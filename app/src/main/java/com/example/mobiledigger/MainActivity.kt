@@ -18,6 +18,7 @@ import com.example.mobiledigger.audio.MusicService
 import com.example.mobiledigger.ui.components.MusicPlayerScreen
 import com.example.mobiledigger.ui.theme.MobileDiggerTheme
 import com.example.mobiledigger.viewmodel.MusicViewModel
+import android.content.SharedPreferences
 
 class MainActivity : ComponentActivity() {
     
@@ -37,8 +38,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Request necessary permissions at startup
-        requestStoragePermissions()
+        // Check if this is the first start and show permissions popup
+        checkFirstStartAndRequestPermissions()
         
         setContent {
             val viewModel: MusicViewModel = viewModel()
@@ -54,6 +55,40 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    
+    private fun checkFirstStartAndRequestPermissions() {
+        val prefs: SharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val isFirstStart = prefs.getBoolean("is_first_start", true)
+        
+        if (isFirstStart) {
+            // Show permissions popup dialog
+            showPermissionsDialog()
+            
+            // Mark that we've shown the permissions dialog
+            prefs.edit().putBoolean("is_first_start", false).apply()
+        } else {
+            // Not first start, just request permissions silently
+            requestStoragePermissions()
+        }
+    }
+    
+    private fun showPermissionsDialog() {
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Permissions Required")
+            .setMessage("MobileDigger needs access to your music files to play and analyze them. Please grant the following permissions:")
+            .setPositiveButton("Grant Permissions") { dialog, _ ->
+                requestStoragePermissions()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Skip") { dialog, _ ->
+                // User can still use the app, but some features might not work
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .create()
+        
+        dialog.show()
     }
     
     private fun requestStoragePermissions() {

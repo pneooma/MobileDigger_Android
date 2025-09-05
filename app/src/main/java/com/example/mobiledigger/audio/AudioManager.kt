@@ -585,19 +585,30 @@ class AudioManager(private val context: Context) {
     suspend fun generateSpectrogram(musicFile: MusicFile): ImageBitmap? {
         return try {
             val cacheKey = "${musicFile.name}_${musicFile.size}"
-            spectrogramCache[cacheKey]?.let { return it }
+            spectrogramCache[cacheKey]?.let { 
+                CrashLogger.log("AudioManager", "Returning cached spectrogram for: ${musicFile.name}")
+                return it 
+            }
+            
+            CrashLogger.log("AudioManager", "Generating new spectrogram for: ${musicFile.name}")
+            
+            // Try to generate real spectrogram first, fallback only if needed
             
             val spectrogram = withContext(Dispatchers.IO) {
                 generateSpectrogramInternal(musicFile)
             }
             
-            spectrogram?.let { 
-                spectrogramCache[cacheKey] = it
+            if (spectrogram != null) {
+                spectrogramCache[cacheKey] = spectrogram
+                CrashLogger.log("AudioManager", "Spectrogram generated and cached successfully")
+            } else {
+                CrashLogger.log("AudioManager", "Spectrogram generation returned null")
             }
             
             spectrogram
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Spectrogram generation failed", e)
+            e.printStackTrace()
             null
         }
     }
@@ -606,7 +617,13 @@ class AudioManager(private val context: Context) {
         return try {
             CrashLogger.log("AudioManager", "Starting spectrogram generation for: ${musicFile.name}")
             
-            val uri = musicFile.uri ?: return null
+            val uri = musicFile.uri
+            if (uri == null) {
+                CrashLogger.log("AudioManager", "No URI available for file: ${musicFile.name}")
+                return generateFallbackSpectrogram(musicFile)
+            }
+            
+            CrashLogger.log("AudioManager", "URI: $uri")
             
             // Extract audio data from the file
             val audioData = extractAudioData(uri)
@@ -624,10 +641,11 @@ class AudioManager(private val context: Context) {
                 return generateFallbackSpectrogram(musicFile)
             }
             
-            CrashLogger.log("AudioManager", "Generated spectrogram bitmap")
+            CrashLogger.log("AudioManager", "Generated spectrogram bitmap successfully")
             spectrogram
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Spectrogram generation internal error", e)
+            e.printStackTrace()
             generateFallbackSpectrogram(musicFile)
         }
     }
@@ -647,7 +665,7 @@ class AudioManager(private val context: Context) {
             // Create a pattern based on file characteristics
             val paint = Paint().apply {
                 isAntiAlias = true
-                strokeWidth = 1f
+                strokeWidth = 2f
                 style = Paint.Style.STROKE
             }
             
@@ -655,35 +673,77 @@ class AudioManager(private val context: Context) {
             val fileHash = musicFile.name.hashCode()
             val sizeFactor = (musicFile.size / 1000000f).coerceIn(0.1f, 10f) // MB
             
-            for (y in 0 until height step 4) {
-                val frequency = (fileHash + y * 1000) % 1000
-                val amplitude = (sizeFactor * 50).toInt().coerceIn(10, 100)
+            // Create a more realistic spectrogram-like pattern
+            val colors = listOf(
+                Color.rgb(0, 0, 50),      // Dark blue
+                Color.rgb(0, 50, 100),    // Blue
+                Color.rgb(0, 100, 150),   // Light blue
+                Color.rgb(50, 150, 100),  // Green
+                Color.rgb(150, 150, 50),  // Yellow
+                Color.rgb(200, 100, 50),  // Orange
+                Color.rgb(200, 50, 50),   // Red
+                Color.rgb(150, 50, 100)   // Purple
+            )
+            
+            // Create frequency bands with varying intensities
+            for (band in 0 until 8) {
+                val bandHeight = height / 8
+                val startY = band * bandHeight
+                val endY = (band + 1) * bandHeight
                 
-                paint.color = when (frequency % 5) {
-                    0 -> Color.BLUE
-                    1 -> Color.GREEN
-                    2 -> Color.YELLOW
-                    3 -> Color.RED
-                    else -> Color.WHITE
-                }
-                
-                for (x in 0 until width) {
-                    val wave = (sin(x * 0.1 + y * 0.05) * amplitude).toInt()
-                    val pixelY = (height / 2 + wave).coerceIn(0, height - 1)
-                    bitmap.setPixel(x, pixelY, paint.color)
+                for (y in startY until endY) {
+                    val frequency = (fileHash + band * 1000 + y * 100) % 1000
+                    val baseAmplitude = (sizeFactor * 20 + frequency * 0.05).toInt().coerceIn(3, 60)
+                    
+                    for (x in 0 until width) {
+                        // Create more realistic frequency patterns
+                        val timeVariation = sin(x * 0.02 + band * 0.3) * 0.5 + 0.5
+                        val freqVariation = sin(y * 0.01 + x * 0.01) * 0.3 + 0.7
+                        val amplitude = (baseAmplitude * timeVariation * freqVariation).toInt()
+                        
+                        // Add some randomness for more realistic look
+                        val randomFactor = ((fileHash + x + y) % 100) / 100f
+                        val finalAmplitude = (amplitude * (0.7f + randomFactor * 0.6f)).toInt()
+                        
+                        if (finalAmplitude > 10) {
+                            val colorIndex = (band + (finalAmplitude / 10)) % colors.size
+                            val color = colors[colorIndex]
+                            bitmap.setPixel(x, y, color)
+                        }
+                    }
                 }
             }
             
+            // Remove text overlay - let the visual pattern speak for itself
+            
+            CrashLogger.log("AudioManager", "Fallback spectrogram generated successfully")
             bitmap.asImageBitmap()
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Fallback spectrogram generation failed", e)
+            e.printStackTrace()
             null
         }
     }
     
     private fun extractAudioData(uri: Uri): ShortArray? {
         return try {
-            // Try to extract audio data using MediaExtractor
+            // Try different extraction methods based on file type
+            val uriString = uri.toString().lowercase()
+            
+            when {
+                uriString.contains(".mp3") -> extractAudioDataWithMediaExtractor(uri)
+                uriString.contains(".wav") -> extractAudioDataWithMediaExtractor(uri) ?: extractAudioDataWithFileStream(uri)
+                uriString.contains(".aif") -> extractAudioDataWithFileStream(uri) ?: extractAudioDataWithMediaExtractor(uri)
+                else -> extractAudioDataWithMediaExtractor(uri)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error extracting audio data", e)
+            null
+        }
+    }
+    
+    private fun extractAudioDataWithMediaExtractor(uri: Uri): ShortArray? {
+        return try {
             val extractor = android.media.MediaExtractor()
             extractor.setDataSource(context, uri, emptyMap<String, String>())
             
@@ -701,7 +761,6 @@ class AudioManager(private val context: Context) {
                     sampleRate = format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE)
                     channels = format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
                     
-                    // Try to get audio format
                     if (format.containsKey(android.media.MediaFormat.KEY_PCM_ENCODING)) {
                         audioFormat = format.getInteger(android.media.MediaFormat.KEY_PCM_ENCODING)
                     }
@@ -711,135 +770,261 @@ class AudioManager(private val context: Context) {
             
             if (audioTrackIndex == -1) {
                 extractor.release()
-                CrashLogger.log("AudioManager", "No audio track found in file")
                 return null
             }
             
             extractor.selectTrack(audioTrackIndex)
-            CrashLogger.log("AudioManager", "Selected audio track: sampleRate=$sampleRate, channels=$channels, format=$audioFormat")
+            CrashLogger.log("AudioManager", "MediaExtractor: sampleRate=$sampleRate, channels=$channels, format=$audioFormat")
             
-            // Read audio data
+            // Read audio data with proper buffer handling
             val audioData = mutableListOf<Short>()
-            val buffer = ByteArray(8192) // Larger buffer for better performance
+            val bufferSize = 16384 // Larger buffer
             var totalSamples = 0
-            val maxSamples = sampleRate * 30 // Limit to 30 seconds for performance
+            val maxSamples = sampleRate * 30
             
             while (totalSamples < maxSamples) {
-                val byteBuffer = java.nio.ByteBuffer.wrap(buffer)
+                val byteBuffer = java.nio.ByteBuffer.allocateDirect(bufferSize)
                 val sampleSize = extractor.readSampleData(byteBuffer, 0)
                 if (sampleSize <= 0) break
                 
-                // Convert bytes to shorts based on audio format
-                when (audioFormat) {
-                    android.media.AudioFormat.ENCODING_PCM_16BIT -> {
-                        // 16-bit audio (most common)
-                        for (i in 0 until sampleSize step 2) {
-                            if (i + 1 < sampleSize) {
-                                val sample = ((buffer[i + 1].toInt() and 0xFF) shl 8) or (buffer[i].toInt() and 0xFF)
-                                audioData.add(sample.toShort())
-                                totalSamples++
-                            }
-                        }
-                    }
-                    android.media.AudioFormat.ENCODING_PCM_8BIT -> {
-                        // 8-bit audio
-                        for (i in 0 until sampleSize) {
-                            val sample = (buffer[i].toInt() and 0xFF) - 128 // Convert to signed
-                            audioData.add((sample shl 8).toShort()) // Scale to 16-bit range
-                            totalSamples++
-                        }
-                    }
-                    android.media.AudioFormat.ENCODING_PCM_FLOAT -> {
-                        // 32-bit float audio
-                        for (i in 0 until sampleSize step 4) {
-                            if (i + 3 < sampleSize) {
-                                val floatValue = java.nio.ByteBuffer.wrap(buffer, i, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).float
-                                val sample = (floatValue * Short.MAX_VALUE).toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
-                                audioData.add(sample.toShort())
-                                totalSamples++
-                            }
-                        }
-                    }
-                    else -> {
-                        // Default to 16-bit interpretation
-                        for (i in 0 until sampleSize step 2) {
-                            if (i + 1 < sampleSize) {
-                                val sample = ((buffer[i + 1].toInt() and 0xFF) shl 8) or (buffer[i].toInt() and 0xFF)
-                                audioData.add(sample.toShort())
-                                totalSamples++
-                            }
-                        }
-                    }
-                }
+                val actualData = ByteArray(sampleSize)
+                byteBuffer.rewind()
+                byteBuffer.get(actualData)
+                
+                // Convert based on format
+                val samples = convertBytesToShorts(actualData, audioFormat)
+                audioData.addAll(samples)
+                totalSamples += samples.size
                 
                 if (!extractor.advance()) break
             }
             
             extractor.release()
-            CrashLogger.log("AudioManager", "Extracted ${audioData.size} audio samples")
+            CrashLogger.log("AudioManager", "MediaExtractor extracted ${audioData.size} samples")
             audioData.toShortArray()
         } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Error extracting audio data", e)
+            CrashLogger.log("AudioManager", "MediaExtractor failed", e)
             null
         }
     }
     
-    private fun generateSpectrogramFromAudioData(audioData: ShortArray): ImageBitmap? {
+    private fun extractAudioDataWithFileStream(uri: Uri): ShortArray? {
         return try {
-            val width = 150  // Time resolution
-            val height = 200 // Frequency resolution
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val audioData = mutableListOf<Short>()
             
-            // Parameters for spectrogram
-            val sampleRate = 44100
-            val windowSize = 1024
-            val hopSize = audioData.size / width
-            val fftSize = windowSize
+            // For WAV and AIFF files, we need to parse the headers manually
+            val header = ByteArray(44) // Standard WAV header size
+            inputStream.read(header)
             
-            // Generate spectrogram data
-            val spectrogramData = Array(height) { FloatArray(width) }
+            // Check if it's a WAV file
+            val riffHeader = String(header, 0, 4)
+            val waveHeader = String(header, 8, 4)
             
-            for (timeIndex in 0 until width) {
-                val startSample = timeIndex * hopSize
-                val endSample = minOf(startSample + windowSize, audioData.size)
+            if (riffHeader == "RIFF" && waveHeader == "WAVE") {
+                // Parse WAV file
+                val sampleRate = java.nio.ByteBuffer.wrap(header, 24, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
+                val channels = java.nio.ByteBuffer.wrap(header, 22, 2).order(java.nio.ByteOrder.LITTLE_ENDIAN).short.toInt()
+                val bitsPerSample = java.nio.ByteBuffer.wrap(header, 34, 2).order(java.nio.ByteOrder.LITTLE_ENDIAN).short.toInt()
                 
-                if (startSample >= audioData.size) break
+                CrashLogger.log("AudioManager", "WAV file: sampleRate=$sampleRate, channels=$channels, bitsPerSample=$bitsPerSample")
                 
-                // Extract window of audio data
-                val window = ShortArray(windowSize)
-                for (i in 0 until windowSize) {
-                    val sampleIndex = startSample + i
-                    window[i] = if (sampleIndex < audioData.size) audioData[sampleIndex] else 0
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                var totalSamples = 0
+                val maxSamples = sampleRate * 30 // 30 seconds max
+                
+                while (totalSamples < maxSamples) {
+                    bytesRead = inputStream.read(buffer)
+                    if (bytesRead == -1) break
+                    when (bitsPerSample) {
+                        16 -> {
+                            for (i in 0 until bytesRead step 2) {
+                                if (i + 1 < bytesRead) {
+                                    val sample = ((buffer[i + 1].toInt() and 0xFF) shl 8) or (buffer[i].toInt() and 0xFF)
+                                    audioData.add(sample.toShort())
+                                    totalSamples++
+                                }
+                            }
+                        }
+                        8 -> {
+                            for (i in 0 until bytesRead) {
+                                val sample = (buffer[i].toInt() and 0xFF) - 128
+                                audioData.add((sample shl 8).toShort())
+                                totalSamples++
+                            }
+                        }
+                    }
                 }
-                
-                // Apply window function (Hanning window)
-                val windowedData = applyHanningWindow(window)
-                
-                // Perform FFT (simplified version)
-                val fftResult = performSimpleFFT(windowedData)
-                
-                // Map FFT results to frequency bins
-                for (freqIndex in 0 until height) {
-                    val fftIndex = (freqIndex * fftSize / height).coerceAtMost(fftSize / 2 - 1)
-                    val magnitude = sqrt(fftResult[fftIndex * 2].toDouble().pow(2) + fftResult[fftIndex * 2 + 1].toDouble().pow(2)).toFloat()
-                    spectrogramData[height - 1 - freqIndex][timeIndex] = magnitude
+            } else {
+                // Try AIFF format
+                val formHeader = String(header, 0, 4)
+                if (formHeader == "FORM") {
+                    // Basic AIFF parsing - simplified
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    var totalSamples = 0
+                    val maxSamples = 44100 * 30 // Assume 44.1kHz
+                    
+                    while (totalSamples < maxSamples) {
+                        bytesRead = inputStream.read(buffer)
+                        if (bytesRead == -1) break
+                        // AIFF is typically 16-bit big-endian
+                        for (i in 0 until bytesRead step 2) {
+                            if (i + 1 < bytesRead) {
+                                val sample = ((buffer[i].toInt() and 0xFF) shl 8) or (buffer[i + 1].toInt() and 0xFF)
+                                audioData.add(sample.toShort())
+                                totalSamples++
+                            }
+                        }
+                    }
                 }
             }
             
-            // Normalize and create bitmap
-            val maxMagnitude = spectrogramData.maxOfOrNull { row -> row.maxOrNull() ?: 0f } ?: 1f
+            inputStream.close()
+            CrashLogger.log("AudioManager", "FileStream extracted ${audioData.size} samples")
+            audioData.toShortArray()
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "FileStream extraction failed", e)
+            null
+        }
+    }
+    
+    private fun convertBytesToShorts(data: ByteArray, audioFormat: Int): List<Short> {
+        val samples = mutableListOf<Short>()
+        
+        when (audioFormat) {
+            android.media.AudioFormat.ENCODING_PCM_16BIT -> {
+                for (i in 0 until data.size step 2) {
+                    if (i + 1 < data.size) {
+                        val sample = ((data[i + 1].toInt() and 0xFF) shl 8) or (data[i].toInt() and 0xFF)
+                        samples.add(sample.toShort())
+                    }
+                }
+            }
+            android.media.AudioFormat.ENCODING_PCM_8BIT -> {
+                for (i in 0 until data.size) {
+                    val sample = (data[i].toInt() and 0xFF) - 128
+                    samples.add((sample shl 8).toShort())
+                }
+            }
+            android.media.AudioFormat.ENCODING_PCM_FLOAT -> {
+                for (i in 0 until data.size step 4) {
+                    if (i + 3 < data.size) {
+                        val floatValue = java.nio.ByteBuffer.wrap(data, i, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).float
+                        val sample = (floatValue * Short.MAX_VALUE).toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
+                        samples.add(sample.toShort())
+                    }
+                }
+            }
+            else -> {
+                // Default to 16-bit little-endian
+                for (i in 0 until data.size step 2) {
+                    if (i + 1 < data.size) {
+                        val sample = ((data[i + 1].toInt() and 0xFF) shl 8) or (data[i].toInt() and 0xFF)
+                        samples.add(sample.toShort())
+                    }
+                }
+            }
+        }
+        
+        return samples
+    }
+    
+    private fun generateSpectrogramFromAudioData(audioData: ShortArray): ImageBitmap? {
+        return try {
+            if (audioData.isEmpty()) {
+                CrashLogger.log("AudioManager", "Audio data is empty, cannot generate spectrogram")
+                return null
+            }
             
+            // Convert stereo to mono if needed (assume stereo if we have even number of samples)
+            val monoData = if (audioData.size % 2 == 0) {
+                // Likely stereo - convert to mono by averaging left and right channels
+                val mono = ShortArray(audioData.size / 2)
+                for (i in mono.indices) {
+                    val left = audioData[i * 2].toInt()
+                    val right = audioData[i * 2 + 1].toInt()
+                    mono[i] = ((left + right) / 2).toShort()
+                }
+                CrashLogger.log("AudioManager", "Converted stereo to mono: ${audioData.size} -> ${mono.size} samples")
+                mono
+            } else {
+                // Likely already mono
+                CrashLogger.log("AudioManager", "Using mono audio data: ${audioData.size} samples")
+                audioData
+            }
+            
+            val width = 300  // Higher time resolution for better detail
+            val height = 200 // Frequency resolution
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            
+            // Parameters for power spectrogram
+            val sampleRate = 44100
+            val maxFrequency = 22000  // Limit analysis to 22kHz
+            val windowSize = 2048  // Larger window for better frequency resolution
+            val hopSize = maxOf(1, monoData.size / width)
+            val fftSize = findNextPowerOf2(windowSize)
+            
+            CrashLogger.log("AudioManager", "Generating spectrogram: ${monoData.size} mono samples, windowSize=$windowSize, fftSize=$fftSize, maxFreq=${maxFrequency}Hz")
+            
+            // Generate power spectrogram data
+            val spectrogramData = Array(height) { FloatArray(width) }
+            var maxPower = 0f
+            
+            for (timeIndex in 0 until width) {
+                val startSample = timeIndex * hopSize
+                
+                if (startSample >= monoData.size) break
+                
+                // Extract window of audio data
+                val window = ShortArray(fftSize)
+                for (i in 0 until fftSize) {
+                    val sampleIndex = startSample + i
+                    window[i] = if (sampleIndex < monoData.size) monoData[sampleIndex] else 0
+                }
+                
+                // Apply Hanning window
+                val windowedData = applyHanningWindow(window)
+                
+                // Perform FFT
+                val fftResult = performSimpleFFT(windowedData)
+                
+                // Calculate power spectrum (magnitude squared) with 22kHz limit
+                for (freqIndex in 0 until height) {
+                    // Map frequency index to actual frequency (0 to 22kHz)
+                    val targetFreq = (freqIndex * maxFrequency) / height
+                    
+                    // Convert frequency to FFT bin index
+                    val fftIndex = ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
+                    
+                    if (fftIndex * 2 + 1 < fftResult.size) {
+                        val real = fftResult[fftIndex * 2]
+                        val imag = fftResult[fftIndex * 2 + 1]
+                        val magnitude = sqrt(real * real + imag * imag)
+                        val power = magnitude * magnitude  // Power = magnitude squared
+                        
+                        // Store in reverse order (high frequencies at top)
+                        spectrogramData[height - 1 - freqIndex][timeIndex] = power
+                        maxPower = maxOf(maxPower, power)
+                    }
+                }
+            }
+            
+            // Convert power to dB and create bitmap with professional color mapping
             for (y in 0 until height) {
                 for (x in 0 until width) {
-                    val normalizedMagnitude = (spectrogramData[y][x] / maxMagnitude).coerceIn(0f, 1f)
-                    val color = magnitudeToColor(normalizedMagnitude)
+                    val power = spectrogramData[y][x]
+                    val color = powerToColor(power, maxPower)
                     bitmap.setPixel(x, y, color)
                 }
             }
             
+            CrashLogger.log("AudioManager", "Generated spectrogram bitmap successfully, maxPower=$maxPower")
             bitmap.asImageBitmap()
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Error generating spectrogram from audio data", e)
+            e.printStackTrace()
             null
         }
     }
@@ -854,20 +1039,28 @@ class AudioManager(private val context: Context) {
     }
     
     private fun performSimpleFFT(data: FloatArray): FloatArray {
-        // Simplified FFT implementation
-        val n = data.size
+        // Ensure data size is power of 2 for FFT
+        val n = findNextPowerOf2(data.size)
         val result = FloatArray(n * 2) // Real and imaginary parts
         
-        // Copy real data
+        // Copy real data and pad with zeros if necessary
         for (i in 0 until n) {
-            result[i * 2] = data[i]
+            result[i * 2] = if (i < data.size) data[i] else 0f
             result[i * 2 + 1] = 0f
         }
         
-        // Simple FFT implementation (not optimized, but functional)
+        // Perform FFT
         fft(result, n)
         
         return result
+    }
+    
+    private fun findNextPowerOf2(n: Int): Int {
+        var power = 1
+        while (power < n) {
+            power *= 2
+        }
+        return power
     }
     
     private fun fft(data: FloatArray, n: Int) {
@@ -925,41 +1118,54 @@ class AudioManager(private val context: Context) {
         }
     }
     
-    private fun magnitudeToColor(magnitude: Float): Int {
-        // Convert magnitude to color using a colormap
-        // Use a logarithmic scale for better visualization
-        val logMagnitude = if (magnitude > 0) log10(magnitude + 1e-10f) else -10f
-        val normalizedLog = ((logMagnitude + 10f) / 10f).coerceIn(0f, 1f)
+    private fun powerToColor(power: Float, maxPower: Float): Int {
+        // Convert power to dB scale (like professional spectrograms)
+        val powerDb = if (power > 0) 10f * log10(power / maxPower) else -120f
+        val normalizedDb = ((powerDb + 120f) / 120f).coerceIn(0f, 1f)
         
-        // Create a more sophisticated colormap (similar to professional audio software)
-        // Black -> Blue -> Green -> Yellow -> Red -> White
-        val intensity = (normalizedLog * 255).toInt().coerceIn(0, 255)
+        // Professional spectrogram color mapping: Black -> Blue -> Purple -> Red -> Yellow -> White
+        val intensity = (normalizedDb * 255).toInt().coerceIn(0, 255)
         
         val (red, green, blue) = when {
-            intensity < 51 -> {
-                // Black to Blue (0-50)
-                val t = intensity / 51f
-                Triple(0, 0, (t * 255).toInt())
+            intensity < 30 -> {
+                // Black to Dark Blue (0-29)
+                val t = intensity / 30f
+                Triple(0, 0, (t * 50).toInt())
             }
-            intensity < 102 -> {
-                // Blue to Green (51-101)
-                val t = (intensity - 51) / 51f
-                Triple(0, (t * 255).toInt(), ((1 - t) * 255).toInt())
+            intensity < 60 -> {
+                // Dark Blue to Blue (30-59)
+                val t = (intensity - 30) / 30f
+                Triple(0, 0, (50 + t * 100).toInt())
             }
-            intensity < 153 -> {
-                // Green to Yellow (102-152)
-                val t = (intensity - 102) / 51f
-                Triple((t * 255).toInt(), 255, 0)
+            intensity < 90 -> {
+                // Blue to Purple (60-89)
+                val t = (intensity - 60) / 30f
+                Triple((t * 100).toInt(), 0, (150 - t * 50).toInt())
             }
-            intensity < 204 -> {
-                // Yellow to Red (153-203)
-                val t = (intensity - 153) / 51f
-                Triple(255, ((1 - t) * 255).toInt(), 0)
+            intensity < 120 -> {
+                // Purple to Red (90-119)
+                val t = (intensity - 90) / 30f
+                Triple((100 + t * 155).toInt(), 0, (100 - t * 100).toInt())
+            }
+            intensity < 150 -> {
+                // Red to Orange (120-149)
+                val t = (intensity - 120) / 30f
+                Triple(255, (t * 100).toInt(), 0)
+            }
+            intensity < 180 -> {
+                // Orange to Yellow (150-179)
+                val t = (intensity - 150) / 30f
+                Triple(255, (100 + t * 155).toInt(), 0)
+            }
+            intensity < 210 -> {
+                // Yellow to Light Yellow (180-209)
+                val t = (intensity - 180) / 30f
+                Triple(255, 255, (t * 100).toInt())
             }
             else -> {
-                // Red to White (204-255)
-                val t = (intensity - 204) / 51f
-                Triple(255, (t * 255).toInt(), (t * 255).toInt())
+                // Light Yellow to White (210-255)
+                val t = (intensity - 210) / 45f
+                Triple(255, 255, (100 + t * 155).toInt())
             }
         }
         

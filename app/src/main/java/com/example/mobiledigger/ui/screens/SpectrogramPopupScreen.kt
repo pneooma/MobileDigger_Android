@@ -501,15 +501,19 @@ fun SpectrogramPopupDialog(
     // Generate spectrogram when dialog opens
     LaunchedEffect(musicFile?.uri) {
         if (musicFile != null) {
+            println("SpectrogramPopupDialog: Starting spectrogram generation for ${musicFile.name}")
             isLoading = true
             try {
                 val bitmap = audioManager.generateSpectrogram(musicFile)
+                println("SpectrogramPopupDialog: Received bitmap: ${bitmap != null}")
                 spectrogramBitmap = bitmap
             } catch (e: Exception) {
+                println("SpectrogramPopupDialog: Exception during generation: ${e.message}")
                 e.printStackTrace()
                 spectrogramBitmap = null
             } finally {
                 isLoading = false
+                println("SpectrogramPopupDialog: Generation completed, isLoading = false")
             }
         }
     }

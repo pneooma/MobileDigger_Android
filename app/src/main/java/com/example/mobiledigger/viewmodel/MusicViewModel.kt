@@ -570,7 +570,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         if (files.isEmpty() || index !in files.indices) return
         val currentFile = files[index]
         // Pre-fetch next file for buffering (only if list has more than 1 item)
-        val nextFile = if (files.size > 1) files[(index + 1) % files.size] else null
+        // val nextFile = if (files.size > 1) files[(index + 1) % files.size] else null
         
         // Check if it's an AIFF file and provide specific feedback
         val isAiffFile = currentFile.name.lowercase().endsWith(".aif") || currentFile.name.lowercase().endsWith(".aiff")
@@ -645,7 +645,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     extractor.release()
                     totalDuration
-                } catch (e2: Exception) {
+                } catch (_: Exception) {
                     // Method 3: Estimate from file size for AIF files
                     if (file.name.lowercase().endsWith(".aif") || file.name.lowercase().endsWith(".aiff")) {
                         // Rough estimate: AIF files are typically uncompressed
@@ -657,7 +657,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             0L
         }
     }

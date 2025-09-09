@@ -412,17 +412,6 @@ class AudioManager(private val context: Context) {
     
     
 
-    fun setVolume(volume: Float) {
-        try {
-            if (isUsingFFmpeg) {
-                ffmpegPlayer?.setVolume(volume.coerceIn(0f, 1f), volume.coerceIn(0f, 1f))
-            } else {
-                exoPlayerFallback?.volume = volume.coerceIn(0f, 1f)
-            }
-            } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Set volume error", e)
-        }
-    }
     
     fun clearAllCaches() {
         try {
@@ -515,6 +504,7 @@ class AudioManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
             } else {
+                @Suppress("DEPRECATION")
                 context.registerReceiver(receiver, filter)
             }
             CrashLogger.log("AudioManager", "Broadcast receiver registered successfully")

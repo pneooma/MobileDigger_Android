@@ -955,15 +955,15 @@ class AudioManager(private val context: Context) {
                 audioData
             }
             
-            val width = 300  // Higher time resolution for better detail
-            val height = 200 // Frequency resolution
+            val width = 600  // Much higher time resolution for better detail
+            val height = 400 // Higher frequency resolution
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             
             // Parameters for power spectrogram
             val sampleRate = 44100
-            val maxFrequency = 22000  // Limit analysis to 22kHz
-            val windowSize = 2048  // Larger window for better frequency resolution
-            val hopSize = maxOf(1, monoData.size / width)
+            val maxFrequency = 25000  // Increased to 25kHz for better high-frequency detail
+            val windowSize = 4096  // Larger window for better frequency resolution
+            val hopSize = maxOf(64, monoData.size / (width * 2))  // Smaller hop size for better temporal resolution
             val fftSize = findNextPowerOf2(windowSize)
             
             CrashLogger.log("AudioManager", "Generating spectrogram: ${monoData.size} mono samples, windowSize=$windowSize, fftSize=$fftSize, maxFreq=${maxFrequency}Hz")
@@ -990,12 +990,12 @@ class AudioManager(private val context: Context) {
                 // Perform FFT
                 val fftResult = performSimpleFFT(windowedData)
                 
-                // Calculate power spectrum (magnitude squared) with 22kHz limit
+                // Calculate power spectrum (magnitude squared) with 25kHz limit
                 for (freqIndex in 0 until height) {
-                    // Map frequency index to actual frequency (0 to 22kHz)
+                    // Map frequency index to actual frequency (0 to 25kHz)
                     val targetFreq = (freqIndex * maxFrequency) / height
                     
-                    // Convert frequency to FFT bin index
+                    // Convert frequency to FFT bin index with better precision
                     val fftIndex = ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
                     
                     if (fftIndex * 2 + 1 < fftResult.size) {
@@ -1011,10 +1011,13 @@ class AudioManager(private val context: Context) {
                 }
             }
             
+            // Apply smoothing to reduce artifacts
+            val smoothedData = applySmoothing(spectrogramData, width, height)
+            
             // Convert power to dB and create bitmap with professional color mapping
             for (y in 0 until height) {
                 for (x in 0 until width) {
-                    val power = spectrogramData[y][x]
+                    val power = smoothedData[y][x]
                     val color = powerToColor(power, maxPower)
                     bitmap.setPixel(x, y, color)
                 }
@@ -1036,6 +1039,33 @@ class AudioManager(private val context: Context) {
             windowed[i] = data[i] * windowValue
         }
         return windowed
+    }
+    
+    private fun applySmoothing(data: Array<FloatArray>, width: Int, height: Int): Array<FloatArray> {
+        val smoothed = Array(height) { FloatArray(width) }
+        val kernelSize = 3
+        val halfKernel = kernelSize / 2
+        
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                var sum = 0f
+                var count = 0
+                
+                // Apply 3x3 smoothing kernel
+                for (ky in -halfKernel..halfKernel) {
+                    for (kx in -halfKernel..halfKernel) {
+                        val ny = (y + ky).coerceIn(0, height - 1)
+                        val nx = (x + kx).coerceIn(0, width - 1)
+                        sum += data[ny][nx]
+                        count++
+                    }
+                }
+                
+                smoothed[y][x] = sum / count
+            }
+        }
+        
+        return smoothed
     }
     
     private fun performSimpleFFT(data: FloatArray): FloatArray {
@@ -1123,8 +1153,9 @@ class AudioManager(private val context: Context) {
         val powerDb = if (power > 0) 10f * log10(power / maxPower) else -120f
         val normalizedDb = ((powerDb + 120f) / 120f).coerceIn(0f, 1f)
         
-        // Professional spectrogram color mapping: Black -> Blue -> Purple -> Red -> Yellow -> White
-        val intensity = (normalizedDb * 255).toInt().coerceIn(0, 255)
+        // Enhanced contrast for better visibility
+        val enhancedDb = normalizedDb * normalizedDb  // Square for better contrast
+        val intensity = (enhancedDb * 255).toInt().coerceIn(0, 255)
         
         val (red, green, blue) = when {
             intensity < 30 -> {

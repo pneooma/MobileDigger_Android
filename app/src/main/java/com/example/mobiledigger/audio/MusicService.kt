@@ -210,22 +210,31 @@ class MusicService : MediaSessionService() {
     }
     
     private fun createNotificationChannel() {
+        // Channel is already created in MobileDiggerApplication
+        // Just verify it exists
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "MobileDigger Music Player",
-                NotificationManager.IMPORTANCE_HIGH // Changed to HIGH for better visibility
-            ).apply {
-                description = "Music playback controls with like/dislike sorting actions"
-                setShowBadge(true)
-                enableLights(false) // Disable lights to avoid issues
-                enableVibration(false)
-                setSound(null, null)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-                setBypassDnd(false)
+            val channel = notificationManager.getNotificationChannel(CHANNEL_ID)
+            if (channel == null) {
+                CrashLogger.log("MusicService", "Warning: Notification channel not found, creating fallback")
+                // Create fallback channel if somehow missing
+                val fallbackChannel = NotificationChannel(
+                    CHANNEL_ID,
+                    "MobileDigger Music Player",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Music playback controls with like/dislike sorting actions"
+                    setShowBadge(false)
+                    enableLights(false)
+                    enableVibration(false)
+                    setSound(null, null)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                    setBypassDnd(false)
+                }
+                notificationManager.createNotificationChannel(fallbackChannel)
+                CrashLogger.log("MusicService", "Fallback notification channel created")
+            } else {
+                CrashLogger.log("MusicService", "Notification channel found: ${channel.name}")
             }
-            notificationManager.createNotificationChannel(channel)
-            CrashLogger.log("MusicService", "Notification channel created successfully with HIGH importance")
         }
     }
     
@@ -260,7 +269,7 @@ class MusicService : MediaSessionService() {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_LOW) // Use LOW for persistent media notifications
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Use DEFAULT for media notifications
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setAutoCancel(false) // Never auto-cancel
             .setSilent(true) // Silent to avoid interruption

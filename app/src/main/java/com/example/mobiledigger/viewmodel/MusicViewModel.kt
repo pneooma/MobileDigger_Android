@@ -10,9 +10,6 @@ import android.os.Build
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
-import android.content.ContentValues
-import android.os.Environment
-import android.graphics.Rect
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobiledigger.audio.AudioManager
@@ -36,8 +33,6 @@ import kotlinx.coroutines.delay
 import com.example.mobiledigger.util.CrashLogger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import android.content.ClipData
-import android.content.ComponentName
 
 enum class PlaylistTab {
     TODO, LIKED, REJECTED
@@ -181,7 +176,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             // Restore previously chosen folders if available
             preferences.getDestinationRootUri()?.let { saved ->
                 runCatching {
-                    val uri = android.net.Uri.parse(saved)
+                    val uri = Uri.parse(saved)
                     fileManager.setDestinationFolder(uri)
                     
                     // Check if the destination folder is actually accessible
@@ -206,7 +201,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             // Restore source folder reference (but don't auto-scan)
             preferences.getSourceRootUri()?.let { saved ->
                 runCatching {
-                    val uri = android.net.Uri.parse(saved)
+                    val uri = Uri.parse(saved)
                     android.util.Log.d("MusicViewModel", "Source folder available: $saved")
                     CrashLogger.log("MusicViewModel", "Source folder available: $saved")
                     
@@ -409,11 +404,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         audioManager.seekTo(position)
     }
     
-    fun setVolume(volume: Float) {
-        val clamped = volume.coerceIn(0f, 1f)
-        _volume.value = clamped
-        audioManager.setVolume(clamped)
-    }
     
     fun sortCurrentFile(action: SortAction) {
         val currentIndex = _currentIndex.value
@@ -569,15 +559,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun getCurrentFile(): MusicFile? {
-        val files = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
-        }
-        val index = _currentIndex.value
-        return if (index < files.size) files[index] else null
-    }
     
     private fun loadCurrentFile() {
         val files = when (_currentPlaylistTab.value) {
@@ -598,7 +579,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
         
         // Call playFile directly (no longer a suspend function)
-        val started = audioManager.playFile(currentFile, nextFile)
+        val started = audioManager.playFile(currentFile)
         _isPlaying.value = started
         if (!started) {
             if (isAiffFile) {
@@ -790,7 +771,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun rescanSourceFolder() {
         val savedUri = preferences.getSourceRootUri()
         if (savedUri != null) {
-            val uri = android.net.Uri.parse(savedUri)
+            val uri = Uri.parse(savedUri)
             CrashLogger.log("MusicViewModel", "Rescanning source folder: $savedUri")
             // Reset state to start fresh
             _errorMessage.value = null

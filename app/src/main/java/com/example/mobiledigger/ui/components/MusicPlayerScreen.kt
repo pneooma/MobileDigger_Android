@@ -7,28 +7,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.Path
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
-import androidx.compose.runtime.rememberCoroutineScope
 import com.example.mobiledigger.R
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay // For deprecated icon
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,16 +32,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 
 
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.ui.theme.DislikeRed
@@ -55,21 +44,18 @@ import com.example.mobiledigger.ui.theme.GreenAccent
 import com.example.mobiledigger.ui.theme.GroovyBlue
 import com.example.mobiledigger.ui.theme.LikeGreen
 import com.example.mobiledigger.ui.theme.NoButton
-import com.example.mobiledigger.ui.theme.OrangeAccent
 import com.example.mobiledigger.ui.theme.YesButton
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import com.example.mobiledigger.viewmodel.PlaylistTab
 
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import kotlin.math.abs
-import kotlinx.coroutines.launch
+import java.util.Locale
 
 private fun formatTime(milliseconds: Long): String {
     val seconds = (milliseconds / 1000).toInt()
     val minutes = seconds / 60
     val remainingSeconds = seconds % 60
-    return String.format("%d:%02d", minutes, remainingSeconds)
+    return String.format(Locale.getDefault(), "%d:%02d", minutes, remainingSeconds)
 }
 
 
@@ -87,7 +73,6 @@ fun MusicPlayerScreen(
     val isPlaying by viewModel.isPlaying.collectAsState()
     val currentPosition by viewModel.currentPosition.collectAsState()
     val duration by viewModel.duration.collectAsState()
-    val volume by viewModel.volume.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val showDeleteRejectedPrompt by viewModel.showDeleteRejectedPrompt.collectAsState()
@@ -98,7 +83,6 @@ fun MusicPlayerScreen(
     
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     
 
     
@@ -150,7 +134,7 @@ fun MusicPlayerScreen(
                 Button(onClick = {
                     if (showDeleteDialogStep < 3) showDeleteDialogStep++
                     else {
-                        val ok = viewModel.deleteAllLiked(3)
+                        viewModel.deleteAllLiked(3)
                         showDeleteDialogStep = 0
                     }
                 }) { Text("OK") }
@@ -263,7 +247,7 @@ fun MusicPlayerScreen(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
-    val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp
+    // val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // isCompactScreen is used, keeping
     val playlistMaxHeight = screenHeight * 0.65f // Playlist takes 65% of screen
 
     // Handle error messages with transparent background and white bold text
@@ -274,7 +258,6 @@ fun MusicPlayerScreen(
         }
     }
     
-
 
     Scaffold(
         modifier = Modifier,
@@ -319,8 +302,8 @@ fun MusicPlayerScreen(
         ) { uri ->
             uri?.let { viewModel.selectDestinationFolder(it) }
         }
-        val hasSourceFolder = musicFiles.isNotEmpty()
-        val hasDestinationFolder = viewModel.destinationFolder.collectAsState().value != null
+        val hasSourceFolder = musicFiles.isNotEmpty() // This can be false
+        val hasDestinationFolder = viewModel.destinationFolder.collectAsState().value != null // This can be false
         val bothFoldersSelected = hasSourceFolder && hasDestinationFolder
 
         // Header with app title and folders pill
@@ -353,7 +336,7 @@ fun MusicPlayerScreen(
                 )
             }
             
-            if (bothFoldersSelected) {
+            if (bothFoldersSelected) { // Condition remains as 'hasSourceFolder' and 'hasDestinationFolder' can be false
                 var menuExpanded by remember { mutableStateOf(false) }
                 OutlinedButton(
                     onClick = { menuExpanded = true },
@@ -368,12 +351,12 @@ fun MusicPlayerScreen(
                 }
                                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(
-                            text = { Text(if (hasSourceFolder) "✓ Source selected" else "Select Source Folder") },
+                            text = { Text("✓ Source selected") },
                             onClick = { menuExpanded = false; folderLauncher.launch(null) },
                             leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text(if (hasDestinationFolder) "✓ Destination selected" else "Select Destination Folder") },
+                            text = { Text("✓ Destination selected") },
                             onClick = { menuExpanded = false; destLauncher.launch(null) },
                             leadingIcon = { Icon(Icons.Default.FolderOpen, contentDescription = null) }
                         )
@@ -422,8 +405,7 @@ fun MusicPlayerScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             // Folder selection buttons - minimize after selection
-            val context = LocalContext.current
-            if (!bothFoldersSelected) {
+            if (!bothFoldersSelected) { // Condition remains
                 // Full size buttons when not both selected - organized in two rows
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -563,10 +545,16 @@ fun MusicPlayerScreen(
                                             scaleX = 1f + abs(animatedOffset) / 2000f // Slight scale effect
                                             scaleY = 1f + abs(animatedOffset) / 2000f
                                         }
-                                        .border(
-                                            width = if (swipeDirection != 0) 3.dp else 0.dp,
-                                            color = borderColor,
-                                            shape = RoundedCornerShape(12.dp)
+                                        .then(
+                                            if (swipeDirection != 0) {
+                                                Modifier.border(
+                                                    width = 3.dp,
+                                                    color = borderColor,
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                            } else {
+                                                Modifier
+                                            }
                                         )
                                         .pointerInput(Unit) {
                                             detectDragGestures(
@@ -583,7 +571,7 @@ fun MusicPlayerScreen(
                                                         }
                                                     }
                                                 }
-                                            ) { change, dragAmount ->
+                                            ) { _, dragAmount ->
                                                 val (x, _) = dragAmount
                                                 dragOffset += x
                                                 dragOffset = dragOffset.coerceIn(-300f, 300f) // Limit drag distance
@@ -664,8 +652,6 @@ fun MusicPlayerScreen(
                                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                             
-
-                                            
                                             Text(
                                                 text = formatTime(duration),
                                                 style = MaterialTheme.typography.bodySmall,
@@ -673,12 +659,9 @@ fun MusicPlayerScreen(
                                             )
                                         }
                                         
-
-                                        
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
                                         // Compact Playback Controls with Volume Popup
-                                        var showVolumePopup by remember { mutableStateOf(false) }
     Row(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically,
@@ -808,7 +791,7 @@ fun MusicPlayerScreen(
                                         .padding(horizontal = 8.dp, vertical = 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    PlaylistTab.values().forEach { tab ->
+                                    PlaylistTab.entries.forEach { tab ->
                                         val isSelected = currentPlaylistTab == tab
                                         val tabColor = when (tab) {
                                             PlaylistTab.TODO -> Color(0xFF2196F3) // Blue
@@ -824,7 +807,25 @@ fun MusicPlayerScreen(
                                         Card(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .clickable { viewModel.switchPlaylistTab(tab) },
+                                                .clickable { viewModel.switchPlaylistTab(tab) }
+                                                .then(
+                                                    if (isSelected) {
+                                                        Modifier
+                                                            .border(
+                                                                width = 2.dp,
+                                                                color = Color.White,
+                                                                shape = RoundedCornerShape(20.dp)
+                                                            )
+                                                            .shadow(
+                                                                elevation = 8.dp,
+                                                                shape = RoundedCornerShape(20.dp),
+                                                                ambientColor = Color.Black.copy(alpha = 0.3f),
+                                                                spotColor = Color.Black.copy(alpha = 0.3f)
+                                                            )
+                                                    } else {
+                                                        Modifier
+                                                    }
+                                                ),
                                             colors = CardDefaults.cardColors(
                                                 containerColor = if (isSelected) selectedColor else tabColor
                                             ),
@@ -844,7 +845,7 @@ fun MusicPlayerScreen(
                                                     when (tab) {
                                                         PlaylistTab.TODO -> {
                                                             Icon(
-                                                                Icons.Default.PlaylistPlay,
+                                                                Icons.AutoMirrored.Filled.PlaylistPlay,
                                                                 contentDescription = "To Do",
                                                                 modifier = Modifier.size(16.dp),
                                                                 tint = if (isSelected) Color.White else Color.Black
@@ -879,7 +880,7 @@ fun MusicPlayerScreen(
                                                         },
                                                         style = MaterialTheme.typography.labelMedium,
                                                         color = if (isSelected) Color.White else Color.Black,
-                                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                                        textAlign = TextAlign.Center
                                                     )
                                                 }
                                             }
@@ -974,6 +975,7 @@ fun MusicPlayerScreen(
                         // Playlist Items (dynamic sizing)
                         itemsIndexed(currentPlaylistFiles, key = { _, mf -> mf.uri }) { index, item ->
                             val isCurrent = index == currentIndex
+                            val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // Moved inside for correct scope if needed
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1268,4 +1270,3 @@ fun MusicPlayerScreen(
 
 
 }
-

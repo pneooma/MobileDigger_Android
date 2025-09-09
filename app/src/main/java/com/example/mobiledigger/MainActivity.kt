@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -19,6 +18,7 @@ import com.example.mobiledigger.ui.components.MusicPlayerScreen
 import com.example.mobiledigger.ui.theme.MobileDiggerTheme
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     
@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
         if (!allGranted) {
             // Show a message that some features might not work
             // This could be handled through the ViewModel if needed
+            // For now, we'll just log this and continue
+            android.util.Log.w("MainActivity", "Some permissions were not granted")
         }
     }
     
@@ -60,52 +62,50 @@ class MainActivity : ComponentActivity() {
     private fun checkFirstStartAndRequestPermissions() {
         val prefs: SharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val isFirstStart = prefs.getBoolean("is_first_start", true)
+        val permissionsShown = prefs.getBoolean("permissions_shown", false)
         
-        if (isFirstStart) {
-            // Show permissions popup dialog
+        if (isFirstStart && !permissionsShown) {
+            // Show permissions popup dialog only if we haven't shown it before
             showPermissionsDialog()
             
             // Mark that we've shown the permissions dialog
-            prefs.edit().putBoolean("is_first_start", false).apply()
+            prefs.edit {
+                putBoolean("is_first_start", false)
+                putBoolean("permissions_shown", true)
+            }
         } else {
-            // Not first start, just request permissions silently
+            // Not first start or permissions already shown, just request permissions silently
             requestStoragePermissions()
         }
     }
     
     private fun showPermissionsDialog() {
-        val dialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Permissions Required")
-            .setMessage("MobileDigger needs access to your music files to play and analyze them. Please grant the following permissions:")
-            .setPositiveButton("Grant Permissions") { dialog, _ ->
-                requestStoragePermissions()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Skip") { dialog, _ ->
-                // User can still use the app, but some features might not work
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .create()
-        
-        dialog.show()
+        try {
+            val dialog = android.app.AlertDialog.Builder(this)
+                .setTitle("Permissions Required")
+                .setMessage("MobileDigger needs access to your music files to play and analyze them. Please grant the following permissions:")
+                .setPositiveButton("Grant Permissions") { dialog, _ ->
+                    requestStoragePermissions()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Skip") { dialog, _ ->
+                    // User can still use the app, but some features might not work
+                    dialog.dismiss()
+                }
+                .setCancelable(false)
+                .create()
+            
+            dialog.show()
+        } catch (_: Exception) {
+            // If dialog fails to show, just request permissions silently
+            requestStoragePermissions()
+        }
     }
     
     private fun requestStoragePermissions() {
         val permissionsToRequest = mutableListOf<String>()
         
-        // Check for MANAGE_EXTERNAL_STORAGE permission (Android 11+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!android.provider.Settings.System.canWrite(this)) {
-                // Request MANAGE_EXTERNAL_STORAGE permission
-                val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                intent.data = android.net.Uri.parse("package:$packageName")
-                startActivity(intent)
-                return
-            }
-        }
-        
-        // Storage permissions
+        // Only request essential permissions, skip MANAGE_EXTERNAL_STORAGE to avoid settings popup
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // Android 13+ uses granular media permissions
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) 
@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
         try {
             val serviceIntent = android.content.Intent(this, MusicService::class.java)
             stopService(serviceIntent)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Service might not be running, ignore
         }
     }
@@ -156,7 +156,7 @@ class MainActivity : ComponentActivity() {
         try {
             val serviceIntent = android.content.Intent(this, MusicService::class.java)
             stopService(serviceIntent)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Service might not be running, ignore
         }
     }

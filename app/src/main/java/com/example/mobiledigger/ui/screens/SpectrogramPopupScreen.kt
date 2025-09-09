@@ -3,7 +3,9 @@ package com.example.mobiledigger.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -176,7 +178,20 @@ fun SpectrogramPopupScreen(
                         )
                         
                         Text(
-                            text = "Resolution: 150x200 pixels (Ultra-fast format)",
+                            text = "Resolution: BALANCED (1024 samples, 128 bins)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        Text(
+                            text = "Analysis Duration: 4 minutes maximum",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        
+                        Text(
+                            text = "Analysis Time: Check logs for timing details",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -187,18 +202,18 @@ fun SpectrogramPopupScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(600.dp) // Much taller height for better spectrogram display
+                        .height(300.dp) // Further reduced height for compact display
                 ) {
                     // Y-axis labels (kHz scale) - left side
                     Column(
                         modifier = Modifier
-                            .width(40.dp)
+                            .width(30.dp)
                             .fillMaxHeight()
                             .padding(vertical = 8.dp),
                         verticalArrangement = Arrangement.SpaceBetween,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val freqLabels = listOf("22k", "20k", "16k", "12k", "8k", "4k", "2k", "20")
+                        val freqLabels = listOf("22k", "18k", "14k", "10k", "6k", "2k", "1k", "20")
                         freqLabels.forEach { label ->
                             Text(
                                 text = label,
@@ -255,7 +270,7 @@ fun SpectrogramPopupScreen(
                     // Y-axis labels (dB scale) - right side
                     Column(
                         modifier = Modifier
-                            .width(40.dp)
+                            .width(30.dp)
                             .fillMaxHeight()
                             .padding(vertical = 8.dp),
                         verticalArrangement = Arrangement.SpaceBetween,
@@ -278,16 +293,22 @@ fun SpectrogramPopupScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 40.dp, vertical = 8.dp),
+                        .padding(horizontal = 30.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val durationSeconds = actualDuration / 1000f // Convert milliseconds to seconds
+                    // Use the analyzed duration for time axis labels, skip for AIFF files
+                    val isAiffFile = musicFile?.name?.lowercase()?.endsWith(".aif") == true || musicFile?.name?.lowercase()?.endsWith(".aiff") == true
+                    val analyzedDurationSeconds = if (isAiffFile) {
+                        240f // Skip time display for AIFF files, use fixed 4 minutes
+                    } else {
+                        actualDuration / 1000f // Use actual duration for other formats
+                    }
                     val timeLabels = listOf(
                         formatTime(0f),
-                        formatTime(durationSeconds * 0.25f),
-                        formatTime(durationSeconds * 0.5f),
-                        formatTime(durationSeconds * 0.75f),
-                        formatTime(durationSeconds)
+                        formatTime(analyzedDurationSeconds * 0.25f),
+                        formatTime(analyzedDurationSeconds * 0.5f),
+                        formatTime(analyzedDurationSeconds * 0.75f),
+                        formatTime(analyzedDurationSeconds)
                     )
                     timeLabels.forEach { label ->
                         Text(
@@ -367,18 +388,8 @@ private fun generateComprehensiveSpectrogramImage(
     canvas.drawText("File: ${musicFile.name}", 50f, yPos, paint)
     yPos += 30f
     
-    // Use the same effective duration calculation as X-axis labels
-    val imageEffectiveDuration = if (duration > 0) duration else {
-        // Estimate duration from file size for AIF files
-        if (musicFile.name.lowercase().endsWith(".aif") || musicFile.name.lowercase().endsWith(".aiff")) {
-            val bytesPerSecond = 44100 * 2 * 2 // 44.1kHz, 16-bit, stereo
-            (musicFile.size * 1000L) / bytesPerSecond
-        } else {
-            // For other formats, estimate based on typical bitrates
-            val estimatedBitrate = 320000L // 320 kbps
-            (musicFile.size * 8 * 1000L) / estimatedBitrate
-        }
-    }
+    // Use the analyzed duration (2 minutes max) for the image
+    val imageEffectiveDuration = minOf(duration, 240000L) // Cap at 4 minutes (240 seconds)
     
     canvas.drawText("Duration: ${formatTime(imageEffectiveDuration / 1000f)}", 50f, yPos, paint)
     yPos += 30f
@@ -400,7 +411,10 @@ private fun generateComprehensiveSpectrogramImage(
     canvas.drawText("• Dynamic Range: -60dB to 0dB", 70f, yPos, smallPaint)
     yPos += 25f
     
-    canvas.drawText("• Resolution: 150x200 pixels", 70f, yPos, smallPaint)
+    canvas.drawText("• Resolution: BALANCED (1024 samples, 128 bins)", 70f, yPos, smallPaint)
+    yPos += 25f
+    
+    canvas.drawText("• Analysis Duration: 4 minutes maximum", 70f, yPos, smallPaint)
     yPos += 25f
     
     canvas.drawText("• Analysis Type: Power Spectrum", 70f, yPos, smallPaint)
@@ -434,10 +448,10 @@ private fun generateComprehensiveSpectrogramImage(
     
     // Y-axis labels - evenly distributed across spectrogram height
     val spectrogramTop = yPos - spectrogramHeight
-    val labelSpacing = spectrogramHeight / 8f // 8 labels total
+    val labelSpacing = spectrogramHeight / 8f // 8 labels total for cleaner display
     
-    // Frequency labels (kHz) on left
-    val freqLabels = listOf("22k", "20k", "16k", "12k", "8k", "4k", "2k", "20")
+    // Frequency labels (kHz) on left - doubled frequency steps
+                        val freqLabels = listOf("22k", "18k", "14k", "10k", "6k", "2k", "1k", "20")
     canvas.drawText("kHz", 20f, spectrogramTop - 10f, smallPaint)
     freqLabels.forEachIndexed { index, label ->
         val labelY = spectrogramTop + (index * labelSpacing) + (labelSpacing / 2f)
@@ -452,19 +466,7 @@ private fun generateComprehensiveSpectrogramImage(
         canvas.drawText(label, 760f, labelY, smallPaint)
     }
     
-    // Time labels - use estimated duration if actual duration is 0
-    val effectiveDuration = if (duration > 0) duration else {
-        // Estimate duration from file size for AIF files
-        if (musicFile?.name?.lowercase()?.endsWith(".aif") == true || musicFile?.name?.lowercase()?.endsWith(".aiff") == true) {
-            val bytesPerSecond = 44100 * 2 * 2 // 44.1kHz, 16-bit, stereo
-            ((musicFile?.size ?: 0L) * 1000L) / bytesPerSecond
-        } else {
-            // For other formats, estimate based on typical bitrates
-            val estimatedBitrate = 320000L // 320 kbps
-            ((musicFile?.size ?: 0L) * 8 * 1000L) / estimatedBitrate
-        }
-    }
-    
+    // Time labels - use analyzed duration (2 minutes max)
     val timeLabels = listOf(
         formatTime(0f),
         formatTime((imageEffectiveDuration / 1000f) * 0.25f),

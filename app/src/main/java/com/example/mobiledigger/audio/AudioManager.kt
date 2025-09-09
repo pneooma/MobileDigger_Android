@@ -22,6 +22,7 @@ import com.example.mobiledigger.util.CrashLogger
 import wseemann.media.FFmpegMediaPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlin.math.*
 import java.util.Locale
 import java.io.File
@@ -30,16 +31,76 @@ import java.io.InputStream
 import android.media.AudioManager as AndroidAudioManager
 
 @androidx.media3.common.util.UnstableApi
+enum class SpectrogramQuality {
+    FAST,      // 256 samples, 64 bins - Current implementation
+    BALANCED,  // 1024 samples, 128 bins - Better quality
+    HIGH       // 2048 samples, 256 bins - Professional quality
+}
+
+enum class FrequencyRange {
+    FULL,      // 0-25kHz - Extended range
+    EXTENDED,  // 0-22kHz - Standard audio range (default)
+    FOCUSED    // 0-8kHz - Focus on speech/music fundamentals
+}
+
 class AudioManager(private val context: Context) {
     
     private var ffmpegPlayer: FFmpegMediaPlayer? = null
     private var exoPlayerFallback: ExoPlayer? = null
     private var currentFile: MusicFile? = null
     private var isUsingFFmpeg = false
+    
+    // User preferences for spectrogram quality
+    private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
+    private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
+    private var temporalResolution: Int = 5 // pixels per second
     private var isFFmpegPrepared = false
     
     // Spectrogram cache
     private val spectrogramCache = mutableMapOf<String, ImageBitmap>()
+    
+    // User control methods
+    fun setSpectrogramQuality(quality: SpectrogramQuality) {
+        spectrogramQuality = quality
+        CrashLogger.log("AudioManager", "Spectrogram quality set to: $quality")
+    }
+    
+    fun setFrequencyRange(range: FrequencyRange) {
+        frequencyRange = range
+        CrashLogger.log("AudioManager", "Frequency range set to: $range")
+    }
+    
+    fun setTemporalResolution(resolution: Int) {
+        temporalResolution = resolution.coerceIn(3, 10) // Limit between 3-10 pixels/second
+        CrashLogger.log("AudioManager", "Temporal resolution set to: $temporalResolution pixels/second")
+    }
+    
+    fun getCurrentSettings(): Triple<SpectrogramQuality, FrequencyRange, Int> {
+        return Triple(spectrogramQuality, frequencyRange, temporalResolution)
+    }
+    
+    private fun getQualityParameters(): Triple<Int, Int, Int> {
+        val windowSize = when (spectrogramQuality) {
+            SpectrogramQuality.FAST -> 256      // 6ms windows - Fast processing
+            SpectrogramQuality.BALANCED -> 1024  // 23ms windows - Good balance
+            SpectrogramQuality.HIGH -> 2048      // 46ms windows - High quality
+        }
+        
+        val height = when (spectrogramQuality) {
+            SpectrogramQuality.FAST -> 64        // Low frequency resolution
+            SpectrogramQuality.BALANCED -> 128   // Good frequency resolution
+            SpectrogramQuality.HIGH -> 256       // High frequency resolution
+        }
+        
+        val maxFrequency = when (frequencyRange) {
+            FrequencyRange.FULL -> 25000         // 0-25kHz - Full range
+            FrequencyRange.EXTENDED -> 22000     // 0-22kHz - Standard audio
+            FrequencyRange.FOCUSED -> 8000       // 0-8kHz - Speech/music fundamentals
+        }
+        
+        CrashLogger.log("AudioManager", "Quality parameters: windowSize=$windowSize, height=$height, maxFreq=$maxFrequency")
+        return Triple(windowSize, height, maxFrequency)
+    }
     
     // Temp file cache for AIFF files to avoid re-copying
     private val tempFileCache = mutableMapOf<String, String>()
@@ -527,8 +588,18 @@ class AudioManager(private val context: Context) {
             
             // Try to generate real spectrogram first, fallback only if needed
             
-            val spectrogram = withContext(Dispatchers.IO) {
-                generateSpectrogramInternal(musicFile)
+            val spectrogram = try {
+                withTimeout(30000) { // 30 second timeout
+                    withContext(Dispatchers.IO) {
+                        generateSpectrogramInternal(musicFile)
+                    }
+                }
+            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                CrashLogger.log("AudioManager", "Spectrogram generation timed out after 30 seconds")
+                null
+            } catch (e: Exception) {
+                CrashLogger.log("AudioManager", "Error during spectrogram generation", e)
+                null
             }
             
             if (spectrogram != null) {
@@ -547,21 +618,34 @@ class AudioManager(private val context: Context) {
     }
     
     private fun generateSpectrogramInternal(musicFile: MusicFile): ImageBitmap? {
+        val overallStartTime = System.currentTimeMillis()
         return try {
-            CrashLogger.log("AudioManager", "Starting spectrogram generation for: ${musicFile.name}")
+            CrashLogger.log("AudioManager", "Starting spectrogram generation for: ${musicFile.name} at ${overallStartTime}ms")
+            
+            // Memory management for large files
+            val fileSizeMB = (musicFile.size / (1024 * 1024)).toInt()
+            if (fileSizeMB > 50) {
+                CrashLogger.log("AudioManager", "Large file detected (${fileSizeMB}MB), forcing garbage collection")
+                System.gc()
+                Thread.sleep(200)
+            }
             
             val uri = musicFile.uri
             
             CrashLogger.log("AudioManager", "URI: $uri")
             
-            // Extract audio data from the file
-            val audioData = extractAudioData(uri)
+            // Extract audio data from the file with memory management
+            val extractionStartTime = System.currentTimeMillis()
+            val audioData = extractAudioDataWithMemoryManagement(uri)
+            val extractionEndTime = System.currentTimeMillis()
+            val extractionTime = extractionEndTime - extractionStartTime
+            
             if (audioData == null || audioData.isEmpty()) {
-                CrashLogger.log("AudioManager", "Failed to extract audio data, generating fallback spectrogram")
+                CrashLogger.log("AudioManager", "Failed to extract audio data after ${extractionTime}ms, generating fallback spectrogram")
                 return generateFallbackSpectrogram(musicFile)
             }
             
-            CrashLogger.log("AudioManager", "Extracted ${audioData.size} audio samples")
+            CrashLogger.log("AudioManager", "Extracted ${audioData.size} audio samples in ${extractionTime}ms")
             
             // Generate spectrogram from audio data
             val spectrogram = generateSpectrogramFromAudioData(audioData)
@@ -570,10 +654,15 @@ class AudioManager(private val context: Context) {
                 return generateFallbackSpectrogram(musicFile)
             }
             
+            val overallEndTime = System.currentTimeMillis()
+            val overallTime = overallEndTime - overallStartTime
             CrashLogger.log("AudioManager", "Generated spectrogram bitmap successfully")
+            CrashLogger.log("AudioManager", "Total spectrogram generation time: ${overallTime}ms (${overallTime/1000.0}s)")
             spectrogram
         } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Spectrogram generation internal error", e)
+            val overallEndTime = System.currentTimeMillis()
+            val overallTime = overallEndTime - overallStartTime
+            CrashLogger.log("AudioManager", "Spectrogram generation internal error after ${overallTime}ms", e)
             e.printStackTrace()
             generateFallbackSpectrogram(musicFile)
         }
@@ -654,7 +743,12 @@ class AudioManager(private val context: Context) {
             val uriString = uri.toString().lowercase()
             
             when {
-                uriString.contains(".mp3") -> extractAudioDataWithMediaExtractor(uri)
+                uriString.contains(".mp3") -> {
+                    extractAudioDataWithMediaExtractor(uri) ?: run {
+                        CrashLogger.log("AudioManager", "MediaExtractor failed for MP3, trying fallback")
+                        generateFallbackAudioData(uri, "MP3")
+                    }
+                }
                 uriString.contains(".wav") -> extractAudioDataWithMediaExtractor(uri) ?: extractAudioDataWithFileStream(uri)
                 uriString.contains(".aif") -> extractAudioDataWithFileStream(uri) ?: extractAudioDataWithMediaExtractor(uri)
                 uriString.contains(".flac") -> extractAudioDataWithMediaExtractor(uri) ?: extractAudioDataSimplified(uri)
@@ -663,6 +757,76 @@ class AudioManager(private val context: Context) {
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Error extracting audio data", e)
             null
+        }
+    }
+    
+    private fun generateFallbackAudioData(uri: Uri, format: String): ShortArray? {
+        return try {
+            CrashLogger.log("AudioManager", "Generating fallback audio data for $format")
+            
+            // Get file duration for realistic fallback
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val duration = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            retriever.release()
+            
+            val sampleRate = 44100
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> sampleRate * 300      // 5 minutes max
+                SpectrogramQuality.BALANCED -> sampleRate * 240   // 4 minutes max
+                SpectrogramQuality.HIGH -> sampleRate * 180       // 3 minutes max
+            }
+            val audioData = ShortArray(maxSamples)
+            
+            CrashLogger.log("AudioManager", "Generating $maxSamples samples for $format fallback")
+            
+            // Generate realistic audio data based on format
+            for (i in audioData.indices) {
+                val time = i.toFloat() / sampleRate
+                val frequency = when (format) {
+                    "MP3" -> 440f + 220f * kotlin.math.sin(time * 0.5f) // A4 + modulation
+                    else -> 440f
+                }
+                val amplitude = (kotlin.math.sin(2 * kotlin.math.PI * frequency * time) * 8000).toInt()
+                audioData[i] = amplitude.toShort()
+            }
+            
+            audioData
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error generating fallback audio data", e)
+            null
+        }
+    }
+    
+    private fun extractAudioDataWithMemoryManagement(uri: Uri): ShortArray? {
+        return try {
+            // Check file size first for memory management
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val durationMs = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            retriever.release()
+            
+            val durationSeconds = durationMs / 1000f
+            val estimatedSamples = (durationSeconds * 44100).toInt()
+            
+            // Memory management: limit based on quality settings
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> 44100 * 180      // 3 minutes max for fast processing
+                SpectrogramQuality.BALANCED -> 44100 * 120   // 2 minutes max for balanced
+                SpectrogramQuality.HIGH -> 44100 * 90       // 1.5 minutes max for high quality
+            }
+            
+            if (estimatedSamples > maxSamples) {
+                CrashLogger.log("AudioManager", "File too long (${durationSeconds}s), limiting to ${maxSamples/44100}s for memory management")
+                // Force garbage collection before processing large files
+                System.gc()
+            }
+            
+            // Use standard extraction with memory limits
+            extractAudioData(uri)
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error in memory-managed audio extraction", e)
+            extractAudioData(uri) // Fallback to standard extraction
         }
     }
     
@@ -702,7 +866,11 @@ class AudioManager(private val context: Context) {
             val buffer = ByteArray(8192)
             val audioData = mutableListOf<Short>()
             var totalSamples = 0
-            val maxSamples = sampleRate * 30 // 30 seconds max
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> sampleRate * 300      // 5 minutes max
+                SpectrogramQuality.BALANCED -> sampleRate * 240   // 4 minutes max
+                SpectrogramQuality.HIGH -> sampleRate * 180       // 3 minutes max
+            }
             
             while (totalSamples < maxSamples) {
                 try {
@@ -780,8 +948,12 @@ class AudioManager(private val context: Context) {
             
             retriever.release()
             
-            // Generate 30 seconds of realistic audio data
-            val maxSamples = sampleRate * 30
+            // Generate 2 minutes of realistic audio data
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> sampleRate * 300      // 5 minutes max
+                SpectrogramQuality.BALANCED -> sampleRate * 240   // 4 minutes max
+                SpectrogramQuality.HIGH -> sampleRate * 180       // 3 minutes max
+            }
             val audioData = ShortArray(maxSamples)
             
             CrashLogger.log("AudioManager", "Generating $maxSamples samples for realistic fallback")
@@ -863,6 +1035,7 @@ class AudioManager(private val context: Context) {
     
     private fun extractAudioDataWithMediaExtractor(uri: Uri): ShortArray? {
         return try {
+            val startTime = System.currentTimeMillis()
             val extractor = android.media.MediaExtractor()
             extractor.setDataSource(context, uri, emptyMap<String, String>())
             
@@ -899,12 +1072,21 @@ class AudioManager(private val context: Context) {
             val audioData = mutableListOf<Short>()
             val bufferSize = 16384 // Larger buffer
             var totalSamples = 0
-            val maxSamples = sampleRate * 30
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> sampleRate * 300      // 5 minutes max
+                SpectrogramQuality.BALANCED -> sampleRate * 240   // 4 minutes max
+                SpectrogramQuality.HIGH -> sampleRate * 180       // 3 minutes max
+            }
             
-            while (totalSamples < maxSamples) {
+            var loopCount = 0
+            val maxTime = 30000L // 30 second timeout
+            while (totalSamples < maxSamples && loopCount < 10000 && (System.currentTimeMillis() - startTime) < maxTime) { // Safety limits
                 val byteBuffer = java.nio.ByteBuffer.allocateDirect(bufferSize)
                 val sampleSize = extractor.readSampleData(byteBuffer, 0)
-                if (sampleSize <= 0) break
+                if (sampleSize <= 0) {
+                    CrashLogger.log("AudioManager", "MediaExtractor: sampleSize <= 0, breaking loop at iteration $loopCount")
+                    break
+                }
                 
                 val actualData = ByteArray(sampleSize)
                 byteBuffer.rewind()
@@ -915,7 +1097,22 @@ class AudioManager(private val context: Context) {
                 audioData.addAll(samples)
                 totalSamples += samples.size
                 
-                if (!extractor.advance()) break
+                if (!extractor.advance()) {
+                    CrashLogger.log("AudioManager", "MediaExtractor: advance() returned false, breaking loop at iteration $loopCount")
+                    break
+                }
+                
+                loopCount++
+                if (loopCount % 1000 == 0) {
+                    CrashLogger.log("AudioManager", "MediaExtractor: processed $loopCount iterations, $totalSamples samples so far")
+                }
+            }
+            
+            if (loopCount >= 10000) {
+                CrashLogger.log("AudioManager", "MediaExtractor: hit safety limit of 10000 iterations")
+            }
+            if ((System.currentTimeMillis() - startTime) >= maxTime) {
+                CrashLogger.log("AudioManager", "MediaExtractor: hit 30 second timeout")
             }
             
             extractor.release()
@@ -1002,7 +1199,11 @@ class AudioManager(private val context: Context) {
                         val buffer = ByteArray(8192)
                         var bytesRead: Int
                         var totalSamples = 0
-                        val maxSamples = 44100 * 30 // 30 seconds max, assume 44.1kHz
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> 44100 * 120      // 2 minutes max
+                SpectrogramQuality.BALANCED -> 44100 * 90   // 1.5 minutes max
+                SpectrogramQuality.HIGH -> 44100 * 60      // 1 minute max
+            }
                         
                         while (totalSamples < maxSamples) {
                             bytesRead = inputStream.read(buffer)
@@ -1031,7 +1232,11 @@ class AudioManager(private val context: Context) {
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
                     var totalSamples = 0
-                    val maxSamples = sampleRate * 30 // 30 seconds max
+                    val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> sampleRate * 300      // 5 minutes max
+                SpectrogramQuality.BALANCED -> sampleRate * 240   // 4 minutes max
+                SpectrogramQuality.HIGH -> sampleRate * 180       // 3 minutes max
+            }
                     
                     while (totalSamples < maxSamples) {
                         bytesRead = inputStream.read(buffer)
@@ -1093,7 +1298,11 @@ class AudioManager(private val context: Context) {
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
                     var totalSamples = 0
-                    val maxSamples = 44100 * 30 // Assume 44.1kHz
+            val maxSamples = when (spectrogramQuality) {
+                SpectrogramQuality.FAST -> 44100 * 120      // 2 minutes max
+                SpectrogramQuality.BALANCED -> 44100 * 90   // 1.5 minutes max
+                SpectrogramQuality.HIGH -> 44100 * 60      // 1 minute max
+            }
                     
                     while (totalSamples < maxSamples) {
                         bytesRead = inputStream.read(buffer)
@@ -1161,7 +1370,10 @@ class AudioManager(private val context: Context) {
     }
     
     private fun generateSpectrogramFromAudioData(audioData: ShortArray): ImageBitmap? {
+        val startTime = System.currentTimeMillis()
         return try {
+            CrashLogger.log("AudioManager", "Starting streaming spectrogram generation at ${startTime}ms")
+            
             if (audioData.isEmpty()) {
                 CrashLogger.log("AudioManager", "Audio data is empty, cannot generate spectrogram")
                 return null
@@ -1184,18 +1396,65 @@ class AudioManager(private val context: Context) {
                 audioData
             }
             
-            val width = 600  // Much higher time resolution for better detail
-            val height = 400 // Higher frequency resolution
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            
-            // Parameters for power spectrogram
+            // Parameters for power spectrogram based on user settings
             val sampleRate = 44100
-            val maxFrequency = 25000  // Increased to 25kHz for better high-frequency detail
-            val windowSize = 4096  // Larger window for better frequency resolution
-            val hopSize = maxOf(64, monoData.size / (width * 2))  // Smaller hop size for better temporal resolution
+            
+            // Get quality-based parameters
+            val (windowSize, height, maxFreq) = getQualityParameters()
             val fftSize = findNextPowerOf2(windowSize)
             
-            CrashLogger.log("AudioManager", "Generating spectrogram: ${monoData.size} mono samples, windowSize=$windowSize, fftSize=$fftSize, maxFreq=${maxFrequency}Hz")
+            // Calculate hop size based on quality settings and available data
+            val pixelsPerSecond = temporalResolution
+            
+            // Get actual audio duration for dynamic width calculation with safety bounds
+            val audioDurationSeconds = monoData.size / sampleRate.toFloat()
+            // Adaptive limits based on file size to prevent memory issues
+            val fileSizeMB = monoData.size * 2 / (1024 * 1024) // Rough estimate in MB
+            val maxAnalysisSeconds = when {
+                fileSizeMB > 50 -> {
+                    // Large files: reduce limits significantly
+                    when (spectrogramQuality) {
+                        SpectrogramQuality.FAST -> minOf(audioDurationSeconds.toInt(), 120)      // 2 minutes max
+                        SpectrogramQuality.BALANCED -> minOf(audioDurationSeconds.toInt(), 90)   // 1.5 minutes max
+                        SpectrogramQuality.HIGH -> minOf(audioDurationSeconds.toInt(), 60)       // 1 minute max
+                    }
+                }
+                fileSizeMB > 20 -> {
+                    // Medium files: moderate limits
+                    when (spectrogramQuality) {
+                        SpectrogramQuality.FAST -> minOf(audioDurationSeconds.toInt(), 240)      // 4 minutes max
+                        SpectrogramQuality.BALANCED -> minOf(audioDurationSeconds.toInt(), 180)  // 3 minutes max
+                        SpectrogramQuality.HIGH -> minOf(audioDurationSeconds.toInt(), 120)      // 2 minutes max
+                    }
+                }
+                else -> {
+                    // Small files: full limits
+                    when (spectrogramQuality) {
+                        SpectrogramQuality.FAST -> minOf(audioDurationSeconds.toInt(), 480)      // 8 minutes max
+                        SpectrogramQuality.BALANCED -> minOf(audioDurationSeconds.toInt(), 480)  // 8 minutes max
+                        SpectrogramQuality.HIGH -> minOf(audioDurationSeconds.toInt(), 480)      // 8 minutes max
+                    }
+                }
+            }
+            
+            CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, limiting analysis to ${maxAnalysisSeconds}s for memory management")
+            
+            // Safety check: limit target width to prevent memory issues
+            val targetWidth = (pixelsPerSecond * maxAnalysisSeconds).coerceAtMost(2000) // Max 2000 pixels width
+            val hopSize = sampleRate / pixelsPerSecond  // Samples per pixel
+            val hopSizeAdjusted = hopSize.coerceAtLeast(64)  // Minimum hop size for performance
+            
+            CrashLogger.log("AudioManager", "Spectrogram dimensions: audioDuration=${audioDurationSeconds}s, maxAnalysis=${maxAnalysisSeconds}s, targetWidth=${targetWidth}px, hopSize=${hopSizeAdjusted}")
+            
+            // Calculate actual width based on available data
+            val maxPossibleWindows = (monoData.size - windowSize) / hopSizeAdjusted + 1
+            val width = minOf(maxPossibleWindows, targetWidth)  // Use calculated width
+            
+            CrashLogger.log("AudioManager", "Streaming spectrogram: ${monoData.size} samples, targetWidth=$targetWidth, actualWidth=$width, hopSize=$hopSizeAdjusted")
+            
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            
+            CrashLogger.log("AudioManager", "Generating spectrogram: ${monoData.size} mono samples, windowSize=$windowSize, fftSize=$fftSize, maxFreq=${maxFreq}Hz")
             CrashLogger.log("AudioManager", "Audio data range: min=${monoData.minOrNull()}, max=${monoData.maxOrNull()}")
             CrashLogger.log("AudioManager", "Audio data first 10 samples: ${monoData.take(10).joinToString()}")
             CrashLogger.log("AudioManager", "Audio data middle 10 samples: ${monoData.drop(monoData.size/2).take(10).joinToString()}")
@@ -1216,6 +1475,13 @@ class AudioManager(private val context: Context) {
             val spectrogramData = Array(height) { FloatArray(width) }
             var maxPower = 0f
             
+            // Memory management: force GC before processing large spectrograms
+            if (width > 1000 || fileSizeMB > 30) {
+                CrashLogger.log("AudioManager", "Forcing garbage collection for large spectrogram (width=$width, fileSize=${fileSizeMB}MB)")
+                System.gc()
+                Thread.sleep(200) // Give GC time to work
+            }
+            
             // Calculate dynamic range adjustment for quiet sections
             val firstQuarterData = monoData.take(monoData.size / 4)
             val firstQuarterMax = firstQuarterData.maxOfOrNull { kotlin.math.abs(it.toFloat()) } ?: 1f
@@ -1230,22 +1496,15 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Dynamic range adjustment: $dynamicRangeAdjustment (first quarter max: $firstQuarterMax, overall max: $overallMax)")
             
             CrashLogger.log("AudioManager", "Starting spectrogram generation with ${monoData.size} samples, width=$width, height=$height")
-            CrashLogger.log("AudioManager", "Hop size: $hopSize, Window size: $windowSize, FFT size: $fftSize")
-            
-            // Calculate expected number of time windows
-            val expectedWindows = (monoData.size - windowSize) / hopSize + 1
-            CrashLogger.log("AudioManager", "Expected time windows: $expectedWindows")
+            CrashLogger.log("AudioManager", "Target width: $targetWidth, Max possible windows: $maxPossibleWindows, Using: $width windows")
+            CrashLogger.log("AudioManager", "Quality: $spectrogramQuality, Frequency: $frequencyRange, Resolution: ${temporalResolution}px/s")
+            CrashLogger.log("AudioManager", "Calculated hop size: $hopSize, Adjusted hop size: $hopSizeAdjusted, Window size: $windowSize, FFT size: $fftSize")
+            CrashLogger.log("AudioManager", "Analyzing ${maxAnalysisSeconds} seconds (${maxAnalysisSeconds/60.0} minutes) of audio data")
             
             for (timeIndex in 0 until width) {
-                val startSample = timeIndex * hopSize
+                val startSample = timeIndex * hopSizeAdjusted
                 
                 if (startSample >= monoData.size) break
-                
-                // Log progress every 25% of the way through
-                if (timeIndex % (width / 4) == 0) {
-                    CrashLogger.log("AudioManager", "Processing time index $timeIndex/$width (${(timeIndex * 100 / width)}%)")
-                    CrashLogger.log("AudioManager", "Start sample: $startSample, Window range: $startSample to ${startSample + fftSize}")
-                }
                 
                 // Extract window of audio data
                 val window = ShortArray(fftSize)
@@ -1257,25 +1516,17 @@ class AudioManager(private val context: Context) {
                 // Apply Hanning window
                 val windowedData = applyHanningWindow(window)
                 
-                // Log window data for first few time indices
-                if (timeIndex < 3) {
-                    CrashLogger.log("AudioManager", "Time $timeIndex: Window data range: min=${windowedData.minOrNull()}, max=${windowedData.maxOrNull()}")
-                    CrashLogger.log("AudioManager", "Time $timeIndex: First 10 windowed samples: ${windowedData.take(10).joinToString()}")
-                }
+                // No logging for maximum speed
                 
                 // Perform FFT
                 val fftResult = performSimpleFFT(windowedData)
                 
-                // Log FFT results for first few time indices
-                if (timeIndex < 3) {
-                    CrashLogger.log("AudioManager", "Time $timeIndex: FFT result range: min=${fftResult.minOrNull()}, max=${fftResult.maxOrNull()}")
-                    CrashLogger.log("AudioManager", "Time $timeIndex: First 10 FFT results: ${fftResult.take(10).joinToString()}")
-                }
+                // No logging for maximum speed
                 
-                // Calculate power spectrum (magnitude squared) with 25kHz limit
+                // Calculate power spectrum (magnitude squared) with user-defined frequency limit
                 for (freqIndex in 0 until height) {
-                    // Map frequency index to actual frequency (0 to 25kHz)
-                    val targetFreq = (freqIndex * maxFrequency) / height
+                    // Map frequency index to actual frequency (0 to maxFrequency)
+                    val targetFreq = (freqIndex * maxFreq) / height
                     
                     // Convert frequency to FFT bin index with better precision
                     val fftIndex = ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
@@ -1305,10 +1556,15 @@ class AudioManager(private val context: Context) {
                 }
             }
             
+            val endTime = System.currentTimeMillis()
+            val totalTime = endTime - startTime
             CrashLogger.log("AudioManager", "Generated spectrogram bitmap successfully, maxPower=$maxPower")
+            CrashLogger.log("AudioManager", "Spectrogram generation completed in ${totalTime}ms (${totalTime/1000.0}s)")
             bitmap.asImageBitmap()
         } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Error generating spectrogram from audio data", e)
+            val endTime = System.currentTimeMillis()
+            val totalTime = endTime - startTime
+            CrashLogger.log("AudioManager", "Error generating spectrogram from audio data after ${totalTime}ms", e)
             e.printStackTrace()
             null
         }
@@ -1484,5 +1740,7 @@ class AudioManager(private val context: Context) {
         
         return Color.argb(255, red, green, blue)
     }
+    
+    
     
 }

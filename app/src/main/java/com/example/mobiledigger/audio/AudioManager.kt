@@ -504,7 +504,7 @@ class AudioManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
             } else {
-                @Suppress("DEPRECATION")
+                @Suppress("DEPRECATION", "UnspecifiedRegisterReceiverFlag")
                 context.registerReceiver(receiver, filter)
             }
             CrashLogger.log("AudioManager", "Broadcast receiver registered successfully")

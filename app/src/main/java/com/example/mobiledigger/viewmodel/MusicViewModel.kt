@@ -759,11 +759,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         CrashLogger.log("MusicViewModel", "Error in $operation", throwable)
     }
     
-    // Retry mechanism for failed operations
-    fun retryLastOperation() {
-        // Implementation for retrying the last failed operation
-        CrashLogger.log("MusicViewModel", "Retrying last operation")
-    }
     
 
     
@@ -786,13 +781,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun isFolderSelected(): Boolean = fileManager.isFolderSelected()
-    
-    fun getFolderPath(): String = fileManager.getFolderPath()
-
-    fun isDestinationSelected(): Boolean = fileManager.isDestinationSelected()
-
-    fun getDestinationPath(): String = fileManager.getDestinationPath()
     
     // Delete all files from "I Don't Dig" folder
     fun deleteRejectedFiles() {
@@ -925,43 +913,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun shareIDigAsZip() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val zipFile = fileManager.zipIDigFolder(getApplication())
-                if (zipFile == null) {
-                    withContext(Dispatchers.Main) { _errorMessage.value = "No Liked files to share" }
-                    return@launch
-                }
-                val uri = androidx.core.content.FileProvider.getUriForFile(
-                    getApplication(),
-                    "${getApplication<Application>().packageName}.fileprovider",
-                    zipFile
-                )
-                withContext(Dispatchers.Main) {
-                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                        type = "application/zip"
-                        putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                        putExtra(android.content.Intent.EXTRA_SUBJECT, zipFile.name)
-                        setPackage("com.whatsapp")
-                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    try {
-                        getApplication<Application>().startActivity(send)
-                    } catch (e: Exception) {
-                        val chooser = android.content.Intent.createChooser(send, "Share Liked Songs")
-                        chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        getApplication<Application>().startActivity(chooser)
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) { _errorMessage.value = "Share failed: ${e.message}" }
-            }
-        }
-    }
 
-    private var musicServiceStarted = false
     
     private fun ensureMusicServiceStarted() {
         val serviceIntent = Intent(context, MusicService::class.java)
@@ -1301,11 +1253,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         return files
     }
     
-    fun refreshPlaylists() {
-        loadLikedFiles()
-        loadRejectedFiles()
-        CrashLogger.log("MusicViewModel", "Manually refreshing playlists")
-    }
     
     
     fun refreshAllPlaylists() {

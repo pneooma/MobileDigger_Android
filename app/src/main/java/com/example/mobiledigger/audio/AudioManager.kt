@@ -393,15 +393,19 @@ class AudioManager(private val context: Context) {
                 }
             }
             
-            // Stop ExoPlayer if it's playing
+            // Stop ExoPlayer if it's playing - with proper cleanup to prevent dead thread handlers
             exoPlayerFallback?.let { player ->
                 try {
                     if (player.isPlaying) {
                         player.stop()
                         CrashLogger.log("AudioManager", "ExoPlayer stopped")
                     }
+                    // Clear media items first
                     player.clearMediaItems()
                     CrashLogger.log("AudioManager", "ExoPlayer cleared")
+                    
+                    // Don't prepare here - let it be prepared when needed
+                    // This prevents the dead thread handler issue
                 } catch (e: Exception) {
                     CrashLogger.log("AudioManager", "Error stopping ExoPlayer", e)
                 }
@@ -442,6 +446,19 @@ class AudioManager(private val context: Context) {
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Seek error", e)
+        }
+    }
+
+    fun isCurrentlyPlaying(): Boolean {
+        return try {
+            if (isUsingFFmpeg) {
+                ffmpegPlayer?.isPlaying ?: false
+            } else {
+                exoPlayerFallback?.isPlaying ?: false
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error checking playing state", e)
+            false
         }
     }
     

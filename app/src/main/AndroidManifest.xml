@@ -58,6 +58,15 @@
                 android:value="true" />
         </service>
         
+        <!-- Media button receiver for handling hardware media buttons -->
+        <receiver
+            android:name=".audio.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+        
         <!-- FileProvider for sharing temporary files (AIFF conversion) -->
         <provider
             android:name="androidx.core.content.FileProvider"

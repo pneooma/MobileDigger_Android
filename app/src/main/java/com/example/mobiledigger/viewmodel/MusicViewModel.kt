@@ -113,6 +113,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val _rejectedFiles = MutableStateFlow<List<MusicFile>>(emptyList())
     val rejectedFiles: StateFlow<List<MusicFile>> = _rejectedFiles.asStateFlow()
     
+    // Current file for notification
+    private var currentFile: MusicFile? = null
+    
     // Computed StateFlow for current playlist files - reactive to tab changes
     val currentPlaylistFiles: StateFlow<List<MusicFile>> = combine(
         _musicFiles,
@@ -237,14 +240,27 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 preferences.setSourceRootUri(uri.toString())
                 android.util.Log.d("MusicViewModel", "Saved source folder URI: $uri")
                 
-                val files = fileManager.loadMusicFiles()
+                val files = try {
+                    fileManager.loadMusicFiles()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error loading music files", e)
+                    _errorMessage.value = "Error loading music files: ${e.message}"
+                    _isLoading.value = false
+                    return@launch
+                }
+                
                 CrashLogger.log("MusicViewModel", "FileManager.loadMusicFiles completed with ${files.size} files")
                 
                 _musicFiles.value = files
                 CrashLogger.log("MusicViewModel", "Updated musicFiles state")
                 
-                // Extract duration for all files in background
-                extractDurationsForAllFiles(files)
+                // Extract duration for all files in background (with error handling)
+                try {
+                    extractDurationsForAllFiles(files)
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error starting duration extraction", e)
+                    // Continue without duration extraction rather than crashing
+                }
                 
                 // Reload playlists when folder is selected
                 loadLikedFiles()
@@ -569,6 +585,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val index = _currentIndex.value
         if (files.isEmpty() || index !in files.indices) return
         val currentFile = files[index]
+        
+        // Store current file for notification
+        this.currentFile = currentFile
+        
         // Pre-fetch next file for buffering (only if list has more than 1 item)
         // val nextFile = if (files.size > 1) files[(index + 1) % files.size] else null
         
@@ -691,17 +711,88 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    private fun updateFileDurationsBatch(updatedFiles: List<MusicFile>) {
+        // Update main music files list
+        val updatedMusicFiles = _musicFiles.value.toMutableList()
+        updatedFiles.forEach { updatedFile ->
+            val index = updatedMusicFiles.indexOfFirst { it.uri == updatedFile.uri }
+            if (index != -1) {
+                updatedMusicFiles[index] = updatedFile
+            }
+        }
+        _musicFiles.value = updatedMusicFiles
+        
+        // Update liked files list
+        val updatedLikedFiles = _likedFiles.value.toMutableList()
+        updatedFiles.forEach { updatedFile ->
+            val index = updatedLikedFiles.indexOfFirst { it.uri == updatedFile.uri }
+            if (index != -1) {
+                updatedLikedFiles[index] = updatedFile
+            }
+        }
+        _likedFiles.value = updatedLikedFiles
+        
+        // Update rejected files list
+        val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
+        updatedFiles.forEach { updatedFile ->
+            val index = updatedRejectedFiles.indexOfFirst { it.uri == updatedFile.uri }
+            if (index != -1) {
+                updatedRejectedFiles[index] = updatedFile
+            }
+        }
+        _rejectedFiles.value = updatedRejectedFiles
+    }
+    
     private fun extractDurationsForAllFiles(files: List<MusicFile>) {
         viewModelScope.launch(Dispatchers.IO) {
-            files.forEach { file ->
-                if (file.duration == 0L) {
-                    val actualDuration = extractDuration(file)
-                    if (actualDuration > 0) {
-                        withContext(Dispatchers.Main) {
-                            updateFileDuration(file, actualDuration)
+            try {
+                // Process files in batches to reduce main thread contention
+                val batchSize = 3 // Reduced batch size to prevent crashes
+                val filesToProcess = files.filter { it.duration == 0L }
+                
+                CrashLogger.log("MusicViewModel", "Starting duration extraction for ${filesToProcess.size} files")
+                
+                for (i in filesToProcess.indices step batchSize) {
+                    try {
+                        val batch = filesToProcess.subList(i, minOf(i + batchSize, filesToProcess.size))
+                        
+                        // Extract durations for this batch
+                        val updatedFiles = mutableListOf<MusicFile>()
+                        batch.forEach { file ->
+                            try {
+                                val actualDuration = extractDuration(file)
+                                if (actualDuration > 0) {
+                                    val updatedFile = file.copy(duration = actualDuration)
+                                    updatedFiles.add(updatedFile)
+                                }
+                            } catch (e: Exception) {
+                                CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
+                                // Continue with other files even if one fails
+                            }
                         }
+                        
+                        // Update UI in batches to reduce main thread calls
+                        if (updatedFiles.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                try {
+                                    updateFileDurationsBatch(updatedFiles)
+                                } catch (e: Exception) {
+                                    CrashLogger.log("MusicViewModel", "Error updating file durations batch", e)
+                                }
+                            }
+                        }
+                        
+                        // Longer delay between batches to prevent overwhelming the system
+                        delay(100)
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Error processing batch starting at index $i", e)
+                        // Continue with next batch even if current batch fails
                     }
                 }
+                
+                CrashLogger.log("MusicViewModel", "Duration extraction completed")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Critical error in extractDurationsForAllFiles", e)
             }
         }
     }
@@ -961,6 +1052,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             val intent = Intent(MusicService.ACTION_UPDATE_NOTIFICATION).apply { setPackage(context.packageName) }
             intent.putExtra(MusicService.EXTRA_TITLE, title)
             intent.putExtra(MusicService.EXTRA_IS_PLAYING, _isPlaying.value)
+            intent.putExtra(MusicService.EXTRA_CURRENT_POSITION, _currentPosition.value)
+            intent.putExtra(MusicService.EXTRA_DURATION, _duration.value)
             context.sendBroadcast(intent)
         } catch (e: Exception) {
             CrashLogger.log("MusicViewModel", "Failed to update notification", e)

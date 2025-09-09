@@ -151,13 +151,7 @@ class MainActivity : ComponentActivity() {
     
     override fun onPause() {
         super.onPause()
-        // Optionally stop the service when app goes to background
-        // This ensures the app doesn't keep running in background
-        try {
-            val serviceIntent = android.content.Intent(this, MusicService::class.java)
-            stopService(serviceIntent)
-        } catch (_: Exception) {
-            // Service might not be running, ignore
-        }
+        // The MusicService is a foreground service and will manage its own lifecycle.
+        // It should continue running even when the app is paused if music is playing.
     }
 }

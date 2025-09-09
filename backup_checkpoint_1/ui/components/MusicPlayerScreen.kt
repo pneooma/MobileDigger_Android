@@ -718,7 +718,7 @@ fun MusicPlayerScreen(
                                                 Icon(
                                                     painter = painterResource(id = R.drawable.ic_pig_headphones),
                                                     contentDescription = "Generate Spectrogram", 
-                                                    tint = Color(0xFFFFB6C1), // Light Pink
+                                                    tint = MaterialTheme.colorScheme.onSurface,
                                                     modifier = Modifier.size(40.dp)
                                                 )
                                             }
@@ -1223,22 +1223,6 @@ fun MusicPlayerScreen(
                                                     contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike", 
                                                     tint = NoButton,
                                                     modifier = Modifier.size(16.dp)
-                                                )
-                                            }
-                                            
-                                            // Pink Pig Icon in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    // Toggle spectrogram popup
-                                                    showSpectrogram = !showSpectrogram
-                                                }, 
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(id = R.drawable.ic_pig_headphones),
-                                                    contentDescription = "Generate Spectrogram", 
-                                                    tint = Color(0xFFFFB6C1), // Light Pink
-                                                    modifier = Modifier.size(20.dp)
                                                 )
                                             }
                                         }

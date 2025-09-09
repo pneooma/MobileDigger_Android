@@ -1,0 +1,56 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Pig head (circle) - Light Pink -->
+    <path
+        android:fillColor="#FFB6C1"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10s10,-4.48 10,-10S17.52,2 12,2z"/>
+    
+    <!-- Pig snout - Light Pink -->
+    <path
+        android:fillColor="#FFA0B4"
+        android:pathData="M10,12.5 Q12,14 14,12.5 Q12,15.5 10,12.5z"/>
+    
+    <!-- Pig nostrils - Light Pink -->
+    <path
+        android:fillColor="#FF8FA3"
+        android:pathData="M11,13.5 Q11.5,13.8 11,14.2 Q10.5,13.8 11,13.5z"/>
+    <path
+        android:fillColor="#FF8FA3"
+        android:pathData="M13,13.5 Q13.5,13.8 13,14.2 Q12.5,13.8 13,13.5z"/>
+    
+    <!-- Pig eyes -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M9,8.5 Q9.5,8 10,8.5 Q9.5,9 9,8.5z"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M14,8.5 Q14.5,8 15,8.5 Q14.5,9 14,8.5z"/>
+    
+    <!-- Headphones -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M6,8 Q6,6 8,6 L8,4 Q8,2 10,2 L14,2 Q16,2 16,4 L16,6 Q18,6 18,8 L18,10 Q18,12 16,12 L16,10 Q16,8 14,8 L10,8 Q8,8 8,10 L8,12 Q6,12 6,10 Z"/>
+    
+    <!-- Headphone band -->
+    <path
+        android:fillColor="#000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.5"
+        android:pathData="M8,4 Q10,3 12,4 Q14,3 16,4"/>
+    
+    <!-- Sound waves - Light Pink -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFA0B4"
+        android:strokeWidth="1.5"
+        android:pathData="M4,8 Q2,8 2,10 Q2,12 4,12"/>
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFA0B4"
+        android:strokeWidth="1.5"
+        android:pathData="M20,8 Q22,8 22,10 Q22,12 20,12"/>
+</vector>

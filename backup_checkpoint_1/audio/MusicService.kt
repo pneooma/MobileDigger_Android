@@ -83,7 +83,7 @@ class MusicService : MediaSessionService() {
         super.onCreate()
         
         notificationManager = getSystemService(NotificationManager::class.java)
-        // Channel is already created in MobileDiggerApplication
+        createNotificationChannel()
         
         // Acquire wake lock to prevent sleep during playback
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -240,7 +240,6 @@ class MusicService : MediaSessionService() {
     private fun createNotification(): Notification {
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        intent.putExtra("from_notification", true) // Mark that this came from notification
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -252,19 +251,18 @@ class MusicService : MediaSessionService() {
         // Create a modern, visually appealing notification with centered title
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(currentTitle)
-            .setContentText("MobileDigger Music Player")
-            .setSmallIcon(R.drawable.ic_pig_headphones) // Use pink pig icon instead of music note
+            .setContentText("Tap to open MobileDigger")
+            .setSmallIcon(R.drawable.ic_music_note)
             .setContentIntent(pendingIntent)
             .setDeleteIntent(createPendingIntent("STOP", 99))
-            .setOngoing(true) // Keep notification persistent
+            .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_LOW) // Use LOW for persistent media notifications
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-            .setAutoCancel(false) // Never auto-cancel
-            .setSilent(true) // Silent to avoid interruption
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE) // Keep in foreground
+            .setAutoCancel(false)
+            .setSilent(true)
             
         // Add waveform to notification if available
         try {
@@ -283,53 +281,38 @@ class MusicService : MediaSessionService() {
                 .setColor(0xFF10B981.toInt())
         } catch (_: Exception) {}
 
-        // Add comprehensive media controls
+        // Add media controls with cleaner text and better spacing
         notificationBuilder
             .addAction(
-                android.R.drawable.ic_media_previous,
-                "Previous",
-                createPendingIntent(ACTION_PREVIOUS, 1)
-            )
-            .addAction(
                 R.drawable.ic_yes_pill,
-                "Like",
-                createPendingIntent(ACTION_LIKE, 2)
+                "LIKE",
+                createPendingIntent(ACTION_LIKE, 1)
             )
             .addAction(
                 playPauseIcon,
                 playPauseText,
-                createPendingIntent(ACTION_PLAY_PAUSE, 3)
+                createPendingIntent(ACTION_PLAY_PAUSE, 2)
             )
             .addAction(
                 R.drawable.ic_no_pill,
-                "Skip",
-                createPendingIntent(ACTION_DISLIKE, 4)
+                "SKIP",
+                createPendingIntent(ACTION_DISLIKE, 3)
+            )
+            .addAction(
+                android.R.drawable.ic_media_previous,
+                "Prev",
+                createPendingIntent(ACTION_PREVIOUS, 4)
             )
             .addAction(
                 android.R.drawable.ic_media_next,
                 "Next",
                 createPendingIntent(ACTION_NEXT, 5)
             )
-            .addAction(
-                R.drawable.ic_pig_headphones,
-                "Spectrogram",
-                createPendingIntent("SPECTROGRAM", 6)
-            )
-            .addAction(
-                android.R.drawable.ic_media_rew,
-                "Rewind",
-                createPendingIntent("REWIND", 7)
-            )
-            .addAction(
-                android.R.drawable.ic_media_ff,
-                "Forward",
-                createPendingIntent("FORWARD", 8)
-            )
 
         // Apply MediaStyle with better spacing and layout
         try {
             val mediaStyle = MediaNotificationCompat.MediaStyle()
-                .setShowActionsInCompactView(1, 2, 3) // Show like, play/pause, skip in compact view
+                .setShowActionsInCompactView(1, 0, 2) // Show play/pause, like, skip in compact view
                 .setShowCancelButton(true)
                 .setCancelButtonIntent(createPendingIntent("STOP", 99))
 

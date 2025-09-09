@@ -29,15 +29,24 @@ class MobileDiggerApplication : Application() {
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val musicChannel = NotificationChannel(
-                "music_playback_channel",
-                "Music Playback",
-                NotificationManager.IMPORTANCE_LOW
+                "music_channel", // Use same ID as MusicService
+                "MobileDigger Music Player",
+                NotificationManager.IMPORTANCE_LOW // Use LOW for media notifications
             ).apply {
-                description = "Controls for music playback"
+                description = "Music playback controls with like/dislike sorting actions"
+                setShowBadge(true)
+                enableLights(false)
+                enableVibration(false)
+                setSound(null, null)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                setBypassDnd(false)
+                // Enable media controls
+                setAllowBubbles(false)
             }
             
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(musicChannel)
+            CrashLogger.log("MobileDiggerApplication", "Notification channel created successfully")
         }
     }
 }

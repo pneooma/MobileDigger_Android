@@ -361,9 +361,11 @@ fun AmplitudaWaveformView(
                             // Configure WaveformSeekBar appearance
                             waveBackgroundColor = unplayedColor
                             waveProgressColor = playedColor
-                            waveWidth = 3f
-                            waveGap = 2f
+                            waveWidth = 1f
+                            waveGap = 0f
                             waveCornerRadius = 2f
+                            wavePaddingTop = 1
+                            wavePaddingBottom = 1
                             
                             // Set the waveform data
                             sample = waveformData!!

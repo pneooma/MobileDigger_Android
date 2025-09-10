@@ -10,17 +10,17 @@ enum class UpdateFrequency(val milliseconds: Float) {
 
 @Immutable
 data class WaveformSettings(
-    val barCount: Int = 400, // UI bars increased to 400
+    val barCount: Int = 500, // UI bars increased to 500
     val oversampleFactor: Int = 1, // iOS doesn't use oversampling, uses direct samplesPerPoint calculation
     val frameDurationMs: Int = 0, // iOS doesn't use fixed frame duration, uses samplesPerPoint
     val bufferSize: Int = 512, // Buffer size = 512
     val minAmplitude: Float = 0.00001f, // Ultra-sensitive minimum amplitude
-    val maxAmplitude: Float = 3.0f, // Extended maximum amplitude range
+    val maxAmplitude: Float = 1.0f, // Standard maximum amplitude range
     
     // React Native Audio Waveform inspired parameters
-    val candleWidth: Float = 0.1f, // Ultra-thin candle width
+    val candleWidth: Float = 0.5f, // Medium-thin candle width
     val candleHeightScale: Float = 3f, // Height scaling factor for amplitude
-    val maxBarsToRender: Int = 400, // Maximum bars to render for performance (matches barCount)
+    val maxBarsToRender: Int = 500, // Maximum bars to render for performance (matches barCount)
     val showHorizontalScrollIndicator: Boolean = false, // Show scroll indicator
     val updateFrequency: UpdateFrequency = UpdateFrequency.MEDIUM // Update frequency
 ) {

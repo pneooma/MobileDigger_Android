@@ -23,6 +23,9 @@ import com.example.mobiledigger.ui.components.ScrollableWaveformView
 import com.example.mobiledigger.ui.components.SharedWaveformState
 import com.example.mobiledigger.ui.components.rememberSharedWaveformState
 import com.example.mobiledigger.ui.components.SharedWaveformDisplay
+import com.example.mobiledigger.ui.components.VisualSettingsDialog
+import com.example.mobiledigger.utils.HapticFeedback
+import com.example.mobiledigger.utils.HapticType
 import com.example.mobiledigger.utils.WaveformGenerator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -101,6 +104,7 @@ fun MusicPlayerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showVisualSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
 
@@ -115,6 +119,7 @@ fun MusicPlayerScreen(
     val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
     val context = LocalContext.current
     val sharedWaveformState = rememberSharedWaveformState(currentFile, context)
+    val hapticFeedback = HapticFeedback.rememberHapticFeedback()
 
     if (showShareDialog) {
         AlertDialog(
@@ -236,6 +241,18 @@ fun MusicPlayerScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    Button(
+                        onClick = { 
+                            hapticFeedback(HapticType.Light)
+                            showSettingsDialog = false
+                            showVisualSettingsDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Visual Settings")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
                         "Gestures:",
@@ -251,6 +268,14 @@ fun MusicPlayerScreen(
                     Text("Done")
                 }
             }
+        )
+    }
+    
+    // Visual Settings Dialog
+    if (showVisualSettingsDialog) {
+        VisualSettingsDialog(
+            visualSettingsManager = viewModel.visualSettingsManager,
+            onDismiss = { showVisualSettingsDialog = false }
         )
     }
 
@@ -696,7 +721,10 @@ fun MusicPlayerScreen(
                                                 )
                                             }
                                             
-                                            IconButton(onClick = { viewModel.next() }, modifier = Modifier.size(40.dp)) {
+                                            IconButton(onClick = { 
+                                                hapticFeedback(HapticType.Light)
+                                                viewModel.next() 
+                                            }, modifier = Modifier.size(40.dp)) {
                                                 Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(24.dp))
                                             }
                                             
@@ -751,6 +779,7 @@ fun MusicPlayerScreen(
                                 ) {
                                     ElevatedButton(
                                         onClick = { 
+                                            hapticFeedback(HapticType.Error)
                                             if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
                                                 viewModel.sortSelectedFiles(SortAction.DISLIKE)
                                             } else {
@@ -779,6 +808,7 @@ fun MusicPlayerScreen(
                                     
                                     ElevatedButton(
                                         onClick = { 
+                                            hapticFeedback(HapticType.Success)
                                             if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
                                                 viewModel.sortSelectedFiles(SortAction.LIKE)
                                             } else {
@@ -1183,11 +1213,17 @@ fun MusicPlayerScreen(
                                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(32.dp)) {
+                                            IconButton(onClick = { 
+                                                hapticFeedback(HapticType.Light)
+                                                viewModel.previous() 
+                                            }, modifier = Modifier.size(32.dp)) {
                                                 Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(18.dp))
                                             }
                                             
-                                            IconButton(onClick = { viewModel.playPause() }, modifier = Modifier.size(40.dp)) {
+                                            IconButton(onClick = { 
+                                                hapticFeedback(HapticType.Medium)
+                                                viewModel.playPause() 
+                                            }, modifier = Modifier.size(40.dp)) {
         Icon(
                                                     if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                                     if (isPlaying) "Pause" else "Play",
@@ -1195,7 +1231,10 @@ fun MusicPlayerScreen(
                                                 )
                                             }
                                             
-                                            IconButton(onClick = { viewModel.next() }, modifier = Modifier.size(32.dp)) {
+                                            IconButton(onClick = { 
+                                                hapticFeedback(HapticType.Light)
+                                                viewModel.next() 
+                                            }, modifier = Modifier.size(32.dp)) {
                                                 Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp))
                                             }
                                             

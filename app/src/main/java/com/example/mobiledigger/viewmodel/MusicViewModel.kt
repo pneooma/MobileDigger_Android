@@ -20,6 +20,7 @@ import com.example.mobiledigger.model.SortResult
 import com.example.mobiledigger.file.FileManager
 import com.example.mobiledigger.file.PreferencesManager
 import com.example.mobiledigger.ui.theme.ThemeManager
+import com.example.mobiledigger.ui.theme.VisualSettingsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +48,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val fileManager = FileManager(application)
     val preferences = PreferencesManager(application)
     val themeManager = ThemeManager(application)
+    val visualSettingsManager = VisualSettingsManager(application)
     private val context = application.applicationContext
     
     // Broadcast receiver for notification actions

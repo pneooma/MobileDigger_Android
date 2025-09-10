@@ -1,0 +1,417 @@
+package com.example.mobiledigger.ui.components
+
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.example.mobiledigger.model.MusicFile
+import com.masoudss.lib.SeekBarOnProgressChanged
+import com.masoudss.lib.WaveformSeekBar
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import linc.com.amplituda.Amplituda
+import linc.com.amplituda.AmplitudaResult
+import linc.com.amplituda.callback.AmplitudaErrorListener
+import linc.com.amplituda.callback.AmplitudaSuccessListener
+import linc.com.amplituda.Compress
+import java.io.InputStream
+
+// Simple in-memory cache for waveform data
+private val waveformCache = mutableMapOf<String, IntArray>()
+
+@Composable
+fun AmplitudaWaveformView(
+    currentFile: MusicFile?,
+    progress: Float, // 0.0 to 1.0
+    onSeek: (Float) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var waveformData by remember { mutableStateOf<IntArray?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    // Generate waveform when file changes
+    LaunchedEffect(currentFile?.uri?.toString(), currentFile?.name) {
+        // Cancel any ongoing processing for the previous file
+        scope.coroutineContext.cancelChildren()
+        
+        val uriString = currentFile?.uri?.toString()
+        println("🔄 AmplitudaWaveformView: LaunchedEffect triggered for file: ${currentFile?.name}")
+        println("🔄 URI string: $uriString")
+        println("🔄 Previous waveform data: ${waveformData?.size ?: "null"}")
+        
+        // Always reset state when file changes
+        waveformData = null
+        errorMessage = null
+        isLoading = true
+        
+        if (currentFile != null) {
+            println("🎵 Starting Amplituda waveform generation for: ${currentFile.name}")
+            println("🔗 URI: ${currentFile.uri}")
+            
+            // Create cache key based on URI and file size
+            val cacheKey = "${currentFile.uri}_${currentFile.size}"
+            
+            // Check cache first
+            val cachedWaveform = waveformCache[cacheKey]
+            if (cachedWaveform != null) {
+                println("⚡ Using cached waveform data: ${cachedWaveform.size} samples")
+                waveformData = cachedWaveform
+                isLoading = false
+                return@LaunchedEffect
+            }
+
+            try {
+                // Process Amplituda on background thread to prevent ANR
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        // Use Amplituda to process the audio with optimized settings
+                        val amplituda = Amplituda(context)
+                        
+                        // Create optimized compression settings for faster processing
+                        val compressSettings = Compress.withParams(
+                            Compress.AVERAGE, // Use average compression for faster processing
+                            2 // Ultra-fast: 2 samples/second
+                        )
+                        
+                        // Try using InputStream first (more compatible with content:// URIs)
+                        val inputStream = try {
+                            context.contentResolver.openInputStream(currentFile.uri)
+                        } catch (e: Exception) {
+                            println("❌ Failed to open InputStream from URI: ${e.message}")
+                            null
+                        }
+                        
+                        if (inputStream != null) {
+                            println("🔗 Using InputStream for Amplituda processing")
+                            
+                            // Process audio using InputStream with optimized settings
+                            amplituda.processAudio(inputStream, compressSettings)
+                                .get(
+                                    object : AmplitudaSuccessListener<InputStream> {
+                                        override fun onSuccess(result: AmplitudaResult<InputStream>) {
+                                            try {
+                                                // Convert result to IntArray for WaveformSeekBar
+                                                val samples = result.amplitudesAsList()
+                                                    .map { amplitude ->
+                                                        // Amplituda returns values in 0-100 range, use directly
+                                                        amplitude.coerceIn(0, 100)
+                                                    }
+                                                    .toIntArray()
+                                                
+                                                // Cache the waveform data
+                                                waveformCache[cacheKey] = samples
+                                                
+                                                // Update UI on main thread
+                                                scope.launch(Dispatchers.Main) {
+                                                    waveformData = samples
+                                                    isLoading = false
+                                                }
+                                                println("✅ Amplituda waveform generated from InputStream: ${samples.size} samples")
+                                                println("🎵 First 10 amplitudes: ${samples.take(10).joinToString()}")
+                                                println("🎵 Amplitude range: min=${samples.minOrNull()}, max=${samples.maxOrNull()}")
+                                            } finally {
+                                                // Close the InputStream
+                                                try {
+                                                    inputStream.close()
+                                                } catch (e: Exception) {
+                                                    println("⚠️ Failed to close InputStream: ${e.message}")
+                                                }
+                                            }
+                                        }
+                                    },
+                                    object : AmplitudaErrorListener {
+                                        override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
+                                            println("❌ Amplituda failed with InputStream, trying URI string: ${exception.message}")
+                                            
+                                            // Close the InputStream
+                                            try {
+                                                inputStream.close()
+                                            } catch (e: Exception) {
+                                                println("⚠️ Failed to close InputStream: ${e.message}")
+                                            }
+                                            
+                                            // Try URI string as fallback
+                                            val uriString = currentFile.uri.toString()
+                                            println("🔗 Trying URI string: $uriString")
+                                            
+                                            amplituda.processAudio(uriString, compressSettings)
+                                                .get(
+                                                    object : AmplitudaSuccessListener<String> {
+                                                        override fun onSuccess(result: AmplitudaResult<String>) {
+                                                            val samples = result.amplitudesAsList()
+                                                                .map { amplitude ->
+                                                                    amplitude.coerceIn(0, 100)
+                                                                }
+                                                                .toIntArray()
+                                                            
+                                                            // Cache the waveform data
+                                                            waveformCache[cacheKey] = samples
+                                                            
+                                                            // Update UI on main thread
+                                                            scope.launch(Dispatchers.Main) {
+                                                                waveformData = samples
+                                                                isLoading = false
+                                                            }
+                                                            println("✅ Amplituda waveform generated from URI string: ${samples.size} samples")
+                                                        }
+                                                    },
+                                                    object : AmplitudaErrorListener {
+                                                        override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
+                                                            println("❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
+                                                            
+                                                            // Final fallback to using the existing WaveformGenerator approach
+                                                            scope.launch(Dispatchers.IO) {
+                                                                try {
+                                                                    val fallbackSamples = com.example.mobiledigger.utils.WaveformGenerator.generateFromUri(
+                                                                        context = context,
+                                                                        uri = currentFile.uri
+                                                                    )
+                                                                    
+                                                                    // Cache the fallback waveform data
+                                                                    waveformCache[cacheKey] = fallbackSamples
+                                                                    
+                                                                    // Update UI on main thread
+                                                                    scope.launch(Dispatchers.Main) {
+                                                                        waveformData = fallbackSamples
+                                                                        isLoading = false
+                                                                    }
+                                                                    println("✅ Final fallback waveform generated: ${fallbackSamples.size} samples")
+                                                                    
+                                                                } catch (fallbackException: Exception) {
+                                                                    println("❌ Final fallback also failed: ${fallbackException.message}")
+                                                                    scope.launch(Dispatchers.Main) {
+                                                                        errorMessage = "All waveform generation methods failed: ${exception.message}"
+                                                                        isLoading = false
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                        }
+                                    }
+                                )
+                        } else {
+                            println("🔗 InputStream not available, trying URI string directly")
+                            val uriString = currentFile.uri.toString()
+                            println("🔗 Trying URI string: $uriString")
+                            
+                            amplituda.processAudio(uriString, compressSettings)
+                                .get(
+                                    object : AmplitudaSuccessListener<String> {
+                                        override fun onSuccess(result: AmplitudaResult<String>) {
+                                            val samples = result.amplitudesAsList()
+                                                .map { amplitude ->
+                                                    amplitude.coerceIn(0, 100)
+                                                }
+                                                .toIntArray()
+                                            
+                                            // Cache the waveform data
+                                            waveformCache[cacheKey] = samples
+                                            
+                                            // Update UI on main thread
+                                            scope.launch(Dispatchers.Main) {
+                                                waveformData = samples
+                                                isLoading = false
+                                            }
+                                            println("✅ Amplituda waveform generated from URI string: ${samples.size} samples")
+                                        }
+                                    },
+                                    object : AmplitudaErrorListener {
+                                        override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
+                                            println("❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
+                                            
+                                            // Final fallback to using the existing WaveformGenerator approach
+                                            scope.launch(Dispatchers.IO) {
+                                                try {
+                                                    val fallbackSamples = com.example.mobiledigger.utils.WaveformGenerator.generateFromUri(
+                                                        context = context,
+                                                        uri = currentFile.uri
+                                                    )
+                                                    
+                                                    // Cache the fallback waveform data
+                                                    waveformCache[cacheKey] = fallbackSamples
+                                                    
+                                                    // Update UI on main thread
+                                                    scope.launch(Dispatchers.Main) {
+                                                        waveformData = fallbackSamples
+                                                        isLoading = false
+                                                    }
+                                                    println("✅ Final fallback waveform generated: ${fallbackSamples.size} samples")
+                                                    
+                                                } catch (fallbackException: Exception) {
+                                                    println("❌ Final fallback also failed: ${fallbackException.message}")
+                                                    scope.launch(Dispatchers.Main) {
+                                                        errorMessage = "All waveform generation methods failed: ${exception.message}"
+                                                        isLoading = false
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                )
+                        }
+                        
+                    } catch (e: Exception) {
+                        println("❌ Exception during Amplituda setup: ${e.message}")
+                        e.printStackTrace()
+                        scope.launch(Dispatchers.Main) {
+                            errorMessage = e.message ?: "Unknown error occurred"
+                            isLoading = false
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ Exception during coroutine setup: ${e.message}")
+                e.printStackTrace()
+                errorMessage = e.message ?: "Unknown error occurred"
+                isLoading = false
+            }
+        } else {
+            println("📭 No current file, clearing waveform data")
+            waveformData = null
+            errorMessage = null
+            isLoading = false
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .padding(horizontal = 16.dp)
+            .background(
+                Color.Gray.copy(alpha = 0.1f),
+                RoundedCornerShape(8.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            isLoading -> {
+                // Loading indicator
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "loadingDots")
+                    (0..2).forEach { index ->
+                        val animatedAlpha by infiniteTransition.animateFloat(
+                            initialValue = 0.3f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(durationMillis = 600, easing = LinearEasing),
+                                initialStartOffset = StartOffset(offsetMillis = index * 200),
+                                repeatMode = RepeatMode.Reverse
+                            ), label = "dotAlpha$index"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = animatedAlpha),
+                                    CircleShape
+                                )
+                        )
+                    }
+                }
+            }
+            
+            errorMessage != null -> {
+                // Error state
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Waveform Error",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        text = errorMessage!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            waveformData != null -> {
+                // Waveform display using WaveformSeekBar
+                val playedColor = MaterialTheme.colorScheme.primary.toArgb()
+                val unplayedColor = Color.Gray.toArgb()
+                
+                AndroidView(
+                    factory = { ctx ->
+                        WaveformSeekBar(ctx).apply {
+                            // Configure WaveformSeekBar appearance
+                            waveBackgroundColor = unplayedColor
+                            waveProgressColor = playedColor
+                            waveWidth = 3f
+                            waveGap = 2f
+                            waveCornerRadius = 2f
+                            
+                            // Set the waveform data
+                            sample = waveformData!!
+                            
+                            // Set initial progress
+                            this.progress = progress * 100f
+                            
+                            // Handle seek events using proper callback
+                            onProgressChanged = object : SeekBarOnProgressChanged {
+                                override fun onProgressChanged(
+                                    waveformSeekBar: WaveformSeekBar, 
+                                    progress: Float, 
+                                    fromUser: Boolean
+                                ) {
+                                    if (fromUser) {
+                                        val normalizedProgress = progress / 100f
+                                        onSeek(normalizedProgress)
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    update = { waveformSeekBar ->
+                        // Update progress when it changes externally
+                        waveformSeekBar.progress = progress * 100f
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            
+            else -> {
+                // No waveform available
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "No waveform available",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "File: ${currentFile?.name ?: "None"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}

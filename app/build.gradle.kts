@@ -102,6 +102,10 @@ dependencies {
     
     // Icons
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
+    
+    // Audio waveform processing and display
+    implementation("com.github.lincollincol:amplituda:2.2.2")
+    implementation("com.github.massoudss:waveformSeekBar:5.0.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

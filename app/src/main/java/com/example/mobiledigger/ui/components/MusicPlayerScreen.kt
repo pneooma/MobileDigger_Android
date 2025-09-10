@@ -19,6 +19,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import com.example.mobiledigger.R
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
+import com.example.mobiledigger.ui.components.AmplitudaWaveformView
+import com.example.mobiledigger.ui.components.WaveformSettingsDialog
+import com.example.mobiledigger.utils.WaveformGenerator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -95,6 +98,7 @@ fun MusicPlayerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showWaveformSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
 
@@ -225,6 +229,21 @@ fun MusicPlayerScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Waveform Settings Button
+                    Button(
+                        onClick = { 
+                            showSettingsDialog = false
+                            showWaveformSettingsDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.GraphicEq, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Waveform Settings")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     Text(
                         "Gestures:",
                         style = MaterialTheme.typography.titleSmall,
@@ -238,6 +257,17 @@ fun MusicPlayerScreen(
                 Button(onClick = { showSettingsDialog = false }) {
                     Text("Done")
                 }
+            }
+        )
+    }
+
+    // Waveform Settings Dialog
+    if (showWaveformSettingsDialog) {
+        WaveformSettingsDialog(
+            onDismiss = { showWaveformSettingsDialog = false },
+            onApply = { settings ->
+                WaveformGenerator.updateSettings(settings)
+                showWaveformSettingsDialog = false
             }
         )
     }
@@ -712,6 +742,24 @@ fun MusicPlayerScreen(
                                 
                                 // Spectrogram view removed - only available in dropdown menu
                             }
+                        }
+                        
+                        // Waveform Container
+                        item {
+                            val progressPercent = if (duration > 0) (currentPosition.toFloat() / duration) else 0f
+                            
+                            AmplitudaWaveformView(
+                                currentFile = currentPlaylistFiles.getOrNull(currentIndex),
+                                progress = progressPercent,
+                                onSeek = { seekProgress ->
+                                    // Handle seek action
+                                    val seekPosition = (seekProgress * duration).toLong()
+                                    viewModel.seekTo(seekPosition)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                            )
                         }
                         
                         // Genre controls removed

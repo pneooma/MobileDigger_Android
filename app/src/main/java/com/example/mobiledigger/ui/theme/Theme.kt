@@ -8,22 +8,71 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+// Note: AdaptiveTheme is not available in current Compose version
+// import androidx.compose.material3.adaptive.AdaptiveTheme
+// import androidx.compose.material3.adaptive.AdaptiveThemeColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 
+// Material 3 Expressive - Enhanced color schemes with vibrant colors
 private val DarkColorScheme = darkColorScheme(
     primary = GreenAccent,
+    onPrimary = Color.White,
+    primaryContainer = GreenAccent.copy(alpha = 0.2f),
+    onPrimaryContainer = GreenAccent,
     secondary = GroovyBlue,
-    tertiary = Pink80
+    onSecondary = Color.White,
+    secondaryContainer = GroovyBlue.copy(alpha = 0.2f),
+    onSecondaryContainer = GroovyBlue,
+    tertiary = Pink80,
+    onTertiary = Color.White,
+    tertiaryContainer = Pink80.copy(alpha = 0.2f),
+    onTertiaryContainer = Pink80,
+    error = DislikeRed,
+    onError = Color.White,
+    errorContainer = DislikeRed.copy(alpha = 0.2f),
+    onErrorContainer = DislikeRed,
+    background = Color(0xFF0A0A0A),
+    onBackground = Color(0xFFE6E6E6),
+    surface = Color(0xFF1A1A1A),
+    onSurface = Color(0xFFE6E6E6),
+    surfaceVariant = Color(0xFF2A2A2A),
+    onSurfaceVariant = Color(0xFFB3B3B3),
+    outline = Color(0xFF4A4A4A),
+    outlineVariant = Color(0xFF3A3A3A),
+    scrim = Color.Black.copy(alpha = 0.5f)
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = GreenAccent,
+    onPrimary = Color.White,
+    primaryContainer = GreenAccent.copy(alpha = 0.1f),
+    onPrimaryContainer = GreenAccent.copy(alpha = 0.8f),
     secondary = GroovyBlue,
-    tertiary = Pink40
+    onSecondary = Color.White,
+    secondaryContainer = GroovyBlue.copy(alpha = 0.1f),
+    onSecondaryContainer = GroovyBlue.copy(alpha = 0.8f),
+    tertiary = Pink40,
+    onTertiary = Color.White,
+    tertiaryContainer = Pink40.copy(alpha = 0.1f),
+    onTertiaryContainer = Pink40.copy(alpha = 0.8f),
+    error = DislikeRed,
+    onError = Color.White,
+    errorContainer = DislikeRed.copy(alpha = 0.1f),
+    onErrorContainer = DislikeRed.copy(alpha = 0.8f),
+    background = Color(0xFFFFFBFE),
+    onBackground = Color(0xFF1C1B1F),
+    surface = Color(0xFFFFFBFE),
+    onSurface = Color(0xFF1C1B1F),
+    surfaceVariant = Color(0xFFE7E0EC),
+    onSurfaceVariant = Color(0xFF49454F),
+    outline = Color(0xFF79747E),
+    outlineVariant = Color(0xFFCAC4D0),
+    scrim = Color.Black.copy(alpha = 0.5f)
 )
 
 data class AppColors(
@@ -45,16 +94,21 @@ fun MobileDiggerTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-
+    
+    // Check if we're in desktop mode or large screen
+    val isLargeScreen = configuration.screenWidthDp >= 840 || configuration.screenHeightDp >= 840
+    
+    // Use standard MaterialTheme (AdaptiveTheme not available in current Compose version)
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography

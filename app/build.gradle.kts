@@ -38,6 +38,9 @@ android {
         compose = true
     }
     
+    // Dynamic delivery disabled for now
+    // dynamicFeatures += setOf(":ffmpeg")
+    
     lint {
         disable.addAll(listOf(
             "UnsafeOptInUsageError",
@@ -58,6 +61,14 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
+    // Enhanced Compose features (using BOM versions)
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.animation:animation-graphics")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.foundation:foundation-layout")
+    implementation("androidx.compose.runtime:runtime")
+    implementation("androidx.compose.runtime:runtime-livedata")
+    
     // File operations and permissions
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.2")
@@ -65,6 +76,10 @@ dependencies {
     // Audio processing - FFmpegMediaPlayer for AIFF support
     implementation("com.github.wseemann:FFmpegMediaPlayer-core:1.0.5")
     implementation("com.github.wseemann:FFmpegMediaPlayer-native:1.0.5")
+    
+    // Dynamic delivery support
+    implementation("com.google.android.play:core:1.10.3")
+    implementation("com.google.android.play:core-ktx:1.8.1")
     
     // Keep ExoPlayer as fallback
     implementation("androidx.media3:media3-exoplayer:1.3.1")

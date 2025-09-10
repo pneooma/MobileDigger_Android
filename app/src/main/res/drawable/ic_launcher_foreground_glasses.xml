@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Glasses centered in the icon -->
+    <group android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:pivotX="54"
+        android:pivotY="54">
+        
+        <!-- Left lens -->
+        <path
+            android:fillColor="#4CAF50"
+            android:pathData="M18,42c0,-3 2.5,-5.5 5.5,-5.5s5.5,2.5 5.5,5.5s-2.5,5.5 -5.5,5.5S18,45 18,42z" />
+        
+        <!-- Right lens -->
+        <path
+            android:fillColor="#4CAF50"
+            android:pathData="M42,42c0,-3 2.5,-5.5 5.5,-5.5s5.5,2.5 5.5,5.5s-2.5,5.5 -5.5,5.5S42,45 42,42z" />
+        
+        <!-- Bridge -->
+        <path
+            android:fillColor="#4CAF50"
+            android:pathData="M30,42h12v2h-12z" />
+        
+        <!-- Left arm -->
+        <path
+            android:fillColor="#4CAF50"
+            android:strokeColor="#4CAF50"
+            android:strokeWidth="2"
+            android:pathData="M12,42 Q8,42 8,44 Q8,46 12,46" />
+        
+        <!-- Right arm -->
+        <path
+            android:fillColor="#4CAF50"
+            android:strokeColor="#4CAF50"
+            android:strokeWidth="2"
+            android:pathData="M60,42 Q64,42 64,44 Q64,46 60,46" />
+        
+        <!-- Highlight on left lens -->
+        <path
+            android:fillColor="#66BB6A"
+            android:pathData="M19,41c0,-0.8 0.6,-1.4 1.4,-1.4s1.4,0.6 1.4,1.4s-0.6,1.4 -1.4,1.4S19,41.8 19,41z" />
+        
+        <!-- Highlight on right lens -->
+        <path
+            android:fillColor="#66BB6A"
+            android:pathData="M43,41c0,-0.8 0.6,-1.4 1.4,-1.4s1.4,0.6 1.4,1.4s-0.6,1.4 -1.4,1.4S43,41.8 43,41z" />
+    </group>
+</vector>

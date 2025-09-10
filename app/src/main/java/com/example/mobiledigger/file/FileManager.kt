@@ -6,10 +6,10 @@ import androidx.documentfile.provider.DocumentFile
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.util.ResourceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import android.media.MediaMetadataRetriever
 import android.util.Log
 import android.provider.DocumentsContract
 import android.content.ContentResolver
@@ -493,17 +493,13 @@ class FileManager(private val context: Context) {
         }
     }
     
-    private fun getDuration(uri: Uri): Long {
+    private suspend fun getDuration(uri: Uri): Long {
         return try {
-            val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(context, uri)
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-            retriever.release()
-            val durationMs = duration?.toLong() ?: 0L
-            if (durationMs == 0L) {
+            val duration = ResourceManager.extractDurationWithFallback(context, uri)
+            if (duration == 0L) {
                 CrashLogger.log("FileManager", "Could not extract duration for $uri - this might be an unsupported format")
             }
-            durationMs
+            duration
         } catch (e: Exception) {
             CrashLogger.log("FileManager", "Error getting duration for $uri", e)
             0L

@@ -30,7 +30,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Semaphore
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.util.ResourceManager
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -397,6 +400,52 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         loadCurrentFile()
         updateNotification()
     }
+    
+    fun playFile(file: MusicFile) {
+        val currentFiles = when (_currentPlaylistTab.value) {
+            PlaylistTab.TODO -> _musicFiles.value
+            PlaylistTab.LIKED -> _likedFiles.value
+            PlaylistTab.REJECTED -> _rejectedFiles.value
+        }
+        val index = currentFiles.indexOfFirst { it.uri == file.uri }
+        if (index >= 0) {
+            _currentIndex.value = index
+            loadCurrentFile()
+        }
+    }
+    
+    fun togglePlayPause() {
+        if (_isPlaying.value) {
+            audioManager.pause()
+            _isPlaying.value = false
+        } else {
+            audioManager.resume()
+            _isPlaying.value = true
+        }
+        updateNotification()
+    }
+    
+    fun likeFile(file: MusicFile) {
+        val updatedLikedFiles = _likedFiles.value.toMutableList()
+        if (!updatedLikedFiles.any { it.uri == file.uri }) {
+            updatedLikedFiles.add(file)
+            _likedFiles.value = updatedLikedFiles
+            // Save to preferences
+            val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
+            prefs.edit().putStringSet("liked_files", updatedLikedFiles.map { it.uri.toString() }.toSet()).apply()
+        }
+    }
+    
+    fun dislikeFile(file: MusicFile) {
+        val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
+        if (!updatedRejectedFiles.any { it.uri == file.uri }) {
+            updatedRejectedFiles.add(file)
+            _rejectedFiles.value = updatedRejectedFiles
+            // Save to preferences
+            val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
+            prefs.edit().putStringSet("rejected_files", updatedRejectedFiles.map { it.uri.toString() }.toSet()).apply()
+        }
+    }
 
     fun jumpTo(index: Int) {
         val files = when (_currentPlaylistTab.value) {
@@ -635,49 +684,24 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         updateNotification()
     }
     
-    private fun extractDuration(file: MusicFile): Long {
+    private suspend fun extractDuration(file: MusicFile): Long {
         return try {
-            // Method 1: MediaMetadataRetriever
-            val retriever = android.media.MediaMetadataRetriever()
-            retriever.setDataSource(context, file.uri)
-            val duration = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
-            retriever.release()
-            val durationMs = duration?.toLong() ?: 0L
-            
-            if (durationMs > 0) {
-                durationMs
+            val duration = ResourceManager.extractDurationWithFallback(context, file.uri)
+            if (duration > 0) {
+                duration
             } else {
-                // Method 2: MediaExtractor for AIF files and other formats
-                try {
-                    val extractor = android.media.MediaExtractor()
-                    extractor.setDataSource(context, file.uri, null)
-                    
-                    var totalDuration = 0L
-                    for (i in 0 until extractor.trackCount) {
-                        val format = extractor.getTrackFormat(i)
-                        val mime = format.getString(android.media.MediaFormat.KEY_MIME)
-                        if (mime?.startsWith("audio/") == true) {
-                            if (format.containsKey(android.media.MediaFormat.KEY_DURATION)) {
-                                val trackDuration = format.getLong(android.media.MediaFormat.KEY_DURATION)
-                                totalDuration = maxOf(totalDuration, trackDuration)
-                            }
-                        }
-                    }
-                    extractor.release()
-                    totalDuration
-                } catch (_: Exception) {
-                    // Method 3: Estimate from file size for AIF files
-                    if (file.name.lowercase().endsWith(".aif") || file.name.lowercase().endsWith(".aiff")) {
-                        // Rough estimate: AIF files are typically uncompressed
-                        // Assume 44.1kHz, 16-bit, stereo = 176,400 bytes per second
-                        val bytesPerSecond = 44100 * 2 * 2 // sample rate * channels * bytes per sample
-                        (file.size * 1000L) / bytesPerSecond
-                    } else {
-                        0L
-                    }
+                // Method 3: Estimate from file size for AIF files
+                if (file.name.lowercase().endsWith(".aif") || file.name.lowercase().endsWith(".aiff")) {
+                    // Rough estimate: AIF files are typically uncompressed
+                    // Assume 44.1kHz, 16-bit, stereo = 176,400 bytes per second
+                    val bytesPerSecond = 44100 * 2 * 2 // sample rate * channels * bytes per sample
+                    (file.size * 1000L) / bytesPerSecond
+                } else {
+                    0L
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Failed to extract duration for ${file.name}", e)
             0L
         }
     }
@@ -746,48 +770,37 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private fun extractDurationsForAllFiles(files: List<MusicFile>) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Process files in batches to reduce main thread contention
-                val batchSize = 3 // Reduced batch size to prevent crashes
                 val filesToProcess = files.filter { it.duration == 0L }
-                
                 CrashLogger.log("MusicViewModel", "Starting duration extraction for ${filesToProcess.size} files")
                 
+                // Process files in batches to avoid overwhelming the system
+                val batchSize = 5
                 for (i in filesToProcess.indices step batchSize) {
-                    try {
-                        val batch = filesToProcess.subList(i, minOf(i + batchSize, filesToProcess.size))
-                        
-                        // Extract durations for this batch
-                        val updatedFiles = mutableListOf<MusicFile>()
-                        batch.forEach { file ->
-                            try {
-                                val actualDuration = extractDuration(file)
-                                if (actualDuration > 0) {
-                                    val updatedFile = file.copy(duration = actualDuration)
-                                    updatedFiles.add(updatedFile)
-                                }
-                            } catch (e: Exception) {
-                                CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
-                                // Continue with other files even if one fails
+                    val batch = filesToProcess.subList(i, minOf(i + batchSize, filesToProcess.size))
+                    
+                    val updatedFiles = batch.mapNotNull { file ->
+                        try {
+                            val actualDuration = extractDuration(file)
+                            if (actualDuration > 0) {
+                                file.copy(duration = actualDuration)
+                            } else {
+                                null
                             }
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
+                            null
                         }
-                        
-                        // Update UI in batches to reduce main thread calls
-                        if (updatedFiles.isNotEmpty()) {
-                            withContext(Dispatchers.Main) {
-                                try {
-                                    updateFileDurationsBatch(updatedFiles)
-                                } catch (e: Exception) {
-                                    CrashLogger.log("MusicViewModel", "Error updating file durations batch", e)
-                                }
-                            }
-                        }
-                        
-                        // Longer delay between batches to prevent overwhelming the system
-                        delay(100)
-                    } catch (e: Exception) {
-                        CrashLogger.log("MusicViewModel", "Error processing batch starting at index $i", e)
-                        // Continue with next batch even if current batch fails
                     }
+                    
+                    withContext(Dispatchers.Main) {
+                        try {
+                            updateFileDurationsBatch(updatedFiles)
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error updating file durations batch", e)
+                        }
+                    }
+                    
+                    delay(100) // Small delay between batches
                 }
                 
                 CrashLogger.log("MusicViewModel", "Duration extraction completed")

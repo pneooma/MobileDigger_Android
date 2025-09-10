@@ -11,6 +11,7 @@ class MobileDiggerApplication : Application() {
     
     override fun onCreate() {
         super.onCreate()
+        
         createNotificationChannels()
         // Initialize crash logging immediately with no destination yet (internal + Downloads)
         CrashLogger.setDestinationFolder(this, null)

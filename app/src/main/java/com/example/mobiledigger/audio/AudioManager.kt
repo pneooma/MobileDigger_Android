@@ -19,10 +19,12 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.extractor.DefaultExtractorsFactory
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.util.ResourceManager
 import wseemann.media.FFmpegMediaPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.delay
 import kotlin.math.*
 import java.util.Locale
 import java.io.File
@@ -279,10 +281,10 @@ class AudioManager(private val context: Context) {
                     player.prepareAsync()
                     CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepareAsync called")
                     
+                    // Wait for preparation to complete (with timeout) using coroutines
+                    val timeout = 5000L // 5 seconds timeout
                     // Wait for preparation to complete (with timeout)
                     val startTime = System.currentTimeMillis()
-                    val timeout = 5000L // 5 seconds timeout
-                    
                     while (!isFFmpegPrepared && (System.currentTimeMillis() - startTime) < timeout) {
                         try {
                             Thread.sleep(50) // Wait 50ms between checks
@@ -782,10 +784,16 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Generating fallback audio data for $format")
             
             // Get file duration for realistic fallback
+            val duration = try {
             val retriever = android.media.MediaMetadataRetriever()
             retriever.setDataSource(context, uri)
-            val duration = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
             retriever.release()
+            durationStr?.toLongOrNull() ?: 0L
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Failed to extract duration", e)
+            0L
+        }
             
             val sampleRate = 44100
             val maxSamples = when (spectrogramQuality) {
@@ -818,10 +826,16 @@ class AudioManager(private val context: Context) {
     private fun extractAudioDataWithMemoryManagement(uri: Uri): ShortArray? {
         return try {
             // Check file size first for memory management
+            val durationMs = try {
             val retriever = android.media.MediaMetadataRetriever()
             retriever.setDataSource(context, uri)
-            val durationMs = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
             retriever.release()
+            durationStr?.toLongOrNull() ?: 0L
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Failed to extract duration", e)
+            0L
+        }
             
             val durationSeconds = durationMs / 1000f
             val estimatedSamples = (durationSeconds * 44100).toInt()
@@ -953,17 +967,21 @@ class AudioManager(private val context: Context) {
         return try {
             CrashLogger.log("AudioManager", "Generating realistic fallback for FLAC file")
             
-            val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(context, uri)
-            
             // Get basic audio information
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 180000L // Default 3 minutes
+            val duration = try {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+            retriever.release()
+            durationStr?.toLongOrNull() ?: 0L
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Failed to extract duration", e)
+            0L
+        }.takeIf { it > 0 } ?: 180000L // Default 3 minutes
             val sampleRate = 44100 // Default sample rate
             val channels = 2 // Default stereo
             
             CrashLogger.log("AudioManager", "FLAC metadata: duration=${duration}ms, sampleRate=$sampleRate, channels=$channels")
-            
-            retriever.release()
             
             // Generate 2 minutes of realistic audio data
             val maxSamples = when (spectrogramQuality) {

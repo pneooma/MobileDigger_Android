@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import com.example.mobiledigger.R
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
-import com.example.mobiledigger.ui.components.AmplitudaWaveformView
+import com.example.mobiledigger.ui.components.ScrollableWaveformView
 import com.example.mobiledigger.ui.components.WaveformSettingsDialog
 import com.example.mobiledigger.utils.WaveformGenerator
 import androidx.compose.material.icons.Icons
@@ -661,12 +661,14 @@ fun MusicPlayerScreen(
         
         Spacer(modifier = Modifier.height(12.dp))
         
-                                        // Progress bar
+                                        // Scrollable Waveform (replaces progress bar)
                                         val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                        Slider(
-                                            value = progressPercent,
-                                            onValueChange = { progress ->
-                                                viewModel.seekTo((progress * duration).toLong())
+                                        ScrollableWaveformView(
+                                            currentFile = currentPlaylistFiles.getOrNull(currentIndex),
+                                            progress = progressPercent,
+                                            onSeek = { seekProgress ->
+                                                val seekPosition = (seekProgress * duration).toLong()
+                                                viewModel.seekTo(seekPosition)
                                             },
                                             modifier = Modifier.fillMaxWidth()
                                         )
@@ -744,23 +746,6 @@ fun MusicPlayerScreen(
                             }
                         }
                         
-                        // Waveform Container
-                        item {
-                            val progressPercent = if (duration > 0) (currentPosition.toFloat() / duration) else 0f
-                            
-                            AmplitudaWaveformView(
-                                currentFile = currentPlaylistFiles.getOrNull(currentIndex),
-                                progress = progressPercent,
-                                onSeek = { seekProgress ->
-                                    // Handle seek action
-                                    val seekPosition = (seekProgress * duration).toLong()
-                                    viewModel.seekTo(seekPosition)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                            )
-                        }
                         
                         // Genre controls removed
                         

@@ -20,7 +20,9 @@ import androidx.compose.ui.res.painterResource
 import com.example.mobiledigger.R
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
 import com.example.mobiledigger.ui.components.ScrollableWaveformView
-import com.example.mobiledigger.ui.components.WaveformSettingsDialog
+import com.example.mobiledigger.ui.components.SharedWaveformState
+import com.example.mobiledigger.ui.components.rememberSharedWaveformState
+import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.utils.WaveformGenerator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -36,6 +38,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 
 
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -98,7 +101,6 @@ fun MusicPlayerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
-    var showWaveformSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
 
@@ -108,6 +110,11 @@ fun MusicPlayerScreen(
     // Multi-selection state
     val selectedIndices by viewModel.selectedIndices.collectAsState()
     val isMultiSelectionMode by viewModel.isMultiSelectionMode.collectAsState()
+    
+    // Shared waveform state - generated once and used by both main and mini players
+    val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
+    val context = LocalContext.current
+    val sharedWaveformState = rememberSharedWaveformState(currentFile, context)
 
     if (showShareDialog) {
         AlertDialog(
@@ -229,20 +236,6 @@ fun MusicPlayerScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Waveform Settings Button
-                    Button(
-                        onClick = { 
-                            showSettingsDialog = false
-                            showWaveformSettingsDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.GraphicEq, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Waveform Settings")
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
                         "Gestures:",
@@ -262,15 +255,6 @@ fun MusicPlayerScreen(
     }
 
     // Waveform Settings Dialog
-    if (showWaveformSettingsDialog) {
-        WaveformSettingsDialog(
-            onDismiss = { showWaveformSettingsDialog = false },
-            onApply = { settings ->
-                WaveformGenerator.updateSettings(settings)
-                showWaveformSettingsDialog = false
-            }
-        )
-    }
 
     // Dynamic sizing based on screen size
     val configuration = LocalConfiguration.current
@@ -661,16 +645,18 @@ fun MusicPlayerScreen(
         
         Spacer(modifier = Modifier.height(12.dp))
         
-                                        // Scrollable Waveform (replaces progress bar)
+                                        // Shared Waveform (replaces progress bar)
                                         val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                        ScrollableWaveformView(
-                                            currentFile = currentPlaylistFiles.getOrNull(currentIndex),
+                                        SharedWaveformDisplay(
+                                            sharedState = sharedWaveformState,
                                             progress = progressPercent,
                                             onSeek = { seekProgress ->
                                                 val seekPosition = (seekProgress * duration).toLong()
                                                 viewModel.seekTo(seekPosition)
                                             },
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(80.dp)
                                         )
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -1164,12 +1150,13 @@ fun MusicPlayerScreen(
                                     .offset(y = (-LocalConfiguration.current.screenHeightDp.dp * 0.1f))
                                     .fillMaxWidth()
                                     .padding(8.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
 ) {
     Column(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
+                                    // Song info row
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -1184,20 +1171,10 @@ fun MusicPlayerScreen(
                                                 style = MaterialTheme.typography.bodyMedium.copy(
                                                     fontWeight = FontWeight.Medium
                                                 ),
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                                 maxLines = 2,
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier.fillMaxWidth()
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            // Time with BPM and Key in mini player
-                                                                                            val miniTimeText = "${formatTime(currentPosition)} / ${formatTime(duration)}"
-                                            Text(
-                                                text = miniTimeText,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                         
@@ -1278,16 +1255,19 @@ fun MusicPlayerScreen(
                                         }
                                     }
                                     
-                                    // Mini player: compact progress bar
+                                    // Mini player: shared waveform (replaces progress bar)
                                     val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                    Slider(
-                                        value = progressPercent,
-                                        onValueChange = { progress ->
-                                            viewModel.seekTo((progress * duration).toLong())
+                                    SharedWaveformDisplay(
+                                        sharedState = sharedWaveformState,
+                                        progress = progressPercent,
+                                        onSeek = { seekProgress ->
+                                            val seekPosition = (seekProgress * duration).toLong()
+                                            viewModel.seekTo(seekPosition)
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 12.dp)
+                                            .height(60.dp)
+                                            .padding(horizontal = 12.dp, vertical = 4.dp)
                                     )
                                 }
                             }

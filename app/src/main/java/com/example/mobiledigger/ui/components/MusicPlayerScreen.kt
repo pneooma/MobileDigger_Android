@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -331,8 +332,12 @@ fun MusicPlayerScreen(
                         )
                     )
                 )
-            .padding(16.dp)
-                .padding(paddingValues)
+            .padding(
+                start = paddingValues.calculateStartPadding(LayoutDirection.Ltr) / 2 + 16.dp,
+                top = paddingValues.calculateTopPadding() / 2 + 6.dp,
+                end = paddingValues.calculateEndPadding(LayoutDirection.Ltr) / 2 + 16.dp,
+                bottom = paddingValues.calculateBottomPadding() / 2 + 6.dp
+            )
         ) {
         // Compute destination launcher and selection flags early (used by header)
         val destLauncher = rememberLauncherForActivityResult(

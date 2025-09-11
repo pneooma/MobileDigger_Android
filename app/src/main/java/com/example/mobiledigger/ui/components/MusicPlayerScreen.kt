@@ -435,7 +435,7 @@ fun MusicPlayerScreen(
                 )
             }
             
-            if (bothFoldersSelected) { // Condition remains as 'hasSourceFolder' and 'hasDestinationFolder' can be false
+            if (hasSourceFolder) { // Show actions when music files are loaded
                 var menuExpanded by remember { mutableStateOf(false) }
                 OutlinedButton(
                     onClick = { menuExpanded = true },
@@ -504,7 +504,7 @@ fun MusicPlayerScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             // Folder selection buttons - minimize after selection
-            if (!bothFoldersSelected) { // Condition remains
+            if (!hasSourceFolder) { // Show folder selection when no music files are loaded
                 // Full size buttons when not both selected - organized in two rows
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),

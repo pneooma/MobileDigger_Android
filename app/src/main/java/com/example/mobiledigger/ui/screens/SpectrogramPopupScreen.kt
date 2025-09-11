@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +36,79 @@ import java.io.FileOutputStream
 import com.example.mobiledigger.audio.AudioManager
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.ui.components.SpectrogramView
+import androidx.compose.ui.viewinterop.AndroidView
+import com.masoudss.lib.WaveformSeekBar
+
+// Data class for audio properties
+data class AudioProperties(
+    val sampleRate: Int,
+    val bitDepth: Int,
+    val channels: Int,
+    val bitrate: Int
+)
+
+// Function to extract audio properties from music file
+private fun extractAudioProperties(musicFile: MusicFile?, context: Context): AudioProperties {
+    if (musicFile == null) {
+        return AudioProperties(0, 0, 0, 0)
+    }
+    
+    return try {
+        val retriever = android.media.MediaMetadataRetriever()
+        retriever.setDataSource(context, musicFile.uri)
+        
+        val sampleRate = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_SAMPLERATE)?.toIntOrNull() ?: 0
+        val bitrate = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toIntOrNull()?.div(1000) ?: 0
+        val channels = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)?.toIntOrNull() ?: 0
+        
+        retriever.release()
+        
+        // Try to get bit depth from file extension or estimate
+        val bitDepth = when (musicFile.name.lowercase().substringAfterLast('.')) {
+            "wav", "aif", "aiff" -> 16 // Most common for uncompressed
+            "flac" -> 24 // FLAC often uses 24-bit
+            "mp3" -> 16 // MP3 is typically 16-bit
+            else -> 16 // Default assumption
+        }
+        
+        // Try to get actual channel count
+        val actualChannels = try {
+            val extractor = android.media.MediaExtractor()
+            extractor.setDataSource(context, musicFile.uri, emptyMap<String, String>())
+            
+            var channelCount = 0
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(android.media.MediaFormat.KEY_MIME)
+                if (mime?.startsWith("audio/") == true) {
+                    if (format.containsKey(android.media.MediaFormat.KEY_CHANNEL_COUNT)) {
+                        channelCount = format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
+                        break
+                    }
+                }
+            }
+            extractor.release()
+            if (channelCount > 0) channelCount else 2 // Default to stereo
+        } catch (e: Exception) {
+            2 // Default to stereo
+        }
+        
+        AudioProperties(
+            sampleRate = sampleRate,
+            bitDepth = bitDepth,
+            channels = actualChannels,
+            bitrate = bitrate
+        )
+    } catch (e: Exception) {
+        // Fallback values
+        AudioProperties(
+            sampleRate = 44100,
+            bitDepth = 16,
+            channels = 2,
+            bitrate = 0
+        )
+    }
+}
 
 @Composable
 fun SpectrogramPopupScreen(
@@ -44,8 +118,10 @@ fun SpectrogramPopupScreen(
     spectrogramBitmap: androidx.compose.ui.graphics.ImageBitmap?,
     isLoading: Boolean,
     onShare: () -> Unit,
-    actualDuration: Long
+    actualDuration: Long,
+    waveformData: IntArray? = null
 ) {
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -66,7 +142,7 @@ fun SpectrogramPopupScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                // Header with title, share button, and close button
+                // Header with centered title and buttons on sides
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -74,6 +150,18 @@ fun SpectrogramPopupScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Left side - Share button
+                    IconButton(
+                        onClick = onShare
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share Spectrogram",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    
+                    // Center - Title
                     Text(
                         text = "Spectrogram Analysis",
                         style = MaterialTheme.typography.headlineSmall,
@@ -81,34 +169,21 @@ fun SpectrogramPopupScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     
-                    Row {
-                        // Share button
-                        IconButton(
-                            onClick = onShare
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Share Spectrogram",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                    // Right side - Close button
+                    IconButton(
+                        onClick = {
+                            onDismiss()
                         }
-                        
-                        // Close button
-                        IconButton(
-                            onClick = {
-                                onDismiss()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
                 
-                // File details section
+                // File details section with two columns
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -117,84 +192,92 @@ fun SpectrogramPopupScreen(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
-                    Column(
+                    Row(
                         modifier = Modifier.padding(16.dp)
                     ) {
-                        Text(
-                            text = "File Information",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Left column - File Information
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "File Information",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // File details
+                            musicFile?.let { file ->
+                                Text(
+                                    text = "Name: ${file.name}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                
+                                Text(
+                                    text = "Duration: ${formatTime(actualDuration / 1000f)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                
+                                Text(
+                                    text = "Size: ${formatFileSize(file.size)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                
+                                Text(
+                                    text = "Format: ${getFileExtension(file.name)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                         
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
                         
-                        // File details
-                        musicFile?.let { file ->
+                        // Right column - Audio Properties
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
-                                text = "Name: ${file.name}",
+                                text = "Audio Properties",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Extract and display audio properties
+                            val audioProperties = extractAudioProperties(musicFile, context)
+                            
+                            Text(
+                                text = "Sample Rate: ${audioProperties.sampleRate} Hz",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             
                             Text(
-                                text = "Duration: ${formatTime(actualDuration / 1000f)}",
+                                text = "Bit Depth: ${audioProperties.bitDepth} bits",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             
                             Text(
-                                text = "Size: ${formatFileSize(file.size)}",
+                                text = "Channels: ${audioProperties.channels}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             
                             Text(
-                                text = "Format: ${getFileExtension(file.name)}",
+                                text = "Bitrate: ${audioProperties.bitrate} kbps",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = "Spectrogram Parameters",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Text(
-                            text = "Frequency Range: 20Hz - 22kHz",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Text(
-                            text = "Dynamic Range: -60dB to 0dB",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Text(
-                            text = "Resolution: BALANCED (1024 samples, 128 bins)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Text(
-                            text = "Analysis Duration: 4 minutes maximum",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        
-                        Text(
-                            text = "Analysis Time: Check logs for timing details",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
                 
@@ -202,7 +285,7 @@ fun SpectrogramPopupScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp) // Further reduced height for compact display
+                        .height(432.dp) // 20% taller (360 * 1.2 = 432)
                 ) {
                     // Y-axis labels (kHz scale) - left side
                     Column(
@@ -289,62 +372,81 @@ fun SpectrogramPopupScreen(
                     }
                 }
                 
-                // Generated Waveform Picture Section
-                Card(
+                // Waveform Section - Centered below spectrogram with matching width
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f) // Take remaining space
                         .padding(top = 16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    // Match the spectrogram container width (same as spectrogram Row)
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "Generated Waveform",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Left spacer to match spectrogram Y-axis labels
+                        Spacer(modifier = Modifier.width(30.dp))
                         
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Waveform display area
-                        Box(
+                        // Waveform card with same width as spectrogram
+                        Card(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.surface,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .padding(8.dp),
-                            contentAlignment = Alignment.Center
+                                .weight(1f) // Same weight as spectrogram image
+                                .height(132.dp), // 10% taller (120 * 1.1 = 132)
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(32.dp),
-                                    color = MaterialTheme.colorScheme.primary
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                            if (waveformData != null) {
+                                // Use the same WaveformSeekBar component as the main player
+                                val playedColor = MaterialTheme.colorScheme.primary.toArgb()
+                                val unplayedColor = Color.Gray.toArgb()
+                                
+                                AndroidView(
+                                    factory = { ctx ->
+                                        WaveformSeekBar(ctx).apply {
+                                            // Configure WaveformSeekBar appearance to match main player
+                                            waveBackgroundColor = unplayedColor
+                                            waveProgressColor = playedColor
+                                            waveWidth = 1f
+                                            waveGap = 0f
+                                            waveCornerRadius = 2f
+                                            wavePaddingTop = 1
+                                            wavePaddingBottom = 1
+                                            
+                                            // Set the waveform data
+                                            sample = waveformData
+                                            
+                                            // Show full waveform (100% progress)
+                                            this.progress = 100f
+                                            
+                                            // Disable built-in gesture handling - make it purely visual
+                                            onProgressChanged = null
+                                            
+                                            // Disable touch events on the WaveformSeekBar
+                                            isEnabled = false
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             } else {
-                                // Display waveform using the same waveform component
-                                musicFile?.let { file ->
-                                    SpectrogramView(
-                                        musicFile = file,
-                                        audioManager = audioManager,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                } ?: run {
-                                    Text(
-                                        text = "No waveform available",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                Text(
+                                    text = "No waveform data available",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
+                    
+                    // Right spacer to match spectrogram Y-axis labels
+                    Spacer(modifier = Modifier.width(30.dp))
+                }
                 }
                 
                 // X-axis time labels (bottom) - outside the image
@@ -547,11 +649,13 @@ private fun generateComprehensiveSpectrogramImage(
     return bitmap
 }
 
+
 @Composable
 fun SpectrogramPopupDialog(
     musicFile: MusicFile?,
     audioManager: AudioManager,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    waveformData: IntArray? = null
 ) {
     var spectrogramBitmap by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -714,6 +818,7 @@ fun SpectrogramPopupDialog(
         spectrogramBitmap = spectrogramBitmap,
         isLoading = isLoading,
         onShare = { shareSpectrogram() },
-        actualDuration = actualDuration
+        actualDuration = actualDuration,
+        waveformData = waveformData
     )
 }

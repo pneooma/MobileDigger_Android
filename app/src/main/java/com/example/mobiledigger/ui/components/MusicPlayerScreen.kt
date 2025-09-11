@@ -209,7 +209,8 @@ fun MusicPlayerScreen(
         SpectrogramPopupDialog(
             musicFile = currentFile,
             audioManager = viewModel.audioManager,
-            onDismiss = { showSpectrogram = false }
+            onDismiss = { showSpectrogram = false },
+            waveformData = sharedWaveformState.waveformData
         )
     }
     
@@ -530,9 +531,10 @@ fun MusicPlayerScreen(
                     Text(
                         text = "Tap to select destination folder",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
                     Icon(
                         Icons.Default.ArrowForward,
                         contentDescription = null,
@@ -569,9 +571,10 @@ fun MusicPlayerScreen(
                     Text(
                         text = "Tap to select source folder with music files",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
                     Icon(
                         Icons.Default.ArrowForward,
                         contentDescription = null,

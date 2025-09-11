@@ -13,8 +13,18 @@ import linc.com.amplituda.Compress
 import java.io.InputStream
 import android.content.Context
 
-// Simple in-memory cache for waveform data
-private val waveformCache = mutableMapOf<String, IntArray>()
+// Extension function for number formatting
+private fun Double.format(digits: Int) = "%.${digits}f".format(this)
+
+// Optimized LRU cache for waveform data with size limit
+private const val MAX_WAVEFORM_CACHE_SIZE = 15 // Limit to 15 waveforms
+private val waveformCache = java.util.Collections.synchronizedMap(
+    object : LinkedHashMap<String, IntArray>(MAX_WAVEFORM_CACHE_SIZE + 1, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, IntArray>?): Boolean {
+            return size > MAX_WAVEFORM_CACHE_SIZE
+        }
+    }
+)
 
 // Shared waveform state that can be used by multiple components
 @Composable
@@ -65,11 +75,17 @@ fun rememberSharedWaveformState(
                         // Use Amplituda to process the audio with optimized settings
                         val amplituda = Amplituda(context)
                         
-                        // Create optimized compression settings for faster processing
-                        val compressSettings = Compress.withParams(
-                            Compress.AVERAGE, // Use average compression for faster processing
-                            2 // Ultra-fast: 2 samples/second
-                        )
+                        // Create dynamic compression settings based on file size for optimal performance
+                        val fileSizeMB = currentFile.size / (1024.0 * 1024.0)
+                        val compressSettings = when {
+                            fileSizeMB > 100 -> Compress.withParams(Compress.AVERAGE, 1) // Very large files: use average compression but fewer samples
+                            fileSizeMB > 50 -> Compress.withParams(Compress.AVERAGE, 2)  // Large files: average compression, 2 samples/sec
+                            fileSizeMB > 20 -> Compress.withParams(Compress.AVERAGE, 3)  // Medium files: average compression, 3 samples/sec
+                            fileSizeMB > 10 -> Compress.withParams(Compress.AVERAGE, 4)  // Small-medium files: average compression, 4 samples/sec
+                            else -> Compress.withParams(Compress.AVERAGE, 5)             // Small files: average compression, 5 samples/sec
+                        }
+                        
+                        println("🎵 File size: ${fileSizeMB.format(1)}MB, using optimized compression settings")
                         
                         // Try using InputStream first (more compatible with content:// URIs)
                         val inputStream = try {

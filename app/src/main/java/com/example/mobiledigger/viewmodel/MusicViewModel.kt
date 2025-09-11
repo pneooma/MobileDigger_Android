@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.sync.Semaphore
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.ResourceManager
@@ -775,24 +776,42 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val filesToProcess = files.filter { it.duration == 0L }
                 CrashLogger.log("MusicViewModel", "Starting duration extraction for ${filesToProcess.size} files")
                 
-                // Process files in batches to avoid overwhelming the system
-                val batchSize = 5
+                // Dynamic batch size based on file count and memory
+                val runtime = Runtime.getRuntime()
+                val availableMemoryMB = (runtime.maxMemory() - runtime.totalMemory() + runtime.freeMemory()) / (1024 * 1024)
+                val batchSize = when {
+                    availableMemoryMB > 500 -> 10 // High memory: larger batches
+                    availableMemoryMB > 200 -> 5  // Medium memory: normal batches
+                    else -> 3                     // Low memory: smaller batches
+                }
+                
+                CrashLogger.log("MusicViewModel", "Available memory: ${availableMemoryMB}MB, using batch size: $batchSize")
+                
+                // Use coroutine semaphore to limit concurrent operations
+                val semaphore = Semaphore(batchSize)
+                
                 for (i in filesToProcess.indices step batchSize) {
                     val batch = filesToProcess.subList(i, minOf(i + batchSize, filesToProcess.size))
                     
-                    val updatedFiles = batch.mapNotNull { file ->
-                        try {
-                            val actualDuration = extractDuration(file)
-                            if (actualDuration > 0) {
-                                file.copy(duration = actualDuration)
-                            } else {
+                    // Process batch with parallel coroutines but controlled concurrency
+                    val updatedFiles = batch.map { file ->
+                        async(Dispatchers.IO) {
+                            semaphore.acquire()
+                            try {
+                                val actualDuration = extractDuration(file)
+                                if (actualDuration > 0) {
+                                    file.copy(duration = actualDuration)
+                                } else {
+                                    null
+                                }
+                            } catch (e: Exception) {
+                                CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
                                 null
+                            } finally {
+                                semaphore.release()
                             }
-                        } catch (e: Exception) {
-                            CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
-                            null
                         }
-                    }
+                    }.awaitAll().filterNotNull()
                     
                     withContext(Dispatchers.Main) {
                         try {
@@ -802,7 +821,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                     
-                    delay(100) // Small delay between batches
+                    // Check memory pressure between batches
+                    val memoryAfterBatch = (runtime.totalMemory() - runtime.freeMemory()) * 100 / runtime.maxMemory()
+                    if (memoryAfterBatch > 80) {
+                        CrashLogger.log("MusicViewModel", "High memory usage detected (${memoryAfterBatch}%), triggering GC")
+                        System.gc()
+                        delay(200) // Give GC time to work
+                    } else {
+                        delay(50) // Small delay between batches
+                    }
                 }
                 
                 CrashLogger.log("MusicViewModel", "Duration extraction completed")
@@ -835,12 +862,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     private fun startPeriodicCacheClearing() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             while (true) {
                 kotlinx.coroutines.delay(300000) // Clear caches every 5 minutes
                 try {
-                    audioManager.clearAllCaches()
-                    CrashLogger.log("MusicViewModel", "Periodic cache clearing completed")
+                    // Check memory usage before clearing
+                    val runtime = Runtime.getRuntime()
+                    val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+                    val maxMemory = runtime.maxMemory()
+                    val memoryUsagePercent = (usedMemory * 100) / maxMemory
+                    
+                    if (memoryUsagePercent > 60) { // Clear if using more than 60% of memory
+                        audioManager.clearAllCaches()
+                        System.gc() // Suggest garbage collection
+                        CrashLogger.log("MusicViewModel", "Periodic cache clearing completed (memory usage: ${memoryUsagePercent}%)")
+                    } else {
+                        CrashLogger.log("MusicViewModel", "Memory usage acceptable (${memoryUsagePercent}%), skipping cache clear")
+                    }
                 } catch (e: Exception) {
                     CrashLogger.log("MusicViewModel", "Error during periodic cache clearing", e)
                 }

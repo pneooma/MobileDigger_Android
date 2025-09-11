@@ -70,6 +70,18 @@ private fun formatTime(milliseconds: Long): String {
     return String.format(Locale.getDefault(), "%d:%02d", minutes, remainingSeconds)
 }
 
+private fun calculateBitrate(fileSizeBytes: Long, durationMs: Long): Int {
+    if (durationMs <= 0) return 0
+    val durationSeconds = durationMs / 1000.0
+    val fileSizeBits = fileSizeBytes * 8
+    return (fileSizeBits / durationSeconds / 1000).toInt() // Convert to kbps
+}
+
+private fun formatFileSize(sizeBytes: Long): String {
+    val sizeMB = sizeBytes / (1024.0 * 1024.0)
+    return String.format(Locale.getDefault(), "%.1f MB", sizeMB)
+}
+
 
 
 
@@ -723,6 +735,18 @@ fun MusicPlayerScreen(
                                     else -> Color.Transparent
                                 }
                                 
+                                // Progress counts: played, liked, rejected (moved above main player container)
+                                val played = viewModel.preferences.getListened()
+                                val yes = viewModel.preferences.getLiked()
+                                val no = viewModel.preferences.getRefused()
+                                Text(
+                                    text = "Played: $played  |  Liked: $yes  |  Rejected: $no",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = GroovyBlue,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                )
+                                
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -779,19 +803,6 @@ fun MusicPlayerScreen(
                                         .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-                                        // Progress counts: played, liked, rejected (moved above song title)
-                                        val played = viewModel.preferences.getListened()
-                                        val yes = viewModel.preferences.getLiked()
-                                        val no = viewModel.preferences.getRefused()
-                                        Text(
-                                            text = "Played: $played  |  Liked: $yes  |  Rejected: $no",
-                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = GroovyBlue,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                        
-                                        Spacer(modifier = Modifier.height(8.dp))
                                         
                                         // Song info with text wrapping
                                         Text(
@@ -808,9 +819,11 @@ fun MusicPlayerScreen(
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
-                                        // Track duration display
+                                        // Track details: Time, Bitrate, Size
+                                        val bitrate = calculateBitrate(file.size, file.duration)
+                                        val fileSize = formatFileSize(file.size)
                                         Text(
-                                            text = "Duration: ${formatTime(file.duration)}",
+                                            text = ":: Time ${formatTime(file.duration)} :: Bitrate ${bitrate} kbps :: Size $fileSize ::",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                                             textAlign = TextAlign.Center,
@@ -915,7 +928,10 @@ fun MusicPlayerScreen(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
+                                    .padding(vertical = 4.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                                )
                             ) {
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -946,7 +962,11 @@ fun MusicPlayerScreen(
                                     
                                     ElevatedButton(
                                         onClick = { viewModel.undoLastAction() },
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.elevatedButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondary,
+                                            contentColor = MaterialTheme.colorScheme.onSecondary
+                                        )
                                     ) {
                                         Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = null)
                                         Spacer(Modifier.width(8.dp))

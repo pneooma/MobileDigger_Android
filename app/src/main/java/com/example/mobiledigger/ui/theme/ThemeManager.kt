@@ -11,6 +11,7 @@ class ThemeManager(context: Context) {
     companion object {
         private const val KEY_DARK_MODE = "dark_mode"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
+        private const val KEY_SELECTED_THEME = "selected_theme"
     }
     
     private val _isDarkMode = mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, false))
@@ -18,6 +19,12 @@ class ThemeManager(context: Context) {
     
     private val _useDynamicColor = mutableStateOf(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
     val useDynamicColor: State<Boolean> = _useDynamicColor
+    
+    private val _selectedTheme = mutableStateOf(
+        AvailableThemes.find { it.name == prefs.getString(KEY_SELECTED_THEME, "MobileDigger") } 
+            ?: MobileDiggerTheme
+    )
+    val selectedTheme: State<ThemeColors> = _selectedTheme
     
     fun toggleDarkMode() {
         val newValue = !_isDarkMode.value
@@ -39,5 +46,14 @@ class ThemeManager(context: Context) {
     fun setDynamicColor(enabled: Boolean) {
         _useDynamicColor.value = enabled
         prefs.edit().putBoolean(KEY_DYNAMIC_COLOR, enabled).apply()
+    }
+    
+    fun setSelectedTheme(theme: ThemeColors) {
+        _selectedTheme.value = theme
+        prefs.edit().putString(KEY_SELECTED_THEME, theme.name).apply()
+    }
+    
+    fun getSelectedTheme(): ThemeColors {
+        return _selectedTheme.value
     }
 }

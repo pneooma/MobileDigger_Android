@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -54,6 +55,7 @@ import com.example.mobiledigger.ui.theme.GroovyBlue
 import com.example.mobiledigger.ui.theme.LikeGreen
 import com.example.mobiledigger.ui.theme.NoButton
 import com.example.mobiledigger.ui.theme.YesButton
+import com.example.mobiledigger.ui.theme.AvailableThemes
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import com.example.mobiledigger.viewmodel.PlaylistTab
 
@@ -121,6 +123,9 @@ fun MusicPlayerScreen(
     val context = LocalContext.current
     val sharedWaveformState = rememberSharedWaveformState(currentFile, context)
     val hapticFeedback = HapticFeedback.rememberHapticFeedback()
+    
+    // Visual settings
+    val visualSettings by viewModel.visualSettingsManager.settings
 
     if (showShareDialog) {
         AlertDialog(
@@ -242,9 +247,60 @@ fun MusicPlayerScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Theme Selection Dropdown
+                    var expanded by remember { mutableStateOf(false) }
+                    val selectedTheme by viewModel.themeManager.selectedTheme
+                    
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedTheme.name,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Theme") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            AvailableThemes.forEach { theme ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(16.dp)
+                                                    .background(
+                                                        theme.primary,
+                                                        CircleShape
+                                                    )
+                                            )
+                                            Text(theme.name)
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.themeManager.setSelectedTheme(theme)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     Button(
                         onClick = { 
-                            hapticFeedback(HapticType.Light)
+                            if (visualSettings.enableHapticFeedback) hapticFeedback(HapticType.Light)
                             showSettingsDialog = false
                             showVisualSettingsDialog = true
                         },
@@ -383,7 +439,7 @@ fun MusicPlayerScreen(
                 var menuExpanded by remember { mutableStateOf(false) }
                 OutlinedButton(
                     onClick = { menuExpanded = true },
-                    shape = RoundedCornerShape(50),
+                    shape = RoundedCornerShape(visualSettings.buttonCornerRadius.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -593,7 +649,7 @@ fun MusicPlayerScreen(
                                                 Modifier.border(
                                                     width = 3.dp,
                                                     color = borderColor,
-                                                    shape = RoundedCornerShape(12.dp)
+                                                    shape = RoundedCornerShape(visualSettings.cardCornerRadius.dp)
                                                 )
                                             } else {
                                                 Modifier
@@ -686,7 +742,7 @@ fun MusicPlayerScreen(
                                             },
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(80.dp)
+                                                .height(visualSettings.waveformHeight.dp)
                                         )
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -714,7 +770,7 @@ fun MusicPlayerScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.fillMaxWidth()
     ) {
-                                            IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(40.dp)) {
+                                            IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(visualSettings.controlButtonSize.dp)) {
                                                 Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(24.dp))
                                             }
                                             
@@ -727,14 +783,14 @@ fun MusicPlayerScreen(
                                             }
                                             
                                             IconButton(onClick = { 
-                                                hapticFeedback(HapticType.Light)
+                                                if (visualSettings.enableHapticFeedback) hapticFeedback(HapticType.Light)
                                                 viewModel.next() 
-                                            }, modifier = Modifier.size(40.dp)) {
+                                            }, modifier = Modifier.size(visualSettings.controlButtonSize.dp)) {
                                                 Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(24.dp))
                                             }
                                             
                                             // Share to WhatsApp Button
-                                            IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(40.dp)) {
+                                            IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(visualSettings.controlButtonSize.dp)) {
                                                 Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color(0xFF25D366), modifier = Modifier.size(20.dp))
                                             }
                                             
@@ -744,9 +800,7 @@ fun MusicPlayerScreen(
                                                     // Show spectrogram popup dialog
                                                     showSpectrogram = true
                                                 }, 
-                                                modifier = Modifier
-                                                    .size(50.dp)
-                                                    .shadow(4.dp, RoundedCornerShape(8.dp))
+                                                modifier = Modifier.size(50.dp)
                                             ) {
                                                 Icon(
                                                     painter = painterResource(id = R.drawable.ic_pig_headphones),

@@ -38,25 +38,16 @@ data class VisualSettings(
     val waveformBarWidth: Float = 1f,
     val waveformGap: Float = 0f,
     val waveformOpacity: Float = 1.0f,
+    val waveformColor: Color = Color(0xFF10B981),
+    val waveformPlayedColor: Color = Color(0xFF4CAF50),
     
     // Player Settings
-    val playerCardElevation: Float = 8f,
-    val miniPlayerElevation: Float = 8f,
     val controlButtonSize: Float = 40f,
-    val miniControlButtonSize: Float = 32f,
-    
-    // Orientation Settings
-    val orientationLock: String = "auto", // "auto", "portrait", "landscape"
     
     // Animation Settings
-    val animationDuration: Int = 300, // milliseconds
     val enableAnimations: Boolean = true,
-    val enableHapticFeedback: Boolean = true,
-    
-    // Advanced Settings
-    val showDebugInfo: Boolean = false,
-    val enableExperimentalFeatures: Boolean = false,
-    val compactMode: Boolean = false
+    val animationSpeed: Float = 1.0f, // 0.5x to 2.0x speed
+    val enableHapticFeedback: Boolean = true
 )
 
 class VisualSettingsManager(context: Context) {
@@ -92,25 +83,16 @@ class VisualSettingsManager(context: Context) {
         private const val KEY_WAVEFORM_BAR_WIDTH = "waveform_bar_width"
         private const val KEY_WAVEFORM_GAP = "waveform_gap"
         private const val KEY_WAVEFORM_OPACITY = "waveform_opacity"
+        private const val KEY_WAVEFORM_COLOR = "waveform_color"
+        private const val KEY_WAVEFORM_PLAYED_COLOR = "waveform_played_color"
         
         // Player keys
-        private const val KEY_PLAYER_CARD_ELEVATION = "player_card_elevation"
-        private const val KEY_MINI_PLAYER_ELEVATION = "mini_player_elevation"
         private const val KEY_CONTROL_BUTTON_SIZE = "control_button_size"
-        private const val KEY_MINI_CONTROL_BUTTON_SIZE = "mini_control_button_size"
-        
-        // Orientation keys
-        private const val KEY_ORIENTATION_LOCK = "orientation_lock"
         
         // Animation keys
-        private const val KEY_ANIMATION_DURATION = "animation_duration"
         private const val KEY_ENABLE_ANIMATIONS = "enable_animations"
+        private const val KEY_ANIMATION_SPEED = "animation_speed"
         private const val KEY_ENABLE_HAPTIC_FEEDBACK = "enable_haptic_feedback"
-        
-        // Advanced keys
-        private const val KEY_SHOW_DEBUG_INFO = "show_debug_info"
-        private const val KEY_ENABLE_EXPERIMENTAL_FEATURES = "enable_experimental_features"
-        private const val KEY_COMPACT_MODE = "compact_mode"
     }
     
     private val _settings = mutableStateOf(loadSettings())
@@ -147,25 +129,16 @@ class VisualSettingsManager(context: Context) {
             waveformBarWidth = prefs.getFloat(KEY_WAVEFORM_BAR_WIDTH, 1f),
             waveformGap = prefs.getFloat(KEY_WAVEFORM_GAP, 0f),
             waveformOpacity = prefs.getFloat(KEY_WAVEFORM_OPACITY, 1.0f),
+            waveformColor = Color(prefs.getLong(KEY_WAVEFORM_COLOR, 0xFF10B981)),
+            waveformPlayedColor = Color(prefs.getLong(KEY_WAVEFORM_PLAYED_COLOR, 0xFF4CAF50)),
             
             // Player
-            playerCardElevation = prefs.getFloat(KEY_PLAYER_CARD_ELEVATION, 8f),
-            miniPlayerElevation = prefs.getFloat(KEY_MINI_PLAYER_ELEVATION, 8f),
             controlButtonSize = prefs.getFloat(KEY_CONTROL_BUTTON_SIZE, 40f),
-            miniControlButtonSize = prefs.getFloat(KEY_MINI_CONTROL_BUTTON_SIZE, 32f),
-            
-            // Orientation
-            orientationLock = prefs.getString(KEY_ORIENTATION_LOCK, "auto") ?: "auto",
             
             // Animation
-            animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
             enableAnimations = prefs.getBoolean(KEY_ENABLE_ANIMATIONS, true),
-            enableHapticFeedback = prefs.getBoolean(KEY_ENABLE_HAPTIC_FEEDBACK, true),
-            
-            // Advanced
-            showDebugInfo = prefs.getBoolean(KEY_SHOW_DEBUG_INFO, false),
-            enableExperimentalFeatures = prefs.getBoolean(KEY_ENABLE_EXPERIMENTAL_FEATURES, false),
-            compactMode = prefs.getBoolean(KEY_COMPACT_MODE, false)
+            animationSpeed = prefs.getFloat(KEY_ANIMATION_SPEED, 1.0f),
+            enableHapticFeedback = prefs.getBoolean(KEY_ENABLE_HAPTIC_FEEDBACK, true)
         )
     }
     
@@ -205,25 +178,16 @@ class VisualSettingsManager(context: Context) {
             putFloat(KEY_WAVEFORM_BAR_WIDTH, settings.waveformBarWidth)
             putFloat(KEY_WAVEFORM_GAP, settings.waveformGap)
             putFloat(KEY_WAVEFORM_OPACITY, settings.waveformOpacity)
+            putLong(KEY_WAVEFORM_COLOR, settings.waveformColor.toArgb().toLong())
+            putLong(KEY_WAVEFORM_PLAYED_COLOR, settings.waveformPlayedColor.toArgb().toLong())
             
             // Player
-            putFloat(KEY_PLAYER_CARD_ELEVATION, settings.playerCardElevation)
-            putFloat(KEY_MINI_PLAYER_ELEVATION, settings.miniPlayerElevation)
             putFloat(KEY_CONTROL_BUTTON_SIZE, settings.controlButtonSize)
-            putFloat(KEY_MINI_CONTROL_BUTTON_SIZE, settings.miniControlButtonSize)
-            
-            // Orientation
-            putString(KEY_ORIENTATION_LOCK, settings.orientationLock)
             
             // Animation
-            putInt(KEY_ANIMATION_DURATION, settings.animationDuration)
             putBoolean(KEY_ENABLE_ANIMATIONS, settings.enableAnimations)
+            putFloat(KEY_ANIMATION_SPEED, settings.animationSpeed)
             putBoolean(KEY_ENABLE_HAPTIC_FEEDBACK, settings.enableHapticFeedback)
-            
-            // Advanced
-            putBoolean(KEY_SHOW_DEBUG_INFO, settings.showDebugInfo)
-            putBoolean(KEY_ENABLE_EXPERIMENTAL_FEATURES, settings.enableExperimentalFeatures)
-            putBoolean(KEY_COMPACT_MODE, settings.compactMode)
         }.apply()
     }
     
@@ -238,10 +202,6 @@ class VisualSettingsManager(context: Context) {
         updateSettings(newSettings)
     }
     
-    fun updateOrientationLock(orientation: String) {
-        val newSettings = _settings.value.copy(orientationLock = orientation)
-        updateSettings(newSettings)
-    }
     
     fun resetToDefaults() {
         updateSettings(VisualSettings())

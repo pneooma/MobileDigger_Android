@@ -237,6 +237,18 @@ fun VisualSettingsDialog(
                             range = 0.1f..1.0f,
                             onValueChange = { currentSettings = currentSettings.copy(waveformOpacity = it) }
                         )
+                        ColorSettingItem(
+                            label = "Waveform Color",
+                            color = currentSettings.waveformColor,
+                            onColorChange = { currentSettings = currentSettings.copy(waveformColor = it) },
+                            hapticFeedback = hapticFeedback
+                        )
+                        ColorSettingItem(
+                            label = "Played Waveform Color",
+                            color = currentSettings.waveformPlayedColor,
+                            onColorChange = { currentSettings = currentSettings.copy(waveformPlayedColor = it) },
+                            hapticFeedback = hapticFeedback
+                        )
                     }
                 )
                 
@@ -245,41 +257,10 @@ fun VisualSettingsDialog(
                     title = "Player",
                     content = {
                         SliderSettingItem(
-                            label = "Player Card Elevation",
-                            value = currentSettings.playerCardElevation,
-                            range = 0f..16f,
-                            onValueChange = { currentSettings = currentSettings.copy(playerCardElevation = it) }
-                        )
-                        SliderSettingItem(
-                            label = "Mini Player Elevation",
-                            value = currentSettings.miniPlayerElevation,
-                            range = 0f..16f,
-                            onValueChange = { currentSettings = currentSettings.copy(miniPlayerElevation = it) }
-                        )
-                        SliderSettingItem(
                             label = "Control Button Size",
                             value = currentSettings.controlButtonSize,
                             range = 24f..64f,
                             onValueChange = { currentSettings = currentSettings.copy(controlButtonSize = it) }
-                        )
-                        SliderSettingItem(
-                            label = "Mini Control Button Size",
-                            value = currentSettings.miniControlButtonSize,
-                            range = 20f..48f,
-                            onValueChange = { currentSettings = currentSettings.copy(miniControlButtonSize = it) }
-                        )
-                    }
-                )
-                
-                // Orientation Settings Section
-                VisualSettingsSection(
-                    title = "Orientation",
-                    content = {
-                        DropdownSettingItem(
-                            label = "Orientation Lock",
-                            value = currentSettings.orientationLock,
-                            options = listOf("auto", "portrait", "landscape"),
-                            onValueChange = { currentSettings = currentSettings.copy(orientationLock = it) }
                         )
                     }
                 )
@@ -294,37 +275,15 @@ fun VisualSettingsDialog(
                             onCheckedChange = { currentSettings = currentSettings.copy(enableAnimations = it) }
                         )
                         SliderSettingItem(
-                            label = "Animation Duration (ms)",
-                            value = currentSettings.animationDuration.toFloat(),
-                            range = 100f..1000f,
-                            onValueChange = { currentSettings = currentSettings.copy(animationDuration = it.toInt()) }
+                            label = "Animation Speed",
+                            value = currentSettings.animationSpeed,
+                            range = 0.5f..2.0f,
+                            onValueChange = { currentSettings = currentSettings.copy(animationSpeed = it) }
                         )
                         SwitchSettingItem(
                             label = "Haptic Feedback",
                             checked = currentSettings.enableHapticFeedback,
                             onCheckedChange = { currentSettings = currentSettings.copy(enableHapticFeedback = it) }
-                        )
-                    }
-                )
-                
-                // Advanced Settings Section
-                VisualSettingsSection(
-                    title = "Advanced",
-                    content = {
-                        SwitchSettingItem(
-                            label = "Show Debug Info",
-                            checked = currentSettings.showDebugInfo,
-                            onCheckedChange = { currentSettings = currentSettings.copy(showDebugInfo = it) }
-                        )
-                        SwitchSettingItem(
-                            label = "Experimental Features",
-                            checked = currentSettings.enableExperimentalFeatures,
-                            onCheckedChange = { currentSettings = currentSettings.copy(enableExperimentalFeatures = it) }
-                        )
-                        SwitchSettingItem(
-                            label = "Compact Mode",
-                            checked = currentSettings.compactMode,
-                            onCheckedChange = { currentSettings = currentSettings.copy(compactMode = it) }
                         )
                     }
                 )

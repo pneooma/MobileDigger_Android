@@ -92,6 +92,7 @@ fun MobileDiggerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
+    selectedTheme: ThemeColors = MobileDiggerTheme,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -101,8 +102,8 @@ fun MobileDiggerTheme(
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> createDarkColorScheme(selectedTheme)
+        else -> createLightColorScheme(selectedTheme)
     }
     
     // Check if we're in desktop mode or large screen
@@ -118,3 +119,59 @@ fun MobileDiggerTheme(
         }
     }
 }
+
+private fun createDarkColorScheme(theme: ThemeColors) = darkColorScheme(
+    primary = theme.primary,
+    onPrimary = theme.onPrimary,
+    primaryContainer = theme.primary.copy(alpha = 0.2f),
+    onPrimaryContainer = theme.primary,
+    secondary = theme.secondary,
+    onSecondary = theme.onSecondary,
+    secondaryContainer = theme.secondary.copy(alpha = 0.2f),
+    onSecondaryContainer = theme.secondary,
+    tertiary = theme.tertiary,
+    onTertiary = theme.onTertiary,
+    tertiaryContainer = theme.tertiary.copy(alpha = 0.2f),
+    onTertiaryContainer = theme.tertiary,
+    error = DislikeRed,
+    onError = Color.White,
+    errorContainer = DislikeRed.copy(alpha = 0.2f),
+    onErrorContainer = DislikeRed,
+    background = theme.background,
+    onBackground = theme.onBackground,
+    surface = theme.surface,
+    onSurface = theme.onSurface,
+    surfaceVariant = theme.surface.copy(alpha = 0.8f),
+    onSurfaceVariant = theme.onSurface.copy(alpha = 0.7f),
+    outline = theme.primary.copy(alpha = 0.5f),
+    outlineVariant = theme.primary.copy(alpha = 0.3f),
+    scrim = Color.Black.copy(alpha = 0.5f)
+)
+
+private fun createLightColorScheme(theme: ThemeColors) = lightColorScheme(
+    primary = theme.primary,
+    onPrimary = theme.onPrimary,
+    primaryContainer = theme.primary.copy(alpha = 0.1f),
+    onPrimaryContainer = theme.primary.copy(alpha = 0.8f),
+    secondary = theme.secondary,
+    onSecondary = theme.onSecondary,
+    secondaryContainer = theme.secondary.copy(alpha = 0.1f),
+    onSecondaryContainer = theme.secondary.copy(alpha = 0.8f),
+    tertiary = theme.tertiary,
+    onTertiary = theme.onTertiary,
+    tertiaryContainer = theme.tertiary.copy(alpha = 0.1f),
+    onTertiaryContainer = theme.tertiary.copy(alpha = 0.8f),
+    error = DislikeRed,
+    onError = Color.White,
+    errorContainer = DislikeRed.copy(alpha = 0.1f),
+    onErrorContainer = DislikeRed.copy(alpha = 0.8f),
+    background = Color(0xFFFFFBFE),
+    onBackground = Color(0xFF1C1B1F),
+    surface = Color(0xFFFFFBFE),
+    onSurface = Color(0xFF1C1B1F),
+    surfaceVariant = Color(0xFFE7E0EC),
+    onSurfaceVariant = Color(0xFF49454F),
+    outline = Color(0xFF79747E),
+    outlineVariant = Color(0xFFCAC4D0),
+    scrim = Color.Black.copy(alpha = 0.5f)
+)

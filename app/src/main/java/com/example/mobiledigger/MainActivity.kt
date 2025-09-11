@@ -47,7 +47,8 @@ class MainActivity : ComponentActivity() {
             val viewModel: MusicViewModel = viewModel()
             MobileDiggerTheme(
                 darkTheme = viewModel.themeManager.isDarkMode.value,
-                dynamicColor = viewModel.themeManager.useDynamicColor.value
+                dynamicColor = viewModel.themeManager.useDynamicColor.value,
+                selectedTheme = viewModel.themeManager.selectedTheme.value
             ) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MusicPlayerScreen(

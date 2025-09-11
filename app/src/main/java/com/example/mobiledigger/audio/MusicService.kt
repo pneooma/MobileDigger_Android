@@ -98,6 +98,7 @@ class MusicService : MediaSessionService() {
         ): MediaSession.ConnectionResult {
             val playerCommands = Player.Commands.Builder()
                 .addAllCommands()
+                .remove(Player.COMMAND_STOP) // Remove stop command to hide system stop button
                 .build()
             val sessionCommands = SessionCommands.Builder().build()
             return MediaSession.ConnectionResult.accept(sessionCommands, playerCommands)

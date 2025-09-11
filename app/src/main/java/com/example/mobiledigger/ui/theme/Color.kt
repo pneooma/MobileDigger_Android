@@ -2,6 +2,7 @@ package com.example.mobiledigger.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Default MobileDigger Colors
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
@@ -17,3 +18,121 @@ val DislikeRed = Color(0xFFE91E63)
 val YesButton = Color(0xFF10B981)
 val NoButton = Color(0xFFEF4444)
 val OrangeAccent = Color(0xFFFF8C00)
+
+// Theme Color Schemes
+data class ThemeColors(
+    val name: String,
+    val primary: Color,
+    val secondary: Color,
+    val tertiary: Color,
+    val accent: Color,
+    val background: Color,
+    val surface: Color,
+    val onPrimary: Color = Color.White,
+    val onSecondary: Color = Color.White,
+    val onTertiary: Color = Color.White,
+    val onBackground: Color = Color.Black,
+    val onSurface: Color = Color.Black
+)
+
+// Ocean Theme - Deep blues and teals
+val OceanTheme = ThemeColors(
+    name = "Ocean",
+    primary = Color(0xFF0066CC),
+    secondary = Color(0xFF00BCD4),
+    tertiary = Color(0xFF4FC3F7),
+    accent = Color(0xFF00E5FF),
+    background = Color(0xFF001122),
+    surface = Color(0xFF002244),
+    onBackground = Color(0xFFE0F2F1),
+    onSurface = Color(0xFFE0F2F1)
+)
+
+// Sunset Theme - Warm oranges and reds
+val SunsetTheme = ThemeColors(
+    name = "Sunset",
+    primary = Color(0xFFFF5722),
+    secondary = Color(0xFFFF9800),
+    tertiary = Color(0xFFFFC107),
+    accent = Color(0xFFFF6B35),
+    background = Color(0xFF2C1810),
+    surface = Color(0xFF3D2317),
+    onBackground = Color(0xFFFFF3E0),
+    onSurface = Color(0xFFFFF3E0)
+)
+
+// Forest Theme - Natural greens
+val ForestTheme = ThemeColors(
+    name = "Forest",
+    primary = Color(0xFF2E7D32),
+    secondary = Color(0xFF4CAF50),
+    tertiary = Color(0xFF8BC34A),
+    accent = Color(0xFF66BB6A),
+    background = Color(0xFF0D1B0D),
+    surface = Color(0xFF1B2E1B),
+    onBackground = Color(0xFFE8F5E8),
+    onSurface = Color(0xFFE8F5E8)
+)
+
+// Purple Theme - Rich purples and violets
+val PurpleTheme = ThemeColors(
+    name = "Purple",
+    primary = Color(0xFF7B1FA2),
+    secondary = Color(0xFF9C27B0),
+    tertiary = Color(0xFFBA68C8),
+    accent = Color(0xFFCE93D8),
+    background = Color(0xFF1A0D1A),
+    surface = Color(0xFF2D1B2D),
+    onBackground = Color(0xFFF3E5F5),
+    onSurface = Color(0xFFF3E5F5)
+)
+
+// Midnight Theme - Dark blues and purples
+val MidnightTheme = ThemeColors(
+    name = "Midnight",
+    primary = Color(0xFF3F51B5),
+    secondary = Color(0xFF5C6BC0),
+    tertiary = Color(0xFF7986CB),
+    accent = Color(0xFF9FA8DA),
+    background = Color(0xFF0A0A0F),
+    surface = Color(0xFF1A1A2E),
+    onBackground = Color(0xFFE8EAF6),
+    onSurface = Color(0xFFE8EAF6)
+)
+
+// Coral Theme - Warm pinks and corals
+val CoralTheme = ThemeColors(
+    name = "Coral",
+    primary = Color(0xFFE91E63),
+    secondary = Color(0xFFF06292),
+    tertiary = Color(0xFFF48FB1),
+    accent = Color(0xFFF8BBD9),
+    background = Color(0xFF1A0D0F),
+    surface = Color(0xFF2D1B1F),
+    onBackground = Color(0xFFFCE4EC),
+    onSurface = Color(0xFFFCE4EC)
+)
+
+// Default MobileDigger Theme
+val MobileDiggerTheme = ThemeColors(
+    name = "MobileDigger",
+    primary = GreenAccent,
+    secondary = GroovyBlue,
+    tertiary = Pink80,
+    accent = OrangeAccent,
+    background = Color(0xFF0A0A0A),
+    surface = Color(0xFF1A1A1A),
+    onBackground = Color(0xFFE6E6E6),
+    onSurface = Color(0xFFE6E6E6)
+)
+
+// All available themes
+val AvailableThemes = listOf(
+    MobileDiggerTheme,
+    OceanTheme,
+    SunsetTheme,
+    ForestTheme,
+    PurpleTheme,
+    MidnightTheme,
+    CoralTheme
+)

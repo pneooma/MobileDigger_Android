@@ -237,6 +237,13 @@ fun rememberSharedWaveformState(
                                                     }
                                                     println("✅ Shared fallback waveform generated: ${fallbackSamples.size} samples")
                                                     
+                                                } catch (fallbackException: OutOfMemoryError) {
+                                                    println("⚠️ OutOfMemoryError in fallback - file too large: ${fallbackException.message}")
+                                                    scope.launch(Dispatchers.Main) {
+                                                        errorMessage = "File too large for waveform generation. Skipping..."
+                                                        isLoading = false
+                                                    }
+                                                    System.gc()
                                                 } catch (fallbackException: Exception) {
                                                     println("❌ Shared fallback also failed: ${fallbackException.message}")
                                                     scope.launch(Dispatchers.Main) {
@@ -250,6 +257,13 @@ fun rememberSharedWaveformState(
                                 )
                         }
                         
+                    } catch (e: OutOfMemoryError) {
+                        println("⚠️ OutOfMemoryError during waveform generation - file too large: ${e.message}")
+                        scope.launch(Dispatchers.Main) {
+                            errorMessage = "File too large for waveform generation. Skipping..."
+                            isLoading = false
+                        }
+                        System.gc()
                     } catch (e: Exception) {
                         println("❌ Exception during shared Amplituda setup: ${e.message}")
                         e.printStackTrace()
@@ -259,6 +273,11 @@ fun rememberSharedWaveformState(
                         }
                     }
                 }
+            } catch (e: OutOfMemoryError) {
+                println("⚠️ OutOfMemoryError during shared coroutine setup - file too large: ${e.message}")
+                errorMessage = "File too large for waveform generation. Skipping..."
+                isLoading = false
+                System.gc()
             } catch (e: Exception) {
                 println("❌ Exception during shared coroutine setup: ${e.message}")
                 e.printStackTrace()

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.ui.theme.DislikeRed
 import com.example.mobiledigger.ui.theme.GreenAccent
@@ -95,6 +96,7 @@ fun MusicPlayerScreen(
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
     
+    
 
     
     val folderLauncher = rememberLauncherForActivityResult(
@@ -102,6 +104,7 @@ fun MusicPlayerScreen(
     ) { uri ->
         uri?.let { viewModel.selectFolder(it) }
     }
+    
     
     
     val snackbarHostState = remember { SnackbarHostState() }
@@ -584,6 +587,7 @@ fun MusicPlayerScreen(
                 }
             }
         }
+        
             
             Spacer(modifier = Modifier.height(16.dp))
             

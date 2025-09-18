@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -121,7 +122,11 @@ fun SpectrogramPopupScreen(
     isLoading: Boolean,
     onShare: () -> Unit,
     actualDuration: Long,
-    waveformData: IntArray? = null
+    waveformData: IntArray? = null,
+    isConverting: Boolean = false,
+    conversionProgress: Float = 0f,
+    isGeneratingSpectrogram: Boolean = false,
+    spectrogramProgress: Float = 0f
 ) {
     val context = LocalContext.current
     Dialog(
@@ -199,7 +204,8 @@ fun SpectrogramPopupScreen(
                     ) {
                         // Left column - File Information
                         Column(
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = "File Information",
@@ -242,7 +248,8 @@ fun SpectrogramPopupScreen(
                         
                         // Right column - Audio Properties
                         Column(
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = "Audio Properties",
@@ -326,10 +333,65 @@ fun SpectrogramPopupScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(48.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    if (isConverting) {
+                                        // Show progress for MP3 conversion
+                                        Text(
+                                            text = "Converting MP3 to WAV...",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        LinearProgressIndicator(
+                                            progress = conversionProgress,
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.8f)
+                                                .height(8.dp)
+                                                .clip(RoundedCornerShape(4.dp)),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                        Text(
+                                            text = "${(conversionProgress * 100).toInt()}%",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else if (isGeneratingSpectrogram) {
+                                        // Show progress for spectrogram generation
+                                        Text(
+                                            text = "Generating Spectrogram...",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        LinearProgressIndicator(
+                                            progress = spectrogramProgress,
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.8f)
+                                                .height(8.dp)
+                                                .clip(RoundedCornerShape(4.dp)),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                        Text(
+                                            text = "${(spectrogramProgress * 100).toInt()}%",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else {
+                                        // Show general loading for other stages
+                                        Text(
+                                            text = "Loading...",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(48.dp),
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
                             }
                         } else if (spectrogramBitmap != null) {
                             Image(
@@ -545,146 +607,193 @@ private fun getFileExtension(fileName: String): String {
 private fun generateComprehensiveSpectrogramImage(
     spectrogramBitmap: androidx.compose.ui.graphics.ImageBitmap,
     musicFile: MusicFile,
-    duration: Long
+    duration: Long,
+    waveformData: IntArray? = null
 ): Bitmap {
-    val width = 800
-    val height = 1000
+    val width = 1200
+    val height = 1600
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
     
-    // Background
-    canvas.drawColor(android.graphics.Color.WHITE)
+    // Modern gradient background
+    val gradient = android.graphics.LinearGradient(
+        0f, 0f, 0f, height.toFloat(),
+        android.graphics.Color.parseColor("#f8fafc"),
+        android.graphics.Color.parseColor("#e2e8f0"),
+        android.graphics.Shader.TileMode.CLAMP
+    )
+    val backgroundPaint = android.graphics.Paint().apply { shader = gradient }
+    canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
     
-    val paint = android.graphics.Paint().apply {
+    // Paint styles for modern look
+    val titlePaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 48f
+        color = android.graphics.Color.parseColor("#1e293b")
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+    }
+    
+    val headerPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 32f
+        color = android.graphics.Color.parseColor("#334155")
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+    }
+    
+    val bodyPaint = android.graphics.Paint().apply {
         isAntiAlias = true
         textSize = 24f
-        color = android.graphics.Color.BLACK
+        color = android.graphics.Color.parseColor("#475569")
     }
     
     val smallPaint = android.graphics.Paint().apply {
         isAntiAlias = true
-        textSize = 16f
-        color = android.graphics.Color.BLACK
+        textSize = 20f
+        color = android.graphics.Color.parseColor("#64748b")
     }
     
-    val titlePaint = android.graphics.Paint().apply {
+    val accentPaint = android.graphics.Paint().apply {
         isAntiAlias = true
-        textSize = 32f
-        color = android.graphics.Color.BLACK
-        isFakeBoldText = true
+        color = android.graphics.Color.parseColor("#3b82f6")
     }
     
-    var yPos = 50f
+    val cardPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.WHITE
+        setShadowLayer(8f, 0f, 4f, android.graphics.Color.parseColor("#20000000"))
+    }
     
-    // Title
-    canvas.drawText("SPECTROGRAM ANALYSIS", 50f, yPos, titlePaint)
+    var yPos = 80f
+    
+    // Modern header with accent line
+    canvas.drawText("AUDIO ANALYSIS REPORT", 60f, yPos, titlePaint)
+    canvas.drawRect(60f, yPos + 20f, 600f, yPos + 25f, accentPaint)
+    yPos += 100f
+    
+    // File information card
+    val cardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 200f)
+    canvas.drawRoundRect(cardRect, 16f, 16f, cardPaint)
+    
+    canvas.drawText("File Information", 60f, yPos + 10f, headerPaint)
+    yPos += 50f
+    
+    canvas.drawText("Name: ${musicFile.name}", 60f, yPos, bodyPaint)
+    yPos += 35f
+    
+    val fileSizeMB = String.format("%.2f", musicFile.size / (1024.0 * 1024.0))
+    canvas.drawText("Size: $fileSizeMB MB", 60f, yPos, bodyPaint)
+    yPos += 35f
+    
+    val imageEffectiveDuration = minOf(duration, 240000L)
+    canvas.drawText("Duration: ${formatTime(imageEffectiveDuration / 1000f)}", 60f, yPos, bodyPaint)
+    yPos += 35f
+    
+    canvas.drawText("Format: ${getFileExtension(musicFile.name).uppercase()}", 60f, yPos, bodyPaint)
     yPos += 60f
     
-    // File Information
-    canvas.drawText("File: ${musicFile.name}", 50f, yPos, paint)
-    yPos += 30f
-    
-    // Use the analyzed duration (2 minutes max) for the image
-    val imageEffectiveDuration = minOf(duration, 240000L) // Cap at 4 minutes (240 seconds)
-    
-    canvas.drawText("Duration: ${formatTime(imageEffectiveDuration / 1000f)}", 50f, yPos, paint)
-    yPos += 30f
-    
-    canvas.drawText("Size: ${formatFileSize(musicFile.size)}", 50f, yPos, paint)
-    yPos += 30f
-    
-    canvas.drawText("Format: ${getFileExtension(musicFile.name)}", 50f, yPos, paint)
-    yPos += 30f
-    
-    // Analysis Parameters
-    yPos += 20f
-    canvas.drawText("Analysis Parameters:", 50f, yPos, paint)
-    yPos += 30f
-    
-    canvas.drawText("• Frequency Range: 20Hz - 22kHz", 70f, yPos, smallPaint)
-    yPos += 25f
-    
-    canvas.drawText("• Dynamic Range: -60dB to 0dB", 70f, yPos, smallPaint)
-    yPos += 25f
-    
-    canvas.drawText("• Resolution: BALANCED (1024 samples, 128 bins)", 70f, yPos, smallPaint)
-    yPos += 25f
-    
-    canvas.drawText("• Analysis Duration: 4 minutes maximum", 70f, yPos, smallPaint)
-    yPos += 25f
-    
-    canvas.drawText("• Analysis Type: Power Spectrum", 70f, yPos, smallPaint)
-    yPos += 25f
-    
-    // Spectrogram Image
-    yPos += 20f
-    val spectrogramWidth = 700
-    val spectrogramHeight = 400
-    val spectrogramRect = android.graphics.Rect(50, yPos.toInt(), 750, (yPos + spectrogramHeight).toInt())
-    
-    // Draw spectrogram with border
-    val borderPaint = android.graphics.Paint().apply {
-        color = android.graphics.Color.BLACK
-        style = android.graphics.Paint.Style.STROKE
-        strokeWidth = 2f
+    // Add waveform section if available
+    if (waveformData != null && waveformData.isNotEmpty()) {
+        // Waveform card
+        val waveformCardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 180f)
+        canvas.drawRoundRect(waveformCardRect, 16f, 16f, cardPaint)
+        
+        canvas.drawText("Waveform", 60f, yPos + 10f, headerPaint)
+        yPos += 50f
+        
+        // Draw waveform
+        val waveformWidth = width - 120f
+        val waveformHeight = 100f
+        val waveformRect = android.graphics.RectF(60f, yPos, 60f + waveformWidth, yPos + waveformHeight)
+        
+        // Background for waveform
+        val waveformBgPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#f1f5f9")
+        }
+        canvas.drawRoundRect(waveformRect, 8f, 8f, waveformBgPaint)
+        
+        // Draw waveform data
+        val waveformPaint = android.graphics.Paint().apply {
+            isAntiAlias = true
+            color = android.graphics.Color.parseColor("#3b82f6")
+            strokeWidth = 2f
+        }
+        
+        val centerY = yPos + waveformHeight / 2f
+        val maxAmplitude = waveformData.maxOrNull()?.toFloat() ?: 1f
+        
+        for (i in 0 until minOf(waveformData.size, waveformWidth.toInt())) {
+            val x = 60f + (i * waveformWidth / waveformData.size)
+            val amplitude = (waveformData[i].toFloat() / maxAmplitude) * (waveformHeight / 2f)
+            canvas.drawLine(x, centerY - amplitude, x, centerY + amplitude, waveformPaint)
+        }
+        
+        yPos += 140f
     }
-    canvas.drawRect(spectrogramRect, borderPaint)
+    
+    // Spectrogram section
+    val spectrogramCardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 520f)
+    canvas.drawRoundRect(spectrogramCardRect, 16f, 16f, cardPaint)
+    
+    canvas.drawText("Frequency Spectrogram", 60f, yPos + 10f, headerPaint)
+    yPos += 60f
+    
+    // Draw spectrogram
+    val spectrogramWidth = width - 120f
+    val spectrogramHeight = 400f
+    val spectrogramRect = android.graphics.RectF(60f, yPos, 60f + spectrogramWidth, yPos + spectrogramHeight)
     
     // Scale and draw the spectrogram bitmap
     val scaledSpectrogram = Bitmap.createScaledBitmap(
         spectrogramBitmap.asAndroidBitmap(),
-        spectrogramWidth,
-        spectrogramHeight,
+        spectrogramWidth.toInt(),
+        spectrogramHeight.toInt(),
         true
     )
-    canvas.drawBitmap(scaledSpectrogram, 50f, yPos, null)
+    canvas.drawBitmap(scaledSpectrogram, 60f, yPos, null)
     
-    // Add axis labels
-    yPos += spectrogramHeight + 10f
+    // Frequency labels
+    canvas.drawText("22 kHz", 60f + spectrogramWidth + 10f, yPos + 20f, smallPaint)
+    canvas.drawText("11 kHz", 60f + spectrogramWidth + 10f, yPos + spectrogramHeight / 2f, smallPaint)
+    canvas.drawText("0 Hz", 60f + spectrogramWidth + 10f, yPos + spectrogramHeight - 10f, smallPaint)
     
-    // Y-axis labels - evenly distributed across spectrogram height
-    val spectrogramTop = yPos - spectrogramHeight
-    val labelSpacing = spectrogramHeight / 8f // 8 labels total for cleaner display
+    // Time labels
+    canvas.drawText("0s", 60f, yPos + spectrogramHeight + 25f, smallPaint)
+    val timeText = "${imageEffectiveDuration / 1000}s"
+    canvas.drawText(timeText, 60f + spectrogramWidth - 50f, yPos + spectrogramHeight + 25f, smallPaint)
     
-    // Frequency labels (kHz) on left - doubled frequency steps
-                        val freqLabels = listOf("22k", "18k", "14k", "10k", "6k", "2k", "1k", "20")
-    canvas.drawText("kHz", 20f, spectrogramTop - 10f, smallPaint)
-    freqLabels.forEachIndexed { index, label ->
-        val labelY = spectrogramTop + (index * labelSpacing) + (labelSpacing / 2f)
-        canvas.drawText(label, 20f, labelY, smallPaint)
-    }
+    yPos += spectrogramHeight + 60f
     
-    // dB labels on right
-    val dbLabels = listOf("0", "-12", "-24", "-36", "-48", "-60")
-    canvas.drawText("dB", 760f, spectrogramTop - 10f, smallPaint)
-    dbLabels.forEachIndexed { index, label ->
-        val labelY = spectrogramTop + (index * labelSpacing) + (labelSpacing / 2f)
-        canvas.drawText(label, 760f, labelY, smallPaint)
-    }
+    // Analysis parameters card
+    val analysisCardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 160f)
+    canvas.drawRoundRect(analysisCardRect, 16f, 16f, cardPaint)
     
-    // Time labels - use analyzed duration (2 minutes max)
-    val timeLabels = listOf(
-        formatTime(0f),
-        formatTime((imageEffectiveDuration / 1000f) * 0.25f),
-        formatTime((imageEffectiveDuration / 1000f) * 0.5f),
-        formatTime((imageEffectiveDuration / 1000f) * 0.75f),
-        formatTime(imageEffectiveDuration / 1000f)
-    )
+    canvas.drawText("Analysis Parameters", 60f, yPos + 10f, headerPaint)
+    yPos += 50f
     
-    for (i in timeLabels.indices) {
-        val xPos = 50f + (i * 175f)
-        canvas.drawText(timeLabels[i], xPos, yPos + 20f, smallPaint)
-    }
+    canvas.drawText("• Frequency Range: 20 Hz - 22 kHz", 60f, yPos, bodyPaint)
+    yPos += 30f
+    canvas.drawText("• Window Size: 2048 samples", 60f, yPos, bodyPaint)
+    yPos += 30f
+    canvas.drawText("• Analysis Duration: ${formatTime(imageEffectiveDuration / 1000f)}", 60f, yPos, bodyPaint)
+    yPos += 60f
     
     // Footer
-    yPos += 60f
-    canvas.drawText("Generated by MobileDigger Audio Analyzer", 50f, yPos, smallPaint)
-    yPos += 20f
-    canvas.drawText("Analysis Date: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}", 50f, yPos, smallPaint)
+    val footerPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 18f
+        color = android.graphics.Color.parseColor("#94a3b8")
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    
+    canvas.drawText(
+        "Generated by MobileDigger Audio Analysis",
+        width / 2f,
+        height - 40f,
+        footerPaint
+    )
     
     return bitmap
 }
-
 
 @Composable
 fun SpectrogramPopupDialog(
@@ -697,6 +806,12 @@ fun SpectrogramPopupDialog(
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    
+    // Track conversion and spectrogram generation progress
+    val isConverting by audioManager.isConverting.collectAsState()
+    val conversionProgress by audioManager.conversionProgress.collectAsState()
+    val isGeneratingSpectrogram by audioManager.isGeneratingSpectrogram.collectAsState()
+    val spectrogramProgress by audioManager.spectrogramProgress.collectAsState()
     
     // Generate spectrogram when dialog opens
     LaunchedEffect(musicFile?.uri) {
@@ -786,7 +901,8 @@ fun SpectrogramPopupDialog(
                     val comprehensiveImage = generateComprehensiveSpectrogramImage(
                         spectrogramBitmap!!,
                         musicFile,
-                        actualDuration
+                        actualDuration,
+                        waveformData
                     )
                     
                     // Save to temporary file
@@ -822,7 +938,8 @@ fun SpectrogramPopupDialog(
                         val comprehensiveImage = generateComprehensiveSpectrogramImage(
                             spectrogramBitmap!!,
                             musicFile,
-                            actualDuration
+                            actualDuration,
+                            waveformData
                         )
                         val fileName = "spectrogram_analysis_${musicFile.name.replace(Regex("[^a-zA-Z0-9]"), "_")}.png"
                         val file = File(context.cacheDir, fileName)
@@ -855,6 +972,10 @@ fun SpectrogramPopupDialog(
         isLoading = isLoading,
         onShare = { shareSpectrogram() },
         actualDuration = actualDuration,
-        waveformData = waveformData
+        waveformData = waveformData,
+        isConverting = isConverting,
+        conversionProgress = conversionProgress,
+        isGeneratingSpectrogram = isGeneratingSpectrogram,
+        spectrogramProgress = spectrogramProgress
     )
 }

@@ -109,6 +109,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _showDeleteRejectedPrompt = MutableStateFlow(false)
     val showDeleteRejectedPrompt: StateFlow<Boolean> = _showDeleteRejectedPrompt.asStateFlow()
     
+    // Progress tracking for file deletion
+    private val _deletionProgress = MutableStateFlow(0f)
+    val deletionProgress: StateFlow<Float> = _deletionProgress.asStateFlow()
+    
+    private val _isDeletingFiles = MutableStateFlow(false)
+    val isDeletingFiles: StateFlow<Boolean> = _isDeletingFiles.asStateFlow()
+    
     // Tabbed playlist states
     private val _currentPlaylistTab = MutableStateFlow(PlaylistTab.TODO)
     val currentPlaylistTab: StateFlow<PlaylistTab> = _currentPlaylistTab.asStateFlow()
@@ -426,43 +433,62 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun playFile(file: MusicFile) {
-        // If the file is from a different playlist, switch to that playlist first
-        if (file.sourcePlaylist != _currentPlaylistTab.value) {
-            switchPlaylistTab(file.sourcePlaylist)
-            // After switching, the `currentPlaylistFiles` will update.
-            // We need to find the index in the *newly updated* currentPlaylistFiles.
-            // This is handled by a LaunchedEffect or similar in the Composable for _currentPlaylistTab change.
-            // For immediate playback, we'll re-find the index after a short delay or directly use the file.
-            // Given switchPlaylistTab also calls loadCurrentFile, we might just need to ensure the index is correct.
-            viewModelScope.launch {
-                delay(50) // Small delay to allow playlist switch to process
-                val updatedFiles = when (_currentPlaylistTab.value) {
+        try {
+            CrashLogger.log("MusicViewModel", "playFile called for: ${file.name} from playlist: ${file.sourcePlaylist}")
+            
+            // If the file is from a different playlist, switch to that playlist first
+            if (file.sourcePlaylist != _currentPlaylistTab.value) {
+                CrashLogger.log("MusicViewModel", "Switching from ${_currentPlaylistTab.value} to ${file.sourcePlaylist}")
+                switchPlaylistTab(file.sourcePlaylist)
+                
+                viewModelScope.launch {
+                    try {
+                        delay(100) // Increased delay to ensure playlist switch is complete
+                        val updatedFiles = when (_currentPlaylistTab.value) {
+                            PlaylistTab.TODO -> _musicFiles.value
+                            PlaylistTab.LIKED -> _likedFiles.value
+                            PlaylistTab.REJECTED -> _rejectedFiles.value
+                        }
+                        
+                        CrashLogger.log("MusicViewModel", "Updated files count: ${updatedFiles.size}")
+                        val index = updatedFiles.indexOfFirst { it.uri == file.uri }
+                        
+                        if (index >= 0) {
+                            CrashLogger.log("MusicViewModel", "Found file at index $index, loading...")
+                            _currentIndex.value = index
+                            loadCurrentFile()
+                        } else {
+                            CrashLogger.log("MusicViewModel", "File not found in target playlist after switching")
+                            _errorMessage.value = "Could not find file in the target playlist after switching."
+                        }
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Error in playFile coroutine", e)
+                        _errorMessage.value = "Error playing file from search: ${e.message}"
+                    }
+                }
+            } else {
+                // If the file is in the current playlist, proceed as before
+                val currentFiles = when (_currentPlaylistTab.value) {
                     PlaylistTab.TODO -> _musicFiles.value
                     PlaylistTab.LIKED -> _likedFiles.value
                     PlaylistTab.REJECTED -> _rejectedFiles.value
                 }
-                val index = updatedFiles.indexOfFirst { it.uri == file.uri }
+                
+                CrashLogger.log("MusicViewModel", "Current files count: ${currentFiles.size}")
+                val index = currentFiles.indexOfFirst { it.uri == file.uri }
+                
                 if (index >= 0) {
+                    CrashLogger.log("MusicViewModel", "Found file at index $index in current playlist")
                     _currentIndex.value = index
                     loadCurrentFile()
                 } else {
-                    _errorMessage.value = "Could not find file in the target playlist after switching."
+                    CrashLogger.log("MusicViewModel", "File not found in current playlist")
+                    _errorMessage.value = "File not found in current playlist."
                 }
             }
-        } else {
-            // If the file is in the current playlist, proceed as before
-            val currentFiles = when (_currentPlaylistTab.value) {
-                PlaylistTab.TODO -> _musicFiles.value
-                PlaylistTab.LIKED -> _likedFiles.value
-                PlaylistTab.REJECTED -> _rejectedFiles.value
-            }
-            val index = currentFiles.indexOfFirst { it.uri == file.uri }
-            if (index >= 0) {
-                _currentIndex.value = index
-                loadCurrentFile()
-            } else {
-                _errorMessage.value = "File not found in current playlist."
-            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Exception in playFile", e)
+            _errorMessage.value = "Error playing file from search: ${e.message}"
         }
     }
     
@@ -1006,18 +1032,44 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     
-    // Delete all files from "I Don't Dig" folder
+    // Delete all files from "I Don't Dig" folder with progress tracking
     fun deleteRejectedFiles() {
         viewModelScope.launch {
+            _isDeletingFiles.value = true
+            _deletionProgress.value = 0f
+            
             try {
-                val success = fileManager.deleteRejectedFiles()
+                // Get the list of rejected files first to track progress
+                val rejectedFiles = _rejectedFiles.value
+                val totalFiles = rejectedFiles.size
+                
+                if (totalFiles == 0) {
+                    _errorMessage.value = "No rejected files to delete"
+                    _isDeletingFiles.value = false
+                    return@launch
+                }
+                
+                CrashLogger.log("MusicViewModel", "Starting deletion of $totalFiles rejected files")
+                
+                // Use the enhanced delete function with progress callback
+                val success = fileManager.deleteRejectedFilesWithProgress { deletedCount ->
+                    val progress = deletedCount.toFloat() / totalFiles
+                    _deletionProgress.value = progress
+                }
+                
                 if (success) {
+                    _deletionProgress.value = 1f
+                    _rejectedFiles.value = emptyList() // Clear the rejected files list
                     _errorMessage.value = "All rejected files deleted successfully"
+                    loadRejectedFiles() // Refresh the list
                 } else {
                     _errorMessage.value = "Failed to delete rejected files"
                 }
             } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error deleting rejected files", e)
                 _errorMessage.value = "Error deleting rejected files: ${e.message}"
+            } finally {
+                _isDeletingFiles.value = false
             }
         }
     }

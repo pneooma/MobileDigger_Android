@@ -25,6 +25,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.*
 import java.util.Locale
 import java.util.Collections
@@ -734,6 +737,20 @@ class AudioManager(private val context: Context) {
         }
     }
     
+    // Progress tracking for MP3 conversion
+    private val _conversionProgress = MutableStateFlow(0f)
+    val conversionProgress: StateFlow<Float> = _conversionProgress.asStateFlow()
+    
+    private val _isConverting = MutableStateFlow(false)
+    val isConverting: StateFlow<Boolean> = _isConverting.asStateFlow()
+    
+    // Progress tracking for spectrogram generation
+    private val _spectrogramProgress = MutableStateFlow(0f)
+    val spectrogramProgress: StateFlow<Float> = _spectrogramProgress.asStateFlow()
+    
+    private val _isGeneratingSpectrogram = MutableStateFlow(false)
+    val isGeneratingSpectrogram: StateFlow<Boolean> = _isGeneratingSpectrogram.asStateFlow()
+
     // Spectrogram generation with proper audio analysis
     suspend fun generateSpectrogram(musicFile: MusicFile): ImageBitmap? {
         return try {
@@ -746,12 +763,29 @@ class AudioManager(private val context: Context) {
             
             CrashLogger.log("AudioManager", "Generating new spectrogram for: ${musicFile.name}")
             
-            // Try to generate real spectrogram first, fallback only if needed
+            // Check if file is MP3 and convert to WAV first for better spectrogram generation
+            val fileForSpectrogram = if (musicFile.name.lowercase().endsWith(".mp3")) {
+                CrashLogger.log("AudioManager", "MP3 file detected, converting to WAV for spectrogram generation")
+                _isConverting.value = true
+                _conversionProgress.value = 0f
+                try {
+                    convertMp3ToWav(musicFile)
+                } finally {
+                    _isConverting.value = false
+                    _conversionProgress.value = 1f
+                }
+            } else {
+                musicFile
+            }
+            
+            // Generate spectrogram with progress tracking
+            _isGeneratingSpectrogram.value = true
+            _spectrogramProgress.value = 0f
             
             val spectrogram = try {
                 withTimeout(30000) { // 30 second timeout
                     withContext(Dispatchers.IO) {
-                        generateSpectrogramInternal(musicFile)
+                        generateSpectrogramInternal(fileForSpectrogram ?: musicFile)
                     }
                 }
             } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
@@ -760,6 +794,13 @@ class AudioManager(private val context: Context) {
             } catch (e: Exception) {
                 CrashLogger.log("AudioManager", "Error during spectrogram generation", e)
                 null
+            } finally {
+                _isGeneratingSpectrogram.value = false
+                _spectrogramProgress.value = 1f
+                // Clean up temporary WAV file if it was created
+                if (fileForSpectrogram != null && fileForSpectrogram != musicFile) {
+                    cleanupTempWavFile(fileForSpectrogram)
+                }
             }
             
             if (spectrogram != null) {
@@ -777,6 +818,272 @@ class AudioManager(private val context: Context) {
         }
     }
     
+    /**
+     * Convert MP3 file to WAV format for better spectrogram generation using MediaMetadataRetriever and MediaExtractor/MediaCodec
+     */
+    private suspend fun convertMp3ToWav(mp3File: MusicFile): MusicFile? {
+        return try {
+            CrashLogger.log("AudioManager", "Starting MP3 to WAV conversion for: ${mp3File.name}")
+            
+            // Create temporary WAV file
+            val tempDir = context.cacheDir
+            val tempWavFile = File(tempDir, "temp_spectrogram_${System.currentTimeMillis()}.wav")
+            
+            withContext(Dispatchers.IO) {
+                // Use MediaExtractor and MediaCodec to decode MP3 to PCM
+                val extractor = android.media.MediaExtractor()
+                var codec: android.media.MediaCodec? = null
+                
+                try {
+                    extractor.setDataSource(context, mp3File.uri, emptyMap<String, String>())
+                    
+                    // Find audio track
+                    var audioTrackIndex = -1
+                    var format: android.media.MediaFormat? = null
+                    
+                    for (i in 0 until extractor.trackCount) {
+                        val trackFormat = extractor.getTrackFormat(i)
+                        val mime = trackFormat.getString(android.media.MediaFormat.KEY_MIME)
+                        if (mime?.startsWith("audio/") == true) {
+                            audioTrackIndex = i
+                            format = trackFormat
+                            break
+                        }
+                    }
+                    
+                    if (audioTrackIndex == -1 || format == null) {
+                        CrashLogger.log("AudioManager", "No audio track found in MP3 file")
+                        return@withContext null
+                    }
+                    
+                    extractor.selectTrack(audioTrackIndex)
+                    
+                    val mime = format.getString(android.media.MediaFormat.KEY_MIME)!!
+                    val sampleRate = format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE)
+                    val channelCount = format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
+                    
+                    CrashLogger.log("AudioManager", "MP3 format: mime=$mime, sampleRate=$sampleRate, channels=$channelCount")
+                    
+                    // Create and configure decoder
+                    codec = android.media.MediaCodec.createDecoderByType(mime)
+                    codec.configure(format, null, null, 0)
+                    codec.start()
+                    
+                    val inputBuffers = codec.inputBuffers
+                    val outputBuffers = codec.outputBuffers
+                    val bufferInfo = android.media.MediaCodec.BufferInfo()
+                    
+                    var isInputDone = false
+                    var isOutputDone = false
+                    
+                    val audioSamples = mutableListOf<Short>()
+                    // Calculate how much audio we actually need for spectrogram
+                    val maxAnalysisSeconds = when (spectrogramQuality) {
+                        SpectrogramQuality.FAST -> 60      // 1 minute for fast
+                        SpectrogramQuality.BALANCED -> 90   // 1.5 minutes for balanced
+                        SpectrogramQuality.HIGH -> 120     // 2 minutes for high quality
+                    }
+                    val maxSamples = sampleRate * maxAnalysisSeconds // Only convert what we need
+                    var totalSamplesExpected = maxSamples
+                    
+                    // Try to get actual duration for better progress tracking
+                    try {
+                        val retriever = android.media.MediaMetadataRetriever()
+                        retriever.setDataSource(context, mp3File.uri)
+                        val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        val durationMs = durationStr?.toLongOrNull() ?: 0L
+                        retriever.release()
+                        
+                        val actualDurationSeconds = (durationMs / 1000f).coerceAtMost(maxAnalysisSeconds.toFloat())
+                        totalSamplesExpected = (sampleRate * actualDurationSeconds).toInt()
+                    } catch (e: Exception) {
+                        CrashLogger.log("AudioManager", "Could not get duration for progress tracking", e)
+                    }
+                    
+                    CrashLogger.log("AudioManager", "Converting MP3: maxSamples=$maxSamples, expectedSamples=$totalSamplesExpected")
+                    
+                    // Decode loop with progress tracking
+                    while (!isOutputDone && audioSamples.size < maxSamples) {
+                        // Feed input
+                        if (!isInputDone) {
+                            val inputBufferIndex = codec.dequeueInputBuffer(0)
+                            if (inputBufferIndex >= 0) {
+                                val inputBuffer = inputBuffers[inputBufferIndex]
+                                val sampleSize = extractor.readSampleData(inputBuffer, 0)
+                                
+                                if (sampleSize < 0) {
+                                    codec.queueInputBuffer(inputBufferIndex, 0, 0, 0, android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                                    isInputDone = true
+                                } else {
+                                    val presentationTimeUs = extractor.sampleTime
+                                    codec.queueInputBuffer(inputBufferIndex, 0, sampleSize, presentationTimeUs, 0)
+                                    extractor.advance()
+                                }
+                            }
+                        }
+                        
+                        // Get output
+                        val outputBufferIndex = codec.dequeueOutputBuffer(bufferInfo, 0)
+                        when {
+                            outputBufferIndex >= 0 -> {
+                                val outputBuffer = outputBuffers[outputBufferIndex]
+                                
+                                if (bufferInfo.size > 0) {
+                                    // Convert ByteBuffer to ShortArray (16-bit PCM)
+                                    val pcmData = ByteArray(bufferInfo.size)
+                                    outputBuffer.get(pcmData)
+                                    
+                                    // Convert bytes to shorts (assuming 16-bit PCM)
+                                    for (i in 0 until pcmData.size step 2) {
+                                        if (i + 1 < pcmData.size && audioSamples.size < maxSamples) {
+                                            val sample = ((pcmData[i + 1].toInt() shl 8) or (pcmData[i].toInt() and 0xFF)).toShort()
+                                            audioSamples.add(sample)
+                                        }
+                                    }
+                                    
+                                    // Update progress
+                                    val progress = (audioSamples.size.toFloat() / totalSamplesExpected).coerceAtMost(1f)
+                                    _conversionProgress.value = progress
+                                }
+                                
+                                codec.releaseOutputBuffer(outputBufferIndex, false)
+                                
+                                if ((bufferInfo.flags and android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                                    isOutputDone = true
+                                }
+                            }
+                            outputBufferIndex == android.media.MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {
+                                // Output buffers changed, get new ones
+                            }
+                            outputBufferIndex == android.media.MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                                // Output format changed
+                                val newFormat = codec.outputFormat
+                                CrashLogger.log("AudioManager", "Decoder output format changed: $newFormat")
+                            }
+                        }
+                    }
+                    
+                    CrashLogger.log("AudioManager", "Decoded ${audioSamples.size} audio samples from MP3")
+                    
+                    if (audioSamples.isNotEmpty()) {
+                        // Create WAV file with the decoded PCM data
+                        createWavFile(tempWavFile, audioSamples.toShortArray(), sampleRate, channelCount)
+                        
+                        // Create MusicFile object for the temporary WAV file
+                        val wavUri = androidx.core.content.FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            tempWavFile
+                        )
+                        
+                        CrashLogger.log("AudioManager", "Created temporary WAV file: ${tempWavFile.absolutePath}, size: ${tempWavFile.length()} bytes")
+                        
+                        return@withContext MusicFile(
+                            uri = wavUri,
+                            name = tempWavFile.name,
+                            duration = mp3File.duration,
+                            size = tempWavFile.length(),
+                            sourcePlaylist = mp3File.sourcePlaylist
+                        )
+                    } else {
+                        CrashLogger.log("AudioManager", "No audio data decoded from MP3")
+                        return@withContext null
+                    }
+                    
+                } finally {
+                    codec?.stop()
+                    codec?.release()
+                    extractor.release()
+                }
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error converting MP3 to WAV", e)
+            null
+        }
+    }
+    
+    /**
+     * Create a WAV file from PCM audio data
+     */
+    private fun createWavFile(file: File, audioData: ShortArray, sampleRate: Int, channels: Int) {
+        val outputStream = file.outputStream()
+        
+        try {
+            val bitsPerSample = 16
+            val byteRate = sampleRate * channels * bitsPerSample / 8
+            val blockAlign = channels * bitsPerSample / 8
+            val dataSize = audioData.size * 2 // 2 bytes per sample
+            val chunkSize = 36 + dataSize
+            
+            // WAV header
+            outputStream.write("RIFF".toByteArray())
+            outputStream.write(intToByteArray(chunkSize))
+            outputStream.write("WAVE".toByteArray())
+            outputStream.write("fmt ".toByteArray())
+            outputStream.write(intToByteArray(16)) // Sub-chunk size
+            outputStream.write(shortToByteArray(1)) // Audio format (PCM)
+            outputStream.write(shortToByteArray(channels.toShort()))
+            outputStream.write(intToByteArray(sampleRate))
+            outputStream.write(intToByteArray(byteRate))
+            outputStream.write(shortToByteArray(blockAlign.toShort()))
+            outputStream.write(shortToByteArray(bitsPerSample.toShort()))
+            outputStream.write("data".toByteArray())
+            outputStream.write(intToByteArray(dataSize))
+            
+            // Audio data (convert shorts to bytes, little-endian)
+            for (sample in audioData) {
+                outputStream.write(sample.toInt() and 0xFF)
+                outputStream.write((sample.toInt() shr 8) and 0xFF)
+            }
+            
+        } finally {
+            outputStream.close()
+        }
+    }
+    
+    private fun intToByteArray(value: Int): ByteArray {
+        return byteArrayOf(
+            (value and 0xFF).toByte(),
+            ((value shr 8) and 0xFF).toByte(),
+            ((value shr 16) and 0xFF).toByte(),
+            ((value shr 24) and 0xFF).toByte()
+        )
+    }
+    
+    private fun shortToByteArray(value: Short): ByteArray {
+        return byteArrayOf(
+            (value.toInt() and 0xFF).toByte(),
+            ((value.toInt() shr 8) and 0xFF).toByte()
+        )
+    }
+    
+    /**
+     * Clean up temporary WAV file after spectrogram generation
+     */
+    private fun cleanupTempWavFile(tempWavFile: MusicFile) {
+        try {
+            // Extract file path from URI
+            val uriString = tempWavFile.uri.toString()
+            if (uriString.contains("temp_spectrogram_")) {
+                // This is a temporary file, safe to delete
+                val tempDir = context.cacheDir
+                val fileName = tempWavFile.name
+                val file = File(tempDir, fileName)
+                
+                if (file.exists()) {
+                    val deleted = file.delete()
+                    if (deleted) {
+                        CrashLogger.log("AudioManager", "Successfully deleted temporary WAV file: ${file.absolutePath}")
+                    } else {
+                        CrashLogger.log("AudioManager", "Failed to delete temporary WAV file: ${file.absolutePath}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error cleaning up temporary WAV file", e)
+        }
+    }
+
     private fun generateSpectrogramInternal(musicFile: MusicFile): ImageBitmap? {
         val overallStartTime = System.currentTimeMillis()
         return try {
@@ -798,20 +1105,25 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "URI: $uri")
             
             // Extract audio data from the file with memory management
+            _spectrogramProgress.value = 0.1f
             val extractionStartTime = System.currentTimeMillis()
             val audioData = extractAudioDataWithMemoryManagement(uri)
             val extractionEndTime = System.currentTimeMillis()
             val extractionTime = extractionEndTime - extractionStartTime
+            _spectrogramProgress.value = 0.3f
             
             if (audioData == null || audioData.isEmpty()) {
                 CrashLogger.log("AudioManager", "Failed to extract audio data after ${extractionTime}ms, generating fallback spectrogram")
+                _spectrogramProgress.value = 0.5f
                 return generateFallbackSpectrogram(musicFile)
             }
             
             CrashLogger.log("AudioManager", "Extracted ${audioData.size} audio samples in ${extractionTime}ms")
             
             // Generate spectrogram from audio data
+            _spectrogramProgress.value = 0.5f
             val spectrogram = generateSpectrogramFromAudioData(audioData)
+            _spectrogramProgress.value = 0.9f
             if (spectrogram == null) {
                 CrashLogger.log("AudioManager", "Failed to generate spectrogram from audio data, using fallback")
                 return generateFallbackSpectrogram(musicFile)

@@ -9,6 +9,7 @@ import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.ResourceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import java.io.File
 import android.util.Log
 import android.provider.DocumentsContract
@@ -508,20 +509,43 @@ class FileManager(private val context: Context) {
     
     // Delete all files from "Rejected" folder
     suspend fun deleteRejectedFiles(): Boolean = withContext(Dispatchers.IO) {
+        return@withContext deleteRejectedFilesWithProgress { _ -> }
+    }
+    
+    // Delete all files from "Rejected" folder with progress callback
+    suspend fun deleteRejectedFilesWithProgress(
+        onProgress: (deletedCount: Int) -> Unit
+    ): Boolean = withContext(Dispatchers.IO) {
         try {
             val destination = destinationFolder ?: return@withContext false
             val rejectedFolder = destination.findFile("Rejected")
                 ?: destination.findFile("I Don't Dig")
                 ?: return@withContext false
             if (!rejectedFolder.isDirectory) return@withContext false
+            
             val files = rejectedFolder.listFiles().filter { it.isFile }
             var deletedCount = 0
-            for (file in files) {
-                try { if (file.delete()) deletedCount++ } catch (e: Exception) {
+            
+            CrashLogger.log("FileManager", "Starting deletion of ${files.size} rejected files")
+            
+            for ((index, file) in files.withIndex()) {
+                try { 
+                    if (file.delete()) {
+                        deletedCount++
+                        onProgress(deletedCount)
+                        CrashLogger.log("FileManager", "Deleted file ${index + 1}/${files.size}: ${file.name}")
+                    }
+                } catch (e: Exception) {
                     CrashLogger.log("FileManager", "Failed to delete file: ${file.name}", e)
                 }
+                
+                // Small delay to prevent overwhelming the system
+                if (index % 10 == 0) {
+                    delay(50)
+                }
             }
-            CrashLogger.log("FileManager", "Deleted $deletedCount rejected files")
+            
+            CrashLogger.log("FileManager", "Deletion completed: $deletedCount out of ${files.size} files deleted")
             true
         } catch (e: Exception) {
             CrashLogger.log("FileManager", "Error deleting rejected files", e)

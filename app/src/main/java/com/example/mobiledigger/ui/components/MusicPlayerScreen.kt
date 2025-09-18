@@ -1215,7 +1215,7 @@ fun MusicPlayerScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                    .padding(horizontal = 6.dp, vertical = 4.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Row(
@@ -1228,28 +1228,28 @@ fun MusicPlayerScreen(
                                                             Icon(
                                                                 Icons.AutoMirrored.Filled.PlaylistPlay,
                                                                 contentDescription = "To Do",
-                                                                modifier = Modifier.size(16.dp),
+                                                                modifier = Modifier.size(14.dp),
                                                                 tint = if (isSelected) Color.White else Color.Black
                                                             )
-                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Spacer(modifier = Modifier.width(2.dp))
                                                         }
                                                         PlaylistTab.LIKED -> {
                                                             Icon(
                                                                 Icons.Default.Favorite,
                                                                 contentDescription = "Liked",
-                                                                modifier = Modifier.size(16.dp),
+                                                                modifier = Modifier.size(14.dp),
                                                                 tint = if (isSelected) Color.White else Color.Black
                                                             )
-                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Spacer(modifier = Modifier.width(2.dp))
                                                         }
                                                         PlaylistTab.REJECTED -> {
                                                             Icon(
                                                                 Icons.Default.ThumbDown,
                                                                 contentDescription = "Rejected",
-                                                                modifier = Modifier.size(16.dp),
+                                                                modifier = Modifier.size(14.dp),
                                                                 tint = if (isSelected) Color.White else Color.Black
                                                             )
-                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Spacer(modifier = Modifier.width(2.dp))
                                                         }
                                                     }
                                                     
@@ -1259,9 +1259,11 @@ fun MusicPlayerScreen(
                                                             PlaylistTab.LIKED -> "Liked (${likedFiles.size})"
                                                             PlaylistTab.REJECTED -> "Rejected (${rejectedFiles.size})"
                                                         },
-                                                        style = MaterialTheme.typography.labelMedium,
+                                                        style = MaterialTheme.typography.labelSmall,
                                                         color = if (isSelected) Color.White else Color.Black,
-                                                        textAlign = TextAlign.Center
+                                                        textAlign = TextAlign.Center,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
                                                     )
                                                 }
                                             }

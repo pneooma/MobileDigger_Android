@@ -358,10 +358,13 @@ fun SpectrogramPopupScreen(
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
-                                    } else if (isGeneratingSpectrogram) {
+                                    } else if (isGeneratingSpectrogram || (conversionProgress >= 1f && !isConverting)) {
                                         // Show progress for spectrogram generation
                                         Text(
-                                            text = "Generating Spectrogram...",
+                                            text = if (conversionProgress >= 1f && !isConverting && spectrogramProgress < 1f) 
+                                                "Generating Spectrogram..." 
+                                            else 
+                                                "Generating Spectrogram...",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )

@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.ui.theme.DislikeRed
@@ -136,6 +137,8 @@ fun MusicPlayerScreen(
     var showRescanSourceDialog by remember { mutableStateOf(false) } // Added state for rescan source dialog
     var showSearchInput by remember { mutableStateOf(false) } // New state to control search input visibility
     var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
+    var showDeleteAllDialog by remember { mutableStateOf(false) } // State for delete all confirmation
+    var showShareZipDialog by remember { mutableStateOf(false) } // State for ZIP sharing confirmation
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
@@ -228,6 +231,116 @@ fun MusicPlayerScreen(
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissDeleteRejectedPrompt() }) { 
                     Text("Keep Files") 
+                }
+            }
+        )
+    }
+
+    // Delete All Files Confirmation Dialog (Double Warning)
+    if (showDeleteAllDialog) {
+        val playlistName = when (currentPlaylistTab) {
+            PlaylistTab.REJECTED -> "Rejected"
+            PlaylistTab.TODO -> "To Do"
+            PlaylistTab.LIKED -> "Liked"
+        }
+        val fileCount = when (currentPlaylistTab) {
+            PlaylistTab.REJECTED -> rejectedFiles.size
+            PlaylistTab.TODO -> musicFiles.size
+            PlaylistTab.LIKED -> likedFiles.size
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("⚠️ WARNING: Delete ALL $playlistName Files?") },
+            text = { 
+                Column {
+                    Text(
+                        "This will PERMANENTLY delete ALL files in the '$playlistName' folder.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Files: $fileCount items will be deleted",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "This action CANNOT be undone. Are you absolutely sure?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Red
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        showDeleteAllDialog = false
+                        when (currentPlaylistTab) {
+                            PlaylistTab.REJECTED -> viewModel.deleteRejectedFiles()
+                            PlaylistTab.TODO -> {
+                                // TODO: Implement deleteAllTodoFiles()
+                                // viewModel.deleteAllTodoFiles()
+                            }
+                            PlaylistTab.LIKED -> {
+                                // TODO: Implement deleteAllLikedFiles()
+                                // viewModel.deleteAllLikedFiles()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) { 
+                    Text("DELETE ALL", color = Color.White, fontWeight = FontWeight.Bold) 
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) { 
+                    Text("Cancel", color = MaterialTheme.colorScheme.primary) 
+                }
+            }
+        )
+    }
+
+    // Share Liked Files as ZIP Confirmation Dialog
+    if (showShareZipDialog) {
+        AlertDialog(
+            onDismissRequest = { showShareZipDialog = false },
+            title = { Text("📦 Share Liked Files as ZIP") },
+            text = { 
+                Column {
+                    Text(
+                        "This will create a ZIP archive containing all your liked songs.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Files to include: ${likedFiles.size} songs",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "The ZIP file will be created and you can share it via any app.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        showShareZipDialog = false
+                        // TODO: Implement createLikedFilesZip function
+                        // viewModel.createLikedFilesZip()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) { 
+                    Text("CREATE ZIP", color = Color.White) 
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showShareZipDialog = false }) { 
+                    Text("Cancel") 
                 }
             }
         )
@@ -1220,53 +1333,114 @@ fun MusicPlayerScreen(
                                             ) {
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.Center
+                                                    horizontalArrangement = Arrangement.Center,
+                                                    modifier = Modifier.fillMaxWidth()
                                                 ) {
-                                                    // Add icons for different playlist types
-                                                    when (tab) {
-                                                        PlaylistTab.TODO -> {
-                                                            Icon(
-                                                                Icons.AutoMirrored.Filled.PlaylistPlay,
-                                                                contentDescription = "To Do",
-                                                                modifier = Modifier.size(14.dp),
-                                                                tint = if (isSelected) Color.White else Color.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(2.dp))
-                                                        }
-                                                        PlaylistTab.LIKED -> {
-                                                            Icon(
-                                                                Icons.Default.Favorite,
-                                                                contentDescription = "Liked",
-                                                                modifier = Modifier.size(14.dp),
-                                                                tint = if (isSelected) Color.White else Color.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(2.dp))
-                                                        }
-                                                        PlaylistTab.REJECTED -> {
-                                                            Icon(
-                                                                Icons.Default.ThumbDown,
-                                                                contentDescription = "Rejected",
-                                                                modifier = Modifier.size(14.dp),
-                                                                tint = if (isSelected) Color.White else Color.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(2.dp))
+                                                    // Icon column - centered
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        modifier = Modifier.weight(0.3f)
+                                                    ) {
+                                                        when (tab) {
+                                                            PlaylistTab.TODO -> {
+                                                                Icon(
+                                                                    Icons.AutoMirrored.Filled.PlaylistPlay,
+                                                                    contentDescription = "To Do",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
+                                                            }
+                                                            PlaylistTab.LIKED -> {
+                                                                Icon(
+                                                                    Icons.Default.Favorite,
+                                                                    contentDescription = "Liked",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
+                                                            }
+                                                            PlaylistTab.REJECTED -> {
+                                                                Icon(
+                                                                    Icons.Default.ThumbDown,
+                                                                    contentDescription = "Rejected",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
+                                                            }
                                                         }
                                                     }
                                                     
-                                                    Text(
-                                                        text = when (tab) {
-                                                            PlaylistTab.TODO -> "To Do (${musicFiles.size})"
-                                                            PlaylistTab.LIKED -> "Liked (${likedFiles.size})"
-                                                            PlaylistTab.REJECTED -> "Rejected (${rejectedFiles.size})"
-                                                        },
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = if (isSelected) Color.White else Color.Black,
-                                                        textAlign = TextAlign.Center,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
+                                                    // No spacing between columns
+                                                    Spacer(modifier = Modifier.width(0.dp))
+                                                    
+                                                    // Text column - centered
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        modifier = Modifier.weight(0.7f)
+                                                    ) {
+                                                        Text(
+                                                            text = when (tab) {
+                                                                PlaylistTab.TODO -> "To Do"
+                                                                PlaylistTab.LIKED -> "Liked"
+                                                                PlaylistTab.REJECTED -> "Rejected"
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = if (isSelected) Color.White else Color.Black,
+                                                            textAlign = TextAlign.Center,
+                                                            maxLines = 1
+                                                        )
+                                                        Text(
+                                                            text = when (tab) {
+                                                                PlaylistTab.TODO -> "(${musicFiles.size} files)"
+                                                                PlaylistTab.LIKED -> "(${likedFiles.size} files)"
+                                                                PlaylistTab.REJECTED -> "(${rejectedFiles.size} files)"
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                            color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.7f),
+                                                            textAlign = TextAlign.Center,
+                                                            maxLines = 1
+                                                        )
+                                                    }
                                                 }
                                             }
+                                        }
+                                    }
+                                    
+                                    // Always show action button - changes based on playlist
+                                    if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                        // Share as ZIP button for liked files
+                                        IconButton(
+                                            onClick = { 
+                                                // Show confirmation dialog for ZIP sharing
+                                                showShareZipDialog = true
+                                            },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Archive,
+                                                contentDescription = "Share Liked as ZIP",
+                                                tint = Color(0xFF4CAF50),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    } else {
+                                        // Delete all button for TODO and REJECTED playlists
+                                        IconButton(
+                                            onClick = { 
+                                                // Show double warning confirmation
+                                                showDeleteAllDialog = true
+                                            },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = when (currentPlaylistTab) {
+                                                    PlaylistTab.REJECTED -> "Delete All Rejected Files"
+                                                    PlaylistTab.TODO -> "Delete All To Do Files"
+                                                    else -> "Delete All Files"
+                                                },
+                                                tint = Color.Red,
+                                                modifier = Modifier.size(20.dp)
+                                            )
                                         }
                                     }
                                 }

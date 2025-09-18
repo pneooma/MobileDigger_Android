@@ -122,6 +122,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Current file for notification
     private var currentFile: MusicFile? = null
     
+    // State for search results
+    private val _searchResults = MutableStateFlow<List<MusicFile>>(emptyList())
+    val searchResults: StateFlow<List<MusicFile>> = _searchResults.asStateFlow()
+    
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> = _searchText.asStateFlow()
+    
     // Computed StateFlow for current playlist files - reactive to tab changes
     val currentPlaylistFiles: StateFlow<List<MusicFile>> = combine(
         _musicFiles,
@@ -257,7 +264,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 CrashLogger.log("MusicViewModel", "FileManager.loadMusicFiles completed with ${files.size} files")
                 
-                _musicFiles.value = files
+                _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
                 CrashLogger.log("MusicViewModel", "Updated musicFiles state")
                 
                 // Extract duration for all files in background (with error handling)
@@ -405,15 +412,43 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun playFile(file: MusicFile) {
-        val currentFiles = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
-        }
-        val index = currentFiles.indexOfFirst { it.uri == file.uri }
-        if (index >= 0) {
-            _currentIndex.value = index
-            loadCurrentFile()
+        // If the file is from a different playlist, switch to that playlist first
+        if (file.sourcePlaylist != _currentPlaylistTab.value) {
+            switchPlaylistTab(file.sourcePlaylist)
+            // After switching, the `currentPlaylistFiles` will update.
+            // We need to find the index in the *newly updated* currentPlaylistFiles.
+            // This is handled by a LaunchedEffect or similar in the Composable for _currentPlaylistTab change.
+            // For immediate playback, we'll re-find the index after a short delay or directly use the file.
+            // Given switchPlaylistTab also calls loadCurrentFile, we might just need to ensure the index is correct.
+            viewModelScope.launch {
+                delay(50) // Small delay to allow playlist switch to process
+                val updatedFiles = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
+                }
+                val index = updatedFiles.indexOfFirst { it.uri == file.uri }
+                if (index >= 0) {
+                    _currentIndex.value = index
+                    loadCurrentFile()
+                } else {
+                    _errorMessage.value = "Could not find file in the target playlist after switching."
+                }
+            }
+        } else {
+            // If the file is in the current playlist, proceed as before
+            val currentFiles = when (_currentPlaylistTab.value) {
+                PlaylistTab.TODO -> _musicFiles.value
+                PlaylistTab.LIKED -> _likedFiles.value
+                PlaylistTab.REJECTED -> _rejectedFiles.value
+            }
+            val index = currentFiles.indexOfFirst { it.uri == file.uri }
+            if (index >= 0) {
+                _currentIndex.value = index
+                loadCurrentFile()
+            } else {
+                _errorMessage.value = "File not found in current playlist."
+            }
         }
     }
     
@@ -431,7 +466,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun likeFile(file: MusicFile) {
         val updatedLikedFiles = _likedFiles.value.toMutableList()
         if (!updatedLikedFiles.any { it.uri == file.uri }) {
-            updatedLikedFiles.add(file)
+            updatedLikedFiles.add(file.copy(sourcePlaylist = PlaylistTab.LIKED))
             _likedFiles.value = updatedLikedFiles
             // Save to preferences
             val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
@@ -442,7 +477,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun dislikeFile(file: MusicFile) {
         val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
         if (!updatedRejectedFiles.any { it.uri == file.uri }) {
-            updatedRejectedFiles.add(file)
+            updatedRejectedFiles.add(file.copy(sourcePlaylist = PlaylistTab.REJECTED))
             _rejectedFiles.value = updatedRejectedFiles
             // Save to preferences
             val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
@@ -1356,7 +1391,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     emptyList()
                 }
                 withContext(Dispatchers.Main) {
-                    _likedFiles.value = likedFiles
+                    _likedFiles.value = likedFiles.map { it.copy(sourcePlaylist = PlaylistTab.LIKED) }
                     CrashLogger.log("MusicViewModel", "Updated liked files StateFlow with ${likedFiles.size} files")
                 }
             } catch (e: Exception) {
@@ -1380,7 +1415,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     emptyList()
                 }
                 withContext(Dispatchers.Main) {
-                    _rejectedFiles.value = rejectedFiles
+                    _rejectedFiles.value = rejectedFiles.map { it.copy(sourcePlaylist = PlaylistTab.REJECTED) }
                     CrashLogger.log("MusicViewModel", "Updated rejected files StateFlow with ${rejectedFiles.size} files")
                 }
             } catch (e: Exception) {
@@ -1408,5 +1443,28 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             loadRejectedFiles()
             CrashLogger.log("MusicViewModel", "Refreshed all playlists")
         }
+    }
+    
+    fun searchMusic(query: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            if (query.isBlank()) {
+                _searchResults.value = emptyList()
+                return@launch
+            }
+
+            val allFiles = (_musicFiles.value + _likedFiles.value + _rejectedFiles.value).distinctBy { it.uri }
+            val results = allFiles.filter { file ->
+                file.name.contains(query, ignoreCase = true)
+            }
+            _searchResults.value = results
+        }
+    }
+    
+    fun clearSearchResults() {
+        _searchResults.value = emptyList()
+    }
+    
+    fun updateSearchText(newText: String) {
+        _searchText.value = newText
     }
 }

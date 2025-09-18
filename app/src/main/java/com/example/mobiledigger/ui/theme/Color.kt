@@ -126,6 +126,73 @@ val MobileDiggerTheme = ThemeColors(
     onSurface = Color(0xFFE6E6E6)
 )
 
+// New Themes (5 more)
+val EarthyTheme = ThemeColors(
+    name = "Earthy",
+    primary = Color(0xFF6D4C41), // Brown
+    secondary = Color(0xFF8D6E63), // Light Brown
+    tertiary = Color(0xFFA1887F), // Lighter Brown
+    accent = Color(0xFF795548), // Medium Brown
+    background = Color(0xFF2E241F),
+    surface = Color(0xFF3E322E),
+    onBackground = Color(0xFFFBE9E7),
+    onSurface = Color(0xFFFBE9E7)
+)
+
+val VibrantTheme = ThemeColors(
+    name = "Vibrant",
+    primary = Color(0xFFE040FB), // Fuchsia
+    secondary = Color(0xFF7C4DFF), // Deep Purple
+    tertiary = Color(0xFF448AFF), // Blue Accent
+    accent = Color(0xFF00E5FF), // Cyan
+    background = Color(0xFF100010),
+    surface = Color(0xFF200020),
+    onBackground = Color(0xFFF3E5F5),
+    onSurface = Color(0xFFF3E5F5)
+)
+
+val MonochromeTheme = ThemeColors(
+    name = "Monochrome",
+    primary = Color(0xFF424242), // Dark Grey
+    secondary = Color(0xFF616161), // Medium Grey
+    tertiary = Color(0xFF9E9E9E), // Light Grey
+    accent = Color(0xFFBDBDBD), // Lighter Grey
+    background = Color(0xFF000000),
+    surface = Color(0xFF1F1F1F),
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onTertiary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White
+)
+
+val RetroTheme = ThemeColors(
+    name = "Retro",
+    primary = Color(0xFFF44336), // Red
+    secondary = Color(0xFFE91E63), // Pink
+    tertiary = Color(0xFF9C27B0), // Purple
+    accent = Color(0xFF673AB7), // Deep Purple
+    background = Color(0xFF1F0000),
+    surface = Color(0xFF3F0000),
+    onBackground = Color(0xFFFFFDE7),
+    onSurface = Color(0xFFFFFDE7)
+)
+
+val HighContrastTheme = ThemeColors(
+    name = "HighContrast",
+    primary = Color(0xFF000000), // Black
+    secondary = Color(0xFFFFFFFF), // White
+    tertiary = Color(0xFF00FF00), // Bright Green
+    accent = Color(0xFFFFFF00), // Yellow
+    background = Color(0xFFFFFFFF),
+    surface = Color(0xFFE0E0E0),
+    onPrimary = Color.White,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.Black,
+    onSurface = Color.Black
+)
+
 // All available themes
 val AvailableThemes = listOf(
     MobileDiggerTheme,
@@ -134,5 +201,10 @@ val AvailableThemes = listOf(
     ForestTheme,
     PurpleTheme,
     MidnightTheme,
-    CoralTheme
+    CoralTheme,
+    EarthyTheme,
+    VibrantTheme,
+    MonochromeTheme,
+    RetroTheme,
+    HighContrastTheme
 )

@@ -125,9 +125,14 @@ fun MusicPlayerScreen(
     var showVisualSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
+    var showRescanSourceDialog by remember { mutableStateOf(false) } // Added state for rescan source dialog
+    var showSearchInput by remember { mutableStateOf(false) } // New state to control search input visibility
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
+    
+    val currentSearchText by viewModel.searchText.collectAsState() // Moved here
+    val searchResults by viewModel.searchResults.collectAsState() // Moved here
     
     // Multi-selection state
     val selectedIndices by viewModel.selectedIndices.collectAsState()
@@ -450,12 +455,40 @@ fun MusicPlayerScreen(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
+            // Added Search button
+            IconButton(
+                onClick = { 
+                    showSearchInput = !showSearchInput 
+                    if (!showSearchInput) { // Clear search when hiding input
+                        viewModel.updateSearchText("")
+                        viewModel.clearSearchResults()
+                    }
+                },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            // Added Rescan Source button
+            IconButton(
+                onClick = { viewModel.rescanSourceFolder() },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Icon(
+                    Icons.Default.Sync,
+                    contentDescription = "Rescan Source",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
             if (hasSourceFolder) { // Show actions when music files are loaded
                 var menuExpanded by remember { mutableStateOf(false) }
                 OutlinedButton(
                     onClick = { menuExpanded = true },
-                    shape = RoundedCornerShape(visualSettings.buttonCornerRadius.dp),
+                    shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -668,6 +701,83 @@ fun MusicPlayerScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             
+            // Search Input Field with Dropdown (moved here from AlertDialog)
+            if (showSearchInput) { // Conditionally display search input
+                var searchExpanded by remember { mutableStateOf(false) }
+                // val currentSearchText by viewModel.searchText.collectAsState() // Removed
+                // val searchResults by viewModel.searchResults.collectAsState() // Removed
+
+                ExposedDropdownMenuBox(
+                    expanded = searchExpanded,
+                    onExpandedChange = { searchExpanded = !searchExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = currentSearchText,
+                        onValueChange = { newValue ->
+                            viewModel.updateSearchText(newValue)
+                            if (newValue.isNotBlank()) {
+                                viewModel.searchMusic(newValue)
+                                searchExpanded = true
+                            } else {
+                                viewModel.clearSearchResults()
+                                searchExpanded = false
+                            }
+                        },
+                        label = { Text("Search Music") },
+                        trailingIcon = {
+                            if (currentSearchText.isNotBlank()) {
+                                IconButton(onClick = {
+                                    viewModel.updateSearchText("")
+                                    viewModel.clearSearchResults()
+                                    searchExpanded = false
+                                }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear Search")
+                                }
+                            } else {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = searchExpanded)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    if (currentSearchText.isNotBlank() && searchResults.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = searchExpanded,
+                            onDismissRequest = { searchExpanded = false },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            searchResults.forEach { musicFile ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(musicFile.name)
+                                            Text(
+                                                "Source: ${musicFile.sourcePlaylist.toString()}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.playFile(musicFile)
+                                        // After playing, hide search input and clear results
+                                        showSearchInput = false 
+                                        searchExpanded = false
+                                        viewModel.clearSearchResults()
+                                        viewModel.updateSearchText("")
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            
             if (isLoading) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -761,7 +871,7 @@ fun MusicPlayerScreen(
                                                 Modifier.border(
                                                     width = 3.dp,
                                                     color = borderColor,
-                                                    shape = RoundedCornerShape(visualSettings.cardCornerRadius.dp)
+                                                    shape = RoundedCornerShape(12.dp)
                                                 )
                                             } else {
                                                 Modifier
@@ -843,7 +953,7 @@ fun MusicPlayerScreen(
                                             },
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(visualSettings.waveformHeight.dp)
+                                                .height(80.dp)
                                         )
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -871,7 +981,7 @@ fun MusicPlayerScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.fillMaxWidth()
     ) {
-                                            IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(visualSettings.controlButtonSize.dp)) {
+                                            IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(40.dp)) {
                                                 Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(24.dp))
                                             }
                                             
@@ -886,12 +996,12 @@ fun MusicPlayerScreen(
                                             IconButton(onClick = { 
                                                 if (visualSettings.enableHapticFeedback) hapticFeedback(HapticType.Light)
                                                 viewModel.next() 
-                                            }, modifier = Modifier.size(visualSettings.controlButtonSize.dp)) {
+                                            }, modifier = Modifier.size(40.dp)) {
                                                 Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(24.dp))
                                             }
                                             
                                             // Share to WhatsApp Button
-                                            IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(visualSettings.controlButtonSize.dp)) {
+                                            IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(40.dp)) {
                                                 Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color(0xFF25D366), modifier = Modifier.size(20.dp))
                                             }
                                             
@@ -1177,6 +1287,66 @@ fun MusicPlayerScreen(
                                                 PlaylistTab.TODO -> "Select a source folder and rescan to load music files"
                                                 PlaylistTab.LIKED -> "Like songs from the To Do playlist to see them here"
                                                 PlaylistTab.REJECTED -> "Reject songs from the To Do playlist to see them here"
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            textAlign = TextAlign.Center,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Conditionally display search results or current playlist files (reverted to original)
+                        val displayFiles = currentPlaylistFiles // Search results handled within dropdown
+
+                        if (displayFiles.isEmpty()) {
+                            item {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Icon(
+                                            Icons.Default.MusicNote,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(48.dp),
+                                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = if (currentSearchText.isNotBlank()) {
+                                                "No songs found matching \"$currentSearchText\""
+                                            } else {
+                                                when (currentPlaylistTab) {
+                                                    PlaylistTab.TODO -> "No music files in To Do playlist"
+                                                    PlaylistTab.LIKED -> "No liked files yet"
+                                                    PlaylistTab.REJECTED -> "No rejected files yet"
+                                                }
+                                            },
+                                            style = MaterialTheme.typography.titleMedium,
+                                            textAlign = TextAlign.Center,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = if (currentSearchText.isNotBlank()) {
+                                                "Try a different search term or clear the search."
+                                            } else {
+                                                when (currentPlaylistTab) {
+                                                    PlaylistTab.TODO -> "Select a source folder and rescan to load music files"
+                                                    PlaylistTab.LIKED -> "Like songs from the To Do playlist to see them here"
+                                                    PlaylistTab.REJECTED -> "Reject songs from the To Do playlist to see them here"
+                                                }
                                             },
                                             style = MaterialTheme.typography.bodyMedium,
                                             textAlign = TextAlign.Center,

@@ -552,6 +552,7 @@ class FileManager(private val context: Context) {
             false
         }
     }
+
     
     // Create liked files text file in cache for sharing
     suspend fun createLikedFilesTxt(): java.io.File? = withContext(Dispatchers.IO) {

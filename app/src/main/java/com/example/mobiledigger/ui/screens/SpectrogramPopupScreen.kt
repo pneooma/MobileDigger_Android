@@ -703,10 +703,11 @@ private fun generateComprehensiveSpectrogramImage(
         canvas.drawText("Waveform", 60f, yPos + 10f, headerPaint)
         yPos += 50f
         
-        // Draw waveform
-        val waveformWidth = width - 120f
+        // Draw waveform (matching spectrogram width and position)
+        val waveformWidth = (width - 200f) * 0.7f  // Same as spectrogram width
         val waveformHeight = 100f
-        val waveformRect = android.graphics.RectF(60f, yPos, 60f + waveformWidth, yPos + waveformHeight)
+        val waveformStartX = 120f  // Same as spectrogram position
+        val waveformRect = android.graphics.RectF(waveformStartX, yPos, waveformStartX + waveformWidth, yPos + waveformHeight)
         
         // Background for waveform
         val waveformBgPaint = android.graphics.Paint().apply {
@@ -725,7 +726,7 @@ private fun generateComprehensiveSpectrogramImage(
         val maxAmplitude = waveformData.maxOrNull()?.toFloat() ?: 1f
         
         for (i in 0 until minOf(waveformData.size, waveformWidth.toInt())) {
-            val x = 60f + (i * waveformWidth / waveformData.size)
+            val x = waveformStartX + (i * waveformWidth / waveformData.size)
             val amplitude = (waveformData[i].toFloat() / maxAmplitude) * (waveformHeight / 2f)
             canvas.drawLine(x, centerY - amplitude, x, centerY + amplitude, waveformPaint)
         }
@@ -740,10 +741,11 @@ private fun generateComprehensiveSpectrogramImage(
     canvas.drawText("Frequency Spectrogram", 60f, yPos + 10f, headerPaint)
     yPos += 60f
     
-    // Draw spectrogram
-    val spectrogramWidth = width - 120f
+    // Draw spectrogram (30% smaller horizontally)
+    val spectrogramWidth = (width - 200f) * 0.7f  // 30% smaller, extra margin for labels
     val spectrogramHeight = 400f
-    val spectrogramRect = android.graphics.RectF(60f, yPos, 60f + spectrogramWidth, yPos + spectrogramHeight)
+    val spectrogramStartX = 120f  // More space for frequency labels
+    val spectrogramRect = android.graphics.RectF(spectrogramStartX, yPos, spectrogramStartX + spectrogramWidth, yPos + spectrogramHeight)
     
     // Scale and draw the spectrogram bitmap
     val scaledSpectrogram = Bitmap.createScaledBitmap(
@@ -752,17 +754,25 @@ private fun generateComprehensiveSpectrogramImage(
         spectrogramHeight.toInt(),
         true
     )
-    canvas.drawBitmap(scaledSpectrogram, 60f, yPos, null)
+    canvas.drawBitmap(scaledSpectrogram, spectrogramStartX, yPos, null)
     
-    // Frequency labels
-    canvas.drawText("22 kHz", 60f + spectrogramWidth + 10f, yPos + 20f, smallPaint)
-    canvas.drawText("11 kHz", 60f + spectrogramWidth + 10f, yPos + spectrogramHeight / 2f, smallPaint)
-    canvas.drawText("0 Hz", 60f + spectrogramWidth + 10f, yPos + spectrogramHeight - 10f, smallPaint)
+    // Frequency labels (moved to left side for better visibility)
+    val freqLabelPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 18f
+        color = android.graphics.Color.parseColor("#64748b")
+        textAlign = android.graphics.Paint.Align.RIGHT
+    }
+    canvas.drawText("22 kHz", spectrogramStartX - 10f, yPos + 20f, freqLabelPaint)
+    canvas.drawText("16 kHz", spectrogramStartX - 10f, yPos + spectrogramHeight * 0.2f, freqLabelPaint)
+    canvas.drawText("11 kHz", spectrogramStartX - 10f, yPos + spectrogramHeight * 0.5f, freqLabelPaint)
+    canvas.drawText("5 kHz", spectrogramStartX - 10f, yPos + spectrogramHeight * 0.75f, freqLabelPaint)
+    canvas.drawText("0 Hz", spectrogramStartX - 10f, yPos + spectrogramHeight - 10f, freqLabelPaint)
     
     // Time labels
-    canvas.drawText("0s", 60f, yPos + spectrogramHeight + 25f, smallPaint)
+    canvas.drawText("0s", spectrogramStartX, yPos + spectrogramHeight + 25f, smallPaint)
     val timeText = "${imageEffectiveDuration / 1000}s"
-    canvas.drawText(timeText, 60f + spectrogramWidth - 50f, yPos + spectrogramHeight + 25f, smallPaint)
+    canvas.drawText(timeText, spectrogramStartX + spectrogramWidth - 50f, yPos + spectrogramHeight + 25f, smallPaint)
     
     yPos += spectrogramHeight + 60f
     

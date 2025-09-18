@@ -34,6 +34,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.cancelChildren
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.ResourceManager
 import java.util.zip.ZipEntry
@@ -98,13 +100,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _destinationFolder = MutableStateFlow<androidx.documentfile.provider.DocumentFile?>(null)
     val destinationFolder: StateFlow<androidx.documentfile.provider.DocumentFile?> = _destinationFolder.asStateFlow()
     
-    private val _zipInProgress = MutableStateFlow(false)
-    val zipInProgress: StateFlow<Boolean> = _zipInProgress.asStateFlow()
-
-    private val _zipProgress = MutableStateFlow<Int>(0)
-    val zipProgress: StateFlow<Int> = _zipProgress.asStateFlow()
-    
-    
     // Delete rejected files prompt
     private val _showDeleteRejectedPrompt = MutableStateFlow(false)
     val showDeleteRejectedPrompt: StateFlow<Boolean> = _showDeleteRejectedPrompt.asStateFlow()
@@ -115,6 +110,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private val _isDeletingFiles = MutableStateFlow(false)
     val isDeletingFiles: StateFlow<Boolean> = _isDeletingFiles.asStateFlow()
+
+    // StateFlow for ZIP creation progress tracking (Int 0-100 to match existing implementation)
+    private val _zipProgress = MutableStateFlow(0)
+    val zipProgress: StateFlow<Int> = _zipProgress.asStateFlow()
+
+    private val _zipInProgress = MutableStateFlow(false)
+    val zipInProgress: StateFlow<Boolean> = _zipInProgress.asStateFlow()
     
     // Tabbed playlist states
     private val _currentPlaylistTab = MutableStateFlow(PlaylistTab.TODO)
@@ -729,6 +731,64 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
         }
     }
+
+    fun updateFileRating(file: MusicFile, rating: Int) {
+        viewModelScope.launch {
+            try {
+                val clampedRating = rating.coerceIn(0, 5)
+                
+                // Update the file in all relevant lists
+                updateFileInList(_musicFiles, file, rating = clampedRating)
+                updateFileInList(_likedFiles, file, rating = clampedRating)
+                updateFileInList(_rejectedFiles, file, rating = clampedRating)
+                
+                // Save rating to metadata as comment
+                saveRatingToMetadata(file, clampedRating)
+                
+                _errorMessage.value = if (clampedRating > 0) {
+                    "Rated ${file.name} with $clampedRating stars"
+                } else {
+                    "Removed rating from ${file.name}"
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error updating file rating", e)
+                _errorMessage.value = "Error updating rating: ${e.message}"
+            }
+        }
+    }
+
+    private fun updateFileInList(
+        stateFlow: MutableStateFlow<List<MusicFile>>, 
+        targetFile: MusicFile, 
+        rating: Int? = null,
+        bpm: Int? = null
+    ) {
+        val currentList = stateFlow.value.toMutableList()
+        val index = currentList.indexOfFirst { it.uri == targetFile.uri }
+        if (index != -1) {
+            val updatedFile = currentList[index].copy(
+                rating = rating ?: currentList[index].rating,
+                bpm = bpm ?: currentList[index].bpm
+            )
+            currentList[index] = updatedFile
+            stateFlow.value = currentList
+        }
+    }
+
+    private suspend fun saveRatingToMetadata(file: MusicFile, rating: Int) {
+        withContext(Dispatchers.IO) {
+            try {
+                val comment = if (rating > 0) "stars $rating" else ""
+                // TODO: Implement actual metadata writing
+                // This would typically use MediaMetadataRetriever or similar
+                CrashLogger.log("MusicViewModel", "Saving rating $rating to file ${file.name} metadata as comment: '$comment'")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error saving rating to metadata", e)
+            }
+        }
+    }
+
+
     
     
     private fun loadCurrentFile() {
@@ -755,6 +815,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         if (isAiffFile) {
             CrashLogger.log("MusicViewModel", "Loading AIFF file: ${currentFile.name}")
         }
+        
+        // Check memory before loading file and clear caches if needed
+        checkMemoryPressureAndCleanup()
         
         // Call playFile directly (no longer a suspend function)
         val started = audioManager.playFile(currentFile)
@@ -956,44 +1019,107 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private fun startPositionUpdates() {
         viewModelScope.launch {
-            while (true) {
-                kotlinx.coroutines.delay(100) // Update every 100ms
-                
-                if (_isPlaying.value) {
-                    _currentPosition.value = audioManager.getCurrentPosition()
-                    _duration.value = audioManager.getDuration()
+            try {
+                while (isActive) { // Check if coroutine is still active
+                    kotlinx.coroutines.delay(100) // Update every 100ms
+                    
+                    if (_isPlaying.value && isActive) { // Double check we're still active
+                        try {
+                            _currentPosition.value = audioManager.getCurrentPosition()
+                            _duration.value = audioManager.getDuration()
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error updating position", e)
+                        }
+                    }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                CrashLogger.log("MusicViewModel", "Position updates cancelled")
+                throw e // Re-throw to properly handle cancellation
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error in position updates", e)
             }
         }
     }
     
     private fun startPeriodicCacheClearing() {
         viewModelScope.launch(Dispatchers.IO) {
-            while (true) {
-                kotlinx.coroutines.delay(300000) // Clear caches every 5 minutes
-                try {
-                    // Check memory usage before clearing
-                    val runtime = Runtime.getRuntime()
-                    val usedMemory = runtime.totalMemory() - runtime.freeMemory()
-                    val maxMemory = runtime.maxMemory()
-                    val memoryUsagePercent = (usedMemory * 100) / maxMemory
+            try {
+                while (isActive) { // Check if coroutine is still active
+                    kotlinx.coroutines.delay(300000) // Clear caches every 5 minutes
                     
-                    if (memoryUsagePercent > 60) { // Clear if using more than 60% of memory
-                        audioManager.clearAllCaches()
-                        System.gc() // Suggest garbage collection
-                        CrashLogger.log("MusicViewModel", "Periodic cache clearing completed (memory usage: ${memoryUsagePercent}%)")
-                    } else {
-                        CrashLogger.log("MusicViewModel", "Memory usage acceptable (${memoryUsagePercent}%), skipping cache clear")
+                    if (!isActive) break // Exit if cancelled
+                    
+                    try {
+                        // Check memory usage before clearing
+                        val runtime = Runtime.getRuntime()
+                        val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+                        val maxMemory = runtime.maxMemory()
+                        val memoryUsagePercent = (usedMemory * 100) / maxMemory
+                        
+                        if (memoryUsagePercent > 50) { // Clear if using more than 50% of memory (more aggressive)
+                            audioManager.clearAllCaches()
+                            System.gc() // Suggest garbage collection
+                            CrashLogger.log("MusicViewModel", "Periodic cache clearing completed (memory usage: ${memoryUsagePercent}%)")
+                        } else {
+                            CrashLogger.log("MusicViewModel", "Memory usage acceptable (${memoryUsagePercent}%), skipping cache clear")
+                        }
+                    } catch (e: Exception) {
+                        if (isActive) { // Only log if not cancelled
+                            CrashLogger.log("MusicViewModel", "Error during periodic cache clearing", e)
+                        }
                     }
-                } catch (e: Exception) {
-                    CrashLogger.log("MusicViewModel", "Error during periodic cache clearing", e)
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                CrashLogger.log("MusicViewModel", "Periodic cache clearing cancelled")
+                throw e // Re-throw to properly handle cancellation
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error in periodic cache clearing", e)
             }
         }
     }
     
     fun clearError() {
         _errorMessage.value = null
+    }
+    
+    /**
+     * Check memory pressure and perform emergency cleanup if needed
+     */
+    private fun checkMemoryPressureAndCleanup() {
+        try {
+            val runtime = Runtime.getRuntime()
+            val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+            val maxMemory = runtime.maxMemory()
+            val memoryUsagePercent = (usedMemory * 100) / maxMemory
+            
+            when {
+                memoryUsagePercent > 85 -> {
+                    // Emergency cleanup
+                    CrashLogger.log("MusicViewModel", "EMERGENCY: Memory usage at ${memoryUsagePercent}%, performing aggressive cleanup")
+                    audioManager.clearAllCaches()
+                    System.gc()
+                    // Clear waveform cache by direct import
+                    try {
+                        com.example.mobiledigger.ui.components.clearWaveformCache()
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Could not clear waveform cache", e)
+                    }
+                }
+                memoryUsagePercent > 70 -> {
+                    // High memory usage - clear caches
+                    CrashLogger.log("MusicViewModel", "High memory usage detected: ${memoryUsagePercent}%, clearing caches")
+                    audioManager.clearAllCaches()
+                    System.gc()
+                }
+                memoryUsagePercent > 60 -> {
+                    // Moderate memory usage - suggestion GC only
+                    CrashLogger.log("MusicViewModel", "Moderate memory usage: ${memoryUsagePercent}%, suggesting GC")
+                    System.gc()
+                }
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error checking memory pressure", e)
+        }
     }
     
     // Enhanced error handling
@@ -1248,19 +1374,43 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     override fun onCleared() {
         super.onCleared()
         try {
-            context.unregisterReceiver(notificationReceiver)
+            CrashLogger.log("MusicViewModel", "ViewModel being cleared, cleaning up resources")
+            
+            // Cancel all running coroutines in viewModelScope
+            viewModelScope.coroutineContext.cancelChildren()
+            
+            // Stop playback first
+            stopPlayback()
+            
+            // Unregister broadcast receiver
+            try {
+                context.unregisterReceiver(notificationReceiver)
+                CrashLogger.log("MusicViewModel", "Notification receiver unregistered")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Receiver was not registered or already unregistered")
+            }
+            
+            // Release audio manager and clear all caches
+            audioManager.clearAllCaches()
+            audioManager.release()
+            
+            // Force garbage collection
+            System.gc()
+            
+            CrashLogger.log("MusicViewModel", "ViewModel cleanup completed")
         } catch (e: Exception) {
-            // Receiver might not be registered
+            CrashLogger.log("MusicViewModel", "Error during ViewModel cleanup", e)
         }
-        audioManager.release()
     }
 
+    private var zipJob: kotlinx.coroutines.Job? = null
+    
     fun startShareLikedZip(background: Boolean = true) {
         if (_zipInProgress.value) return
         _zipInProgress.value = true
         _zipProgress.value = 0
         val scope = if (background) viewModelScope else viewModelScope
-        scope.launch(Dispatchers.IO) {
+        zipJob = scope.launch(Dispatchers.IO) {
             try {
                 val destination = fileManager.getDestinationFolder()
                 val liked = destination?.findFile("Liked") ?: destination?.findFile("I DIG")
@@ -1317,6 +1467,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             } finally {
                 _zipInProgress.value = false
             }
+        }
+    }
+    
+    fun cancelZipCreation() {
+        try {
+            zipJob?.cancel()
+            zipJob = null
+            _zipInProgress.value = false
+            _zipProgress.value = 0
+            _errorMessage.value = "ZIP creation cancelled"
+            CrashLogger.log("MusicViewModel", "ZIP creation cancelled by user")
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error cancelling ZIP creation", e)
         }
     }
 

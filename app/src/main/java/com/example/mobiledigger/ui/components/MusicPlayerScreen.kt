@@ -58,6 +58,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.ui.theme.DislikeRed
 import com.example.mobiledigger.ui.theme.GreenAccent
@@ -136,6 +141,8 @@ fun MusicPlayerScreen(
     var showDeleteDialogStep by remember { mutableStateOf(0) }
     var showRescanSourceDialog by remember { mutableStateOf(false) } // Added state for rescan source dialog
     var showSearchInput by remember { mutableStateOf(false) } // New state to control search input visibility
+    val searchFocusRequester = remember { FocusRequester() }
+    val scope = rememberCoroutineScope()
     var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
     var showDeleteAllDialog by remember { mutableStateOf(false) } // State for delete all confirmation
     var showShareZipDialog by remember { mutableStateOf(false) } // State for ZIP sharing confirmation
@@ -280,12 +287,11 @@ fun MusicPlayerScreen(
                         when (currentPlaylistTab) {
                             PlaylistTab.REJECTED -> viewModel.deleteRejectedFiles()
                             PlaylistTab.TODO -> {
-                                // TODO: Implement deleteAllTodoFiles()
-                                // viewModel.deleteAllTodoFiles()
+                                // TODO files don't have a specific delete function yet
+                                // For now, just show a message
                             }
                             PlaylistTab.LIKED -> {
-                                // TODO: Implement deleteAllLikedFiles()
-                                // viewModel.deleteAllLikedFiles()
+                                showDeleteDialogStep = 1 // Use existing liked files delete flow
                             }
                         }
                     },
@@ -330,8 +336,7 @@ fun MusicPlayerScreen(
                 Button(
                     onClick = { 
                         showShareZipDialog = false
-                        // TODO: Implement createLikedFilesZip function
-                        // viewModel.createLikedFilesZip()
+                        viewModel.startShareLikedZip(true)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) { 
@@ -667,10 +672,70 @@ fun MusicPlayerScreen(
                     }
             }
         }
-        // Pinned progress bar just under header
+        // ZIP progress indicator at top of screen
         if (zipInProgress) {
-            Spacer(Modifier.height(8.dp))
-            LinearProgressIndicator(progress = { zipProgress / 100f }, modifier = Modifier.fillMaxWidth())
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Creating ZIP archive...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Listen to a nice song because it will take a while. 🎵",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        progress = { zipProgress / 100f },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "$zipProgress%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        
+                        Button(
+                            onClick = { viewModel.cancelZipCreation() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Text(
+                                text = "Cancel",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
         }
         
         // Subtle message for missing folder selection
@@ -827,8 +892,14 @@ fun MusicPlayerScreen(
             // Search Input Field with Dropdown (moved here from AlertDialog)
             if (showSearchInput) { // Conditionally display search input
                 var searchExpanded by remember { mutableStateOf(false) }
-                // val currentSearchText by viewModel.searchText.collectAsState() // Removed
-                // val searchResults by viewModel.searchResults.collectAsState() // Removed
+                
+                // Auto-focus and show keyboard when search input becomes visible
+                LaunchedEffect(showSearchInput) {
+                    if (showSearchInput) {
+                        delay(100) // Small delay to ensure UI is ready
+                        searchFocusRequester.requestFocus()
+                    }
+                }
 
                 ExposedDropdownMenuBox(
                     expanded = searchExpanded,
@@ -839,12 +910,15 @@ fun MusicPlayerScreen(
                         value = currentSearchText,
                         onValueChange = { newValue ->
                             viewModel.updateSearchText(newValue)
-                            if (newValue.isNotBlank()) {
-                                viewModel.searchMusic(newValue)
-                                searchExpanded = true
-                            } else {
-                                viewModel.clearSearchResults()
-                                searchExpanded = false
+                            scope.launch { // Use the scope for delayed search
+                                delay(1500) // 1.5 second delay
+                                if (newValue == currentSearchText && newValue.isNotBlank()) {
+                                    viewModel.searchMusic(newValue)
+                                    searchExpanded = true
+                                } else if (newValue.isBlank()) {
+                                    viewModel.clearSearchResults()
+                                    searchExpanded = false
+                                }
                             }
                         },
                         label = { Text("Search Music") },
@@ -864,6 +938,7 @@ fun MusicPlayerScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor()
+                            .focusRequester(searchFocusRequester)
                     )
                     if (currentSearchText.isNotBlank() && searchResults.isNotEmpty()) {
                         ExposedDropdownMenu(
@@ -1070,11 +1145,12 @@ fun MusicPlayerScreen(
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
-                                        // Track details: Time, Bitrate, Size
+                                        // Track details: Time, Bitrate, Size, BPM
                                         val bitrate = calculateBitrate(file.size, file.duration)
                                         val fileSize = formatFileSize(file.size)
+                                        val bpmText = if (file.bpm > 0) " :: BPM ${file.bpm}" else ""
                                         Text(
-                                            text = ":: Time ${formatTime(file.duration)} :: Bitrate ${bitrate} kbps :: Size $fileSize ::",
+                                            text = ":: Time ${formatTime(file.duration)} :: Bitrate ${bitrate} kbps :: Size $fileSize$bpmText ::",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                                             textAlign = TextAlign.Center,
@@ -1116,68 +1192,106 @@ fun MusicPlayerScreen(
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
-                                        // Compact Playback Controls with Volume Popup
-    Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                        // Compact Playback Controls with Star Rating
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceEvenly,
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.fillMaxWidth()
-    ) {
-                                            IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(40.dp)) {
-                                                Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(24.dp))
-                                            }
-                                            
-                                            FloatingActionButton(onClick = { viewModel.playPause() }, modifier = Modifier.size(50.dp)) {
-            Icon(
-                if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                    if (isPlaying) "Pause" else "Play",
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                            }
-                                            
-                                            IconButton(onClick = { 
-                                                hapticFeedback()
-                                                viewModel.next() 
-                                            }, modifier = Modifier.size(40.dp)) {
-                                                Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(24.dp))
-                                            }
-                                            
-                                            // Share to WhatsApp Button
-                                            IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(40.dp)) {
-                                                Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color(0xFF25D366), modifier = Modifier.size(20.dp))
-                                            }
-                                            
-                                            // Spectrogram Button with Text
-                                            IconButton(
-                                                onClick = { 
-                                                    // Show spectrogram popup dialog
-                                                    showSpectrogram = true
-                                                }, 
-                                                modifier = Modifier.size(50.dp)
+                                        ) {
+                                            // Left side: Music controls
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Column(
-                                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                                    verticalArrangement = Arrangement.Center
-                                                ) {
-                                                    Text(
-                                                        text = "Sp",
-                                                        style = MaterialTheme.typography.labelMedium.copy(
-                                                            fontWeight = FontWeight.Bold
-                                                        ),
-                                                        color = Color(0xFFFFB6C1), // Light Pink
-                                                        textAlign = TextAlign.Center
+                                                IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(36.dp)) {
+                                                    Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(20.dp))
+                                                }
+                                                
+                                                FloatingActionButton(onClick = { viewModel.playPause() }, modifier = Modifier.size(44.dp)) {
+                                                    Icon(
+                                                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                        if (isPlaying) "Pause" else "Play",
+                                                        modifier = Modifier.size(22.dp)
                                                     )
-                                                    Text(
-                                                        text = "eK",
-                                                        style = MaterialTheme.typography.labelMedium.copy(
-                                                            fontWeight = FontWeight.Bold
-                                                        ),
-                                                        color = Color(0xFFFFB6C1), // Light Pink
-                                                        textAlign = TextAlign.Center
-                                                    )
+                                                }
+                                                
+                                                IconButton(onClick = { 
+                                                    hapticFeedback()
+                                                    viewModel.next() 
+                                                }, modifier = Modifier.size(36.dp)) {
+                                                    Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(20.dp))
                                                 }
                                             }
                                             
-                                            // Rating Button removed as requested
+                                            // Center: Star Rating (increased size)
+                                            Row(
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                repeat(5) { starIndex ->
+                                                    IconButton(
+                                                        onClick = {
+                                                            val newRating = starIndex + 1
+                                                            viewModel.updateFileRating(file, newRating)
+                                                        },
+                                                        modifier = Modifier.size(36.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = if (starIndex < file.rating) 
+                                                                Icons.Default.Star 
+                                                            else 
+                                                                Icons.Default.StarOutline,
+                                                            contentDescription = "Rate ${starIndex + 1} stars",
+                                                            tint = if (starIndex < file.rating) 
+                                                                Color(0xFFFFD700) // Gold color
+                                                            else 
+                                                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                                                            modifier = Modifier.size(27.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Right side: Share and SpEK
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Share to WhatsApp Button
+                                                IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(36.dp)) {
+                                                    Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color(0xFF25D366), modifier = Modifier.size(18.dp))
+                                                }
+                                                
+                                                // Spectrogram Button with Text
+                                                IconButton(
+                                                    onClick = { 
+                                                        showSpectrogram = true
+                                                    }, 
+                                                    modifier = Modifier.size(44.dp)
+                                                ) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        verticalArrangement = Arrangement.Center
+                                                    ) {
+                                                        Text(
+                                                            text = "Sp",
+                                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                                fontWeight = FontWeight.Bold
+                                                            ),
+                                                            color = Color(0xFFFFB6C1), // Light Pink
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                        Text(
+                                                            text = "eK",
+                                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                                fontWeight = FontWeight.Bold
+                                                            ),
+                                                            color = Color(0xFFFFB6C1), // Light Pink
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }

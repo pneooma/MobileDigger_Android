@@ -16,8 +16,8 @@ import android.content.Context
 // Extension function for number formatting
 private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
-// Optimized LRU cache for waveform data with size limit
-private const val MAX_WAVEFORM_CACHE_SIZE = 15 // Limit to 15 waveforms
+// Optimized LRU cache for waveform data with size limit (reduced for memory safety)
+private const val MAX_WAVEFORM_CACHE_SIZE = 8 // Limit to 8 waveforms for better memory management
 private val waveformCache = java.util.Collections.synchronizedMap(
     object : LinkedHashMap<String, IntArray>(MAX_WAVEFORM_CACHE_SIZE + 1, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, IntArray>?): Boolean {
@@ -320,3 +320,17 @@ data class SharedWaveformState(
     val isLoading: Boolean,
     val errorMessage: String?
 )
+
+/**
+ * Function to clear the waveform cache for memory management
+ */
+fun clearWaveformCache() {
+    try {
+        val oldSize = waveformCache.size
+        waveformCache.clear()
+        println("🧹 Waveform cache cleared: freed $oldSize entries")
+        System.gc()
+    } catch (e: Exception) {
+        println("❌ Error clearing waveform cache: ${e.message}")
+    }
+}

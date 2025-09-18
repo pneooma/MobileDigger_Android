@@ -75,8 +75,8 @@ class AudioManager(private val context: Context) {
     private var temporalResolution: Int = 5 // pixels per second
     private var isFFmpegPrepared = false
     
-    // Spectrogram cache with size limit to prevent memory leaks
-    private val maxCacheSize = 20 // Limit to 20 spectrograms
+    // Spectrogram cache with size limit to prevent memory leaks (reduced for memory safety)
+    private val maxCacheSize = 10 // Limit to 10 spectrograms for better memory management
     private val spectrogramCache = Collections.synchronizedMap(
         object : LinkedHashMap<String, ImageBitmap>(maxCacheSize + 1, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>?): Boolean {

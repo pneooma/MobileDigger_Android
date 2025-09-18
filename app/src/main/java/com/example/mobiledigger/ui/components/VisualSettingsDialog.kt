@@ -89,14 +89,14 @@ fun VisualSettingsDialog(
                         SliderSettingItem(
                             label = "Main Waveform Height",
                             value = currentSettings.waveformHeight,
-                            range = 40f..120f,
+                            range = 40f..150f,
                             onValueChange = { currentSettings = currentSettings.copy(waveformHeight = it) },
                             onReset = { currentSettings = currentSettings.copy(waveformHeight = settings.waveformHeight) }
                         )
                         SliderSettingItem(
                             label = "Mini Waveform Height",
                             value = currentSettings.miniWaveformHeight,
-                            range = 30f..80f,
+                            range = 30f..130f,
                             onValueChange = { currentSettings = currentSettings.copy(miniWaveformHeight = it) },
                             onReset = { currentSettings = currentSettings.copy(miniWaveformHeight = settings.miniWaveformHeight) }
                         )

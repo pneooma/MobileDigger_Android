@@ -43,7 +43,7 @@ enum class PlaylistTab {
     TODO, LIKED, REJECTED
 }
 
-class MusicViewModel(application: Application) : AndroidViewModel(application) {
+class MusicViewModel(application: Application) : AndroidViewModel(application), AudioManager.PlaybackCompletionListener {
     
     val audioManager = AudioManager(application)
     private val fileManager = FileManager(application)
@@ -166,6 +166,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Initialize audio manager first
             audioManager.initialize()
+            audioManager.setPlaybackCompletionListener(this) // Register listener
             startPositionUpdates()
             
             // Load playlists at startup
@@ -509,52 +510,54 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     
     fun sortCurrentFile(action: SortAction) {
-        val currentIndex = _currentIndex.value
-        val currentFiles = when (_currentPlaylistTab.value) {
+        val fileToSort = currentFile // Use the currently playing file
+        if (fileToSort == null) {
+            _errorMessage.value = "No current file selected to sort"
+            return
+        }
+        sortMusicFile(fileToSort, action)
+    }
+
+    private fun sortFileAtIndex(index: Int, action: SortAction) {
+        // This function will still be used for multi-selection where a specific index in the current view is sorted.
+        // It should get the MusicFile from the current view's list.
+        val files = when (_currentPlaylistTab.value) {
             PlaylistTab.TODO -> _musicFiles.value
             PlaylistTab.LIKED -> _likedFiles.value
             PlaylistTab.REJECTED -> _rejectedFiles.value
         }
-        if (currentFiles.isEmpty()) {
-            _errorMessage.value = "No files in current playlist to sort"
+        if (index !in files.indices) {
+            CrashLogger.log("MusicViewModel", "Invalid index for sorting: $index")
+            _errorMessage.value = "Invalid file selected for sorting."
             return
         }
-        if (currentIndex in currentFiles.indices) {
-            sortFileAtIndex(currentIndex, action)
-        } else {
-            _errorMessage.value = "No current file selected to sort"
-        }
+        val fileToSort = files[index]
+        sortMusicFile(fileToSort, action) // Delegate to the new function
     }
 
-    private fun sortFileAtIndex(index: Int, action: SortAction) {
+    private fun sortMusicFile(file: MusicFile, action: SortAction) {
         if (!fileManager.isDestinationSelected()) {
             _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
             return
         }
-
-        if (index !in _musicFiles.value.indices) {
-            CrashLogger.log("MusicViewModel", "Invalid index for sorting: $index")
-            return
-        }
-
-        val fileToSort = _musicFiles.value[index]
-        CrashLogger.log("MusicViewModel", "Sorting file: ${fileToSort.name} with action $action")
-
+        
+        CrashLogger.log("MusicViewModel", "Sorting file: ${file.name} with action $action, source: ${file.sourcePlaylist}")
+        
         viewModelScope.launch {
             try {
-                val success = fileManager.sortFile(fileToSort, action)
+                val success = fileManager.sortFile(file, action)
                 if (success) {
-                    handleSuccessfulSort(index, fileToSort, action)
+                    handleSuccessfulSort(file, action)
                 } else {
                     _errorMessage.value = "Failed to sort file. Please check folder permissions."
                 }
             } catch (e: Exception) {
-                handleError("sortFileAtIndex", e)
+                handleError("sortMusicFile", e)
             }
         }
     }
 
-    private fun handleSuccessfulSort(sortedIndex: Int, sortedFile: MusicFile, action: SortAction) {
+    private fun handleSuccessfulSort(sortedFile: MusicFile, action: SortAction) {
         try {
             when (action) {
                 SortAction.LIKE -> preferences.incrementLiked()
@@ -562,78 +565,98 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 else -> {}
             }
         } catch (_: Exception) {
+            // Log this but don't stop the main flow
+            CrashLogger.log("MusicViewModel", "Error incrementing preferences for sort action $action")
         }
 
         val sortResult = SortResult(sortedFile, action)
         _sortResults.value = _sortResults.value + sortResult
-
-        // Handle file removal based on current playlist tab
-        when (_currentPlaylistTab.value) {
+        
+        // Determine which list the file came from and remove it
+        when (sortedFile.sourcePlaylist) {
             PlaylistTab.TODO -> {
-                // Remove from TODO playlist (main music files)
                 val updatedFiles = _musicFiles.value.toMutableList()
-                if (sortedIndex in updatedFiles.indices) {
-                    updatedFiles.removeAt(sortedIndex)
+                val indexToRemove = updatedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                if (indexToRemove != -1) {
+                    updatedFiles.removeAt(indexToRemove)
                     _musicFiles.value = updatedFiles
 
-                    if (updatedFiles.isEmpty()) {
-                        _currentIndex.value = 0
+                    // Adjust current index and playback if the sorted file was the current one
+                    if (sortedFile.uri == currentFile?.uri) {
                         stopPlayback()
-                        _errorMessage.value = "Well done! Now select another folder!"
-                    } else {
-                        val wasCurrent = sortedIndex == _currentIndex.value
-                        val newIndex = when {
-                            _currentIndex.value >= updatedFiles.size -> updatedFiles.size - 1
-                            !wasCurrent && sortedIndex < _currentIndex.value -> _currentIndex.value - 1
-                            else -> _currentIndex.value
+                        _currentIndex.value = 0 // Reset index if currently playing song is removed
+                        if (updatedFiles.isNotEmpty()) {
+                            loadCurrentFile() // Load the new first file if playlist not empty
+                        } else {
+                            _errorMessage.value = "Well done! Now select another folder!"
                         }
-                        _currentIndex.value = newIndex
-                        if (wasCurrent) loadCurrentFile()
+                    } else if (indexToRemove < _currentIndex.value) {
+                        _currentIndex.value = _currentIndex.value - 1 // Shift index if file before it was removed
                     }
                 }
             }
             PlaylistTab.LIKED -> {
-                // Remove from liked playlist
                 val updatedLikedFiles = _likedFiles.value.toMutableList()
-                if (sortedIndex in updatedLikedFiles.indices) {
-                    updatedLikedFiles.removeAt(sortedIndex)
+                val indexToRemove = updatedLikedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                if (indexToRemove != -1) {
+                    updatedLikedFiles.removeAt(indexToRemove)
                     _likedFiles.value = updatedLikedFiles
                     
-                    // Adjust current index if needed
-                    if (_currentIndex.value >= updatedLikedFiles.size && updatedLikedFiles.isNotEmpty()) {
-                        _currentIndex.value = updatedLikedFiles.size - 1
-                    } else if (updatedLikedFiles.isEmpty()) {
-                        _currentIndex.value = 0
+                    // Adjust current index if currently playing from this list
+                    if (sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) {
                         stopPlayback()
+                        _currentIndex.value = 0 // Reset index
+                        if (updatedLikedFiles.isNotEmpty()) {
+                            loadCurrentFile()
+                        } else {
+                            _errorMessage.value = "No liked files left."
+                        }
+                    } else if (indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.LIKED) {
+                        _currentIndex.value = _currentIndex.value - 1
                     }
                 }
             }
             PlaylistTab.REJECTED -> {
-                // Remove from rejected playlist
                 val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
-                if (sortedIndex in updatedRejectedFiles.indices) {
-                    updatedRejectedFiles.removeAt(sortedIndex)
+                val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                if (indexToRemove != -1) {
+                    updatedRejectedFiles.removeAt(indexToRemove)
                     _rejectedFiles.value = updatedRejectedFiles
                     
-                    // Adjust current index if needed
-                    if (_currentIndex.value >= updatedRejectedFiles.size && updatedRejectedFiles.isNotEmpty()) {
-                        _currentIndex.value = updatedRejectedFiles.size - 1
-                    } else if (updatedRejectedFiles.isEmpty()) {
-                        _currentIndex.value = 0
+                    // Adjust current index if currently playing from this list
+                    if (sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
                         stopPlayback()
+                        _currentIndex.value = 0 // Reset index
+                        if (updatedRejectedFiles.isNotEmpty()) {
+                            loadCurrentFile()
+                        } else {
+                            _errorMessage.value = "No rejected files left."
+                        }
+                    } else if (indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
+                        _currentIndex.value = _currentIndex.value - 1
                     }
                 }
             }
         }
         
-        // Reload playlists after sorting immediately
+        // Reload playlists after sorting immediately to ensure UI consistency
         refreshAllPlaylists()
         
         _errorMessage.value = if (action == SortAction.LIKE) "Moved to 'Liked'" else "Moved to 'Rejected'"
     }
 
     fun sortAtIndex(index: Int, action: SortAction) {
-        sortFileAtIndex(index, action)
+        // This function now delegates to sortMusicFile
+        val files = when (_currentPlaylistTab.value) {
+            PlaylistTab.TODO -> _musicFiles.value
+            PlaylistTab.LIKED -> _likedFiles.value
+            PlaylistTab.REJECTED -> _rejectedFiles.value
+        }
+        if (index in files.indices) {
+            sortMusicFile(files[index], action)
+        } else {
+            _errorMessage.value = "Invalid index for sorting: $index"
+        }
     }
 
     fun undoLastAction() {
@@ -1366,7 +1389,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
         
         // Load current file for the new tab
-        loadCurrentFile()
+        // loadCurrentFile()
         
         // Force UI refresh by triggering a small delay and reload
         viewModelScope.launch {
@@ -1466,5 +1489,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     fun updateSearchText(newText: String) {
         _searchText.value = newText
+    }
+    
+    override fun onTrackCompletion() {
+        CrashLogger.log("MusicViewModel", "Track completed, playing next.")
+        next()
     }
 }

@@ -53,6 +53,17 @@ class AudioManager(private val context: Context) {
     private var currentFile: MusicFile? = null
     private var isUsingFFmpeg = false
     
+    // Listener for track completion events
+    interface PlaybackCompletionListener {
+        fun onTrackCompletion()
+    }
+    
+    private var playbackCompletionListener: PlaybackCompletionListener? = null
+    
+    fun setPlaybackCompletionListener(listener: PlaybackCompletionListener) {
+        this.playbackCompletionListener = listener
+    }
+    
     // User preferences for spectrogram quality
     private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
@@ -159,6 +170,7 @@ class AudioManager(private val context: Context) {
                 }
                 setOnCompletionListener { mp ->
                     CrashLogger.log("AudioManager", "FFmpegMediaPlayer playback completed")
+                    playbackCompletionListener?.onTrackCompletion()
                 }
                 setOnInfoListener { mp, what, extra ->
                     CrashLogger.log("AudioManager", "FFmpegMediaPlayer info: what=$what, extra=$extra")
@@ -176,6 +188,16 @@ class AudioManager(private val context: Context) {
             exoPlayerFallback = ExoPlayer.Builder(context)
                 .setMediaSourceFactory(mediaSourceFactory)
                 .build()
+            
+            // Set ExoPlayer completion listener
+            exoPlayerFallback?.addListener(object : androidx.media3.common.Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == androidx.media3.common.Player.STATE_ENDED) {
+                        CrashLogger.log("AudioManager", "ExoPlayer playback completed")
+                        playbackCompletionListener?.onTrackCompletion()
+                    }
+                }
+            })
             
             CrashLogger.log("AudioManager", "AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback")
         } catch (e: Exception) {

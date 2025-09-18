@@ -1145,12 +1145,11 @@ fun MusicPlayerScreen(
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
-                                        // Track details: Time, Bitrate, Size, BPM
+                                        // Track details: Time, Bitrate, Size
                                         val bitrate = calculateBitrate(file.size, file.duration)
                                         val fileSize = formatFileSize(file.size)
-                                        val bpmText = if (file.bpm > 0) " :: BPM ${file.bpm}" else ""
                                         Text(
-                                            text = ":: Time ${formatTime(file.duration)} :: Bitrate ${bitrate} kbps :: Size $fileSize$bpmText ::",
+                                            text = ":: Time ${formatTime(file.duration)} :: Bitrate ${bitrate} kbps :: Size $fileSize ::",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                                             textAlign = TextAlign.Center,

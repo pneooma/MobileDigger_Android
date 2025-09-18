@@ -760,15 +760,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private fun updateFileInList(
         stateFlow: MutableStateFlow<List<MusicFile>>, 
         targetFile: MusicFile, 
-        rating: Int? = null,
-        bpm: Int? = null
+        rating: Int? = null
     ) {
         val currentList = stateFlow.value.toMutableList()
         val index = currentList.indexOfFirst { it.uri == targetFile.uri }
         if (index != -1) {
             val updatedFile = currentList[index].copy(
-                rating = rating ?: currentList[index].rating,
-                bpm = bpm ?: currentList[index].bpm
+                rating = rating ?: currentList[index].rating
             )
             currentList[index] = updatedFile
             stateFlow.value = currentList
@@ -963,24 +961,24 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     val batch = filesToProcess.subList(i, minOf(i + batchSize, filesToProcess.size))
                     
                     // Process batch with parallel coroutines but controlled concurrency
-                    val updatedFiles = batch.map { file ->
-                        async(Dispatchers.IO) {
-                            semaphore.acquire()
-                            try {
-                                val actualDuration = extractDuration(file)
-                                if (actualDuration > 0) {
-                                    file.copy(duration = actualDuration)
-                                } else {
+                        val updatedFiles = batch.map { file ->
+                            async(Dispatchers.IO) {
+                                semaphore.acquire()
+                                try {
+                                    val actualDuration = extractDuration(file)
+                                    if (actualDuration > 0) {
+                                        file.copy(duration = actualDuration)
+                                    } else {
+                                        null
+                                    }
+                                } catch (e: Exception) {
+                                    CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
                                     null
+                                } finally {
+                                    semaphore.release()
                                 }
-                            } catch (e: Exception) {
-                                CrashLogger.log("MusicViewModel", "Error extracting duration for ${file.name}", e)
-                                null
-                            } finally {
-                                semaphore.release()
                             }
-                        }
-                    }.awaitAll().filterNotNull()
+                        }.awaitAll().filterNotNull()
                     
                     withContext(Dispatchers.Main) {
                         try {

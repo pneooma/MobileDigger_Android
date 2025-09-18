@@ -1,0 +1,53 @@
+📱 MobileDigger v7.7 - Feature Summary
+========================================
+
+🎯 MAJOR IMPROVEMENTS:
+
+🛡️ MEMORY MANAGEMENT FIXES:
+- Fixed critical memory leaks causing crashes after multiple songs
+- Proper coroutine lifecycle management with automatic cancellation
+- Reduced cache sizes: Spectrogram cache (20→10), Waveform cache (15→8)
+- Aggressive memory pressure monitoring (60%/70%/85% thresholds)
+- Emergency cache clearing when memory is critically low
+- Fixed infinite loops in position updates and cache clearing
+
+📦 ZIP CREATION ENHANCEMENTS:
+- Added CANCEL button for ZIP creation process
+- Friendly progress message: "Listen to a nice song because it will take a while. 🎵"
+- Proper job cancellation with user feedback
+- Progress percentage display with cancel option
+
+🎨 UI/UX IMPROVEMENTS:
+- Star rating system 50% larger (24dp→36dp buttons, 18dp→27dp icons)
+- Better touch targets and visual prominence for ratings
+
+📊 SPECTROGRAM SHARING FIXES:
+- Fixed KHz scale visibility (moved to left side with proper spacing)
+- Made waveform same length as spectrogram in shared reports
+- Reduced spectrogram size by 30% horizontally for better proportions
+- Improved frequency labels: 22kHz, 16kHz, 11kHz, 5kHz, 0Hz
+- Better alignment and positioning of all elements
+
+🎛️ WAVEFORM SETTINGS:
+- Increased max waveform height limits:
+  • Main Waveform: 40-150dp (was 40-120dp)
+  • Mini Waveform: 30-130dp (was 30-80dp)
+- More flexibility for user customization
+
+🔧 TECHNICAL IMPROVEMENTS:
+- Enhanced error handling with proper cancellation exceptions
+- Better logging for debugging and monitoring
+- Improved memory efficiency across all components
+- More responsive UI with better memory management
+
+📋 FEATURE HIGHLIGHTS:
+✅ ZIP creation with cancel button and friendly messages
+✅ Memory leak fixes for stable long-term usage
+✅ Larger, more accessible star ratings
+✅ Professional spectrogram sharing with proper scaling
+✅ Increased waveform height customization range
+✅ Better overall app stability and performance
+
+🚀 This version focuses on stability, user experience, and visual improvements while maintaining all existing functionality.
+
+Generated: $(date)

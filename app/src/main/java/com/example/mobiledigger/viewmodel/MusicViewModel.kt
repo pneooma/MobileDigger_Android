@@ -158,6 +158,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _isMultiSelectionMode = MutableStateFlow(false)
     val isMultiSelectionMode: StateFlow<Boolean> = _isMultiSelectionMode.asStateFlow()
     
+    private val _lastSortedAction = MutableStateFlow<SortAction?>(null)
+    val lastSortedAction: StateFlow<SortAction?> = _lastSortedAction.asStateFlow()
+    
     init {
         try {
             // Initialize crash logger
@@ -582,6 +585,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         val sortResult = SortResult(sortedFile, action)
         _sortResults.value = _sortResults.value + sortResult
         
+        _lastSortedAction.value = action // Set the last sorted action
+        viewModelScope.launch {
+            delay(300) // Short delay to allow animation to play
+            _lastSortedAction.value = null // Reset after animation
+        }
+        
         // Determine which list the file came from and remove it
         when (sortedFile.sourcePlaylist) {
             PlaylistTab.TODO -> {
@@ -710,7 +719,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         this.currentFile = currentFile
         
         // Pre-fetch next file for buffering (only if list has more than 1 item)
-        // val nextFile = if (files.size > 1) files[(index + 1) % files.size] else null
+        val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
+        if (nextFile != null) {
+            // Removed audioManager.preloadFile(nextFile) // New call to preload next file
+        }
         
         // Check if it's an AIFF file and provide specific feedback
         val isAiffFile = currentFile.name.lowercase().endsWith(".aif") || currentFile.name.lowercase().endsWith(".aiff")

@@ -39,6 +39,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 
 
 import androidx.compose.ui.platform.LocalConfiguration
@@ -85,7 +94,7 @@ private fun formatFileSize(sizeBytes: Long): String {
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class) // Combined annotations
 @Composable
 fun MusicPlayerScreen(
     viewModel: MusicViewModel,
@@ -799,7 +808,11 @@ fun MusicPlayerScreen(
                 val listState = rememberLazyListState()
                 val isScrolled by remember {
                     derivedStateOf {
-                        listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 100
+                        // Show miniplayer when we've scrolled past the main player (which contains the waveform)
+                        // The main player is the first item (index 0), so when we're at index 1 or beyond,
+                        // or significantly scrolled within the first item, the waveform is no longer visible
+                        listState.firstVisibleItemIndex > 0 || 
+                        (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset > 400)
                     }
                 }
                 
@@ -823,10 +836,15 @@ fun MusicPlayerScreen(
                                 
                                 val animatedOffset by animateFloatAsState(
                                     targetValue = if (isAnimating) dragOffset else 0f,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessLow
-                                    ),
+                                    animationSpec = if (visualSettings.enableAnimations) {
+                                        val speedFactor = 1f / visualSettings.animationSpeed
+                                        spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
+                                            stiffness = Spring.StiffnessLow * speedFactor
+                                        )
+                                    } else { 
+                                        tween(durationMillis = 0) // Snap immediately if animations are disabled
+                                    },
                                     finishedListener = {
                                         isAnimating = false
                                         dragOffset = 0f
@@ -916,17 +934,26 @@ fun MusicPlayerScreen(
     ) {
                                         
                                         // Song info with text wrapping
-                                        Text(
-                                            text = file.name.ifEmpty { "Unknown Track" },
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 3,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
+                                        AnimatedContent(
+                                            targetState = file.name,
+                                            transitionSpec = {
+                                                fadeIn(animationSpec = tween(800)) + slideInVertically() with
+                                                fadeOut(animationSpec = tween(800)) + slideOutVertically()
+                                            },
+                                            label = "Song Name Animation"
+                                        ) { targetName ->
+                                            Text(
+                                                text = targetName.ifEmpty { "Unknown Track" },
+                                                style = MaterialTheme.typography.titleMedium.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 3,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
@@ -1006,7 +1033,7 @@ fun MusicPlayerScreen(
                                                 Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color(0xFF25D366), modifier = Modifier.size(20.dp))
                                             }
                                             
-                                            // Spectrogram Button with Pig Icon
+                                            // Spectrogram Button with Text
                                             IconButton(
                                                 onClick = { 
                                                     // Show spectrogram popup dialog
@@ -1014,12 +1041,27 @@ fun MusicPlayerScreen(
                                                 }, 
                                                 modifier = Modifier.size(50.dp)
                                             ) {
-                                                Icon(
-                                                    painter = painterResource(id = R.drawable.ic_pig_headphones),
-                                                    contentDescription = "Generate Spectrogram", 
-                                                    tint = Color(0xFFFFB6C1), // Light Pink
-                                                    modifier = Modifier.size(40.dp)
-                                                )
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.Center
+                                                ) {
+                                                    Text(
+                                                        text = "Sp",
+                                                        style = MaterialTheme.typography.labelMedium.copy(
+                                                            fontWeight = FontWeight.Bold
+                                                        ),
+                                                        color = Color(0xFFFFB6C1), // Light Pink
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                    Text(
+                                                        text = "eK",
+                                                        style = MaterialTheme.typography.labelMedium.copy(
+                                                            fontWeight = FontWeight.Bold
+                                                        ),
+                                                        color = Color(0xFFFFB6C1), // Light Pink
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
                                             }
                                             
                                             // Rating Button removed as requested
@@ -1066,9 +1108,13 @@ fun MusicPlayerScreen(
                                         ),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(Icons.Default.ThumbDown, contentDescription = null)
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "REJECT ALL" else "NO")
+                                        // Animated content for icon and text
+                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && viewModel.lastSortedAction.value == SortAction.DISLIKE) 0.5f else 1f, animationSpec = tween(durationMillis = 150))
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.graphicsLayer(alpha = alpha)) {
+                                            Icon(Icons.Default.ThumbDown, contentDescription = null)
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "REJECT ALL" else "NO")
+                                        }
                                     }
                                     
                                     ElevatedButton(
@@ -1099,9 +1145,13 @@ fun MusicPlayerScreen(
                                         ),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(Icons.Default.Favorite, contentDescription = null)
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "LIKE ALL" else "YES")
+                                        // Animated content for icon and text
+                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && viewModel.lastSortedAction.value == SortAction.LIKE) 0.5f else 1f, animationSpec = tween(durationMillis = 150))
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.graphicsLayer(alpha = alpha)) {
+                                            Icon(Icons.Default.Favorite, contentDescription = null)
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "LIKE ALL" else "YES")
+                                        }
                                     }
                                 }
                             }
@@ -1560,126 +1610,252 @@ fun MusicPlayerScreen(
                         }
                     }
                     
-                    // Enhanced Sticky minimized player when scrolled
-                    if (isScrolled) {
+                    // Enhanced Sticky minimized player when scrolled - positioned correctly in BoxScope
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isScrolled,
+                        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .zIndex(1f),
+                        label = "Miniplayer Animated Visibility"
+                    ) {
                         val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
                         currentFile?.let { file ->
+                            // Animation states for miniplayer swipe feedback
+                            var miniDragOffset by remember { mutableStateOf(0f) }
+                            var miniIsAnimating by remember { mutableStateOf(false) }
+                            var miniSwipeDirection by remember { mutableStateOf(0) } // -1 left, 0 none, 1 right
+                            
+                            val miniAnimatedOffset by animateFloatAsState(
+                                targetValue = if (miniIsAnimating) miniDragOffset else 0f,
+                                animationSpec = if (visualSettings.enableAnimations) {
+                                    val speedFactor = 1f / visualSettings.animationSpeed
+                                    spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
+                                        stiffness = Spring.StiffnessLow * speedFactor
+                                    )
+                                } else { 
+                                    tween(durationMillis = 0) // Snap immediately if animations are disabled
+                                },
+                                finishedListener = {
+                                    miniIsAnimating = false
+                                    miniDragOffset = 0f
+                                    miniSwipeDirection = 0
+                                }
+                            )
+                            
+                            val miniCardColor = when (miniSwipeDirection) {
+                                1 -> LikeGreen.copy(alpha = 0.3f)
+                                -1 -> DislikeRed.copy(alpha = 0.3f)
+                                else -> MaterialTheme.colorScheme.surface
+                            }
+                            
+                            val miniBorderColor = when (miniSwipeDirection) {
+                                1 -> LikeGreen
+                                -1 -> DislikeRed
+                                else -> Color.Transparent
+                            }
+                            
                             Card(
                                 modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = (-LocalConfiguration.current.screenHeightDp.dp * 0.1f))
                                     .fillMaxWidth()
-                                    .padding(8.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    .padding(8.dp)
+                                    .graphicsLayer {
+                                        translationX = miniAnimatedOffset
+                                        scaleX = 1f + abs(miniAnimatedOffset) / 3000f // Slightly more subtle scale for miniplayer
+                                        scaleY = 1f + abs(miniAnimatedOffset) / 3000f
+                                    }
+                                    .then(
+                                        if (miniSwipeDirection != 0) {
+                                            Modifier.border(
+                                                width = 2.dp,
+                                                color = miniBorderColor,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
+                                    .pointerInput(Unit) {
+                                        detectDragGestures(
+                                            onDragStart = {
+                                                miniIsAnimating = false
+                                            },
+                                            onDragEnd = {
+                                                miniIsAnimating = true
+                                                // Execute action if threshold met
+                                                if (abs(miniDragOffset) > 100) { // Slightly lower threshold for miniplayer
+                                                    when {
+                                                        miniDragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
+                                                        miniDragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                    }
+                                                }
+                                            }
+                                        ) { _, dragAmount ->
+                                            val (x, _) = dragAmount
+                                            miniDragOffset += x
+                                            miniDragOffset = miniDragOffset.coerceIn(-200f, 200f) // Smaller drag distance for miniplayer
+                                            
+                                            // Update visual feedback
+                                            miniSwipeDirection = when {
+                                                miniDragOffset > 30 -> 1 // Right swipe (like) - lower threshold
+                                                miniDragOffset < -30 -> -1 // Left swipe (dislike) - lower threshold
+                                                else -> 0
+                                            }
+                                        }
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = miniCardColor),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-) {
-    Column(
+                            ) {
+                                Column(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    // Song info row
+                                    // Main content - Song name and controls in 2 columns
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                            .padding(horizontal = 13.dp, vertical = 9.dp), // Increased by 10%
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // Song info (compact) with wrapping
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = file.name.ifEmpty { "Unknown Track" },
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontWeight = FontWeight.Medium
-                                                ),
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                maxLines = 2,
-                                                overflow = TextOverflow.Ellipsis,
+                                        // Left column: Song info
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            AnimatedContent(
+                                                targetState = file.name,
+                                                transitionSpec = {
+                                                    fadeIn(animationSpec = tween(800)) + slideInVertically() with
+                                                    fadeOut(animationSpec = tween(800)) + slideOutVertically()
+                                                },
+                                                label = "Miniplayer Song Name Animation",
                                                 modifier = Modifier.fillMaxWidth()
-                                            )
+                                            ) { targetName ->
+                                                Text(
+                                                    text = targetName.ifEmpty { "Unknown Track" },
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        fontWeight = FontWeight.Medium
+                                                    ),
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
                                         }
                                         
-                                        // Compact controls
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                        // Right column: Control buttons in two rows
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
                                         ) {
-                                            IconButton(onClick = { 
-                                                hapticFeedback() // Simplified call
-                                                viewModel.previous() 
-                                            }, modifier = Modifier.size(32.dp)) {
-                                                Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(18.dp))
+                                            // First row: PREV PLAY NEXT
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                IconButton(onClick = { 
+                                                    hapticFeedback()
+                                                    viewModel.previous() 
+                                                }, modifier = Modifier.size(32.dp)) {
+                                                    Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(18.dp))
+                                                }
+                                                
+                                                IconButton(onClick = { 
+                                                    hapticFeedback()
+                                                    viewModel.playPause() 
+                                                }, modifier = Modifier.size(40.dp)) {
+                                                    Icon(
+                                                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                        if (isPlaying) "Pause" else "Play",
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                }
+                                                
+                                                IconButton(onClick = { 
+                                                    hapticFeedback()
+                                                    viewModel.next() 
+                                                }, modifier = Modifier.size(32.dp)) {
+                                                    Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp))
+                                                }
                                             }
                                             
-                                            IconButton(onClick = { 
-                                                hapticFeedback() // Simplified call
-                                                viewModel.playPause() 
-                                            }, modifier = Modifier.size(40.dp)) {
-        Icon(
-                                                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                    if (isPlaying) "Pause" else "Play",
-                                                    modifier = Modifier.size(22.dp)
-                                                )
-                                            }
-                                            
-                                            IconButton(onClick = { 
-                                                hapticFeedback() // Simplified call
-                                                viewModel.next() 
-                                            }, modifier = Modifier.size(32.dp)) {
-                                                Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp))
-                                            }
-                                            
-                                            // Like button in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                        viewModel.sortSelectedFiles(SortAction.LIKE)
-                                                    } else {
-                                                        viewModel.sortCurrentFile(SortAction.LIKE)
+                                            // Second row: DISLIKE LIKE SPEK
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Dislike button in mini player
+                                                IconButton(
+                                                    onClick = { 
+                                                        if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                            viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                        } else {
+                                                            viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                        }
+                                                    }, 
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ThumbDown, 
+                                                        contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike", 
+                                                        tint = NoButton,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                                
+                                                // Like button in mini player
+                                                IconButton(
+                                                    onClick = { 
+                                                        if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                            viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                        } else {
+                                                            viewModel.sortCurrentFile(SortAction.LIKE)
+                                                        }
+                                                    }, 
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Favorite, 
+                                                        contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Like All Selected" else "Like", 
+                                                        tint = YesButton,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                                
+                                                // Spectrogram Text Button in mini player
+                                                IconButton(
+                                                    onClick = { 
+                                                        // Toggle spectrogram popup
+                                                        showSpectrogram = !showSpectrogram
+                                                    }, 
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        verticalArrangement = Arrangement.Center
+                                                    ) {
+                                                        Text(
+                                                            text = "Sp",
+                                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                                fontWeight = FontWeight.Bold
+                                                            ),
+                                                            color = Color(0xFFFFB6C1), // Light Pink
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                        Text(
+                                                            text = "eK",
+                                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                                fontWeight = FontWeight.Bold
+                                                            ),
+                                                            color = Color(0xFFFFB6C1), // Light Pink
+                                                            textAlign = TextAlign.Center
+                                                        )
                                                     }
-                                                }, 
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Favorite, 
-                                                    contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Like All Selected" else "Like", 
-                                                    tint = YesButton,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            }
-                                            
-                                            // Dislike button in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                        viewModel.sortSelectedFiles(SortAction.DISLIKE)
-                                                    } else {
-                                                        viewModel.sortCurrentFile(SortAction.DISLIKE)
-                                                    }
-                                                }, 
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.ThumbDown, 
-                                                    contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike", 
-                                                    tint = NoButton,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            }
-                                            
-                                            // Pink Pig Icon in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    // Toggle spectrogram popup
-                                                    showSpectrogram = !showSpectrogram
-                                                }, 
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(id = R.drawable.ic_pig_headphones),
-                                                    contentDescription = "Generate Spectrogram", 
-                                                    tint = Color(0xFFFFB6C1), // Light Pink
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                }
                                             }
                                         }
                                     }
@@ -1702,7 +1878,6 @@ fun MusicPlayerScreen(
                             }
                         }
                     }
-
 
                 }
             }

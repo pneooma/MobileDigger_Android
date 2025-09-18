@@ -64,6 +64,8 @@ class AudioManager(private val context: Context) {
         this.playbackCompletionListener = listener
     }
     
+    private var preloadedFile: MusicFile? = null
+    
     // User preferences for spectrogram quality
     private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
@@ -205,6 +207,97 @@ class AudioManager(private val context: Context) {
         }
     }
     
+    fun preloadFile(musicFile: MusicFile) {
+        if (musicFile == preloadedFile) {
+            CrashLogger.log("AudioManager", "File ${musicFile.name} already preloaded.")
+            return
+        }
+        
+        CrashLogger.log("AudioManager", "Preloading file: ${musicFile.name}")
+        
+        // Stop any current preloading
+        releasePreloadedPlayer()
+        
+        preloadedFile = musicFile
+        
+        val uri = musicFile.uri
+        val fileName = musicFile.name.lowercase(Locale.getDefault())
+        val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
+        
+        if (isAiffFile) {
+            // Preload with FFmpegMediaPlayer
+            ffmpegPlayer?.let { player ->
+                try {
+                    CrashLogger.log("AudioManager", "Preloading AIFF with FFmpegMediaPlayer: ${musicFile.name}")
+                    player.reset()
+                    isFFmpegPrepared = false
+                    val dataSource = getFFmpegDataSource(uri)
+                    if (dataSource != null) {
+                        player.setDataSource(dataSource)
+                        player.prepareAsync()
+                        CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepareAsync for preload called.")
+                    } else {
+                        CrashLogger.log("AudioManager", "Failed to get data source for FFmpeg preload.")
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("AudioManager", "Error preloading AIFF with FFmpegMediaPlayer", e)
+                }
+            }
+        } else {
+            // Preload with ExoPlayer
+            exoPlayerFallback?.let { player ->
+                try {
+                    CrashLogger.log("AudioManager", "Preloading with ExoPlayer: ${musicFile.name}")
+                    player.stop()
+                    player.clearMediaItems()
+                    player.setMediaItem(MediaItem.fromUri(uri))
+                    player.prepare()
+                    player.playWhenReady = false // Don't start playing automatically
+                } catch (e: Exception) {
+                    CrashLogger.log("AudioManager", "Error preloading with ExoPlayer", e)
+                }
+            }
+        }
+    }
+    
+    private fun releasePreloadedPlayer() {
+        preloadedFile = null
+        // No explicit release for ExoPlayer, just clear media items and stop playback
+        exoPlayerFallback?.stop()
+        exoPlayerFallback?.clearMediaItems()
+        // Reset FFmpegMediaPlayer
+        ffmpegPlayer?.reset()
+        isFFmpegPrepared = false
+        CrashLogger.log("AudioManager", "Preloaded player released.")
+    }
+    
+    // Helper to get FFmpeg data source, extracted from tryPlayWithFFmpegSync
+    private fun getFFmpegDataSource(uri: Uri): String? {
+        return try {
+            if (uri.scheme == "file") {
+                uri.path
+            } else {
+                val uriString = uri.toString()
+                val cachedPath = tempFileCache[uriString]
+                if (cachedPath != null && File(cachedPath).exists()) {
+                    cachedPath
+                } else {
+                    val tempFile = copyUriToTempFile(uri)
+                    if (tempFile != null) {
+                        val tempPath = tempFile.absolutePath
+                        tempFileCache[uriString] = tempPath
+                        tempPath
+                    } else {
+                        null
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Error getting FFmpeg data source", e)
+            null
+        }
+    }
+    
     fun playFile(musicFile: MusicFile): Boolean {
         return try {
             currentFile = musicFile
@@ -262,38 +355,7 @@ class AudioManager(private val context: Context) {
             isFFmpegPrepared = false
             
             // Try to set data source for FFmpegMediaPlayer
-            val dataSource = try {
-                if (uri.scheme == "file") {
-                    // For file:// URIs, use the path directly
-                    val filePath = uri.path
-                    CrashLogger.log("AudioManager", "Using file path for FFmpegMediaPlayer: $filePath")
-                    filePath
-                } else {
-                    // For content:// URIs, check cache first, then copy to temp file
-                    val uriString = uri.toString()
-                    val cachedPath = tempFileCache[uriString]
-                    
-                    if (cachedPath != null && File(cachedPath).exists()) {
-                        CrashLogger.log("AudioManager", "Using cached temp file: $cachedPath")
-                        cachedPath
-                    } else {
-                        CrashLogger.log("AudioManager", "Content URI detected, copying to temp file for FFmpegMediaPlayer")
-                        val tempFile = copyUriToTempFile(uri)
-                        if (tempFile != null) {
-                            val tempPath = tempFile.absolutePath
-                            tempFileCache[uriString] = tempPath
-                            CrashLogger.log("AudioManager", "Copied to temp file and cached: $tempPath")
-                            tempPath
-                        } else {
-                            CrashLogger.log("AudioManager", "Failed to copy content URI to temp file")
-                            return false
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "Error preparing data source for FFmpegMediaPlayer", e)
-                return false
-            }
+            val dataSource = getFFmpegDataSource(uri)
             
             if (dataSource == null) {
                 CrashLogger.log("AudioManager", "No data source available for FFmpegMediaPlayer")
@@ -484,6 +546,7 @@ class AudioManager(private val context: Context) {
     
     fun stop() {
         stopAllPlayback()
+        releasePreloadedPlayer() // Also release the preloaded player when stopping
     }
     
     fun seekTo(position: Long) {

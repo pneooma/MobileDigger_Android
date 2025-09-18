@@ -129,6 +129,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText.asStateFlow()
     
+    // State for subfolders
+    private val _subfolders = MutableStateFlow<List<Uri>>(emptyList())
+    val subfolders: StateFlow<List<Uri>> = _subfolders.asStateFlow()
+    
     // Computed StateFlow for current playlist files - reactive to tab changes
     val currentPlaylistFiles: StateFlow<List<MusicFile>> = combine(
         _musicFiles,
@@ -295,6 +299,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     _errorMessage.value = "Loaded ${files.size} tracks. Now playing first track.$destInfo"
                 } else {
                     _errorMessage.value = "No music files found in selected folder."
+                }
+                
+                // Load subfolders if a source folder is selected
+                preferences.getSourceRootUri()?.let { uriString ->
+                    val sourceUri = Uri.parse(uriString)
+                    loadSubfolders(sourceUri)
                 }
                 
                 CrashLogger.log("MusicViewModel", "selectFolder completed successfully")
@@ -537,7 +547,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
     private fun sortMusicFile(file: MusicFile, action: SortAction) {
         if (!fileManager.isDestinationSelected()) {
-            _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
+            _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting." // More specific message
             return
         }
         
@@ -1491,8 +1501,64 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _searchText.value = newText
     }
     
+    fun loadSubfolders(sourceUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val folders = fileManager.listSubfolders(sourceUri)
+                withContext(Dispatchers.Main) {
+                    _subfolders.value = folders
+                    CrashLogger.log("MusicViewModel", "Loaded ${folders.size} subfolders.")
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error loading subfolders", e)
+                withContext(Dispatchers.Main) { _errorMessage.value = "Error loading subfolders: ${e.message}" }
+            }
+        }
+    }
+    
+    fun loadFilesFromSubfolder(subfolderUri: Uri) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _errorMessage.value = null
+                stopPlayback()
+                _currentIndex.value = 0
+                _musicFiles.value = emptyList() // Clear current playlist
+                CrashLogger.log("MusicViewModel", "Loading files from subfolder: $subfolderUri")
+                
+                val files = fileManager.loadMusicFilesFromSubfolder(subfolderUri)
+                _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
+                
+                // Extract duration for all files in background (with error handling)
+                try {
+                    extractDurationsForAllFiles(files)
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error starting duration extraction for subfolder files", e)
+                }
+                
+                if (files.isNotEmpty()) {
+                    _currentIndex.value = 0
+                    loadCurrentFile()
+                    _errorMessage.value = "Loaded ${files.size} tracks from subfolder."
+                } else {
+                    _errorMessage.value = "No music files found in selected subfolder."
+                }
+                CrashLogger.log("MusicViewModel", "loadFilesFromSubfolder completed successfully")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "loadFilesFromSubfolder failed", e)
+                _errorMessage.value = "Error loading subfolder: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
     override fun onTrackCompletion() {
         CrashLogger.log("MusicViewModel", "Track completed, playing next.")
         next()
+    }
+
+    fun getFileName(uri: Uri): String? {
+        return fileManager.getFileName(uri)
     }
 }

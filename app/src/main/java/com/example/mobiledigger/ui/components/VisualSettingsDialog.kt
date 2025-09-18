@@ -22,10 +22,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.mobiledigger.ui.theme.VisualSettings
 import com.example.mobiledigger.ui.theme.VisualSettingsManager
 import com.example.mobiledigger.utils.HapticFeedback
-import com.example.mobiledigger.utils.HapticType
+import com.example.mobiledigger.ui.theme.HapticFeedbackType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VisualSettingsDialog(
     visualSettingsManager: VisualSettingsManager,
@@ -34,7 +35,7 @@ fun VisualSettingsDialog(
     val settings by visualSettingsManager.settings
     var currentSettings by remember { mutableStateOf(settings) }
     var showColorPicker by remember { mutableStateOf<String?>(null) }
-    val hapticFeedback = HapticFeedback.rememberHapticFeedback()
+    val hapticFeedback = HapticFeedback.rememberHapticFeedback(currentSettings) // Pass currentSettings
     
     Dialog(
         onDismissRequest = onDismiss,
@@ -130,6 +131,26 @@ fun VisualSettingsDialog(
                             onCheckedChange = { currentSettings = currentSettings.copy(enableHapticFeedback = it) },
                             onReset = { currentSettings = currentSettings.copy(enableHapticFeedback = settings.enableHapticFeedback) }
                         )
+                        // New Haptic Feedback Type Dropdown
+                        if (currentSettings.enableHapticFeedback) {
+                            DropdownSettingItem(
+                                label = "Haptic Feedback Type",
+                                value = currentSettings.hapticFeedbackType.name,
+                                options = HapticFeedbackType.entries.map { it.name },
+                                onValueChange = { newType ->
+                                    currentSettings = currentSettings.copy(hapticFeedbackType = HapticFeedbackType.valueOf(newType))
+                                },
+                                onReset = { currentSettings = currentSettings.copy(hapticFeedbackType = settings.hapticFeedbackType) }
+                            )
+                            // New Haptic Feedback Intensity Slider
+                            SliderSettingItem(
+                                label = "Haptic Feedback Intensity",
+                                value = currentSettings.hapticFeedbackIntensity,
+                                range = 0.0f..1.0f,
+                                onValueChange = { currentSettings = currentSettings.copy(hapticFeedbackIntensity = it) },
+                                onReset = { currentSettings = currentSettings.copy(hapticFeedbackIntensity = settings.hapticFeedbackIntensity) }
+                            )
+                        }
                     }
                 )
                 
@@ -148,7 +169,7 @@ fun VisualSettingsDialog(
                 ) {
                     TextButton(
                         onClick = {
-                            hapticFeedback(HapticType.Medium)
+                            hapticFeedback() // Simplified call
                             currentSettings = VisualSettings()
                         }
                     ) {
@@ -157,7 +178,7 @@ fun VisualSettingsDialog(
                     
                     Row {
                         TextButton(onClick = {
-                            hapticFeedback(HapticType.Light)
+                            hapticFeedback() // Simplified call
                             onDismiss()
                         }) {
                             Text("Cancel")
@@ -165,7 +186,7 @@ fun VisualSettingsDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             onClick = {
-                                hapticFeedback(HapticType.Success)
+                                hapticFeedback() // Simplified call
                                 visualSettingsManager.updateSettings(currentSettings)
                                 onDismiss()
                             }
@@ -274,7 +295,8 @@ private fun DropdownSettingItem(
     label: String,
     value: String,
     options: List<String>,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    onReset: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     

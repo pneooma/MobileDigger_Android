@@ -603,4 +603,46 @@ class FileManager(private val context: Context) {
     fun getRejectedFolderUri(): Uri? {
         return destinationFolder?.findFile("Rejected")?.uri
     }
+
+    fun listSubfolders(parentUri: Uri): List<Uri> {
+        val subfolders = mutableListOf<Uri>()
+        try {
+            val parentDocument = DocumentFile.fromTreeUri(context, parentUri)
+            parentDocument?.listFiles()?.forEach { file ->
+                if (file.isDirectory && !isHiddenOrTrashed(file.name)) {
+                    subfolders.add(file.uri)
+                }
+            }
+            CrashLogger.log("FileManager", "Found ${subfolders.size} subfolders in ${parentUri}")
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error listing subfolders for ${parentUri}", e)
+        }
+        return subfolders
+    }
+    
+    suspend fun loadMusicFilesFromSubfolder(subfolderUri: Uri): List<MusicFile> = withContext(Dispatchers.IO) {
+        val musicFiles = mutableListOf<MusicFile>()
+        try {
+            val subfolderDocument = DocumentFile.fromTreeUri(context, subfolderUri) ?: DocumentFile.fromSingleUri(context, subfolderUri)
+            subfolderDocument?.let { folder ->
+                if (folder.exists() && folder.canRead()) {
+                    val scanned = scanForMusicFiles(folder.uri, true)
+                    musicFiles.addAll(scanned)
+                    CrashLogger.log("FileManager", "Scanned ${musicFiles.size} files from subfolder: ${folder.name}")
+                } else {
+                    CrashLogger.log("FileManager", "Cannot access subfolder: ${folder.name}")
+                }
+            } ?: run {
+                CrashLogger.log("FileManager", "Subfolder document not found for URI: $subfolderUri")
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error loading music files from subfolder", e)
+        }
+        musicFiles
+    }
+    
+    fun getFileName(uri: Uri): String? {
+        val documentFile = DocumentFile.fromSingleUri(context, uri)
+        return documentFile?.name
+    }
 }

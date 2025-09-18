@@ -27,7 +27,6 @@ import com.example.mobiledigger.ui.components.rememberSharedWaveformState
 import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.ui.components.VisualSettingsDialog
 import com.example.mobiledigger.utils.HapticFeedback
-import com.example.mobiledigger.utils.HapticType
 import com.example.mobiledigger.utils.WaveformGenerator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -127,6 +126,7 @@ fun MusicPlayerScreen(
     var showDeleteDialogStep by remember { mutableStateOf(0) }
     var showRescanSourceDialog by remember { mutableStateOf(false) } // Added state for rescan source dialog
     var showSearchInput by remember { mutableStateOf(false) } // New state to control search input visibility
+    var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
@@ -142,11 +142,12 @@ fun MusicPlayerScreen(
     val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
     val context = LocalContext.current
     val sharedWaveformState = rememberSharedWaveformState(currentFile, context)
-    val hapticFeedback = HapticFeedback.rememberHapticFeedback()
     
     // Visual settings
     val visualSettings by viewModel.visualSettingsManager.settings
-
+    
+    val hapticFeedback = HapticFeedback.rememberHapticFeedback(visualSettings) // Updated to pass visualSettings
+    
     if (showShareDialog) {
         AlertDialog(
             onDismissRequest = { showShareDialog = false },
@@ -321,7 +322,7 @@ fun MusicPlayerScreen(
                     
                     Button(
                         onClick = { 
-                            if (visualSettings.enableHapticFeedback) hapticFeedback(HapticType.Light)
+                            hapticFeedback() // Simplified call
                             showSettingsDialog = false
                             showVisualSettingsDialog = true
                         },
@@ -953,7 +954,7 @@ fun MusicPlayerScreen(
                                             },
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(80.dp)
+                                                .height(visualSettings.waveformHeight.dp) // Use setting
                                         )
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -994,7 +995,7 @@ fun MusicPlayerScreen(
                                             }
                                             
                                             IconButton(onClick = { 
-                                                if (visualSettings.enableHapticFeedback) hapticFeedback(HapticType.Light)
+                                                hapticFeedback()
                                                 viewModel.next() 
                                             }, modifier = Modifier.size(40.dp)) {
                                                 Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(24.dp))
@@ -1052,7 +1053,7 @@ fun MusicPlayerScreen(
                                 ) {
                                     ElevatedButton(
                                         onClick = { 
-                                            hapticFeedback(HapticType.Error)
+                                            hapticFeedback()
                                             if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
                                                 viewModel.sortSelectedFiles(SortAction.DISLIKE)
                                             } else {
@@ -1085,7 +1086,7 @@ fun MusicPlayerScreen(
                                     
                                     ElevatedButton(
                                         onClick = { 
-                                            hapticFeedback(HapticType.Success)
+                                            hapticFeedback()
                                             if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
                                                 viewModel.sortSelectedFiles(SortAction.LIKE)
                                             } else {
@@ -1114,8 +1115,13 @@ fun MusicPlayerScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 8.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    // Subfolder Selection Button
+                                    IconButton(onClick = { showSubfolderDialog = true }) {
+                                        Icon(Icons.Default.FolderOpen, contentDescription = "Select Subfolder")
+                                    }
                                     PlaylistTab.entries.forEach { tab ->
                                         val isSelected = currentPlaylistTab == tab
                                         val tabColor = when (tab) {
@@ -1243,6 +1249,49 @@ fun MusicPlayerScreen(
                                             }
                                         }
                                     }
+                                }
+                                
+                                // Subfolder Selection Dialog
+                                if (showSubfolderDialog) {
+                                    AlertDialog(
+                                        onDismissRequest = { showSubfolderDialog = false },
+                                        title = { Text("Select Subfolder") },
+                                        text = {
+                                            val subfolders by viewModel.subfolders.collectAsState()
+                                            if (subfolders.isEmpty()) {
+                                                Text("No subfolders found in the current source folder.")
+                                            } else {
+                                                LazyColumn {
+                                                    // Add option to select the root source folder
+                                                    item {
+                                                        TextButton(onClick = {
+                                                            viewModel.preferences.getSourceRootUri()?.let { uriString ->
+                                                                viewModel.selectFolder(android.net.Uri.parse(uriString))
+                                                            }
+                                                            showSubfolderDialog = false
+                                                        }) {
+                                                            Text("../ (Root Folder)", fontWeight = FontWeight.Bold)
+                                                        }
+                                                    }
+                                                    itemsIndexed(subfolders) { index, subfolderUri ->
+                                                        TextButton(onClick = {
+                                                            viewModel.loadFilesFromSubfolder(subfolderUri)
+                                                            showSubfolderDialog = false
+                                                        }) {
+                                                            Text(viewModel.getFileName(subfolderUri) ?: subfolderUri.lastPathSegment ?: "Unknown Subfolder")
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        confirmButton = {
+                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                                Button(onClick = { showSubfolderDialog = false }) {
+                                                    Text("Cancel")
+                                                }
+                                            }
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -1474,31 +1523,35 @@ fun MusicPlayerScreen(
                                             }
                                         } else {
                                             // Normal mode: individual file actions
-                                            IconButton(
-                                                onClick = { 
-                                                    viewModel.sortAtIndex(index, SortAction.LIKE) 
-                                                },
-                                                modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Favorite, 
-                                                    contentDescription = "Yes", 
-                                                    tint = YesButton,
-                                                    modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
-                                                )
+                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.REJECTED) {
+                                                IconButton(
+                                                    onClick = { 
+                                                        viewModel.sortAtIndex(index, SortAction.LIKE) 
+                                                    },
+                                                    modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Favorite, 
+                                                        contentDescription = "Yes", 
+                                                        tint = YesButton,
+                                                        modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
+                                                    )
+                                                }
                                             }
-                                            IconButton(
-                                                onClick = { 
-                                                    viewModel.sortAtIndex(index, SortAction.DISLIKE) 
-                                                },
-                                                modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.ThumbDown, 
-                                                    contentDescription = "No", 
-                                                    tint = NoButton,
-                                                    modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
-                                                )
+                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                                IconButton(
+                                                    onClick = { 
+                                                        viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                    },
+                                                    modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ThumbDown, 
+                                                        contentDescription = "No", 
+                                                        tint = NoButton,
+                                                        modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1551,14 +1604,14 @@ fun MusicPlayerScreen(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             IconButton(onClick = { 
-                                                hapticFeedback(HapticType.Light)
+                                                hapticFeedback() // Simplified call
                                                 viewModel.previous() 
                                             }, modifier = Modifier.size(32.dp)) {
                                                 Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(18.dp))
                                             }
                                             
                                             IconButton(onClick = { 
-                                                hapticFeedback(HapticType.Medium)
+                                                hapticFeedback() // Simplified call
                                                 viewModel.playPause() 
                                             }, modifier = Modifier.size(40.dp)) {
         Icon(
@@ -1569,7 +1622,7 @@ fun MusicPlayerScreen(
                                             }
                                             
                                             IconButton(onClick = { 
-                                                hapticFeedback(HapticType.Light)
+                                                hapticFeedback() // Simplified call
                                                 viewModel.next() 
                                             }, modifier = Modifier.size(32.dp)) {
                                                 Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp))
@@ -1642,7 +1695,7 @@ fun MusicPlayerScreen(
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(60.dp)
+                                            .height(visualSettings.miniWaveformHeight.dp) // Use setting
                                             .padding(horizontal = 12.dp, vertical = 4.dp)
                                     )
                                 }

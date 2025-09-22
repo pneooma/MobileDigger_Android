@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +57,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     val themeManager = ThemeManager(application)
     val visualSettingsManager = VisualSettingsManager(application)
     private val context = application.applicationContext
+    
+    // Mutex to prevent concurrent file loading operations that cause memory pressure
+    private val fileLoadingMutex = Mutex()
     
     // Broadcast receiver for notification actions
     private val notificationReceiver = object : BroadcastReceiver() {
@@ -857,8 +862,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             CrashLogger.log("MusicViewModel", "Loading AIFF file: ${currentFile.name}")
         }
         
-        // Check memory before loading file and clear caches if needed
-        checkMemoryPressureAndCleanup()
+    // Check memory before loading file and clear caches if needed
+    checkMemoryPressureAndCleanup()
+    
+    // Additional memory check specifically for waveform and file operations
+    val runtime = Runtime.getRuntime()
+    val availableMemoryMB = (runtime.maxMemory() - runtime.totalMemory() + runtime.freeMemory()) / (1024 * 1024)
+    if (availableMemoryMB < 50) {
+        CrashLogger.log("MusicViewModel", "Critical low memory ($availableMemoryMB MB) - stopping file processing")
+        return
+    }
         
         // Call playFile directly (no longer a suspend function)
         val started = audioManager.playFile(currentFile)
@@ -1740,9 +1753,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     fun loadLikedFiles() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val destinationFolder = fileManager.getDestinationFolder()
-                CrashLogger.log("MusicViewModel", "Loading liked files from destination folder: ${destinationFolder?.name}")
+            fileLoadingMutex.withLock {
+                try {
+                    val destinationFolder = fileManager.getDestinationFolder()
+                    CrashLogger.log("MusicViewModel", "Loading liked files from destination folder: ${destinationFolder?.name}")
                 
                 val likedFiles = if (destinationFolder != null) {
                     // Get the Liked folder within the destination folder
@@ -1778,21 +1792,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     CrashLogger.log("MusicViewModel", "No destination folder found")
                     emptyList()
                 }
-                withContext(Dispatchers.Main) {
-                    _likedFiles.value = likedFiles.map { it.copy(sourcePlaylist = PlaylistTab.LIKED) }
-                    CrashLogger.log("MusicViewModel", "Updated liked files StateFlow with ${likedFiles.size} files")
+                    withContext(Dispatchers.Main) {
+                        _likedFiles.value = likedFiles.map { it.copy(sourcePlaylist = PlaylistTab.LIKED) }
+                        CrashLogger.log("MusicViewModel", "Updated liked files StateFlow with ${likedFiles.size} files")
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error loading liked files", e)
                 }
-            } catch (e: Exception) {
-                CrashLogger.log("MusicViewModel", "Error loading liked files", e)
             }
         }
     }
     
     private fun loadRejectedFiles() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val rejectedUri = fileManager.getRejectedFolderUri()
-                CrashLogger.log("MusicViewModel", "Loading rejected files from URI: $rejectedUri")
+            fileLoadingMutex.withLock {
+                try {
+                    val rejectedUri = fileManager.getRejectedFolderUri()
+                    CrashLogger.log("MusicViewModel", "Loading rejected files from URI: $rejectedUri")
                 
                 val rejectedFiles = if (rejectedUri != null) {
                     val files = fileManager.listMusicFilesInFolder(rejectedUri)
@@ -1802,12 +1818,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     CrashLogger.log("MusicViewModel", "No rejected folder URI found")
                     emptyList()
                 }
-                withContext(Dispatchers.Main) {
-                    _rejectedFiles.value = rejectedFiles.map { it.copy(sourcePlaylist = PlaylistTab.REJECTED) }
-                    CrashLogger.log("MusicViewModel", "Updated rejected files StateFlow with ${rejectedFiles.size} files")
+                    withContext(Dispatchers.Main) {
+                        _rejectedFiles.value = rejectedFiles.map { it.copy(sourcePlaylist = PlaylistTab.REJECTED) }
+                        CrashLogger.log("MusicViewModel", "Updated rejected files StateFlow with ${rejectedFiles.size} files")
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error loading rejected files", e)
                 }
-            } catch (e: Exception) {
-                CrashLogger.log("MusicViewModel", "Error loading rejected files", e)
             }
         }
     }

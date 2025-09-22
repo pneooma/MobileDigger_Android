@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.mobiledigger.model.MusicFile
-import com.example.mobiledigger.utils.WaveformGenerator
+import com.example.mobiledigger.utils.LightweightWaveformGenerator
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -44,10 +44,11 @@ fun WaveformView(
             // Move heavy waveform generation to background thread
             withContext(Dispatchers.IO) {
                 try {
-                    // Generate waveform from URI in background
-                    val waveform = WaveformGenerator.generateFromUri(
+                    // Generate waveform from URI in background with memory safety
+                    val waveform = LightweightWaveformGenerator.generateFromUri(
                         context = context,
-                        uri = currentFile.uri
+                        uri = currentFile.uri,
+                        barsCount = 30 // Limit to 30 bars for memory safety
                     )
                     
                     // Update UI on main thread
@@ -69,10 +70,7 @@ fun WaveformView(
         }
     }
 
-    // Debug logging for UI states
-    LaunchedEffect(isLoading, waveformData) {
-        println("🎨 WaveformView UI State - isLoading: $isLoading, hasData: ${waveformData != null}")
-    }
+    // Debug logging removed for performance
 
     Box(
         modifier = modifier

@@ -306,7 +306,14 @@ class AudioManager(private val context: Context) {
             currentFile = musicFile
             val uri = musicFile.uri
             
+            // Validate URI before attempting playback
+            if (uri == null || uri.toString().isEmpty() || uri.toString() == "null") {
+                CrashLogger.log("AudioManager", "Invalid or empty URI for file: ${musicFile.name}, URI: $uri")
+                return false
+            }
+            
             CrashLogger.log("AudioManager", "Attempting to play file: ${musicFile.name}")
+            CrashLogger.log("AudioManager", "File URI: $uri")
             
             // CRITICAL: Stop any currently playing audio before starting new playback
             stopAllPlayback()

@@ -5,9 +5,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import java.io.File
 import java.io.FileOutputStream
 import androidx.lifecycle.AndroidViewModel
@@ -174,6 +176,25 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _lastSortedAction = MutableStateFlow<SortAction?>(null)
     val lastSortedAction: StateFlow<SortAction?> = _lastSortedAction.asStateFlow()
     
+    // Subfolder management for liked files
+    private val _subfolderHistory = MutableStateFlow<List<String>>(emptyList())
+    val subfolderHistory: StateFlow<List<String>> = _subfolderHistory.asStateFlow()
+    
+    private val _availableSubfolders = MutableStateFlow<List<String>>(emptyList())
+    val availableSubfolders: StateFlow<List<String>> = _availableSubfolders.asStateFlow()
+    
+    private val _subfolderFileCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val subfolderFileCounts: StateFlow<Map<String, Int>> = _subfolderFileCounts.asStateFlow()
+    
+    private val _showSubfolderDialog = MutableStateFlow(false)
+    val showSubfolderDialog: StateFlow<Boolean> = _showSubfolderDialog.asStateFlow()
+    
+    private val _newSubfolderName = MutableStateFlow("")
+    val newSubfolderName: StateFlow<String> = _newSubfolderName.asStateFlow()
+    
+    private val _showSubfolderManagementDialog = MutableStateFlow(false)
+    val showSubfolderManagementDialog: StateFlow<Boolean> = _showSubfolderManagementDialog.asStateFlow()
+    
     init {
         try {
             // Initialize crash logger
@@ -192,6 +213,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Load playlists at startup
             loadLikedFiles()
             loadRejectedFiles()
+            
+            // Initialize subfolder management
+            loadSubfolderHistory()
+            updateSubfolderInfo()
             
             // Clear caches periodically to prevent memory buildup
             startPeriodicCacheClearing()
@@ -1666,6 +1691,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             PlaylistTab.LIKED -> {
                 CrashLogger.log("MusicViewModel", "LIKED tab - loading files")
                 loadLikedFiles()
+                updateSubfolderInfo() // Update subfolder info for liked playlist
             }
             PlaylistTab.REJECTED -> {
                 CrashLogger.log("MusicViewModel", "REJECTED tab - loading files")
@@ -1684,18 +1710,42 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
-    private fun loadLikedFiles() {
+    fun loadLikedFiles() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val likedUri = fileManager.getLikedFolderUri()
-                CrashLogger.log("MusicViewModel", "Loading liked files from URI: $likedUri")
+                val destinationFolder = fileManager.getDestinationFolder()
+                CrashLogger.log("MusicViewModel", "Loading liked files from destination folder: ${destinationFolder?.name}")
                 
-                val likedFiles = if (likedUri != null) {
-                    val files = fileManager.listMusicFilesInFolder(likedUri)
-                    CrashLogger.log("MusicViewModel", "Found ${files.size} liked files")
-                    files
+                val likedFiles = if (destinationFolder != null) {
+                    // Get the Liked folder within the destination folder
+                    val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
+                    if (likedFolder != null) {
+                        val allFiles = mutableListOf<MusicFile>()
+                        
+                        // Get files from root liked folder
+                        val rootFiles = fileManager.listMusicFilesInFolder(likedFolder.uri)
+                        allFiles.addAll(rootFiles)
+                        
+                        // Get files from all subfolders
+                        likedFolder.listFiles()?.forEach { subfolder ->
+                            if (subfolder.isDirectory) {
+                                val subfolderFiles = fileManager.listMusicFilesInFolder(subfolder.uri)
+                                // Add subfolder info to each file
+                                val filesWithSubfolder = subfolderFiles.map { file ->
+                                    file.copy(subfolder = subfolder.name)
+                                }
+                                allFiles.addAll(filesWithSubfolder)
+                            }
+                        }
+                        
+                        CrashLogger.log("MusicViewModel", "Found ${allFiles.size} liked files (including subfolders)")
+                        allFiles
+                    } else {
+                        CrashLogger.log("MusicViewModel", "Liked folder not found in destination")
+                        emptyList()
+                    }
                 } else {
-                    CrashLogger.log("MusicViewModel", "No liked folder URI found")
+                    CrashLogger.log("MusicViewModel", "No destination folder found")
                     emptyList()
                 }
                 withContext(Dispatchers.Main) {
@@ -1835,5 +1885,421 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
     fun getFileName(uri: Uri): String? {
         return fileManager.getFileName(uri)
+    }
+    
+    // ==================== SUBFOLDER MANAGEMENT ====================
+    
+    private fun loadSubfolderHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val prefs = getApplication<Application>().getSharedPreferences("subfolder_history", Context.MODE_PRIVATE)
+                val historyString = prefs.getString("subfolder_names", "") ?: ""
+                val history = if (historyString.isNotEmpty()) {
+                    historyString.split(",").filter { it.isNotBlank() }.take(50)
+                } else {
+                    emptyList()
+                }
+                _subfolderHistory.value = history
+                CrashLogger.log("MusicViewModel", "Loaded subfolder history: ${history.size} items")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error loading subfolder history", e)
+            }
+        }
+    }
+    
+    private fun saveSubfolderHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val prefs = getApplication<Application>().getSharedPreferences("subfolder_history", Context.MODE_PRIVATE)
+                val historyString = _subfolderHistory.value.joinToString(",")
+                prefs.edit().putString("subfolder_names", historyString).apply()
+                CrashLogger.log("MusicViewModel", "Saved subfolder history: ${_subfolderHistory.value.size} items")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error saving subfolder history", e)
+            }
+        }
+    }
+    
+    fun updateSubfolderInfo() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val destinationFolder = fileManager.getDestinationFolder()
+                if (destinationFolder != null) {
+                    // Get the Liked folder within the destination folder
+                    val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
+                    if (likedFolder != null) {
+                        val subfolders = mutableListOf<String>()
+                        val fileCounts = mutableMapOf<String, Int>()
+                        
+                        // Get all subfolders in liked folder
+                        likedFolder.listFiles()?.forEach { file ->
+                            if (file.isDirectory) {
+                                val folderName = file.name
+                                if (folderName != null) {
+                                    subfolders.add(folderName)
+                                    
+                                    // Count music files in this subfolder
+                                    val musicFiles = file.listFiles()?.filter { 
+                                        it.isFile && (it.name?.endsWith(".mp3", ignoreCase = true) == true)
+                                    } ?: emptyList()
+                                    fileCounts[folderName] = musicFiles.size
+                                }
+                            }
+                        }
+                        
+                        _availableSubfolders.value = subfolders.sorted()
+                        _subfolderFileCounts.value = fileCounts
+                        CrashLogger.log("MusicViewModel", "Updated subfolder info: ${subfolders.size} folders")
+                    }
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error updating subfolder info", e)
+            }
+        }
+    }
+    
+    fun addToSubfolderHistory(subfolderName: String) {
+        if (subfolderName.isBlank()) return
+        
+        val currentHistory = _subfolderHistory.value.toMutableList()
+        // Remove if already exists to avoid duplicates
+        currentHistory.remove(subfolderName)
+        // Add to beginning
+        currentHistory.add(0, subfolderName)
+        // Keep only last 50
+        _subfolderHistory.value = currentHistory.take(50)
+        saveSubfolderHistory()
+    }
+    
+    fun showSubfolderDialog() {
+        _showSubfolderDialog.value = true
+    }
+    
+    fun hideSubfolderDialog() {
+        _showSubfolderDialog.value = false
+        _newSubfolderName.value = ""
+    }
+    
+    fun setNewSubfolderName(name: String) {
+        _newSubfolderName.value = name
+    }
+    
+    fun createNewSubfolder() {
+        val name = _newSubfolderName.value.trim()
+        if (name.isNotBlank()) {
+            addToSubfolderHistory(name)
+            hideSubfolderDialog()
+            // Automatically move the current file to the new subfolder
+            moveCurrentFileToSubfolder(name)
+        }
+    }
+    
+    fun showSubfolderManagementDialog() {
+        _showSubfolderManagementDialog.value = true
+    }
+    
+    fun hideSubfolderManagementDialog() {
+        _showSubfolderManagementDialog.value = false
+    }
+    
+    fun removeSubfoldersFromHistory(subfolderNames: List<String>) {
+        if (subfolderNames.isEmpty()) return
+        
+        val currentHistory = _subfolderHistory.value.toMutableList()
+        currentHistory.removeAll(subfolderNames)
+        _subfolderHistory.value = currentHistory
+        saveSubfolderHistory()
+        
+        _errorMessage.value = "Removed ${subfolderNames.size} subfolder(s) from memory"
+    }
+    
+    fun moveCurrentFileToSubfolder(subfolderName: String) {
+        val currentFile = _currentPlayingFile.value
+        if (currentFile == null) {
+            _errorMessage.value = "No file is currently playing"
+            return
+        }
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val destinationFolder = fileManager.getDestinationFolder()
+                if (destinationFolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "No destination folder selected"
+                    }
+                    return@launch
+                }
+                
+                // Get the Liked folder within the destination folder
+                val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
+                if (likedFolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Liked folder not found"
+                    }
+                    return@launch
+                }
+                
+                // Create subfolder if it doesn't exist
+                var subfolder = likedFolder.findFile(subfolderName)
+                if (subfolder == null) {
+                    subfolder = likedFolder.createDirectory(subfolderName)
+                    if (subfolder == null) {
+                        withContext(Dispatchers.Main) {
+                            _errorMessage.value = "Failed to create subfolder: $subfolderName"
+                        }
+                        return@launch
+                    }
+                }
+                
+                // Move the file - preserve original filename and MIME type
+                val fileName = fileManager.getFileName(currentFile.uri) ?: "unknown"
+                val originalMimeType = getApplication<Application>().contentResolver.getType(currentFile.uri) ?: "audio/mpeg"
+                val targetFile = subfolder.createFile(originalMimeType, fileName)
+                
+                if (targetFile != null) {
+                    // Copy file content
+                    val inputStream = getApplication<Application>().contentResolver.openInputStream(currentFile.uri)
+                    val outputStream = getApplication<Application>().contentResolver.openOutputStream(targetFile.uri)
+                    
+                    if (inputStream != null && outputStream != null) {
+                        inputStream.copyTo(outputStream)
+                        inputStream.close()
+                        outputStream.close()
+                        
+                        // Delete original file
+                        val originalFile = DocumentFile.fromSingleUri(getApplication(), currentFile.uri)
+                        originalFile?.delete()
+                        
+                        // Update playlists
+                        withContext(Dispatchers.Main) {
+                            addToSubfolderHistory(subfolderName)
+                            updateSubfolderInfo()
+                            loadLikedFiles() // Refresh liked files
+                            loadRejectedFiles() // Refresh rejected files
+                            
+                            // Remove file from the appropriate playlist based on current tab
+                            when (_currentPlaylistTab.value) {
+                                PlaylistTab.TODO -> {
+                                    val updatedTodoFiles = _musicFiles.value.toMutableList()
+                                    val indexToRemove = updatedTodoFiles.indexOfFirst { it.uri == currentFile.uri }
+                                    if (indexToRemove != -1) {
+                                        updatedTodoFiles.removeAt(indexToRemove)
+                                        _musicFiles.value = updatedTodoFiles
+                                        
+                                        // Adjust current index if needed
+                                        if (indexToRemove < _currentIndex.value) {
+                                            _currentIndex.value = _currentIndex.value - 1
+                                        } else if (indexToRemove == _currentIndex.value) {
+                                            // If we removed the currently playing file, load the next one
+                                            if (updatedTodoFiles.isNotEmpty()) {
+                                                if (_currentIndex.value >= updatedTodoFiles.size) {
+                                                    _currentIndex.value = updatedTodoFiles.size - 1
+                                                }
+                                                loadCurrentFile()
+                                            } else {
+                                                stopPlayback()
+                                                _errorMessage.value = "Moved '$fileName' to '$subfolderName'. No more files in TODO playlist."
+                                            }
+                                        }
+                                    }
+                                }
+                                PlaylistTab.REJECTED -> {
+                                    val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
+                                    val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == currentFile.uri }
+                                    if (indexToRemove != -1) {
+                                        updatedRejectedFiles.removeAt(indexToRemove)
+                                        _rejectedFiles.value = updatedRejectedFiles
+                                        
+                                        // Adjust current index if needed
+                                        if (indexToRemove < _currentIndex.value) {
+                                            _currentIndex.value = _currentIndex.value - 1
+                                        } else if (indexToRemove == _currentIndex.value) {
+                                            // If we removed the currently playing file, load the next one
+                                            if (updatedRejectedFiles.isNotEmpty()) {
+                                                if (_currentIndex.value >= updatedRejectedFiles.size) {
+                                                    _currentIndex.value = updatedRejectedFiles.size - 1
+                                                }
+                                                loadCurrentFile()
+                                            } else {
+                                                stopPlayback()
+                                                _errorMessage.value = "Moved '$fileName' to '$subfolderName'. No more files in REJECTED playlist."
+                                            }
+                                        }
+                                    }
+                                }
+                                PlaylistTab.LIKED -> {
+                                    // For liked files, we're just moving between subfolders, no need to remove from playlist
+                                }
+                            }
+                            
+                            _errorMessage.value = "Moved '$fileName' to '$subfolderName'"
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            _errorMessage.value = "Failed to copy file to subfolder"
+                        }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Failed to create file in subfolder"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _errorMessage.value = "Error moving file: ${e.message}"
+                }
+                CrashLogger.log("MusicViewModel", "Error moving file to subfolder", e)
+            }
+        }
+    }
+    
+    fun moveCurrentFileFromSubfolderToRoot() {
+        val currentFile = _currentPlayingFile.value
+        if (currentFile == null) {
+            _errorMessage.value = "No file is currently playing"
+            return
+        }
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val destinationFolder = fileManager.getDestinationFolder()
+                if (destinationFolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "No destination folder selected"
+                    }
+                    return@launch
+                }
+                
+                // Get the Liked folder within the destination folder
+                val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
+                if (likedFolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Liked folder not found"
+                    }
+                    return@launch
+                }
+                
+                // Move file from subfolder to root - preserve original filename and MIME type
+                val fileName = fileManager.getFileName(currentFile.uri) ?: "unknown"
+                val originalMimeType = getApplication<Application>().contentResolver.getType(currentFile.uri) ?: "audio/mpeg"
+                val targetFile = likedFolder.createFile(originalMimeType, fileName)
+                
+                if (targetFile != null) {
+                    // Copy file content
+                    val inputStream = getApplication<Application>().contentResolver.openInputStream(currentFile.uri)
+                    val outputStream = getApplication<Application>().contentResolver.openOutputStream(targetFile.uri)
+                    
+                    if (inputStream != null && outputStream != null) {
+                        inputStream.copyTo(outputStream)
+                        inputStream.close()
+                        outputStream.close()
+                        
+                        // Delete original file
+                        val originalFile = DocumentFile.fromSingleUri(getApplication(), currentFile.uri)
+                        originalFile?.delete()
+                        
+                        // Update playlists
+                        withContext(Dispatchers.Main) {
+                            updateSubfolderInfo()
+                            loadLikedFiles() // Refresh liked files
+                            _errorMessage.value = "Moved '$fileName' to root liked folder"
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            _errorMessage.value = "Failed to copy file to root"
+                        }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Failed to create file in root"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _errorMessage.value = "Error moving file: ${e.message}"
+                }
+                CrashLogger.log("MusicViewModel", "Error moving file from subfolder to root", e)
+            }
+        }
+    }
+    
+    fun getCurrentFileSubfolder(): String? {
+        val currentFile = _currentPlayingFile.value ?: return null
+        val destinationFolder = fileManager.getDestinationFolder() ?: return null
+        
+        // Get the Liked folder within the destination folder
+        val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG") ?: return null
+        
+        // Check if file is in a subfolder
+        likedFolder.listFiles()?.forEach { subfolder ->
+            if (subfolder.isDirectory) {
+                subfolder.listFiles()?.forEach { file ->
+                    if (file.uri == currentFile.uri) {
+                        return subfolder.name
+                    }
+                }
+            }
+        }
+        return null
+    }
+    
+    fun setCurrentFileWithoutPlaying(file: MusicFile) {
+        // Set the current file without starting playback
+        _currentPlayingFile.value = file
+        // Don't call loadCurrentFile() or start playback
+    }
+    
+    fun loadFilesFromLikedSubfolder(subfolderName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val destinationFolder = fileManager.getDestinationFolder()
+                if (destinationFolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "No destination folder selected"
+                    }
+                    return@launch
+                }
+                
+                // Get the Liked folder within the destination folder
+                val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
+                if (likedFolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Liked folder not found"
+                    }
+                    return@launch
+                }
+                
+                // Find the specific subfolder
+                val subfolder = likedFolder.findFile(subfolderName)
+                if (subfolder == null) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Subfolder '$subfolderName' not found"
+                    }
+                    return@launch
+                }
+                
+                // Load files from the subfolder
+                val files = fileManager.listMusicFilesInFolder(subfolder.uri)
+                val filesWithSubfolder = files.map { file ->
+                    file.copy(subfolder = subfolderName, sourcePlaylist = PlaylistTab.LIKED)
+                }
+                
+                withContext(Dispatchers.Main) {
+                    _likedFiles.value = filesWithSubfolder
+                    _currentIndex.value = 0
+                    if (filesWithSubfolder.isNotEmpty()) {
+                        loadCurrentFile()
+                        _errorMessage.value = "Loaded ${filesWithSubfolder.size} files from '$subfolderName'"
+                    } else {
+                        _errorMessage.value = "No files found in '$subfolderName'"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _errorMessage.value = "Error loading files from subfolder: ${e.message}"
+                }
+                CrashLogger.log("MusicViewModel", "Error loading files from liked subfolder", e)
+            }
+        }
     }
 }

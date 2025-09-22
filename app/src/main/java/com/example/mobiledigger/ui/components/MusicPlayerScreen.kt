@@ -33,6 +33,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay // For deprecated icon
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -150,12 +159,23 @@ fun MusicPlayerScreen(
     var deleteActionType by remember { mutableStateOf<PlaylistTab?>(null) } // State for delete all confirmation
     var showShareZipDialog by remember { mutableStateOf(false) } // State for ZIP sharing confirmation
     var showReadmeDialog by remember { mutableStateOf(false) } // State for README dialog
+    var showSubfolderDropdown by remember { mutableStateOf(false) } // State for subfolder dropdown
+    var showSubfolderManagementDialog by remember { mutableStateOf(false) } // State for subfolder management dialog
+    var showSubfolderSelectionDialog by remember { mutableStateOf(false) } // State for subfolder selection dialog from playlist
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
     
     val currentSearchText by viewModel.searchText.collectAsState() // Moved here
     val searchResults by viewModel.searchResults.collectAsState() // Moved here
+    
+    // Subfolder management state
+    val subfolderHistory by viewModel.subfolderHistory.collectAsState()
+    val availableSubfolders by viewModel.availableSubfolders.collectAsState()
+    val subfolderFileCounts by viewModel.subfolderFileCounts.collectAsState()
+    val showSubfolderCreateDialog by viewModel.showSubfolderDialog.collectAsState()
+    val newSubfolderName by viewModel.newSubfolderName.collectAsState()
+    val showSubfolderManagementDialogState by viewModel.showSubfolderManagementDialog.collectAsState()
     
     // Multi-selection state
     val selectedIndices by viewModel.selectedIndices.collectAsState()
@@ -812,7 +832,11 @@ viewModel.updateSearchText("")
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Delete Rejected Files") },
-                            onClick = { menuExpanded = false; viewModel.deleteRejectedFiles() },
+                            onClick = { 
+                                menuExpanded = false
+                                deleteActionType = PlaylistTab.REJECTED
+                                showDeleteAllDialog = true
+                            },
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
                         )
                         HorizontalDivider(); HorizontalDivider(); HorizontalDivider()
@@ -1464,6 +1488,226 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                             }
+                                            
+                                            // Subfolder dropdown button (available in all playlists)
+                                            Box {
+                                                IconButton(
+                                                    onClick = { showSubfolderDropdown = true },
+                                                    modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Icon(
+                                                        Icons.Default.Folder,
+                                                        contentDescription = "Move to Subfolder",
+                                                        tint = Color(0xFF4CAF50), // Green color
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                                
+                                                // Subfolder dropdown menu
+                                                DropdownMenu(
+                                                    expanded = showSubfolderDropdown,
+                                                    onDismissRequest = { showSubfolderDropdown = false }
+                                                ) {
+                                                    // Context-aware subfolder options based on current playlist
+                                                    when (currentPlaylistTab) {
+                                                        PlaylistTab.TODO -> {
+                                                            // For TODO playlist: show options to move to liked subfolders (this will also like the file)
+                                                            DropdownMenuItem(
+                                                                text = { 
+                                                                    Row(
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            Icons.Default.Add,
+                                                                            contentDescription = null,
+                                                                            tint = Color(0xFF4CAF50)
+                                                                        )
+                                                                        Text("Add new subfolder")
+                                                                    }
+                                                                },
+                                                                onClick = { 
+                                                                    showSubfolderDropdown = false
+                                                                    viewModel.showSubfolderDialog()
+                                                                }
+                                                            )
+                                                            
+                                                            // Available subfolders with file counts
+                                                            availableSubfolders.forEach { subfolder ->
+                                                                val fileCount = subfolderFileCounts[subfolder] ?: 0
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text("Like & move to \"$subfolder\" ($fileCount files)")
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                    }
+                                                                )
+                                                            }
+                                                            
+                                                            // Recent subfolders (from history)
+                                                            subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text("Like & move to \"$subfolder\" (0 files)")
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                        
+                                                        PlaylistTab.REJECTED -> {
+                                                            // For REJECTED playlist: show options to move to liked subfolders (this will also like the file)
+                                                            DropdownMenuItem(
+                                                                text = { 
+                                                                    Row(
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            Icons.Default.Add,
+                                                                            contentDescription = null,
+                                                                            tint = Color(0xFF4CAF50)
+                                                                        )
+                                                                        Text("Add new subfolder")
+                                                                    }
+                                                                },
+                                                                onClick = { 
+                                                                    showSubfolderDropdown = false
+                                                                    viewModel.showSubfolderDialog()
+                                                                }
+                                                            )
+                                                            
+                                                            // Available subfolders with file counts
+                                                            availableSubfolders.forEach { subfolder ->
+                                                                val fileCount = subfolderFileCounts[subfolder] ?: 0
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text("Like & move to \"$subfolder\" ($fileCount files)")
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                    }
+                                                                )
+                                                            }
+                                                            
+                                                            // Recent subfolders (from history)
+                                                            subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text("Like & move to \"$subfolder\" (0 files)")
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                        
+                                                        PlaylistTab.LIKED -> {
+                                                            // For LIKED playlist: show full subfolder management options
+                                                            DropdownMenuItem(
+                                                                text = { 
+                                                                    Row(
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            Icons.Default.Add,
+                                                                            contentDescription = null,
+                                                                            tint = Color(0xFF4CAF50)
+                                                                        )
+                                                                        Text("Add new subfolder")
+                                                                    }
+                                                                },
+                                                                onClick = { 
+                                                                    showSubfolderDropdown = false
+                                                                    viewModel.showSubfolderDialog()
+                                                                }
+                                                            )
+                                                            
+                                                            // Current file's subfolder info (only for liked files)
+                                                            val currentSubfolder = viewModel.getCurrentFileSubfolder()
+                                                            if (currentSubfolder != null) {
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text(
+                                                                            "Remove from \"$currentSubfolder\" to Root",
+                                                                            color = Color(0xFFFF5722) // Orange color
+                                                                        )
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileFromSubfolderToRoot()
+                                                                    }
+                                                                )
+                                                            }
+                                                            
+                                                            // Available subfolders with file counts
+                                                            availableSubfolders.forEach { subfolder ->
+                                                                val fileCount = subfolderFileCounts[subfolder] ?: 0
+                                                                val isCurrentSubfolder = currentSubfolder == subfolder
+                                                                
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text(
+                                                                            if (isCurrentSubfolder) "Currently in \"$subfolder\" ($fileCount files)"
+                                                                            else "Move to \"$subfolder\" ($fileCount files)"
+                                                                        )
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        if (!isCurrentSubfolder) {
+                                                                            viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                        }
+                                                                    },
+                                                                    enabled = !isCurrentSubfolder
+                                                                )
+                                                            }
+                                                            
+                                                            // Recent subfolders (from history)
+                                                            subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text("Move to \"$subfolder\" (0 files)")
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    // Manage subfolders option
+                                                    DropdownMenuItem(
+                                                        text = { 
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Default.Delete,
+                                                                    contentDescription = null,
+                                                                    tint = Color(0xFFFF5722) // Orange color
+                                                                )
+                                                                Text("Manage subfolders")
+                                                            }
+                                                        },
+                                                        onClick = { 
+                                                            showSubfolderDropdown = false
+                                                            viewModel.showSubfolderManagementDialog()
+                                                        }
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -1769,30 +2013,75 @@ viewModel.updateSearchText("")
                                 if (showSubfolderDialog) {
                                     AlertDialog(
                                         onDismissRequest = { showSubfolderDialog = false },
-                                        title = { Text("Select Subfolder") },
+                                        title = { 
+                                            Text(
+                                                when (currentPlaylistTab) {
+                                                    PlaylistTab.TODO -> "Select Source Subfolder"
+                                                    PlaylistTab.LIKED -> "Select Liked Subfolder"
+                                                    PlaylistTab.REJECTED -> "Select Source Subfolder"
+                                                }
+                                            )
+                                        },
                                         text = {
-                                            val subfolders by viewModel.subfolders.collectAsState()
-                                            if (subfolders.isEmpty()) {
-                                                Text("No subfolders found in the current source folder.")
-                                            } else {
-                                                LazyColumn {
-                                                    // Add option to select the root source folder
-                                                    item {
-                                                        TextButton(onClick = {
-                                                            viewModel.preferences.getSourceRootUri()?.let { uriString ->
-                                                                viewModel.selectFolder(android.net.Uri.parse(uriString))
+                                            when (currentPlaylistTab) {
+                                                PlaylistTab.TODO, PlaylistTab.REJECTED -> {
+                                                    // Show source folder subfolders for TODO and REJECTED
+                                                    val subfolders by viewModel.subfolders.collectAsState()
+                                                    if (subfolders.isEmpty()) {
+                                                        Text("No subfolders found in the current source folder.")
+                                                    } else {
+                                                        LazyColumn {
+                                                            // Add option to select the root source folder
+                                                            item {
+                                                                TextButton(onClick = {
+                                                                    viewModel.preferences.getSourceRootUri()?.let { uriString ->
+                                                                        viewModel.selectFolder(android.net.Uri.parse(uriString))
+                                                                    }
+                                                                    showSubfolderDialog = false
+                                                                }) {
+                                                                    Text("../ (Root Folder)", fontWeight = FontWeight.Bold)
+                                                                }
                                                             }
-                                                            showSubfolderDialog = false
-                                                        }) {
-                                                            Text("../ (Root Folder)", fontWeight = FontWeight.Bold)
+                                                            itemsIndexed(subfolders) { index, subfolderUri ->
+                                                                TextButton(onClick = {
+                                                                    viewModel.loadFilesFromSubfolder(subfolderUri)
+                                                                    showSubfolderDialog = false
+                                                                }) {
+                                                                    Text(viewModel.getFileName(subfolderUri) ?: subfolderUri.lastPathSegment ?: "Unknown Subfolder")
+                                                                }
+                                                            }
                                                         }
                                                     }
-                                                    itemsIndexed(subfolders) { index, subfolderUri ->
-                                                        TextButton(onClick = {
-                                                            viewModel.loadFilesFromSubfolder(subfolderUri)
-                                                            showSubfolderDialog = false
-                                                        }) {
-                                                            Text(viewModel.getFileName(subfolderUri) ?: subfolderUri.lastPathSegment ?: "Unknown Subfolder")
+                                                }
+                                                PlaylistTab.LIKED -> {
+                                                    // Show liked subfolders for LIKED playlist
+                                                    val availableSubfolders by viewModel.availableSubfolders.collectAsState()
+                                                    val subfolderFileCounts by viewModel.subfolderFileCounts.collectAsState()
+                                                    
+                                                    if (availableSubfolders.isEmpty()) {
+                                                        Text("No subfolders found in the liked folder.")
+                                                    } else {
+                                                        LazyColumn {
+                                                            // Add option to select the root liked folder
+                                                            item {
+                                                                TextButton(onClick = {
+                                                                    // Load all liked files (from root and all subfolders)
+                                                                    viewModel.loadLikedFiles()
+                                                                    showSubfolderDialog = false
+                                                                }) {
+                                                                    Text("../ (All Liked Files)", fontWeight = FontWeight.Bold)
+                                                                }
+                                                            }
+                                                            itemsIndexed(availableSubfolders) { index, subfolderName ->
+                                                                val fileCount = subfolderFileCounts[subfolderName] ?: 0
+                                                                TextButton(onClick = {
+                                                                    // Load files from specific liked subfolder
+                                                                    viewModel.loadFilesFromLikedSubfolder(subfolderName)
+                                                                    showSubfolderDialog = false
+                                                                }) {
+                                                                    Text("$subfolderName ($fileCount files)")
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -2113,7 +2402,16 @@ viewModel.updateSearchText("")
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                         Text(
-                                            text = "Time: ${formatTime(item.duration)}",
+                                            text = if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                                val subfolderInfo = if (item.subfolder != null) {
+                                                    ":: ${item.subfolder} ::"
+                                                } else {
+                                                    ":: Liked ::"
+                                                }
+                                                "Time: ${formatTime(item.duration)} $subfolderInfo"
+                                            } else {
+                                                "Time: ${formatTime(item.duration)}"
+                                            },
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -2188,7 +2486,31 @@ viewModel.updateSearchText("")
                                                     tint = NoButton,
                                                     modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
                                                 )
-                                                }
+                                            }
+                                        }
+                                            
+                                            // Move to folder button (available in all playlists)
+                                            IconButton(
+                                                onClick = { 
+                                                    // Set the current file to this item without playing it
+                                                    val currentFiles = when (currentPlaylistTab) {
+                                                        PlaylistTab.TODO -> musicFiles
+                                                        PlaylistTab.LIKED -> likedFiles
+                                                        PlaylistTab.REJECTED -> rejectedFiles
+                                                    }
+                                                    if (index < currentFiles.size) {
+                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                    }
+                                                    showSubfolderSelectionDialog = true
+                                                },
+                                                modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Folder,
+                                                    contentDescription = "Move to Subfolder",
+                                                    tint = Color(0xFF4CAF50), // Green color
+                                                    modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
+                                                )
                                             }
                                         }
                                     }
@@ -2473,6 +2795,253 @@ viewModel.updateSearchText("")
                 }
             }
         }
+    }
+    
+    // Subfolder creation dialog
+    if (showSubfolderCreateDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideSubfolderDialog() },
+            title = { Text("Create New Subfolder") },
+            text = {
+                Column {
+                    Text("Enter a name for the new subfolder:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newSubfolderName,
+                        onValueChange = { viewModel.setNewSubfolderName(it) },
+                        label = { Text("Subfolder Name") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.createNewSubfolder() },
+                    enabled = newSubfolderName.trim().isNotBlank()
+                ) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideSubfolderDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Subfolder management dialog
+    if (showSubfolderManagementDialogState) {
+        var selectedSubfolders by remember { mutableStateOf(setOf<String>()) }
+        
+        AlertDialog(
+            onDismissRequest = { 
+                viewModel.hideSubfolderManagementDialog()
+                selectedSubfolders = emptySet()
+            },
+            title = { Text("Manage Subfolders") },
+            text = {
+                Column {
+                    Text("Select subfolders to remove from memory:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Show all subfolders from history
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.height(200.dp)
+                    ) {
+                        items(subfolderHistory) { subfolder ->
+                            val isSelected = selectedSubfolders.contains(subfolder)
+                            
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { 
+                                        selectedSubfolders = if (isSelected) {
+                                            selectedSubfolders - subfolder
+                                        } else {
+                                            selectedSubfolders + subfolder
+                                        }
+                                    },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) 
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                    else 
+                                        MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = isSelected,
+                                        onCheckedChange = { 
+                                            selectedSubfolders = if (isSelected) {
+                                                selectedSubfolders - subfolder
+                                            } else {
+                                                selectedSubfolders + subfolder
+                                            }
+                                        }
+                                    )
+                                    Text(
+                                        text = subfolder,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        if (selectedSubfolders.isNotEmpty()) {
+                            viewModel.removeSubfoldersFromHistory(selectedSubfolders.toList())
+                        }
+                        viewModel.hideSubfolderManagementDialog()
+                        selectedSubfolders = emptySet()
+                    },
+                    enabled = selectedSubfolders.isNotEmpty()
+                ) {
+                    Text("Remove Selected")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    viewModel.hideSubfolderManagementDialog()
+                    selectedSubfolders = emptySet()
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Subfolder selection dialog for playlist items
+    if (showSubfolderSelectionDialog) {
+        // Update subfolder info when dialog is shown
+        LaunchedEffect(showSubfolderSelectionDialog) {
+            if (showSubfolderSelectionDialog) {
+                viewModel.updateSubfolderInfo()
+            }
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showSubfolderSelectionDialog = false },
+            title = { 
+                Text(
+                    when (currentPlaylistTab) {
+                        PlaylistTab.TODO -> "Move to Liked Subfolder"
+                        PlaylistTab.REJECTED -> "Move to Liked Subfolder"
+                        PlaylistTab.LIKED -> "Move to Subfolder"
+                    }
+                )
+            },
+            text = {
+                Column {
+                    Text("Select a subfolder to move the current file:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Add new subfolder option
+                    TextButton(
+                        onClick = {
+                            showSubfolderSelectionDialog = false
+                            viewModel.showSubfolderDialog()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                tint = Color(0xFF4CAF50)
+                            )
+                            Text("Create new subfolder")
+                        }
+                    }
+                    
+                    // Available subfolders with file counts
+                    if (availableSubfolders.isNotEmpty()) {
+                        Text(
+                            "Available subfolders:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                        availableSubfolders.forEach { subfolder ->
+                            val fileCount = subfolderFileCounts[subfolder] ?: 0
+                            TextButton(
+                                onClick = {
+                                    showSubfolderSelectionDialog = false
+                                    viewModel.moveCurrentFileToSubfolder(subfolder)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("$subfolder")
+                                    Text(
+                                        "$fileCount files",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Recent subfolders (from history) - empty folders
+                    val recentSubfolders = subfolderHistory.filter { it !in availableSubfolders }
+                    if (recentSubfolders.isNotEmpty()) {
+                        Text(
+                            "Recent subfolders (empty):",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                        recentSubfolders.forEach { subfolder ->
+                            TextButton(
+                                onClick = {
+                                    showSubfolderSelectionDialog = false
+                                    viewModel.moveCurrentFileToSubfolder(subfolder)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("$subfolder")
+                                    Text(
+                                        "0 files",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSubfolderSelectionDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
 

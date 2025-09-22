@@ -1,6 +1,7 @@
 package com.example.mobiledigger.ui.components
 
 import androidx.compose.animation.core.*
+import com.example.mobiledigger.util.AnimationUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,7 @@ fun SharedWaveformDisplay(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
     
     // Local progress state for immediate feedback
     var localProgress by remember { mutableStateOf(progress) }
@@ -66,7 +68,7 @@ fun SharedWaveformDisplay(
                             initialValue = 0.3f,
                             targetValue = 1f,
                             animationSpec = infiniteRepeatable(
-                                animation = tween(durationMillis = 600, easing = LinearEasing),
+                                animation = tween(durationMillis = AnimationUtils.getOptimizedDuration(600, refreshRate), easing = LinearEasing),
                                 initialStartOffset = StartOffset(offsetMillis = index * 200),
                                 repeatMode = RepeatMode.Reverse
                             ), label = "dotAlpha$index"

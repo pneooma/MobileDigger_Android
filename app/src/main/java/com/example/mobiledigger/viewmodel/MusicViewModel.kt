@@ -631,9 +631,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     // Adjust current index and playback if the sorted file was the current one
                     if (sortedFile.uri == currentFile?.uri) {
                         stopPlayback()
-                        _currentIndex.value = 0 // Reset index if currently playing song is removed
+                        // Keep the same index position, but adjust if we're at the end
+                        if (_currentIndex.value >= updatedFiles.size) {
+                            _currentIndex.value = updatedFiles.size - 1 // Go to last file if we're past the end
+                        }
                         if (updatedFiles.isNotEmpty()) {
-                            loadCurrentFile() // Load the new first file if playlist not empty
+                            loadCurrentFile() // Load the file at the current index
                         } else {
                             _errorMessage.value = "Well done! Now select another folder!"
                         }
@@ -652,7 +655,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     // Adjust current index if currently playing from this list
                     if (sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) {
                         stopPlayback()
-                        _currentIndex.value = 0 // Reset index
+                        // Keep the same index position, but adjust if we're at the end
+                        if (_currentIndex.value >= updatedLikedFiles.size) {
+                            _currentIndex.value = updatedLikedFiles.size - 1 // Go to last file if we're past the end
+                        }
                         if (updatedLikedFiles.isNotEmpty()) {
                             loadCurrentFile()
                         } else {
@@ -673,7 +679,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     // Adjust current index if currently playing from this list
                     if (sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
                         stopPlayback()
-                        _currentIndex.value = 0 // Reset index
+                        // Keep the same index position, but adjust if we're at the end
+                        if (_currentIndex.value >= updatedRejectedFiles.size) {
+                            _currentIndex.value = updatedRejectedFiles.size - 1 // Go to last file if we're past the end
+                        }
                         if (updatedRejectedFiles.isNotEmpty()) {
                             loadCurrentFile()
                         } else {

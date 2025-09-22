@@ -541,7 +541,7 @@ fun SpectrogramPopupScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "⚠️ Spectrogram analysis limited to first 4 minutes of audio",
+                            text = "Spectrogram analysis limited to first 4 minutes of audio",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             textAlign = TextAlign.Center,

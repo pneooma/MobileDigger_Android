@@ -1621,6 +1621,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             _selectedIndices.value = emptySet()
         }
     }
+
+    fun enableMultiSelectionMode(index: Int) {
+        _isMultiSelectionMode.value = true
+        toggleSelection(index)
+    }
     
     fun toggleSelection(index: Int) {
         if (!_isMultiSelectionMode.value) return
@@ -1640,6 +1645,29 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     fun clearSelection() {
         _selectedIndices.value = emptySet()
+    }
+    
+    fun moveSelectedFilesToSubfolder(subfolderName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val selected = _selectedIndices.value.toList()
+            val filesToMove = selected.mapNotNull { index -> _musicFiles.value.getOrNull(index) }
+
+            if (filesToMove.isNotEmpty()) {
+                val success = fileManager.moveFilesToSubfolder(filesToMove, subfolderName)
+                if (success) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Moved ${filesToMove.size} files to $subfolderName"
+                        _selectedIndices.value = emptySet()
+                        _isMultiSelectionMode.value = false
+                        rescanSourceFolder() // Refresh the list
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Failed to move files"
+                    }
+                }
+            }
+        }
     }
     
     fun sortSelectedFiles(action: SortAction) {

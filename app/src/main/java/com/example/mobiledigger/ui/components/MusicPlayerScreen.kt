@@ -694,9 +694,9 @@ fun MusicPlayerScreen(
                     )
                 )
             .padding(
-                start = paddingValues.calculateStartPadding(LayoutDirection.Ltr) / 2 + 16.dp,
+                start = 6.dp,
                 top = paddingValues.calculateTopPadding() / 2 + 6.dp,
-                end = paddingValues.calculateEndPadding(LayoutDirection.Ltr) / 2 + 16.dp,
+                end = 6.dp,
                 bottom = paddingValues.calculateBottomPadding() / 2 + 6.dp
             )
         ) {
@@ -712,25 +712,36 @@ fun MusicPlayerScreen(
 
         // Header with app title and folders pill
         Row(
-        modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "MobileDigger",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = MaterialTheme.typography.headlineMedium.fontSize * 0.5f
+                    ),
                     color = GreenAccent
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "groovy's child :: v8.3 ::",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Text(
+                    text = "groovy's child",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.5f,
+                        lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.5f // Compact line height
+                    ),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = ":: v8.14 ::",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
+                        lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
+                    ),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
             
             // Calculate responsive spacing based on screen width - reduced to prevent text wrapping

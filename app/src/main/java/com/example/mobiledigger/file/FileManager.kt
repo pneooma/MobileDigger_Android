@@ -670,4 +670,37 @@ class FileManager(private val context: Context) {
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         return documentFile?.name
     }
+
+    suspend fun moveFilesToSubfolder(files: List<MusicFile>, subfolderName: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val destination = destinationFolder ?: return@withContext false
+            var targetSubFolder = destination.findFile(subfolderName)
+            if (targetSubFolder == null) {
+                targetSubFolder = destination.createDirectory(subfolderName)
+            }
+            targetSubFolder ?: return@withContext false
+
+            files.forEach { musicFile ->
+                val sourceFile = DocumentFile.fromSingleUri(context, musicFile.uri)
+                if (sourceFile != null && sourceFile.exists()) {
+                    val desiredName = sourceFile.name ?: musicFile.name
+                    val safeName = resolveUniqueName(targetSubFolder, desiredName)
+                    val target = targetSubFolder.createFile(sourceFile.type ?: "audio/*", safeName)
+
+                    if (target != null) {
+                        contentResolver.openInputStream(sourceFile.uri)?.use { input ->
+                            contentResolver.openOutputStream(target.uri)?.use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        sourceFile.delete()
+                    }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error moving files to subfolder", e)
+            false
+        }
+    }
 }

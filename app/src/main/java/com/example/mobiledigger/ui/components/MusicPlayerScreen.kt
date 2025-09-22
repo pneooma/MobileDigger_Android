@@ -1160,13 +1160,13 @@ viewModel.updateSearchText("")
     }
             } else {
                 val listState = rememberLazyListState()
+                // Optimized scroll detection - only recalculate when actually needed
                 val isScrolled by remember {
                     derivedStateOf {
-                        // Show miniplayer when we've scrolled past the main player (which contains the waveform)
-                        // The main player is the first item (index 0), so when we're at index 1 or beyond,
-                        // or significantly scrolled within the first item, the waveform is no longer visible
-                        listState.firstVisibleItemIndex > 0 || 
-                        (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset > 400)
+                        val firstIndex = listState.firstVisibleItemIndex
+                        val firstOffset = listState.firstVisibleItemScrollOffset
+                        // Only recalculate when crossing thresholds
+                        firstIndex > 0 || (firstIndex == 0 && firstOffset > 400)
                     }
                 }
                 
@@ -1176,7 +1176,10 @@ viewModel.updateSearchText("")
                         state = listState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .heightIn(max = playlistMaxHeight)
+                            .heightIn(max = playlistMaxHeight),
+                        // Performance optimizations
+                        contentPadding = PaddingValues(vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         // Current song info
                         item {

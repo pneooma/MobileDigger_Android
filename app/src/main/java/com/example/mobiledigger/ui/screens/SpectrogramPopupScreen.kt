@@ -31,7 +31,11 @@ import androidx.compose.ui.window.DialogProperties
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
 import android.net.Uri
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import java.io.File
@@ -41,6 +45,7 @@ import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.ui.components.SpectrogramView
 import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.WaveformSeekBar
+import android.graphics.Typeface
 
 // Data class for audio properties
 data class AudioProperties(
@@ -613,200 +618,322 @@ private fun generateComprehensiveSpectrogramImage(
     spectrogramBitmap: androidx.compose.ui.graphics.ImageBitmap,
     musicFile: MusicFile,
     duration: Long,
-    waveformData: IntArray? = null
+    waveformData: IntArray? = null,
+    backgroundColor: Int,
+    textColor: Int,
+    primaryColor: Int,
+    surfaceVariantColor: Int,
+    errorContainerColor: Int,
+    onErrorContainerColor: Int,
+    context: Context
 ): Bitmap {
     val width = 1200
-    val height = 1600
+    val height = 2400 // Increased height for more content
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
-    
-    // Modern gradient background
-    val gradient = android.graphics.LinearGradient(
-        0f, 0f, 0f, height.toFloat(),
-        android.graphics.Color.parseColor("#f8fafc"),
-        android.graphics.Color.parseColor("#e2e8f0"),
-        android.graphics.Shader.TileMode.CLAMP
-    )
-    val backgroundPaint = android.graphics.Paint().apply { shader = gradient }
-    canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
-    
-    // Paint styles for modern look
+
+    // Paints
+    val backgroundPaint = android.graphics.Paint().apply { color = backgroundColor }
     val titlePaint = android.graphics.Paint().apply {
         isAntiAlias = true
         textSize = 48f
-        color = android.graphics.Color.parseColor("#1e293b")
+        color = textColor
         typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-    }
-    
-    val headerPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        textSize = 32f
-        color = android.graphics.Color.parseColor("#334155")
-        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-    }
-    
-    val bodyPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        textSize = 24f
-        color = android.graphics.Color.parseColor("#475569")
-    }
-    
-    val smallPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        textSize = 20f
-        color = android.graphics.Color.parseColor("#64748b")
-    }
-    
-    val accentPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        color = android.graphics.Color.parseColor("#3b82f6")
-    }
-    
-    val cardPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        color = android.graphics.Color.WHITE
-        setShadowLayer(8f, 0f, 4f, android.graphics.Color.parseColor("#20000000"))
-    }
-    
-    var yPos = 80f
-    
-    // Modern header with accent line
-    canvas.drawText("AUDIO ANALYSIS REPORT", 60f, yPos, titlePaint)
-    canvas.drawRect(60f, yPos + 20f, 600f, yPos + 25f, accentPaint)
-    yPos += 100f
-    
-    // File information card
-    val cardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 200f)
-    canvas.drawRoundRect(cardRect, 16f, 16f, cardPaint)
-    
-    canvas.drawText("File Information", 60f, yPos + 10f, headerPaint)
-    yPos += 50f
-    
-    canvas.drawText("Name: ${musicFile.name}", 60f, yPos, bodyPaint)
-    yPos += 35f
-    
-    val fileSizeMB = String.format("%.2f", musicFile.size / (1024.0 * 1024.0))
-    canvas.drawText("Size: $fileSizeMB MB", 60f, yPos, bodyPaint)
-    yPos += 35f
-    
-    val imageEffectiveDuration = minOf(duration, 240000L)
-    canvas.drawText("Duration: ${formatTime(imageEffectiveDuration / 1000f)}", 60f, yPos, bodyPaint)
-    yPos += 35f
-    
-    canvas.drawText("Format: ${getFileExtension(musicFile.name).uppercase()}", 60f, yPos, bodyPaint)
-    yPos += 60f
-    
-    // Add waveform section if available
-    if (waveformData != null && waveformData.isNotEmpty()) {
-        // Waveform card
-        val waveformCardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 180f)
-        canvas.drawRoundRect(waveformCardRect, 16f, 16f, cardPaint)
-        
-        canvas.drawText("Waveform", 60f, yPos + 10f, headerPaint)
-        yPos += 50f
-        
-        // Draw waveform (matching spectrogram width and position)
-        val waveformWidth = (width - 200f) * 0.7f  // Same as spectrogram width
-        val waveformHeight = 100f
-        val waveformStartX = 120f  // Same as spectrogram position
-        val waveformRect = android.graphics.RectF(waveformStartX, yPos, waveformStartX + waveformWidth, yPos + waveformHeight)
-        
-        // Background for waveform
-        val waveformBgPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#f1f5f9")
-        }
-        canvas.drawRoundRect(waveformRect, 8f, 8f, waveformBgPaint)
-        
-        // Draw waveform data
-        val waveformPaint = android.graphics.Paint().apply {
-            isAntiAlias = true
-            color = android.graphics.Color.parseColor("#3b82f6")
-            strokeWidth = 2f
-        }
-        
-        val centerY = yPos + waveformHeight / 2f
-        val maxAmplitude = waveformData.maxOrNull()?.toFloat() ?: 1f
-        
-        for (i in 0 until minOf(waveformData.size, waveformWidth.toInt())) {
-            val x = waveformStartX + (i * waveformWidth / waveformData.size)
-            val amplitude = (waveformData[i].toFloat() / maxAmplitude) * (waveformHeight / 2f)
-            canvas.drawLine(x, centerY - amplitude, x, centerY + amplitude, waveformPaint)
-        }
-        
-        yPos += 140f
-    }
-    
-    // Spectrogram section
-    val spectrogramCardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 520f)
-    canvas.drawRoundRect(spectrogramCardRect, 16f, 16f, cardPaint)
-    
-    canvas.drawText("Frequency Spectrogram", 60f, yPos + 10f, headerPaint)
-    yPos += 60f
-    
-    // Draw spectrogram (30% smaller horizontally)
-    val spectrogramWidth = (width - 200f) * 0.7f  // 30% smaller, extra margin for labels
-    val spectrogramHeight = 400f
-    val spectrogramStartX = 120f  // More space for frequency labels
-    val spectrogramRect = android.graphics.RectF(spectrogramStartX, yPos, spectrogramStartX + spectrogramWidth, yPos + spectrogramHeight)
-    
-    // Scale and draw the spectrogram bitmap
-    val scaledSpectrogram = Bitmap.createScaledBitmap(
-        spectrogramBitmap.asAndroidBitmap(),
-        spectrogramWidth.toInt(),
-        spectrogramHeight.toInt(),
-        true
-    )
-    canvas.drawBitmap(scaledSpectrogram, spectrogramStartX, yPos, null)
-    
-    // Frequency labels (moved to left side for better visibility)
-    val freqLabelPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        textSize = 18f
-        color = android.graphics.Color.parseColor("#64748b")
-        textAlign = android.graphics.Paint.Align.RIGHT
-    }
-    canvas.drawText("22 kHz", spectrogramStartX - 10f, yPos + 20f, freqLabelPaint)
-    canvas.drawText("16 kHz", spectrogramStartX - 10f, yPos + spectrogramHeight * 0.2f, freqLabelPaint)
-    canvas.drawText("11 kHz", spectrogramStartX - 10f, yPos + spectrogramHeight * 0.5f, freqLabelPaint)
-    canvas.drawText("5 kHz", spectrogramStartX - 10f, yPos + spectrogramHeight * 0.75f, freqLabelPaint)
-    canvas.drawText("0 Hz", spectrogramStartX - 10f, yPos + spectrogramHeight - 10f, freqLabelPaint)
-    
-    // Time labels
-    canvas.drawText("0s", spectrogramStartX, yPos + spectrogramHeight + 25f, smallPaint)
-    val timeText = "${imageEffectiveDuration / 1000}s"
-    canvas.drawText(timeText, spectrogramStartX + spectrogramWidth - 50f, yPos + spectrogramHeight + 25f, smallPaint)
-    
-    yPos += spectrogramHeight + 60f
-    
-    // Analysis parameters card
-    val analysisCardRect = android.graphics.RectF(40f, yPos - 20f, width - 40f, yPos + 160f)
-    canvas.drawRoundRect(analysisCardRect, 16f, 16f, cardPaint)
-    
-    canvas.drawText("Analysis Parameters", 60f, yPos + 10f, headerPaint)
-    yPos += 50f
-    
-    canvas.drawText("• Frequency Range: 20 Hz - 22 kHz", 60f, yPos, bodyPaint)
-    yPos += 30f
-    canvas.drawText("• Window Size: 2048 samples", 60f, yPos, bodyPaint)
-    yPos += 30f
-    canvas.drawText("• Analysis Duration: ${formatTime(imageEffectiveDuration / 1000f)}", 60f, yPos, bodyPaint)
-    yPos += 60f
-    
-    // Footer
-    val footerPaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        textSize = 18f
-        color = android.graphics.Color.parseColor("#94a3b8")
         textAlign = android.graphics.Paint.Align.CENTER
     }
+    val headerPaint = TextPaint().apply {
+        isAntiAlias = true
+        textSize = 32f
+        color = textColor
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    val bodyPaint = TextPaint().apply {
+        isAntiAlias = true
+        textSize = 24f * 1.296f // Decreased by 10%
+        color = textColor
+        textAlign = android.graphics.Paint.Align.LEFT
+    }
+    val cardPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = surfaceVariantColor
+    }
+    val warningCardPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = errorContainerColor
+    }
     
-    canvas.drawText(
-        "Generated by MobileDigger Audio Analysis",
-        width / 2f,
-        height - 40f,
-        footerPaint
+    // Draw Background
+    canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
+
+    var yPos = 80f
+
+    // Header
+    val analysisTitle = "SPECTOGRAM ANALYSIS"
+    canvas.drawText(analysisTitle, width / 2f, yPos, titlePaint)
+    val titleBounds = android.graphics.Rect()
+    titlePaint.getTextBounds(analysisTitle, 0, analysisTitle.length, titleBounds)
+    val titleUnderlinePaint = android.graphics.Paint(titlePaint).apply {
+        strokeWidth = 3f // Increased thickness
+    }
+    val underlineY = yPos + titlePaint.descent() + (titlePaint.textSize * 0.1f) // Positioned 10% lower
+    canvas.drawLine(width / 2f - titleBounds.width() / 2, underlineY, width / 2f + titleBounds.width() / 2, underlineY, titleUnderlinePaint)
+
+
+    yPos += 80f * 1.2f // Move down by 20%
+
+    // File details section with two columns
+    val infoCardTop = yPos
+    val infoCardHeight = 320f
+    val infoCardRect = android.graphics.RectF(40f, infoCardTop, width - 40f, infoCardTop + infoCardHeight)
+    canvas.drawRoundRect(infoCardRect, 16f, 16f, cardPaint)
+    
+    val infoContentTop = infoCardTop + 60f
+
+    val cardContentWidth = width - 80f
+    val horizontalPadding = 20f
+    val middlePadding = 20f
+    val columnWidth = ((cardContentWidth - (2 * horizontalPadding) - middlePadding) / 2).toInt()
+
+    // Column 1: File Information
+    val col1HeaderX = 40f + horizontalPadding + (columnWidth / 2f)
+    val fileInfoTitle = "FILE INFORMATION"
+    canvas.drawText(fileInfoTitle, col1HeaderX, infoContentTop, headerPaint)
+    val fileInfoBounds = android.graphics.Rect()
+    headerPaint.getTextBounds(fileInfoTitle, 0, fileInfoTitle.length, fileInfoBounds)
+    val headerUnderlinePaint = android.graphics.Paint(headerPaint).apply {
+        strokeWidth = 3f // Increased thickness
+    }
+    val fileInfoUnderlineY = infoContentTop + headerPaint.descent() + (headerPaint.textSize * 0.1f) // Positioned 10% lower
+    canvas.drawLine(col1HeaderX - fileInfoBounds.width() / 2, fileInfoUnderlineY, col1HeaderX + fileInfoBounds.width() / 2, fileInfoUnderlineY, headerUnderlinePaint)
+
+    var yPosCol1 = infoContentTop + 60f
+    val col1StartX = 40f + horizontalPadding
+
+    val fileDetails = listOf(
+        "Name: ${musicFile.name}",
+        "Duration: ${formatTime(duration / 1000f)}",
+        "Size: ${formatFileSize(musicFile.size)}",
+        "Format: ${getFileExtension(musicFile.name)}"
     )
+
+    fileDetails.forEach { text ->
+        val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, bodyPaint, columnWidth)
+            .setAlignment(Layout.Alignment.ALIGN_CENTER)
+            .build()
+        canvas.save()
+        canvas.translate(col1StartX, yPosCol1)
+        staticLayout.draw(canvas)
+        canvas.restore()
+        yPosCol1 += staticLayout.height + 10
+    }
+
+    // Column 2: Audio Properties
+    val col2HeaderX = 40f + horizontalPadding + columnWidth + middlePadding + (columnWidth / 2f)
+    val audioPropsTitle = "AUDIO PROPERTIES"
+    canvas.drawText(audioPropsTitle, col2HeaderX, infoContentTop, headerPaint)
+    val audioPropsBounds = android.graphics.Rect()
+    headerPaint.getTextBounds(audioPropsTitle, 0, audioPropsTitle.length, audioPropsBounds)
+    val audioPropsUnderlineY = infoContentTop + headerPaint.descent() + (headerPaint.textSize * 0.1f) // Positioned 10% lower
+    canvas.drawLine(col2HeaderX - audioPropsBounds.width() / 2, audioPropsUnderlineY, col2HeaderX + audioPropsBounds.width() / 2, audioPropsUnderlineY, headerUnderlinePaint)
+
+
+    var yPosCol2 = infoContentTop + 60f
+    val col2StartX = 40f + horizontalPadding + columnWidth + middlePadding
+
+    val audioProperties = extractAudioProperties(musicFile, context)
+    val audioDetails = listOf(
+        "Sample Rate: ${audioProperties.sampleRate} Hz",
+        "Bit Depth: ${audioProperties.bitDepth} bits",
+        "Channels: ${audioProperties.channels}",
+        "Bitrate: ${audioProperties.bitrate} kbps"
+    )
+
+    audioDetails.forEach { text ->
+        val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, bodyPaint, columnWidth)
+            .setAlignment(Layout.Alignment.ALIGN_CENTER)
+            .build()
+        canvas.save()
+        canvas.translate(col2StartX, yPosCol2)
+        staticLayout.draw(canvas)
+        canvas.restore()
+        yPosCol2 += staticLayout.height + 10
+    }
+
+    yPos = infoCardTop + infoCardHeight + (infoCardHeight * 0.35f) // Move down by another 20%
+
+    // Spectrogram
+    val spectrogramCardTop = yPos
+    val spectrogramCardHeight = 680f * 1.35f // Increased height by another 15%
+    val spectrogramCardRect = android.graphics.RectF(40f, spectrogramCardTop, width - 40f, spectrogramCardTop + spectrogramCardHeight) // Increased height for time labels and spectrogram
+    canvas.drawRoundRect(spectrogramCardRect, 16f, 16f, cardPaint)
+    val spectrogramContentTop = spectrogramCardTop + 50f
+    val spectrogramHeight = 400f * 1.9f // Increased height to fill new container space
+    val spectrogramTop = spectrogramContentTop
+
+    val axisLabelPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 20f * 1.05f // Increased by 5%
+        color = textColor
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
+
+    // Y-axis labels (left - kHz)
+    axisLabelPaint.textAlign = android.graphics.Paint.Align.RIGHT
+    val freqLabels = listOf("22k", "18k", "14k", "10k", "6k", "2k", "1k", "20")
+    val freqLabelX = 100f
+    freqLabels.forEachIndexed { index, label ->
+        val labelY = spectrogramTop + (spectrogramHeight * index / (freqLabels.size - 1)) + (axisLabelPaint.textSize / 3)
+        canvas.drawText(label, freqLabelX, labelY, axisLabelPaint)
+    }
+
+    // Y-axis labels (right - dB)
+    axisLabelPaint.textAlign = android.graphics.Paint.Align.LEFT
+    val dbLabels = listOf("0", "-12", "-24", "-36", "-48", "-60")
+    val dbLabelX = width - 100f
+    dbLabels.forEachIndexed { index, label ->
+        val labelY = spectrogramTop + (spectrogramHeight * index / (dbLabels.size - 1)) + (axisLabelPaint.textSize / 3)
+        canvas.drawText(label, dbLabelX, labelY, axisLabelPaint)
+    }
+
+    val spectrogramStartX = 120f
+    val spectrogramEndX = width - 120f
+    val spectrogramWidth = spectrogramEndX - spectrogramStartX
+
+    val scaledSpectrogram = Bitmap.createScaledBitmap(spectrogramBitmap.asAndroidBitmap(), spectrogramWidth.toInt(), spectrogramHeight.toInt(), true)
+    canvas.drawBitmap(scaledSpectrogram, spectrogramStartX, spectrogramTop, null)
+
+    // X-axis time labels
+    axisLabelPaint.textAlign = android.graphics.Paint.Align.CENTER
+    val analyzedDurationSeconds = minOf(duration / 1000f, 240f)
+    val timeLabels = listOf(
+        formatTime(0f),
+        formatTime(analyzedDurationSeconds * 0.25f),
+        formatTime(analyzedDurationSeconds * 0.5f),
+        formatTime(analyzedDurationSeconds * 0.75f),
+        formatTime(analyzedDurationSeconds)
+    )
+    val timeLabelY = spectrogramTop + spectrogramHeight + 40f
+    timeLabels.forEachIndexed { index, label ->
+        val labelX = spectrogramStartX + (spectrogramWidth * index / (timeLabels.size - 1))
+        canvas.drawText(label, labelX, timeLabelY, axisLabelPaint)
+    }
+
+    yPos = spectrogramCardTop + spectrogramCardHeight + 20f // Add space after spectrogram card
+
+    // Waveform
+    val waveformCardBottom: Float
+    if (waveformData != null) {
+        val waveformCardTop = yPos
+        val waveformCardHeight = 280f // Increased height to contain taller waveform
+        val waveformCardRect = android.graphics.RectF(40f, waveformCardTop, width - 40f, waveformCardTop + waveformCardHeight) // Increased height
+        canvas.drawRoundRect(waveformCardRect, 16f, 16f, cardPaint)
+        
+        val waveformContentTop = waveformCardTop + 50f
+
+        val waveformPaint = android.graphics.Paint().apply {
+            color = primaryColor
+            strokeWidth = 2f
+        }
+        val waveformWidth = (width - 160f).toInt()
+        val waveformHeight = 100f * 1.5f // Increased height
+        val waveformStartX = 80f
+        val centerY = waveformContentTop + waveformHeight / 2f
+        
+        // Improved drawing logic: Group samples to fit the width
+        val samples = waveformData.map { it.toFloat() }
+        val maxAmplitude = samples.maxOrNull() ?: 1f
+        val samplesPerPixel = samples.size.toFloat() / waveformWidth
+        
+        for (i in 0 until waveformWidth) {
+            val start = (i * samplesPerPixel).toInt()
+            val end = ((i + 1) * samplesPerPixel).toInt().coerceAtMost(samples.size)
+            if (start < end) {
+                val peak = samples.subList(start, end).maxOrNull() ?: 0f
+                val amplitude = (peak / maxAmplitude) * (waveformHeight / 2f)
+                val x = waveformStartX + i
+                canvas.drawLine(x, centerY - amplitude, x, centerY + amplitude, waveformPaint)
+            }
+        }
+        waveformCardBottom = waveformCardTop + waveformCardHeight
+    } else {
+        waveformCardBottom = yPos
+    }
     
+    // --- Generated With Section ---
+    var generatedYPos = waveformCardBottom + 60f // Start 60px below waveform
+
+    val generatedWithPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 24f
+        color = textColor
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    val mobileDiggerPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 36f
+        color = AndroidColor.parseColor("#10B981") // GreenAccent
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    val groovyPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 28f
+        color = textColor
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    val linePaint = android.graphics.Paint().apply {
+        color = textColor
+        strokeWidth = 2f
+    }
+
+    // Calculate heights for precise positioning
+    val generatedWithHeight = generatedWithPaint.descent() - generatedWithPaint.ascent()
+    val mobileDiggerHeight = mobileDiggerPaint.descent() - mobileDiggerPaint.ascent()
+    val groovyHeight = groovyPaint.descent() - groovyPaint.ascent()
+    val linePadding = 50f
+    val interTextPadding = 40f
+
+    // Draw top line
+    canvas.drawLine(40f, generatedYPos, width - 40f, generatedYPos, linePaint)
+    generatedYPos += linePaint.strokeWidth + linePadding
+
+    // Draw "Generated with"
+    canvas.drawText("Generated with", width / 2f, generatedYPos - generatedWithPaint.ascent(), generatedWithPaint)
+    generatedYPos += generatedWithHeight + interTextPadding
+
+    // Draw "MobileDigger for Android"
+    canvas.drawText("MobileDigger for Android", width / 2f, generatedYPos - mobileDiggerPaint.ascent(), mobileDiggerPaint)
+    generatedYPos += mobileDiggerHeight + interTextPadding
+    
+    // Draw "groovy's child"
+    canvas.drawText("groovy's child", width / 2f, generatedYPos - groovyPaint.ascent(), groovyPaint)
+    generatedYPos += groovyHeight + linePadding
+
+    // Draw bottom line
+    canvas.drawLine(40f, generatedYPos, width - 40f, generatedYPos, linePaint)
+    
+    val generatedWithBlockBottom = generatedYPos // This is the bottom of the "Generated With" block
+
+    // --- Centered Warning Section ---
+    val warningCardHeight = 100f
+    val spaceForWarning = height - generatedWithBlockBottom // Space from bottom of generated block to bottom of image
+    val warningYPos = generatedWithBlockBottom + (spaceForWarning - warningCardHeight) / 2
+
+    val warningCardRect = android.graphics.RectF(40f, warningYPos, width - 40f, warningYPos + warningCardHeight)
+    canvas.drawRoundRect(warningCardRect, 16f, 16f, warningCardPaint)
+    
+    val finalWarningTextPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textSize = 22f * 1.2f // 20% bigger
+        color = onErrorContainerColor
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    val warningText = "Spectrogram analysis limited to first 4 minutes of audio"
+    val textBounds = android.graphics.Rect()
+    finalWarningTextPaint.getTextBounds(warningText, 0, warningText.length, textBounds)
+    canvas.drawText(warningText, width / 2f, warningYPos + warningCardHeight / 2 + textBounds.height() / 2, finalWarningTextPaint)
+
     return bitmap
 }
 
@@ -821,6 +948,7 @@ fun SpectrogramPopupDialog(
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val themeColors = MaterialTheme.colorScheme
     
     // Track conversion and spectrogram generation progress
     val isConverting by audioManager.isConverting.collectAsState()
@@ -917,7 +1045,14 @@ fun SpectrogramPopupDialog(
                         spectrogramBitmap!!,
                         musicFile,
                         actualDuration,
-                        waveformData
+                        waveformData,
+                        themeColors.surface.toArgb(),
+                        themeColors.onSurface.toArgb(),
+                        themeColors.primary.toArgb(),
+                        themeColors.surfaceVariant.toArgb(),
+                        themeColors.errorContainer.toArgb(),
+                        themeColors.onErrorContainer.toArgb(),
+                        context
                     )
                     
                     // Save to temporary file
@@ -954,7 +1089,14 @@ fun SpectrogramPopupDialog(
                             spectrogramBitmap!!,
                             musicFile,
                             actualDuration,
-                            waveformData
+                            waveformData,
+                            themeColors.surface.toArgb(),
+                            themeColors.onSurface.toArgb(),
+                            themeColors.primary.toArgb(),
+                            themeColors.surfaceVariant.toArgb(),
+                            themeColors.errorContainer.toArgb(),
+                            themeColors.onErrorContainer.toArgb(),
+                            context
                         )
                         val fileName = "spectrogram_analysis_${musicFile.name.replace(Regex("[^a-zA-Z0-9]"), "_")}.png"
                         val file = File(context.cacheDir, fileName)

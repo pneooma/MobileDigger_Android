@@ -1,44 +1,19 @@
-Changelog for MobileDigger
 
-- Moved version number below 'groovy's child' and updated text styles.
-- Incremented build version to 5.5.
+- Updated spectrogram share image to better match the UI.
+- Incremented build version to 8.15.
 
-- Fixed header layout to display text on separate lines.
-- Incremented build version to 5.6.
+- Updated spectrogram share image to better match the UI.
+- Incremented build version to 8.15.
 
-- Corrected versioning to align with git tags (v8.6).
-- Updated versionCode to 806 and versionName to 8.6.
+- Increased waveform height in shared image by 30%.
+- Increased top padding for file info in shared image.
+- Incremented build version to 8.16.
 
-- Reduced vertical spacing in the header text for a more compact look.
-- Incremented build version to 8.7.
+- Adjusted spacing in shared spectrogram image.
+- Incremented build version to 8.17.
 
-- Reduced space between header and content.
-- Incremented build version to 8.8.
+- Further adjusted spacing in shared spectrogram image.
+- Incremented build version to 8.18.
 
-- Removed remaining space below the header for a more compact UI.
-- Incremented build version to 8.9.
-
-- Reduced space below the header using a negative offset.
-- Incremented build version to 8.9.
-
-- Used a negative offset to remove space below the header.
-- Incremented build version to 8.9.
-
-- Made the header 20% smaller on the Y-axis.
-- Incremented build version to 8.10.
-
-- Restored header to its original height.
-- Incremented build version to 8.11.
-
-- Reduced main container horizontal padding to 6.dp.
-- Incremented build version to 8.12.
-
-- Reduced counters row horizontal padding to 6.dp.
-- Incremented build version to 8.13.
-
-- Reduced counters horizontal padding to 6.dp.
-- Incremented build version to 8.13.
-
-- REVERTED: Last change caused app to freeze. Reverting to build 8.12.
-
-- Incremented build version to 8.14 to resolve installation issue.
+- Finalized styling for shared spectrogram image.
+- Incremented build version to 8.19.

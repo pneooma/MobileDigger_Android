@@ -1442,34 +1442,8 @@ viewModel.updateSearchText("")
                                                 }
                                             }
                                             
-                                            // Center: Star Rating (increased size)
-                                            Row(
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                repeat(5) { starIndex ->
-                                                    IconButton(
-                                                        onClick = {
-                                                            val newRating = starIndex + 1
-                                                            viewModel.updateFileRating(file, newRating)
-                                                        },
-                                                        modifier = Modifier.size(32.dp)
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = if (starIndex < file.rating) 
-                                                                Icons.Default.Star 
-                                                            else 
-                                                                Icons.Default.StarOutline,
-                                                            contentDescription = "Rate ${starIndex + 1} stars",
-                                                            tint = if (starIndex < file.rating) 
-                                                                Color(0xFFFFD700) // Gold color
-                                                            else 
-                                                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
-                                                            modifier = Modifier.size(24.dp)
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                            // Center: Spacer for alignment
+                                            Spacer(modifier = Modifier.weight(1f))
                                             
                                             // Right side: Share and SpEK
                                             Row(

@@ -329,6 +329,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     // Continue without duration extraction rather than crashing
                 }
                 
+                
                 // Reload playlists when folder is selected
                 loadLikedFiles()
                 loadRejectedFiles()
@@ -818,59 +819,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
 
-    fun updateFileRating(file: MusicFile, rating: Int) {
-        viewModelScope.launch {
-            try {
-                val clampedRating = rating.coerceIn(0, 5)
-                
-                // Update the file in all relevant lists
-                updateFileInList(_musicFiles, file, rating = clampedRating)
-                updateFileInList(_likedFiles, file, rating = clampedRating)
-                updateFileInList(_rejectedFiles, file, rating = clampedRating)
-                
-                // Save rating to metadata as comment
-                saveRatingToMetadata(file, clampedRating)
-                
-                _errorMessage.value = if (clampedRating > 0) {
-                    "Rated ${file.name} with $clampedRating stars"
-                } else {
-                    "Removed rating from ${file.name}"
-                }
-            } catch (e: Exception) {
-                CrashLogger.log("MusicViewModel", "Error updating file rating", e)
-                _errorMessage.value = "Error updating rating: ${e.message}"
-            }
-        }
-    }
 
-    private fun updateFileInList(
-        stateFlow: MutableStateFlow<List<MusicFile>>, 
-        targetFile: MusicFile, 
-        rating: Int? = null
-    ) {
-        val currentList = stateFlow.value.toMutableList()
-        val index = currentList.indexOfFirst { it.uri == targetFile.uri }
-        if (index != -1) {
-            val updatedFile = currentList[index].copy(
-                rating = rating ?: currentList[index].rating
-            )
-            currentList[index] = updatedFile
-            stateFlow.value = currentList
-        }
-    }
 
-    private suspend fun saveRatingToMetadata(file: MusicFile, rating: Int) {
-        withContext(Dispatchers.IO) {
-            try {
-                val comment = if (rating > 0) "stars $rating" else ""
-                // TODO: Implement actual metadata writing
-                // This would typically use MediaMetadataRetriever or similar
-                CrashLogger.log("MusicViewModel", "Saving rating $rating to file ${file.name} metadata as comment: '$comment'")
-            } catch (e: Exception) {
-                CrashLogger.log("MusicViewModel", "Error saving rating to metadata", e)
-            }
-        }
-    }
+    
+    
+    
+    
 
 
     

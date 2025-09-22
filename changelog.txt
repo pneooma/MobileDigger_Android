@@ -1,19 +1,6 @@
 
-- Updated spectrogram share image to better match the UI.
-- Incremented build version to 8.15.
+- Increased axis label font size in shared spectrogram image.
+- Incremented build version to 8.20.
 
-- Updated spectrogram share image to better match the UI.
-- Incremented build version to 8.15.
-
-- Increased waveform height in shared image by 30%.
-- Increased top padding for file info in shared image.
-- Incremented build version to 8.16.
-
-- Adjusted spacing in shared spectrogram image.
-- Incremented build version to 8.17.
-
-- Further adjusted spacing in shared spectrogram image.
-- Incremented build version to 8.18.
-
-- Finalized styling for shared spectrogram image.
-- Incremented build version to 8.19.
+- Finalized shared spectrogram image styling.
+- Incremented build version to 8.21.

@@ -773,7 +773,7 @@ private fun generateComprehensiveSpectrogramImage(
 
     val axisLabelPaint = android.graphics.Paint().apply {
         isAntiAlias = true
-        textSize = 20f * 1.05f // Increased by 5%
+        textSize = 20f * 1.2f // Increased by 20%
         color = textColor
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }

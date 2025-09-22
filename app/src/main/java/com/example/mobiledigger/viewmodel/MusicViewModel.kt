@@ -73,6 +73,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
     
+    // Track the actually playing file separately from playlist navigation
+    private val _currentPlayingFile = MutableStateFlow<MusicFile?>(null)
+    val currentPlayingFile: StateFlow<MusicFile?> = _currentPlayingFile.asStateFlow()
+    
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
     
@@ -811,6 +815,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         // Store current file for notification
         this.currentFile = currentFile
         
+        // Update the actually playing file (independent of playlist navigation)
+        _currentPlayingFile.value = currentFile
+        
         // Pre-fetch next file for buffering (only if list has more than 1 item)
         val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
         if (nextFile != null) {
@@ -1491,7 +1498,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     fun deleteAllLiked(confirmCount: Int): Boolean {
-        if (confirmCount < 3) return false
+        if (confirmCount < 4) return false
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val destination = fileManager.getDestinationFolder()
@@ -1499,7 +1506,41 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 val files = liked?.listFiles()?.filter { it.isFile } ?: emptyList()
                 var deleted = 0
                 files.forEach { f -> try { if (f.delete()) deleted++ } catch (_: Exception) {} }
-                withContext(Dispatchers.Main) { _errorMessage.value = "Deleted $deleted liked files" }
+                withContext(Dispatchers.Main) { 
+                    _errorMessage.value = "Deleted $deleted liked files"
+                    _likedFiles.value = emptyList() // Clear the liked files list
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { _errorMessage.value = "Delete failed: ${e.message}" }
+            }
+        }
+        return true
+    }
+    
+    fun deleteAllTodo(confirmCount: Int): Boolean {
+        if (confirmCount < 4) return false
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val sourceFolder = fileManager.getSelectedFolder()
+                if (sourceFolder != null) {
+                    val files = sourceFolder.listFiles()?.filter { it.isFile } ?: emptyList()
+                    var deleted = 0
+                    files.forEach { f -> 
+                        try { 
+                            if (f.delete()) deleted++ 
+                        } catch (_: Exception) {} 
+                    }
+                    withContext(Dispatchers.Main) { 
+                        _errorMessage.value = "Deleted $deleted todo files"
+                        _musicFiles.value = emptyList() // Clear the music files list
+                        _currentIndex.value = 0
+                        stopPlayback()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { 
+                        _errorMessage.value = "No source folder selected" 
+                    }
+                }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { _errorMessage.value = "Delete failed: ${e.message}" }
             }

@@ -119,6 +119,7 @@ fun MusicPlayerScreen(
     val likedFiles by viewModel.likedFiles.collectAsState()
     val rejectedFiles by viewModel.rejectedFiles.collectAsState()
     val currentPlaylistFiles by viewModel.currentPlaylistFiles.collectAsState()
+    val currentPlayingFile by viewModel.currentPlayingFile.collectAsState()
     
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
@@ -148,6 +149,7 @@ fun MusicPlayerScreen(
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var deleteActionType by remember { mutableStateOf<PlaylistTab?>(null) } // State for delete all confirmation
     var showShareZipDialog by remember { mutableStateOf(false) } // State for ZIP sharing confirmation
+    var showReadmeDialog by remember { mutableStateOf(false) } // State for README dialog
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
@@ -160,7 +162,7 @@ fun MusicPlayerScreen(
     val isMultiSelectionMode by viewModel.isMultiSelectionMode.collectAsState()
     
     // Shared waveform state - generated once and used by both main and mini players
-    val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
+    val currentFile = currentPlayingFile // Use the actually playing file instead of playlist-based file
     val context = LocalContext.current
     val sharedWaveformState = rememberSharedWaveformState(currentFile, context)
     
@@ -185,25 +187,69 @@ fun MusicPlayerScreen(
     }
 
     if (showDeleteDialogStep > 0) {
+        val playlistName = when (deleteActionType) {
+            PlaylistTab.LIKED -> "Liked"
+            PlaylistTab.TODO -> "To Do"
+            else -> "files"
+        }
         val msg = when (showDeleteDialogStep) {
-            1 -> "Are you sure you want to delete ALL files from Liked?"
-            2 -> "Really sure? This cannot be undone."
-            else -> "Final confirmation: Delete ALL Liked files?"
+            1 -> "Are you sure you want to delete ALL files from $playlistName?"
+            2 -> "Really sure? This action will permanently remove all files."
+            3 -> "This cannot be undone. Are you absolutely certain?"
+            else -> "FINAL WARNING: Delete ALL $playlistName files? This is your last chance!"
         }
         AlertDialog(
-            onDismissRequest = { showDeleteDialogStep = 0 },
-            title = { Text("Delete Liked") },
-            text = { Text(msg) },
-            confirmButton = {
-                Button(onClick = {
-                    if (showDeleteDialogStep < 3) showDeleteDialogStep++
-                    else {
-                        viewModel.deleteAllLiked(3)
-                        showDeleteDialogStep = 0
+            onDismissRequest = { showDeleteDialogStep = 0; deleteActionType = null },
+            title = { Text("⚠️ Delete $playlistName Files") },
+            text = { 
+                Column {
+                    Text(
+                        text = msg,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (showDeleteDialogStep >= 3) Color.Red else Color.Unspecified,
+                        fontWeight = if (showDeleteDialogStep >= 3) FontWeight.Bold else FontWeight.Normal
+                    )
+                    if (showDeleteDialogStep >= 2) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "This action is IRREVERSIBLE!",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Red,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                }) { Text("OK") }
+                }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialogStep = 0 }) { Text("Cancel") } }
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (showDeleteDialogStep < 4) showDeleteDialogStep++
+                    else {
+                            when (deleteActionType) {
+                                PlaylistTab.LIKED -> viewModel.deleteAllLiked(4)
+                                PlaylistTab.TODO -> viewModel.deleteAllTodo(4)
+                                else -> {}
+                            }
+                        showDeleteDialogStep = 0
+                            deleteActionType = null
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (showDeleteDialogStep >= 3) Color.Red else MaterialTheme.colorScheme.primary
+                    )
+                ) { 
+                    Text(
+                        text = if (showDeleteDialogStep >= 4) "DELETE FOREVER" else "Continue",
+                        color = if (showDeleteDialogStep >= 3) Color.White else Color.Unspecified,
+                        fontWeight = if (showDeleteDialogStep >= 4) FontWeight.Bold else FontWeight.Normal
+                    ) 
+                }
+            },
+            dismissButton = { 
+                TextButton(onClick = { showDeleteDialogStep = 0; deleteActionType = null }) { 
+                    Text("Cancel") 
+                } 
+            }
         )
     }
 
@@ -291,20 +337,23 @@ fun MusicPlayerScreen(
                         when (deleteActionType) {
                             PlaylistTab.REJECTED -> viewModel.deleteRejectedFiles()
                             PlaylistTab.TODO -> {
-                                // TODO files don't have a specific delete function yet
-                                // For now, just show a message
+                                deleteActionType = PlaylistTab.TODO
+                                showDeleteDialogStep = 1 // Use 4-step confirmation for TODO files
                             }
                             PlaylistTab.LIKED -> {
-                                showDeleteDialogStep = 1 // Use existing liked files delete flow
+                                deleteActionType = PlaylistTab.LIKED
+                                showDeleteDialogStep = 1 // Use 4-step confirmation for LIKED files
                             }
                             null -> {
                                 // Fallback to current playlist tab if action type is not set
                                 when (currentPlaylistTab) {
                                     PlaylistTab.REJECTED -> viewModel.deleteRejectedFiles()
                                     PlaylistTab.TODO -> {
-                                        // TODO files don't have a specific delete function yet
+                                        deleteActionType = PlaylistTab.TODO
+                                        showDeleteDialogStep = 1
                                     }
                                     PlaylistTab.LIKED -> {
+                                        deleteActionType = PlaylistTab.LIKED
                                         showDeleteDialogStep = 1
                                     }
                                 }
@@ -363,6 +412,74 @@ fun MusicPlayerScreen(
             dismissButton = {
                 TextButton(onClick = { showShareZipDialog = false }) { 
                     Text("Cancel") 
+                }
+            }
+        )
+    }
+
+    // README Dialog
+    if (showReadmeDialog) {
+        AlertDialog(
+            onDismissRequest = { showReadmeDialog = false },
+            title = { Text("MobileDigger README") },
+            text = { 
+                LazyColumn(
+                    modifier = Modifier.height(400.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        Text(
+                            "GETTING STARTED:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text("• Select Source Folder: Tap the \"Source\" button to choose where your music files are stored")
+                        Text("• Select Destination Folder: Tap the \"Destination\" button to choose where sorted files will be moved")
+                        Text("• Rescan Source: Use the large green \"Rescan Source\" button to load music files from your last selected source folder.")
+                    }
+                    
+                    item {
+                        Text(
+                            "WORKFLOW:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text("• Listen to songs and swipe left (dislike) or right (like) to sort them")
+                        Text("• Liked songs go to the \"Liked\" folder")
+                        Text("• Disliked songs go to the \"Rejected\" folder")
+                        Text("• Use the playlist tabs to navigate between To Do, Liked, and Rejected files")
+                    }
+                    
+                    item {
+                        Text(
+                            "FEATURES:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text("• Swipe gestures for quick sorting")
+                        Text("• Search functionality across all playlists")
+                        Text("• Spectrogram analysis for audio files")
+                        Text("• Share liked songs as ZIP archive")
+                        Text("• Multi-selection for batch operations")
+                        Text("• Waveform visualization")
+                        Text("• Haptic feedback")
+                    }
+                    
+                    item {
+                        Text(
+                            "GESTURES:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text("• Swipe card left/right to sort")
+                        Text("• Tap and drag waveform to seek")
+                        Text("• Long press for multi-selection mode")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showReadmeDialog = false }) {
+                    Text("Got it!")
                 }
             }
         )
@@ -589,10 +706,19 @@ fun MusicPlayerScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+            
+            // Calculate responsive spacing based on screen width - reduced to prevent text wrapping
+            val buttonSpacing = when {
+                screenWidth < 400.dp -> 2.dp
+                screenWidth < 600.dp -> 3.dp
+                screenWidth < 800.dp -> 4.dp
+                else -> 6.dp
+            }
+            
             // Settings button (always visible)
             IconButton(
                 onClick = { showSettingsDialog = true },
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = buttonSpacing)
             ) {
                 Icon(
                     Icons.Default.Settings,
@@ -605,11 +731,11 @@ fun MusicPlayerScreen(
                 onClick = { 
                     showSearchInput = !showSearchInput 
                     if (!showSearchInput) { // Clear search when hiding input
-                        viewModel.updateSearchText("")
+viewModel.updateSearchText("")
                         viewModel.clearSearchResults()
                     }
                 },
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = buttonSpacing)
             ) {
                 Icon(
                     Icons.Default.Search,
@@ -620,12 +746,23 @@ fun MusicPlayerScreen(
             // Added Rescan Source button
             IconButton(
                 onClick = { viewModel.rescanSourceFolder() },
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = buttonSpacing)
             ) {
                 Icon(
                     Icons.Default.Sync,
                     contentDescription = "Rescan Source",
                     tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            // Added README/Info button
+            IconButton(
+                onClick = { showReadmeDialog = true },
+                modifier = Modifier.padding(end = buttonSpacing)
+            ) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = "README",
+                    tint = Color(0xFF4CAF50) // Green color to match README theme
                 )
             }
             
@@ -634,10 +771,8 @@ fun MusicPlayerScreen(
                 OutlinedButton(
                     onClick = { menuExpanded = true },
                     shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
                     Text("Actions", style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.width(4.dp))
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
@@ -685,6 +820,12 @@ fun MusicPlayerScreen(
                             text = { Text("Delete Liked Files", color = Color.Red, fontWeight = FontWeight.Bold) },
                             onClick = { menuExpanded = false; showDeleteDialogStep = 1 },
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("README", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold) },
+                            onClick = { menuExpanded = false; showReadmeDialog = true },
+                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF4CAF50)) }
                         )
                     }
             }
@@ -888,14 +1029,17 @@ fun MusicPlayerScreen(
                     ) {
                         ElevatedButton(
                             onClick = { viewModel.rescanSourceFolder() },
+                            modifier = Modifier
+                                .height(80.dp) // Double the height
+                                .padding(horizontal = 16.dp), // Add horizontal padding for width
                             colors = ButtonDefaults.elevatedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                containerColor = Color(0xFF2E7D32), // Darker green
+                                contentColor = Color.White
                             )
                         ) {
-                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Rescan Source")
+                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(36.dp)) // Double the icon size
+                            Spacer(Modifier.width(16.dp)) // Double the spacing
+                            Text("Rescan Source", fontSize = 18.sp) // Increase text size
                         }
                     }
                 }
@@ -1036,7 +1180,7 @@ fun MusicPlayerScreen(
                     ) {
                         // Current song info
                         item {
-                            val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
+                            val currentFile = currentPlayingFile // Use the actually playing file
                             if (currentFile != null) {
                                 val file = currentFile
                                 // Animation states for swipe feedback
@@ -1711,71 +1855,184 @@ fun MusicPlayerScreen(
                                     }
                                 }
                             }
-                        }
-                        
-                        // Conditionally display search results or current playlist files (reverted to original)
-                        val displayFiles = currentPlaylistFiles // Search results handled within dropdown
-
-                        if (displayFiles.isEmpty()) {
-                            item {
+                            
+                            // MobileDigger Instructions Card - show when app starts (no files loaded)
+                            if (musicFiles.isEmpty() && likedFiles.isEmpty() && rejectedFiles.isEmpty()) {
+                                item {
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                        .height(400.dp), // Fixed height for scrollable content
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        containerColor = MaterialTheme.colorScheme.surface // Use theme background
                                     )
                                 ) {
                                     Column(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(24.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                            .fillMaxSize()
+                                            .padding(20.dp)
                                     ) {
-                                        Icon(
-                                            Icons.Default.MusicNote,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(48.dp),
-                                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                                        )
-                                        Spacer(modifier = Modifier.height(12.dp))
                                         Text(
-                                            text = if (currentSearchText.isNotBlank()) {
-                                                "No songs found matching \"$currentSearchText\""
-                                            } else {
-                                                when (currentPlaylistTab) {
-                                                    PlaylistTab.TODO -> "No music files in To Do playlist"
-                                                    PlaylistTab.LIKED -> "No liked files yet"
-                                                    PlaylistTab.REJECTED -> "No rejected files yet"
-                                                }
-                                            },
-                                            style = MaterialTheme.typography.titleMedium,
-                                            textAlign = TextAlign.Center,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = "Must Know about MobileDigger Application",
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = MaterialTheme.colorScheme.onSurface, // Use theme contrast text
+                                            fontWeight = FontWeight.Bold
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = if (currentSearchText.isNotBlank()) {
-                                                "Try a different search term or clear the search."
-                                            } else {
-                                                when (currentPlaylistTab) {
-                                                    PlaylistTab.TODO -> "Select a source folder and rescan to load music files"
-                                                    PlaylistTab.LIKED -> "Like songs from the To Do playlist to see them here"
-                                                    PlaylistTab.REJECTED -> "Reject songs from the To Do playlist to see them here"
-                                                }
-                                            },
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            textAlign = TextAlign.Center,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        
+                                        // Scrollable content
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxSize(),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            item {
+                                                Text(
+                                                    text = "GETTING STARTED:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Select Source Folder: Tap the \"Source\" button to choose where your music files are stored\n" +
+                                                            "• Select Destination Folder: Tap the \"Destination\" button to choose where sorted files will be moved\n" +
+                                                            "• Rescan Source: Use the large green \"Rescan Source\" button to load music files from your last selected source folder.",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "WORKFLOW:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Swipe left or right on the main player or miniplayer for like/dislike a song\n" +
+                                                            "• Controls like play, next, like/dislike are available in the notifications area also. The playback works in the background too\n" +
+                                                            "• Play Music: Tap any song in the playlist to start playing\n" +
+                                                            "• Like Songs: Tap the ❤️ button to move songs to your \"Liked\" playlist\n" +
+                                                            "• Reject Songs: Tap the 👎 button to move songs to your \"Rejected\" playlist\n" +
+                                                            "• Rate Songs: Use the ⭐ star rating system (1-5 stars) to rate your music\n" +
+                                                            "• This tag will be visible in the song's metadata, in the comments line\n" +
+                                                            "• Search: Use the search icon in the header to find specific songs",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "PLAYLIST NAVIGATION:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• To Do: Your main playlist with unsorted music files\n" +
+                                                            "  * Subfolder selection from the root source folder\n" +
+                                                            "• Liked: Songs you've marked as favorites\n" +
+                                                            "• Rejected: Songs you don't want to keep",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "SPECTROGRAM ANALYSIS:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Generate visual spectrograms of your music files\n" +
+                                                            "• Share spectrogram reports with detailed audio analysis",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "FILE ORGANIZATION:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Automatic file sorting into liked/rejected folders\n" +
+                                                            "• Multi-select mode for batch operations. Accessible from the \"Actions\" menu in top right corner\n" +
+                                                            "• ZIP creation for sharing liked songs",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "CUSTOMIZATION:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Adjustable waveform heights (main and mini waveforms)\n" +
+                                                            "• Multiple themes and color schemes\n" +
+                                                            "• Haptic feedback controls",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "SEARCH & FILTER:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Real-time search across all playlists\n" +
+                                                            "• Search by filename, artist, or song title\n" +
+                                                            "• Click to play a song from the search results\n" +
+                                                            "• Auto-focus search with keyboard support",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                            
+                                            item {
+                                                Text(
+                                                    text = "SHARING OPTIONS:",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "• Share liked songs as ZIP archive\n" +
+                                                            "  * This will zip and share the entire Liked Folder\n" +
+                                                            "• Export liked songs list as TXT file\n" +
+                                                            "• Share spectrogram analysis reports",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
+                            }
                         }
+                        
+                        // Conditionally display search results or current playlist files (reverted to original)
+                        val displayFiles = currentPlaylistFiles // Search results handled within dropdown
                         
                         // Playlist Items (dynamic sizing)
                         itemsIndexed(currentPlaylistFiles, key = { _, mf -> mf.uri }) { index, item ->
-                            val isCurrent = index == currentIndex
+                            val isCurrent = currentPlayingFile?.uri == item.uri // Check if this item is actually playing
                             val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // Moved inside for correct scope if needed
                             Card(
                                 modifier = Modifier
@@ -1790,7 +2047,7 @@ fun MusicPlayerScreen(
                                                 if (isMultiSelectionMode) {
                                                     viewModel.toggleSelection(index)
                                                 } else {
-                                                    viewModel.jumpTo(index)
+                                                    viewModel.jumpTo(index) // Jump to this item in the current playlist
                                                 }
                                             }
                                         ) 

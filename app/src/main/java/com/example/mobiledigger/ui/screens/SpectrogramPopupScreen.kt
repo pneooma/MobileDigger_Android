@@ -221,7 +221,9 @@ fun SpectrogramPopupScreen(
                                 Text(
                                     text = "Name: ${file.name}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                                 
                                 Text(

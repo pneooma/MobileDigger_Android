@@ -4,3 +4,7 @@
 
 - Finalized shared spectrogram image styling.
 - Incremented build version to 8.21.
+
+- Enhanced spectrogram quality with higher FFT resolution and improved color mapping.
+- Implemented Blackman window function for cleaner frequency analysis.
+- Incremented build version to 8.31.

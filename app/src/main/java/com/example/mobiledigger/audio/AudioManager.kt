@@ -107,15 +107,15 @@ class AudioManager(private val context: Context) {
     
     private fun getQualityParameters(): Triple<Int, Int, Int> {
         val windowSize = when (spectrogramQuality) {
-            SpectrogramQuality.FAST -> 256      // 6ms windows - Fast processing
-            SpectrogramQuality.BALANCED -> 1024  // 23ms windows - Good balance
-            SpectrogramQuality.HIGH -> 2048      // 46ms windows - High quality
+            SpectrogramQuality.FAST -> 1024
+            SpectrogramQuality.BALANCED -> 4096
+            SpectrogramQuality.HIGH -> 8192      // Increased for higher quality
         }
         
         val height = when (spectrogramQuality) {
-            SpectrogramQuality.FAST -> 64        // Low frequency resolution
-            SpectrogramQuality.BALANCED -> 128   // Good frequency resolution
-            SpectrogramQuality.HIGH -> 256       // High frequency resolution
+            SpectrogramQuality.FAST -> 128
+            SpectrogramQuality.BALANCED -> 256
+            SpectrogramQuality.HIGH -> 512       // Increased for more frequency bins
         }
         
         val maxFrequency = when (frequencyRange) {
@@ -2221,6 +2221,16 @@ class AudioManager(private val context: Context) {
         return windowed
     }
     
+    private fun applyBlackmanWindow(data: ShortArray): FloatArray {
+        val windowed = FloatArray(data.size)
+        val n = data.size
+        for (i in data.indices) {
+            val windowValue = (0.42 - 0.5 * cos(2 * PI * i / (n - 1)) + 0.08 * cos(4 * PI * i / (n - 1))).toFloat()
+            windowed[i] = data[i] * windowValue
+        }
+        return windowed
+    }
+    
     private fun applySmoothing(data: Array<FloatArray>, width: Int, height: Int): Array<FloatArray> {
         val smoothed = Array(height) { FloatArray(width) }
         val kernelSize = 3
@@ -2329,60 +2339,50 @@ class AudioManager(private val context: Context) {
     }
     
     private fun powerToColor(power: Float, maxPower: Float): Int {
-        // Convert power to dB scale (like professional spectrograms)
         val powerDb = if (power > 0) 10f * log10(power / maxPower) else -120f
         val normalizedDb = ((powerDb + 120f) / 120f).coerceIn(0f, 1f)
-        
-        // Enhanced contrast for better visibility
-        val enhancedDb = normalizedDb * normalizedDb  // Square for better contrast
-        val intensity = (enhancedDb * 255).toInt().coerceIn(0, 255)
-        
-        val (red, green, blue) = when {
-            intensity < 30 -> {
-                // Black to Dark Blue (0-29)
-                val t = intensity / 30f
-                Triple(0, 0, (t * 50).toInt())
-            }
-            intensity < 60 -> {
-                // Dark Blue to Blue (30-59)
-                val t = (intensity - 30) / 30f
-                Triple(0, 0, (50 + t * 100).toInt())
-            }
-            intensity < 90 -> {
-                // Blue to Purple (60-89)
-                val t = (intensity - 60) / 30f
-                Triple((t * 100).toInt(), 0, (150 - t * 50).toInt())
-            }
-            intensity < 120 -> {
-                // Purple to Red (90-119)
-                val t = (intensity - 90) / 30f
-                Triple((100 + t * 155).toInt(), 0, (100 - t * 100).toInt())
-            }
-            intensity < 150 -> {
-                // Red to Orange (120-149)
-                val t = (intensity - 120) / 30f
-                Triple(255, (t * 100).toInt(), 0)
-            }
-            intensity < 180 -> {
-                // Orange to Yellow (150-179)
-                val t = (intensity - 150) / 30f
-                Triple(255, (100 + t * 155).toInt(), 0)
-            }
-            intensity < 210 -> {
-                // Yellow to Light Yellow (180-209)
-                val t = (intensity - 180) / 30f
-                Triple(255, 255, (t * 100).toInt())
-            }
-            else -> {
-                // Light Yellow to White (210-255)
-                val t = (intensity - 210) / 45f
-                Triple(255, 255, (100 + t * 155).toInt())
-            }
+
+        val colors = intArrayOf(
+            Color.BLACK,
+            Color.rgb(0, 0, 139),
+            Color.rgb(138, 43, 226),
+            Color.RED,
+            Color.YELLOW
+        )
+        val fractions = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
+
+        if (normalizedDb <= 0f) return colors[0]
+        if (normalizedDb >= 1f) return colors.last()
+
+        var i = 0
+        while (i < fractions.size && fractions[i] < normalizedDb) {
+            i++
         }
-        
-        return Color.argb(255, red, green, blue)
+
+        if (i == 0) return colors[0]
+
+        val fraction = (normalizedDb - fractions[i - 1]) / (fractions[i] - fractions[i - 1])
+        return interpolateColor(colors[i - 1], colors[i], fraction)
     }
-    
+
+    private fun interpolateColor(color1: Int, color2: Int, fraction: Float): Int {
+        val r1 = Color.red(color1)
+        val g1 = Color.green(color1)
+        val b1 = Color.blue(color1)
+        val a1 = Color.alpha(color1)
+
+        val r2 = Color.red(color2)
+        val g2 = Color.green(color2)
+        val b2 = Color.blue(color2)
+        val a2 = Color.alpha(color2)
+
+        val r = (r1 + (r2 - r1) * fraction).toInt()
+        val g = (g1 + (g2 - g1) * fraction).toInt()
+        val b = (b1 + (b2 - b1) * fraction).toInt()
+        val a = (a1 + (a2 - a1) * fraction).toInt()
+
+        return Color.argb(a, r, g, b)
+    }
     
     
 }

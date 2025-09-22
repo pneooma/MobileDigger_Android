@@ -721,12 +721,16 @@ fun MusicPlayerScreen(
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
                     color = GreenAccent
                 )
-                Text(
-                    text = "groovy's child",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "groovy's child :: v8.3 ::",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             
             // Calculate responsive spacing based on screen width - reduced to prevent text wrapping
@@ -2338,16 +2342,12 @@ viewModel.updateSearchText("")
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = if (isCompactScreen) 1.dp else 2.dp
                                     )
-                                    .pointerInput(Unit) { 
-                                        detectTapGestures(
-                                            onTap = { 
-                                                if (isMultiSelectionMode) {
-                                                    viewModel.toggleSelection(index)
-                                                } else {
-                                                    viewModel.jumpTo(index) // Jump to this item in the current playlist
-                                                }
-                                            }
-                                        ) 
+                                    .clickable {
+                                        if (isMultiSelectionMode) {
+                                            viewModel.toggleSelection(index)
+                                        } else {
+                                            viewModel.jumpTo(index) // Jump to this item in the current playlist
+                                        }
                                     },
                                 colors = CardDefaults.cardColors(
                                     containerColor = when {

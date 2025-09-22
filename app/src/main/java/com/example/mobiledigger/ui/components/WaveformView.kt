@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -19,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.utils.WaveformGenerator
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun WaveformView(
@@ -31,43 +35,37 @@ fun WaveformView(
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    // Generate waveform when file or settings change
-    LaunchedEffect(currentFile?.uri?.toString(), WaveformGenerator.getCurrentSettings()) {
-        println("🔄 WaveformView: LaunchedEffect triggered for file: ${currentFile?.name}")
-        println("🔗 URI key: ${currentFile?.uri?.toString()}")
-        println("🎛️ Settings: ${WaveformGenerator.getCurrentSettings()}")
+    // Generate waveform when file changes ONLY - Cache settings and move to background
+    LaunchedEffect(currentFile?.uri?.toString()) {
         if (currentFile != null) {
-            println("🎵 Starting waveform generation for: ${currentFile.name}")
-            println("🔗 URI: ${currentFile.uri}")
             isLoading = true
             waveformData = null // Clear previous data
             
-            try {
-                // Use URI directly like spectrogram generation
-                println("📁 Using URI directly: ${currentFile.uri}")
-                
-                // Generate waveform from URI (same approach as spectrogram)
-                val waveform = WaveformGenerator.generateFromUri(
-                    context = context,
-                    uri = currentFile.uri
-                )
-                
-                waveformData = waveform
-                println("✅ Waveform loaded successfully: ${waveform.size} bars")
-                println("🎵 First 5 amplitudes: ${waveform.take(5).joinToString()}")
-            } catch (e: Exception) {
-                println("❌ Error generating waveform: ${e.message}")
-                e.printStackTrace()
-                // Create a test waveform on error
-                waveformData = IntArray(50) { (Math.random() * 100).toInt() }
-                println("🧪 Using test waveform due to error")
-            } finally {
-                isLoading = false
-                println("🏁 Waveform generation completed")
+            // Move heavy waveform generation to background thread
+            withContext(Dispatchers.IO) {
+                try {
+                    // Generate waveform from URI in background
+                    val waveform = WaveformGenerator.generateFromUri(
+                        context = context,
+                        uri = currentFile.uri
+                    )
+                    
+                    // Update UI on main thread
+                    withContext(Dispatchers.Main) {
+                        waveformData = waveform
+                        isLoading = false
+                    }
+                } catch (e: Exception) {
+                    // Create a simple waveform on error without expensive operations
+                    withContext(Dispatchers.Main) {
+                        waveformData = IntArray(30) { if (it % 3 == 0) 60 else 30 } // Simple pattern
+                        isLoading = false
+                    }
+                }
             }
         } else {
-            println("📭 No current file, clearing waveform data")
             waveformData = null
+            isLoading = false
         }
     }
 
@@ -123,16 +121,22 @@ fun WaveformView(
             val playedColor = MaterialTheme.colorScheme.primary
             val unplayedColor = MaterialTheme.colorScheme.outline
             
+            // Use optimized Canvas with cached drawing operations
             Canvas(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(alpha = 0.8f) // Reduce overdraw
             ) {
-                drawWaveform(
-                    amplitudes = waveformData!!,
-                    progress = progress,
-                    canvasSize = size,
-                    playedColor = playedColor,
-                    unplayedColor = unplayedColor
-                )
+                // Cache expensive calculations
+                if (waveformData!!.isNotEmpty()) {
+                    drawOptimizedWaveform(
+                        amplitudes = waveformData!!,
+                        progress = progress,
+                        canvasSize = size,
+                        playedColor = playedColor,
+                        unplayedColor = unplayedColor
+                    )
+                }
             }
         } else {
             // No waveform available - show debug info
@@ -160,7 +164,7 @@ fun WaveformView(
     }
 }
 
-private fun DrawScope.drawWaveform(
+private fun DrawScope.drawOptimizedWaveform(
     amplitudes: IntArray,
     progress: Float,
     canvasSize: androidx.compose.ui.geometry.Size,
@@ -169,66 +173,42 @@ private fun DrawScope.drawWaveform(
 ) {
     if (amplitudes.isEmpty()) return
 
-    // React Native Audio Waveform inspired candlestick rendering
-    val settings = WaveformGenerator.getCurrentSettings()
-    val totalBars = amplitudes.size
-    val candleWidth = settings.candleWidth.dp.toPx()
-    val candleSpacing = 1.dp.toPx() // Small gap between candles
-    val totalCandleWidth = candleWidth + candleSpacing
-    
-    // Calculate how many candles can fit in the available width
-    val maxCandlesInWidth = (canvasSize.width / totalCandleWidth).toInt()
-    val effectiveBars = minOf(totalBars, maxCandlesInWidth)
-    
-    // Calculate actual spacing to fill the width properly
-    val availableWidth = canvasSize.width
-    val actualCandleWidth = (availableWidth / effectiveBars) - candleSpacing
-    
-    val maxBarHeight = canvasSize.height * 0.9f // Use more of the available height
+    // Simplified high-performance waveform rendering
+    val maxBars = 50 // Limit bars for performance
+    val effectiveBars = minOf(amplitudes.size, maxBars)
+    val barWidth = canvasSize.width / effectiveBars
+    val maxBarHeight = canvasSize.height * 0.8f
     val centerY = canvasSize.height / 2f
     val progressX = canvasSize.width * progress
 
-    println("🎨 Drawing waveform: totalBars=$totalBars, effectiveBars=$effectiveBars, candleWidth=$actualCandleWidth, canvasWidth=${canvasSize.width}")
-    println("🎵 Amplitude range: min=${amplitudes.minOrNull()}, max=${amplitudes.maxOrNull()}, first 5: ${amplitudes.take(5).joinToString()}")
-
-    // Draw candlesticks (React Native Audio Waveform approach)
+    // Use simple rectangles instead of rounded rectangles for performance
     for (i in 0 until effectiveBars) {
-        val amplitude = amplitudes[i]
-        val x = i * (actualCandleWidth + candleSpacing)
+        val amplitude = amplitudes[i * amplitudes.size / effectiveBars]
+        val x = i * barWidth
         
-        // Apply height scaling (React Native Audio Waveform approach)
-        val normalizedAmplitude = (amplitude / 100f).coerceIn(0f, 1f)
-        val scaledHeight = normalizedAmplitude * maxBarHeight * settings.candleHeightScale
-        val finalBarHeight = maxOf(scaledHeight, 2.dp.toPx()) // Minimum height for visibility
+        // Simplified height calculation
+        val normalizedAmplitude = (amplitude / 100f).coerceIn(0.1f, 1f)
+        val barHeight = normalizedAmplitude * maxBarHeight * 0.6f
 
         val isPlayed = x < progressX
-        val color = if (isPlayed) playedColor else unplayedColor
+        val color = if (isPlayed) playedColor else unplayedColor.copy(alpha = 0.6f)
 
-        val top = centerY - finalBarHeight / 2
+        val top = centerY - barHeight / 2
 
-        // Draw candlestick (individual bar)
-        drawRoundRect(
+        // Draw simple rectangle for maximum performance
+        drawRect(
             color = color,
             topLeft = Offset(x, top),
-            size = androidx.compose.ui.geometry.Size(actualCandleWidth, finalBarHeight),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(actualCandleWidth / 4)
+            size = androidx.compose.ui.geometry.Size(barWidth * 0.8f, barHeight)
         )
     }
 
-    // Draw progress cursor with gradient effect
-    val cursorWidth = 3.dp.toPx()
+    // Simplified progress cursor for performance
+    val cursorWidth = 2.dp.toPx()
     drawLine(
-        color = Color.Red.copy(alpha = 0.8f),
-        start = Offset(progressX - cursorWidth/2, 0f),
-        end = Offset(progressX - cursorWidth/2, canvasSize.height),
+        color = Color.Red.copy(alpha = 0.9f),
+        start = Offset(progressX, 0f),
+        end = Offset(progressX, canvasSize.height),
         strokeWidth = cursorWidth
-    )
-
-    // Add subtle glow effect to cursor
-    drawLine(
-        color = Color.Red.copy(alpha = 0.3f),
-        start = Offset(progressX - cursorWidth, 0f),
-        end = Offset(progressX - cursorWidth, canvasSize.height),
-        strokeWidth = cursorWidth * 2
     )
 }

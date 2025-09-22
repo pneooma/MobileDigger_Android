@@ -94,8 +94,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    // Song transition state for smooth animations
+    private val _isTransitioning = MutableStateFlow(false)
+    val isTransitioning: StateFlow<Boolean> = _isTransitioning.asStateFlow()
+    
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    
+    // Audio preloading for smooth transitions
+    private var audioPreloadJob: kotlinx.coroutines.Job? = null
+    private var preloadedFile: MusicFile? = null
     
     private val _sortResults = MutableStateFlow<List<SortResult>>(emptyList())
     val sortResults: StateFlow<List<SortResult>> = _sortResults.asStateFlow()
@@ -426,41 +434,81 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun next() {
-        val currentFiles = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
+        viewModelScope.launch {
+            val currentFiles = when (_currentPlaylistTab.value) {
+                PlaylistTab.TODO -> _musicFiles.value
+                PlaylistTab.LIKED -> _likedFiles.value
+                PlaylistTab.REJECTED -> _rejectedFiles.value
+            }
+            if (currentFiles.isEmpty()) {
+                _errorMessage.value = "No files in current playlist to navigate"
+                return@launch
+            }
+            
+            // Start smooth transition
+            _isTransitioning.value = true
+            
+            // Quick fade out for smooth transition (120Hz optimized)
+            if (_isPlaying.value) {
+                _isPlaying.value = false
+                try {
+                    audioManager.pause()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error pausing during transition", e)
+                }
+            }
+            
+            delay(50) // Brief pause for 120Hz smooth animation
+            
+            val nextIndex = (_currentIndex.value + 1) % currentFiles.size
+            _currentIndex.value = nextIndex
+            loadCurrentFile()
+            updateNotification()
+            
+            delay(100) // Allow new file to load
+            _isTransitioning.value = false
         }
-        if (currentFiles.isEmpty()) {
-            _errorMessage.value = "No files in current playlist to navigate"
-            return
-        }
-        
-        val nextIndex = (_currentIndex.value + 1) % currentFiles.size
-        _currentIndex.value = nextIndex
-        loadCurrentFile()
-        updateNotification()
     }
     
     fun previous() {
-        val currentFiles = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
+        viewModelScope.launch {
+            val currentFiles = when (_currentPlaylistTab.value) {
+                PlaylistTab.TODO -> _musicFiles.value
+                PlaylistTab.LIKED -> _likedFiles.value
+                PlaylistTab.REJECTED -> _rejectedFiles.value
+            }
+            if (currentFiles.isEmpty()) {
+                _errorMessage.value = "No files in current playlist to navigate"
+                return@launch
+            }
+            
+            // Start smooth transition
+            _isTransitioning.value = true
+            
+            // Quick fade out for smooth transition (120Hz optimized)
+            if (_isPlaying.value) {
+                _isPlaying.value = false
+                try {
+                    audioManager.pause()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error pausing during transition", e)
+                }
+            }
+            
+            delay(50) // Brief pause for 120Hz smooth animation
+            
+            val prevIndex = if (_currentIndex.value > 0) {
+                _currentIndex.value - 1
+            } else {
+                currentFiles.size - 1
+            }
+            _currentIndex.value = prevIndex
+            loadCurrentFile()
+            updateNotification()
+            
+            delay(100) // Allow new file to load
+            _isTransitioning.value = false
         }
-        if (currentFiles.isEmpty()) {
-            _errorMessage.value = "No files in current playlist to navigate"
-            return
-        }
-        
-        val prevIndex = if (_currentIndex.value > 0) {
-            _currentIndex.value - 1
-        } else {
-            currentFiles.size - 1
-        }
-        _currentIndex.value = prevIndex
-        loadCurrentFile()
-        updateNotification()
     }
     
     fun playFile(file: MusicFile) {
@@ -893,6 +941,32 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         
         updateNotification()
+        
+        // Start preloading next song for smooth transitions
+        preloadNextSong()
+    }
+    
+    private fun preloadNextSong() {
+        audioPreloadJob?.cancel()
+        audioPreloadJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val currentFiles = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
+                }
+                val currentIdx = _currentIndex.value
+                
+                // Preload next song if available
+                if (currentIdx + 1 < currentFiles.size) {
+                    val nextFile = currentFiles[currentIdx + 1]
+                    preloadedFile = nextFile
+                    CrashLogger.log("MusicViewModel", "Preloaded next song: ${nextFile.name}")
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error preloading next song", e)
+            }
+        }
     }
     
     private suspend fun extractDuration(file: MusicFile): Long {
@@ -1060,7 +1134,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         viewModelScope.launch {
             try {
                 while (isActive) { // Check if coroutine is still active
-                    kotlinx.coroutines.delay(100) // Update every 100ms
+                    kotlinx.coroutines.delay(33) // Update every ~33ms for 120Hz displays (30fps UI updates)
                     
                     if (_isPlaying.value && isActive) { // Double check we're still active
                         try {
@@ -1738,8 +1812,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             }
                         }
                         
-                        CrashLogger.log("MusicViewModel", "Found ${allFiles.size} liked files (including subfolders)")
-                        allFiles
+                        // Remove duplicates based on URI (in case a file exists in both root and subfolder)
+                        val uniqueFiles = allFiles.distinctBy { it.uri }
+                        CrashLogger.log("MusicViewModel", "Found ${allFiles.size} liked files (including subfolders), ${uniqueFiles.size} unique")
+                        uniqueFiles
                     } else {
                         CrashLogger.log("MusicViewModel", "Liked folder not found in destination")
                         emptyList()
@@ -2074,12 +2150,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         withContext(Dispatchers.Main) {
                             addToSubfolderHistory(subfolderName)
                             updateSubfolderInfo()
-                            loadLikedFiles() // Refresh liked files
-                            loadRejectedFiles() // Refresh rejected files
                             
-                            // Remove file from the appropriate playlist based on current tab
+                            // Handle file movement based on current playlist tab
                             when (_currentPlaylistTab.value) {
                                 PlaylistTab.TODO -> {
+                                    // Remove from TODO playlist
                                     val updatedTodoFiles = _musicFiles.value.toMutableList()
                                     val indexToRemove = updatedTodoFiles.indexOfFirst { it.uri == currentFile.uri }
                                     if (indexToRemove != -1) {
@@ -2102,8 +2177,22 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                             }
                                         }
                                     }
+                                    
+                                    // Add to liked files with subfolder info
+                                    val likedFile = currentFile.copy(
+                                        sourcePlaylist = PlaylistTab.LIKED,
+                                        subfolder = subfolderName,
+                                        uri = targetFile.uri // Use the new URI
+                                    )
+                                    val updatedLikedFiles = _likedFiles.value.toMutableList()
+                                    // Check for duplicates before adding
+                                    if (!updatedLikedFiles.any { it.uri == likedFile.uri }) {
+                                        updatedLikedFiles.add(likedFile)
+                                        _likedFiles.value = updatedLikedFiles
+                                    }
                                 }
                                 PlaylistTab.REJECTED -> {
+                                    // Remove from REJECTED playlist
                                     val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
                                     val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == currentFile.uri }
                                     if (indexToRemove != -1) {
@@ -2126,9 +2215,24 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                             }
                                         }
                                     }
+                                    
+                                    // Add to liked files with subfolder info
+                                    val likedFile = currentFile.copy(
+                                        sourcePlaylist = PlaylistTab.LIKED,
+                                        subfolder = subfolderName,
+                                        uri = targetFile.uri // Use the new URI
+                                    )
+                                    val updatedLikedFiles = _likedFiles.value.toMutableList()
+                                    // Check for duplicates before adding
+                                    if (!updatedLikedFiles.any { it.uri == likedFile.uri }) {
+                                        updatedLikedFiles.add(likedFile)
+                                        _likedFiles.value = updatedLikedFiles
+                                    }
                                 }
                                 PlaylistTab.LIKED -> {
-                                    // For liked files, we're just moving between subfolders, no need to remove from playlist
+                                    // For liked files, we're just moving between subfolders
+                                    // Reload liked files to reflect the new subfolder structure
+                                    loadLikedFiles()
                                 }
                             }
                             

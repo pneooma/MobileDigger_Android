@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -129,6 +130,7 @@ fun MusicPlayerScreen(
     val rejectedFiles by viewModel.rejectedFiles.collectAsState()
     val currentPlaylistFiles by viewModel.currentPlaylistFiles.collectAsState()
     val currentPlayingFile by viewModel.currentPlayingFile.collectAsState()
+    val isTransitioning by viewModel.isTransitioning.collectAsState()
     
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
@@ -169,13 +171,13 @@ fun MusicPlayerScreen(
     val currentSearchText by viewModel.searchText.collectAsState() // Moved here
     val searchResults by viewModel.searchResults.collectAsState() // Moved here
     
-    // Subfolder management state
-    val subfolderHistory by viewModel.subfolderHistory.collectAsState()
-    val availableSubfolders by viewModel.availableSubfolders.collectAsState()
-    val subfolderFileCounts by viewModel.subfolderFileCounts.collectAsState()
-    val showSubfolderCreateDialog by viewModel.showSubfolderDialog.collectAsState()
-    val newSubfolderName by viewModel.newSubfolderName.collectAsState()
-    val showSubfolderManagementDialogState by viewModel.showSubfolderManagementDialog.collectAsState()
+    // Subfolder management state - Lazy loaded to avoid unnecessary recomposition
+    val subfolderHistory by remember { viewModel.subfolderHistory }.collectAsState()
+    val availableSubfolders by remember { viewModel.availableSubfolders }.collectAsState()
+    val subfolderFileCounts by remember { viewModel.subfolderFileCounts }.collectAsState()
+    val showSubfolderCreateDialog by remember { viewModel.showSubfolderDialog }.collectAsState()
+    val newSubfolderName by remember { viewModel.newSubfolderName }.collectAsState()
+    val showSubfolderManagementDialogState by remember { viewModel.showSubfolderManagementDialog }.collectAsState()
     
     // Multi-selection state
     val selectedIndices by viewModel.selectedIndices.collectAsState()
@@ -1184,13 +1186,11 @@ viewModel.updateSearchText("")
     }
             } else {
                 val listState = rememberLazyListState()
-                // Optimized scroll detection - only recalculate when actually needed
+                // Optimized scroll detection - minimize recomposition frequency
                 val isScrolled by remember {
                     derivedStateOf {
-                        val firstIndex = listState.firstVisibleItemIndex
-                        val firstOffset = listState.firstVisibleItemScrollOffset
-                        // Only recalculate when crossing thresholds
-                        firstIndex > 0 || (firstIndex == 0 && firstOffset > 400)
+                        // Use less granular detection to reduce recompositions
+                        listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 300
                     }
                 }
                 
@@ -1203,33 +1203,48 @@ viewModel.updateSearchText("")
                             .heightIn(max = playlistMaxHeight),
                         // Performance optimizations
                         contentPadding = PaddingValues(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        // Add performance hints for large lists
+                        userScrollEnabled = true,
+                        reverseLayout = false
                     ) {
                         // Current song info
                         item {
                             val currentFile = currentPlayingFile // Use the actually playing file
                             if (currentFile != null) {
                                 val file = currentFile
-                                // Animation states for swipe feedback
+                                // Animation states for swipe feedback - Performance optimized for 120Hz
                                 var dragOffset by remember { mutableStateOf(0f) }
                                 var isAnimating by remember { mutableStateOf(false) }
                                 var swipeDirection by remember { mutableStateOf(0) } // -1 left, 0 none, 1 right
                                 
+                                // Song transition fade animation for 120Hz displays
+                                val transitionAlpha by animateFloatAsState(
+                                    targetValue = if (isTransitioning) 0.3f else 1f,
+                                    animationSpec = tween(
+                                        durationMillis = 150, // Fast for 120Hz
+                                        easing = FastOutSlowInEasing
+                                    ),
+                                    label = "transition_fade"
+                                )
+                                
+                                // Cache animation spec optimized for 120Hz displays
+                                val animationSpec = remember(visualSettings.enableAnimations, visualSettings.animationSpeed) {
+                                    if (visualSettings.enableAnimations) {
+                                        val speedFactor = 1f / visualSettings.animationSpeed
+                                        // Optimized spring for 120Hz with higher stiffness
+                                        spring<Float>(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
+                                            stiffness = Spring.StiffnessMediumLow * speedFactor * 1.5f // Faster for 120Hz
+                                        )
+                                    } else { 
+                                        tween<Float>(durationMillis = 0) // Snap immediately if animations are disabled
+                                    }
+                                }
+                                
                                 val animatedOffset by animateFloatAsState(
                                     targetValue = if (isAnimating) dragOffset else 0f,
-                                    animationSpec = if (visualSettings.enableAnimations) {
-                                        val speedFactor = 1f / visualSettings.animationSpeed
-                                        if (speedFactor == 1f) {
-                                            animationSpecs.bouncySpring
-                                        } else {
-                                            spring(
-                                                dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
-                                                stiffness = Spring.StiffnessLow * speedFactor
-                                            )
-                                        }
-                                    } else { 
-                                        tween(durationMillis = 0) // Snap immediately if animations are disabled
-                                    },
+                                    animationSpec = animationSpec,
                                     finishedListener = {
                                         isAnimating = false
                                         dragOffset = 0f
@@ -1269,6 +1284,7 @@ viewModel.updateSearchText("")
                                             translationX = animatedOffset
                                             scaleX = 1f + abs(animatedOffset) / 2000f // Slight scale effect
                                             scaleY = 1f + abs(animatedOffset) / 2000f
+                                            alpha = transitionAlpha // Smooth fade during song transitions
                                         }
                                         .then(
                                             if (swipeDirection != 0) {
@@ -1342,11 +1358,18 @@ viewModel.updateSearchText("")
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
-                                        // Track details: Time, Bitrate, Size
-                                        val bitrate = calculateBitrate(file.size, file.duration)
-                                        val fileSize = formatFileSize(file.size)
+                                        // Track details: Time, Bitrate, Size - Cache expensive calculations
+                                        val bitrate = remember(file.size, file.duration) { 
+                                            calculateBitrate(file.size, file.duration) 
+                                        }
+                                        val fileSize = remember(file.size) { 
+                                            formatFileSize(file.size) 
+                                        }
+                                        val timeString = remember(file.duration) { 
+                                            formatTime(file.duration) 
+                                        }
                                         Text(
-                                            text = ":: Time ${formatTime(file.duration)} :: Bitrate ${bitrate} kbps :: Size $fileSize ::",
+                                            text = ":: Time $timeString :: Bitrate ${bitrate} kbps :: Size $fileSize ::",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                                             textAlign = TextAlign.Center,
@@ -2322,10 +2345,18 @@ viewModel.updateSearchText("")
                         // Conditionally display search results or current playlist files (reverted to original)
                         val displayFiles = currentPlaylistFiles // Search results handled within dropdown
                         
-                        // Playlist Items (dynamic sizing)
-                        itemsIndexed(currentPlaylistFiles, key = { _, mf -> mf.uri }) { index, item ->
-                            val isCurrent = currentPlayingFile?.uri == item.uri // Check if this item is actually playing
-                            val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // Moved inside for correct scope if needed
+                        // Playlist Items (dynamic sizing) - Performance optimized
+                        itemsIndexed(
+                            items = currentPlaylistFiles, 
+                            key = { _, mf -> "${mf.uri}_${mf.subfolder ?: ""}" } // More unique key including subfolder
+                        ) { index, item ->
+                            // Cache expensive calculations
+                            val isCurrent = remember(currentPlayingFile?.uri, item.uri) { 
+                                currentPlayingFile?.uri == item.uri 
+                            }
+                            val isCompactScreen = remember(screenWidth, screenHeight) { 
+                                screenWidth < 600.dp || screenHeight < 800.dp 
+                            }
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -2401,8 +2432,9 @@ viewModel.updateSearchText("")
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                        Text(
-                                            text = if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                        // Cache time formatting and subfolder info to avoid recalculation
+                                        val timeText = remember(item.duration, currentPlaylistTab, item.subfolder) {
+                                            if (currentPlaylistTab == PlaylistTab.LIKED) {
                                                 val subfolderInfo = if (item.subfolder != null) {
                                                     ":: ${item.subfolder} ::"
                                                 } else {
@@ -2411,7 +2443,10 @@ viewModel.updateSearchText("")
                                                 "Time: ${formatTime(item.duration)} $subfolderInfo"
                                             } else {
                                                 "Time: ${formatTime(item.duration)}"
-                                            },
+                                            }
+                                        }
+                                        Text(
+                                            text = timeText,
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )

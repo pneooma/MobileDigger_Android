@@ -194,3 +194,8 @@
 - Performance: Removed time/bitrate lines in lists; skipped background duration extraction; waveform seeking restored.
 - Stability: Preparing logcat monitoring for crash investigation.
 - Incremented build version to 8.57.
+
+8.58
+- Source history buttons now only set source; scanning happens only on Rescan.
+- Adjusted rescan label and recent sources UX; crash monitoring improvements.
+- Incremented build version to 8.58.

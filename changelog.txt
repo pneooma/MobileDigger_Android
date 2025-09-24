@@ -198,4 +198,12 @@
 8.58
 - Source history buttons now only set source; scanning happens only on Rescan.
 - Adjusted rescan label and recent sources UX; crash monitoring improvements.
+ - Incremented build version to 8.58.
+
+8.59
+- Added smart automatic cache trimming with LRU eviction and safety for in-use files.
+- New CacheManager caps cache (preferred 512MB, hard 1GB) and runs periodically.
+- Protected active FFmpeg data source and temp WAV paths during cleanup.
+- Integrated with periodic maintenance; no interference with playback/workflows.
+- Incremented build version to 8.59.
 - Incremented build version to 8.58.

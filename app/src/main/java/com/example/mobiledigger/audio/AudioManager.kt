@@ -69,6 +69,10 @@ class AudioManager(private val context: Context) {
     
     private var preloadedFile: MusicFile? = null
     
+    // Track cache files currently in active use to avoid deleting them during trimming
+    private var currentFFmpegDataSourcePath: String? = null
+    private var currentTempWavPath: String? = null
+    
     // User preferences for spectrogram quality
     private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
@@ -397,6 +401,11 @@ class AudioManager(private val context: Context) {
             try {
                 player.setDataSource(dataSource)
                 CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource: $dataSource")
+                // Track in-use data source path if it is a file path inside cache
+                currentFFmpegDataSourcePath = try {
+                    val f = java.io.File(dataSource)
+                    if (f.exists() && f.absolutePath.startsWith(context.cacheDir.absolutePath)) f.absolutePath else null
+                } catch (_: Exception) { null }
             } catch (e: Exception) {
                 CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource failed", e)
                 // Try to reset the player state
@@ -897,6 +906,7 @@ class AudioManager(private val context: Context) {
             // Create temporary WAV file
             val tempDir = context.cacheDir
             val tempWavFile = File(tempDir, "temp_spectrogram_${System.currentTimeMillis()}.wav")
+            currentTempWavPath = tempWavFile.absolutePath
             
             withContext(Dispatchers.IO) {
                 // Use MediaExtractor and MediaCodec to decode MP3 to PCM
@@ -1146,6 +1156,9 @@ class AudioManager(private val context: Context) {
                     } else {
                         CrashLogger.log("AudioManager", "Failed to delete temporary WAV file: ${file.absolutePath}")
                     }
+                }
+                if (file.absolutePath == currentTempWavPath) {
+                    currentTempWavPath = null
                 }
             }
         } catch (e: Exception) {

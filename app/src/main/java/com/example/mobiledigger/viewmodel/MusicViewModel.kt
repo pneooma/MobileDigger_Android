@@ -42,6 +42,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.Job
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.util.CacheManager
 import com.example.mobiledigger.util.ResourceManager
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -1198,6 +1199,32 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         } else {
                             CrashLogger.log("MusicViewModel", "Memory usage acceptable (${memoryUsagePercent}%), skipping cache clear")
                         }
+
+                        // Smart disk cache trimming (best-effort, non-intrusive)
+                        try {
+                            val ctx = getApplication<Application>().applicationContext
+                            val totalCache = CacheManager.calculateTotalCacheBytes(ctx)
+                            // Preferred and hard caps (adjustable): 512MB preferred, 1GB hard
+                            val preferred = 512L * 1024L * 1024L
+                            val hard = 1024L * 1024L * 1024L
+                            if (totalCache > preferred) {
+                                val protected = mutableSetOf<String>()
+                                // Protect active temp files used by audio pipeline
+                                try {
+                                    val p1 = javaClass.getDeclaredField("audioManager")
+                                    p1.isAccessible = true
+                                    val am = p1.get(this@MusicViewModel) as com.example.mobiledigger.audio.AudioManager
+                                    val f1 = am.javaClass.getDeclaredField("currentFFmpegDataSourcePath")
+                                    f1.isAccessible = true
+                                    (f1.get(am) as? String)?.let { protected.add(it) }
+                                    val f2 = am.javaClass.getDeclaredField("currentTempWavPath")
+                                    f2.isAccessible = true
+                                    (f2.get(am) as? String)?.let { protected.add(it) }
+                                } catch (_: Exception) { /* best-effort */ }
+                                CacheManager.trimDiskCache(ctx, preferred, hard, protected)
+                                CrashLogger.log("MusicViewModel", "Disk cache trimmed. Before=${totalCache} bytes")
+                            }
+                        } catch (_: Exception) { /* ignore */ }
                     } catch (e: Exception) {
                         if (isActive) { // Only log if not cancelled
                             CrashLogger.log("MusicViewModel", "Error during periodic cache clearing", e)

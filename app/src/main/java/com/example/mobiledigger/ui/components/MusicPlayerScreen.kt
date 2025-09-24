@@ -812,7 +812,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = ":: v8.58 ::",
+                    text = ":: v8.59 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height

@@ -812,7 +812,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = ":: v8.55 ::",
+                    text = ":: v8.57 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1218,9 +1218,39 @@ viewModel.updateSearchText("")
                                 contentColor = Color.White
                             )
                         ) {
-                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(36.dp)) // Double the icon size
-                            Spacer(Modifier.width(16.dp)) // Double the spacing
-                            Text("Rescan Source", fontSize = 18.sp) // Increase text size
+                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(36.dp))
+                            Spacer(Modifier.width(16.dp))
+                            val lastSource = viewModel.preferences.getSourceRootUri()
+                            val lastLabel = lastSource?.let { uri ->
+                                kotlin.runCatching { android.net.Uri.parse(uri).path ?: uri }.getOrNull()?.let { path ->
+                                    val parts = path.trim('/').split('/')
+                                    val tail = parts.takeLast(2)
+                                    if (tail.isNotEmpty()) tail.joinToString("/") else path
+                                }
+                            } ?: "(none)"
+                            Text("Rescan: $lastLabel", fontSize = 18.sp)
+                        }
+                    }
+                    // Recent Sources (max 10) buttons, two per row
+                    val recentSources by viewModel.recentSourceUris.collectAsState()
+                    if (recentSources.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        val rows = recentSources.take(10).chunked(2)
+                        rows.forEach { rowItems ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                rowItems.forEach { uriString ->
+                                    val label = kotlin.runCatching { android.net.Uri.parse(uriString).path ?: uriString }.getOrNull()?.let { p ->
+                                        val parts = p.trim('/').split('/')
+                                        val tail = parts.takeLast(2)
+                                        if (tail.isNotEmpty()) tail.joinToString("/") else p
+                                    } ?: uriString
+                                    OutlinedButton(onClick = { viewModel.setSourceFolderPreference(android.net.Uri.parse(uriString)) }, modifier = Modifier.weight(1f)) {
+                                        Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    }
+                                }
+                                if (rowItems.size == 1) Spacer(Modifier.weight(1f))
+                            }
+                            Spacer(Modifier.height(6.dp))
                         }
                     }
                 }

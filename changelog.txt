@@ -181,3 +181,16 @@
 - Disabled background duration extraction when loading folders/subfolders.
 - Multi-select liked subfolders in tabs row refined and compacted.
 - Incremented build version to 8.55.
+
+8.56
+- Remember recent source folders (up to 10) and show under the big Rescan button (two columns).
+- Rescan button shows the last two path segments of the current source.
+- Kept performance optimizations and waveform seeking from previous version.
+- Incremented build version to 8.56.
+
+8.57
+- UI: Added recent source history buttons (2-column list) under Rescan; Rescan shows last two path parts.
+- Liked subfolder picker: compact multi-select checkboxes and View button; kept in tabs row dialog only.
+- Performance: Removed time/bitrate lines in lists; skipped background duration extraction; waveform seeking restored.
+- Stability: Preparing logcat monitoring for crash investigation.
+- Incremented build version to 8.57.

@@ -208,6 +208,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private val _showSubfolderManagementDialog = MutableStateFlow(false)
     val showSubfolderManagementDialog: StateFlow<Boolean> = _showSubfolderManagementDialog.asStateFlow()
+
+    // Recent source folders (URIs as strings), max 10
+    private val _recentSourceUris = MutableStateFlow<List<String>>(emptyList())
+    val recentSourceUris: StateFlow<List<String>> = _recentSourceUris.asStateFlow()
     
     init {
         try {
@@ -234,6 +238,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             
             // Clear caches periodically to prevent memory buildup
             startPeriodicCacheClearing()
+
+            // Load recent sources from preferences
+            loadRecentSources()
             
             // Start service and register receiver in background to avoid blocking
             viewModelScope.launch(Dispatchers.IO) {
@@ -293,6 +300,42 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             _errorMessage.value = "Failed to initialize audio: ${e.message}"
         }
     }
+
+    private fun loadRecentSources() {
+        try {
+            val prefs = getApplication<Application>().getSharedPreferences("recent_sources", Context.MODE_PRIVATE)
+            val csv = prefs.getString("uris", "") ?: ""
+            val list = if (csv.isNotBlank()) csv.split("|").filter { it.isNotBlank() } else emptyList()
+            _recentSourceUris.value = list.take(10)
+        } catch (_: Exception) { /* ignore */ }
+    }
+
+    private fun saveRecentSources() {
+        try {
+            val prefs = getApplication<Application>().getSharedPreferences("recent_sources", Context.MODE_PRIVATE)
+            prefs.edit().putString("uris", _recentSourceUris.value.take(10).joinToString("|")) .apply()
+        } catch (_: Exception) { /* ignore */ }
+    }
+
+    private fun addRecentSource(uri: Uri) {
+        val s = uri.toString()
+        val current = _recentSourceUris.value.toMutableList()
+        current.remove(s)
+        current.add(0, s)
+        _recentSourceUris.value = current.take(10)
+        saveRecentSources()
+    }
+
+    // Set source folder preference only (do not rescan yet)
+    fun setSourceFolderPreference(uri: Uri) {
+        try {
+            preferences.setSourceRootUri(uri.toString())
+            addRecentSource(uri)
+            _errorMessage.value = "Source set. Tap Rescan to load files."
+        } catch (e: Exception) {
+            handleError("setSourceFolderPreference", e)
+        }
+    }
     
     fun selectFolder(uri: Uri) {
         viewModelScope.launch {
@@ -307,6 +350,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "Starting folder selection: $uri")
                 
                 fileManager.setSelectedFolder(uri)
+                addRecentSource(uri)
                 CrashLogger.log("MusicViewModel", "FileManager.setSelectedFolder completed")
                 
                 // Save the source folder URI for future app starts

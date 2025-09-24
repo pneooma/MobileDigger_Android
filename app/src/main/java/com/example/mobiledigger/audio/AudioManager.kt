@@ -50,6 +50,7 @@ enum class FrequencyRange {
 }
 
 class AudioManager(private val context: Context) {
+    private val analyzer = AudioAnalyzer()
     
     private var ffmpegPlayer: FFmpegMediaPlayer? = null
     private var exoPlayerFallback: ExoPlayer? = null
@@ -829,6 +830,165 @@ class AudioManager(private val context: Context) {
     private val _isGeneratingSpectrogram = MutableStateFlow(false)
     val isGeneratingSpectrogram: StateFlow<Boolean> = _isGeneratingSpectrogram.asStateFlow()
 
+    // BPM/Key analysis result
+    private val _analysisResult = MutableStateFlow<AudioAnalysisResult?>(null)
+    val analysisResult: StateFlow<AudioAnalysisResult?> = _analysisResult.asStateFlow()
+    private val _isAnalyzing = MutableStateFlow(false)
+    val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
+    private val analysisCache = Collections.synchronizedMap(mutableMapOf<String, AudioAnalysisResult>())
+
+    suspend fun analyzeFile(musicFile: com.example.mobiledigger.model.MusicFile, force: Boolean = false): AudioAnalysisResult? {
+        return try {
+            val key = musicFile.uri.toString()
+            if (!force) {
+                analysisCache[key]?.let { cached ->
+                    _analysisResult.value = cached
+                    return cached
+                }
+            }
+            val uri = musicFile.uri
+            _isAnalyzing.value = true
+            // Prefer precise PCM decode for analysis (better BPM/Key accuracy)
+            val audioData = withContext(Dispatchers.IO) {
+                extractPcmDecodedForAnalysis(uri) ?: extractAudioDataWithMemoryManagement(uri)
+            }
+            if (audioData == null || audioData.isEmpty()) return null
+            val analysis = withContext(Dispatchers.Default) { analyzer.analyze(audioData, 44100) }
+            analysisCache[key] = analysis
+            _analysisResult.value = analysis
+            analysis
+        } catch (e: Exception) {
+            com.example.mobiledigger.util.CrashLogger.log("AudioManager", "analyzeFile failed", e)
+            null
+        } finally {
+            _isAnalyzing.value = false
+        }
+    }
+
+    /**
+     * Decode compressed audio (e.g., MP3/FLAC/AAC) to PCM ShortArray for high-quality analysis
+     */
+    private fun extractPcmDecodedForAnalysis(uri: Uri): ShortArray? {
+        return try {
+            val extractor = android.media.MediaExtractor()
+            extractor.setDataSource(context, uri, emptyMap<String, String>())
+
+            var trackIndex = -1
+            var mime = ""
+            var sampleRate = 44100
+            var channels = 2
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val m = format.getString(android.media.MediaFormat.KEY_MIME) ?: ""
+                if (m.startsWith("audio/")) {
+                    trackIndex = i
+                    mime = m
+                    if (format.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) {
+                        sampleRate = format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE)
+                    }
+                    if (format.containsKey(android.media.MediaFormat.KEY_CHANNEL_COUNT)) {
+                        channels = format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
+                    }
+                    break
+                }
+            }
+            if (trackIndex == -1) {
+                extractor.release()
+                return null
+            }
+            extractor.selectTrack(trackIndex)
+
+            val codec = android.media.MediaCodec.createDecoderByType(mime)
+            val format = extractor.getTrackFormat(trackIndex)
+            codec.configure(format, null, null, 0)
+            codec.start()
+
+            val outputBufferInfo = android.media.MediaCodec.BufferInfo()
+            val pcm = ArrayList<Short>(sampleRate * 120)
+            val maxSamples = sampleRate * 120 // up to 2 minutes
+            var endOfStream = false
+
+            while (!endOfStream && pcm.size < maxSamples) {
+                // Queue input
+                val inIndex = codec.dequeueInputBuffer(5000)
+                if (inIndex >= 0) {
+                    val inputBuffer = codec.getInputBuffer(inIndex)
+                    val sampleSize = extractor.readSampleData(inputBuffer!!, 0)
+                    if (sampleSize < 0) {
+                        codec.queueInputBuffer(inIndex, 0, 0, 0, android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    } else {
+                        val presentationTimeUs = extractor.sampleTime
+                        codec.queueInputBuffer(inIndex, 0, sampleSize, presentationTimeUs, 0)
+                        extractor.advance()
+                    }
+                }
+
+                // Dequeue output
+                val outIndex = codec.dequeueOutputBuffer(outputBufferInfo, 5000)
+                when {
+                    outIndex >= 0 -> {
+                        val outputBuffer = codec.getOutputBuffer(outIndex) ?: continue
+                        if (outputBuffer.remaining() > 0) {
+                            val outBytes = ByteArray(outputBuffer.remaining())
+                            outputBuffer.get(outBytes)
+                            // Convert bytes to 16-bit PCM shorts if needed
+                            val shorts = convertBytesToPcmShorts(outBytes, channels)
+                            val remaining = maxSamples - pcm.size
+                            if (shorts.size > remaining) {
+                                for (i in 0 until remaining) pcm.add(shorts[i])
+                            } else {
+                                pcm.addAll(shorts.asList())
+                            }
+                        }
+                        codec.releaseOutputBuffer(outIndex, false)
+                        if ((outputBufferInfo.flags and android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            endOfStream = true
+                        }
+                    }
+                }
+            }
+
+            codec.stop(); codec.release(); extractor.release()
+
+            // Downmix stereo to mono
+            val mono = if (channels == 2) {
+                val list = ArrayList<Short>(pcm.size / 2)
+                var i = 0
+                while (i + 1 < pcm.size && list.size < maxSamples / 2) {
+                    val left = pcm[i].toInt()
+                    val right = pcm[i + 1].toInt()
+                    list.add(((left + right) / 2).toShort())
+                    i += 2
+                }
+                list.toShortArray()
+            } else {
+                pcm.toShortArray()
+            }
+            mono
+        } catch (e: Exception) {
+            com.example.mobiledigger.util.CrashLogger.log("AudioManager", "extractPcmDecodedForAnalysis failed", e)
+            null
+        }
+    }
+
+    private fun convertBytesToPcmShorts(data: ByteArray, channels: Int): ShortArray {
+        // Assume 16-bit PCM little-endian from MediaCodec for common decoders
+        val count = data.size / 2
+        val shorts = ShortArray(count)
+        var j = 0
+        for (i in 0 until count) {
+            val lo = data[j].toInt() and 0xFF
+            val hi = data[j + 1].toInt()
+            shorts[i] = ((hi shl 8) or lo).toShort()
+            j += 2
+        }
+        return shorts
+    }
+
+    fun clearAnalysis() {
+        _analysisResult.value = null
+    }
+
     // Spectrogram generation with proper audio analysis
     suspend fun generateSpectrogram(musicFile: MusicFile): ImageBitmap? {
         return try {
@@ -1201,6 +1361,22 @@ class AudioManager(private val context: Context) {
             }
             
             CrashLogger.log("AudioManager", "Extracted ${audioData.size} audio samples in ${extractionTime}ms")
+
+            // Compute BPM/Key analysis (cached per file)
+            try {
+                val key = "${musicFile.name}_${musicFile.size}"
+                val cached = analysisCache[key]
+                if (cached != null) {
+                    _analysisResult.value = cached
+                } else {
+                    // Assume 44100 Hz if unknown
+                    val analysis = analyzer.analyze(audioData, 44100)
+                    analysisCache[key] = analysis
+                    _analysisResult.value = analysis
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("AudioManager", "Audio analysis failed", e)
+            }
             
             // Generate spectrogram from audio data
             _spectrogramProgress.value = 0.5f

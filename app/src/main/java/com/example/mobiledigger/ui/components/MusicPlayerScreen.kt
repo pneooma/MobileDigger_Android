@@ -120,6 +120,24 @@ private fun formatFileSize(sizeBytes: Long): String {
     return String.format(Locale.getDefault(), "%.1f MB", sizeMB)
 }
 
+private fun toCamelotKey(key: String): String {
+    val parts = key.trim().split(" ")
+    if (parts.size != 2) return key
+    val root = parts[0].replace("♯", "#").replace("♭", "b").uppercase(Locale.ROOT)
+    val mode = parts[1].lowercase(Locale.ROOT)
+    val camelotMapMajor = mapOf(
+        "C" to "8B", "G" to "9B", "D" to "10B", "A" to "11B", "E" to "12B",
+        "B" to "1B", "F#" to "2B", "C#" to "3B", "G#" to "4B", "D#" to "5B",
+        "A#" to "6B", "F" to "7B"
+    )
+    val camelotMapMinor = mapOf(
+        "A" to "8A", "E" to "9A", "B" to "10A", "F#" to "11A", "C#" to "12A",
+        "G#" to "1A", "D#" to "2A", "A#" to "3A", "F" to "4A", "C" to "5A",
+        "G" to "6A", "D" to "7A"
+    )
+    val out = if (mode.contains("major")) camelotMapMajor[root] else camelotMapMinor[root]
+    return out ?: key
+}
 
 
 
@@ -137,6 +155,7 @@ fun MusicPlayerScreen(
     val duration by viewModel.duration.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val scope = rememberCoroutineScope()
     val showDeleteRejectedPrompt by viewModel.showDeleteRejectedPrompt.collectAsState()
     val currentPlaylistTab by viewModel.currentPlaylistTab.collectAsState()
     val likedFiles by viewModel.likedFiles.collectAsState()
@@ -174,7 +193,6 @@ fun MusicPlayerScreen(
     var showInfoMessage by remember { mutableStateOf(false) }
     var infoMessageText by remember { mutableStateOf("") }
     var infoMessageType by remember { mutableStateOf("info") } // "info", "success", "error"
-    val scope = rememberCoroutineScope()
     var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
     
     // Helper function to show info messages with delay after waveform appearance
@@ -812,7 +830,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = ":: v8.59 ::",
+                    text = ":: v8.65 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1417,7 +1435,7 @@ viewModel.updateSearchText("")
                         // Current song info
                         item {
                             val currentFile = currentPlayingFile // Use the actually playing file
-                            if (currentFile != null) {
+            if (currentFile != null) {
                                 val file = currentFile
                                 // Animation states for swipe feedback - Performance optimized for 120Hz
                                 var dragOffset by remember { mutableStateOf(0f) }
@@ -1476,12 +1494,20 @@ viewModel.updateSearchText("")
                                 val no = viewModel.preferences.getRefused()
                                 Text(
                                     text = "Played: $played  |  Liked: $yes  |  Rejected: $no",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.8f
+                                    ),
                                     color = GroovyBlue,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                                 )
                                 
+                                // Clear previous analysis on track change; do not auto-analyze
+                                LaunchedEffect(file.uri) {
+                                    viewModel.audioManager.clearAnalysis()
+                                }
+
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1563,8 +1589,49 @@ viewModel.updateSearchText("")
                                         }
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        
-                                        // Removed time/bitrate line for performance
+                                        // Metadata row under title:| Time | Bitrate | Size | BPM | Key |
+                                        val analysis by viewModel.audioManager.analysisResult.collectAsState()
+                                        val durationText = formatTime(duration)
+                                        val bitrateText = "${calculateBitrate(file.size, duration)} kbps"
+                                        val sizeText = formatFileSize(file.size)
+                                        val bpmText = analysis?.bpm?.let { "${(it + 0.5f).toInt()}" } ?: "—"
+                                        val keyText = analysis?.key?.let { toCamelotKey(it) } ?: "—"
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "| Time $durationText | $bitrateText | $sizeText | BPM: $bpmText | Key $keyText |",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            val isAnalyzing by viewModel.audioManager.isAnalyzing.collectAsState()
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        currentPlayingFile?.let { viewModel.audioManager.analyzeFile(it, force = true) }
+                                                    }
+                                                },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                modifier = Modifier.height(22.dp),
+                                                enabled = !isAnalyzing
+                                            ) {
+                                                if (isAnalyzing) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(14.dp),
+                                                        strokeWidth = 2.dp
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "Analyze",
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
+                                            }
+                                        }
         
         Spacer(modifier = Modifier.height(12.dp))
         
@@ -2910,17 +2977,90 @@ viewModel.updateSearchText("")
                                                 label = "Miniplayer Song Name Animation",
                                                 modifier = Modifier.fillMaxWidth()
                                             ) { targetName ->
+                                            val title = targetName.ifEmpty { "Unknown Track" }
+                                            val desiredLines = when {
+                                                title.length <= 28 -> 2
+                                                title.length <= 56 -> 3
+                                                else -> 4
+                                            }
+                                            val fontScale = when (desiredLines) {
+                                                2 -> 0.9f    // bigger when fewer lines
+                                                3 -> 0.75f
+                                                else -> 0.62f
+                                            }
                                             Text(
-                                                    text = targetName.ifEmpty { "Unknown Track" },
+                                                text = title,
                                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontWeight = FontWeight.Medium
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
                                                 ),
                                                 color = MaterialTheme.colorScheme.onSurface,
-                                                maxLines = 2,
+                                                maxLines = desiredLines,
                                                 overflow = TextOverflow.Ellipsis,
-                                                    textAlign = TextAlign.Center,
+                                                textAlign = TextAlign.Center,
                                                 modifier = Modifier.fillMaxWidth()
                                             )
+                                            }
+                                            // Miniplayer metadata rows under title
+                                            val miniAnalysis by viewModel.audioManager.analysisResult.collectAsState()
+                                            val miniDurationText = formatTime(duration)
+                                            val miniBitrateText = "${calculateBitrate(file.size, duration)} kbps"
+                                            val miniSizeText = formatFileSize(file.size)
+                                            val miniBpm = miniAnalysis?.bpm?.let { "${(it + 0.5f).toInt()}" } ?: "—"
+                                            val miniKey = miniAnalysis?.key?.let { toCamelotKey(it) } ?: "—"
+                                            // Row 1: Time | Bitrate | Size
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "| Time $miniDurationText | $miniBitrateText | $miniSizeText |",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.9f
+                                                    ),
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                            // Row 2: BPM | Key | Analyze
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "| BPM: $miniBpm | Key $miniKey |",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.9f
+                                                    ),
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                val miniAnalyzing by viewModel.audioManager.isAnalyzing.collectAsState()
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        scope.launch {
+                                                            currentPlayingFile?.let { viewModel.audioManager.analyzeFile(it, force = true) }
+                                                        }
+                                                    },
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                    modifier = Modifier.height(22.dp),
+                                                    enabled = !miniAnalyzing
+                                                ) {
+                                                    if (miniAnalyzing) {
+                                                        CircularProgressIndicator(
+                                                            modifier = Modifier.size(14.dp),
+                                                            strokeWidth = 2.dp
+                                                        )
+                                                    } else {
+                                                        Text(
+                                                            text = "Analyze",
+                                                            style = MaterialTheme.typography.labelSmall
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                         
@@ -2931,16 +3071,16 @@ viewModel.updateSearchText("")
                                         ) {
                                             // First row: PREV PLAY NEXT with modern style
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
                                                 // Previous button - mini style
                                                 Card(
                                                     onClick = { 
                                                     hapticFeedback()
                                                 viewModel.previous() 
                                                     },
-                                                    modifier = Modifier.size(29.dp), // Reduced from 36dp to 29dp (20% smaller)
+                                                    modifier = Modifier.size(41.dp),
                                                     shape = CircleShape,
                                                     colors = CardDefaults.cardColors(
                                                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
@@ -2954,7 +3094,7 @@ viewModel.updateSearchText("")
                                                         Icon(
                                                             Icons.Default.SkipPrevious, 
                                                             "Previous", 
-                                                            modifier = Modifier.size(14.dp), // Reduced from 18dp to 14dp (20% smaller)
+                                                            modifier = Modifier.size(22.dp),
                                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
                                                     }
@@ -2966,7 +3106,7 @@ viewModel.updateSearchText("")
                                                     hapticFeedback()
                                                 viewModel.playPause() 
                                                     }, 
-                                                    modifier = Modifier.size(35.dp), // Reduced from 44dp to 35dp (20% smaller)
+                                                    modifier = Modifier.size(29.dp),
                                                     containerColor = MaterialTheme.colorScheme.primary,
                                                     contentColor = MaterialTheme.colorScheme.onPrimary,
                                                     elevation = FloatingActionButtonDefaults.elevation(
@@ -2977,7 +3117,7 @@ viewModel.updateSearchText("")
         Icon(
                                                     if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                                     if (isPlaying) "Pause" else "Play",
-                                                        modifier = Modifier.size(18.dp) // Reduced from 22dp to 18dp (20% smaller)
+                                                        modifier = Modifier.size(15.dp)
                                                 )
                                             }
                                             
@@ -2987,7 +3127,7 @@ viewModel.updateSearchText("")
                                                     hapticFeedback()
                                                 viewModel.next() 
                                                     },
-                                                    modifier = Modifier.size(29.dp), // Reduced from 36dp to 29dp (20% smaller)
+                                                    modifier = Modifier.size(41.dp),
                                                     shape = CircleShape,
                                                     colors = CardDefaults.cardColors(
                                                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
@@ -3001,7 +3141,7 @@ viewModel.updateSearchText("")
                                                         Icon(
                                                             Icons.Default.SkipNext, 
                                                             "Next", 
-                                                            modifier = Modifier.size(14.dp), // Reduced from 18dp to 14dp (20% smaller)
+                                                            modifier = Modifier.size(22.dp),
                                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
                                                     }
@@ -3010,7 +3150,7 @@ viewModel.updateSearchText("")
                                             
                                             // Second row: DISLIKE LIKE SPEK
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(5.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 // Dislike button in mini player
@@ -3022,13 +3162,13 @@ viewModel.updateSearchText("")
                                                             viewModel.sortCurrentFile(SortAction.DISLIKE)
                                                     }
                                                 }, 
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(38.dp)
                                             ) {
                                                 Icon(
                                                         Icons.Default.ThumbDown, 
                                                         contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike", 
                                                         tint = NoButton,
-                                                    modifier = Modifier.size(16.dp)
+                                                    modifier = Modifier.size(19.dp)
                                                 )
                                             }
                                             
@@ -3041,13 +3181,13 @@ viewModel.updateSearchText("")
                                                             viewModel.sortCurrentFile(SortAction.LIKE)
                                                     }
                                                 }, 
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(38.dp)
                                             ) {
                                                 Icon(
                                                         Icons.Default.Favorite, 
                                                         contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Like All Selected" else "Like", 
                                                         tint = YesButton,
-                                                    modifier = Modifier.size(16.dp)
+                                                    modifier = Modifier.size(19.dp)
                                                 )
                                             }
                                             
@@ -3057,7 +3197,7 @@ viewModel.updateSearchText("")
                                                     // Toggle spectrogram popup
                                                     showSpectrogram = !showSpectrogram
                                                 }, 
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(38.dp)
                                             ) {
                                                     Column(
                                                         horizontalAlignment = Alignment.CenterHorizontally,

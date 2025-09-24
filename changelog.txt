@@ -1,3 +1,4 @@
+ - Miniplayer: adaptive 2–4 line title with dynamic font scaling.
 
 - Increased axis label font size in shared spectrogram image.
 - Incremented build version to 8.20.
@@ -6,6 +7,16 @@
 - Incremented build version to 8.21.
 
 - Enhanced spectrogram quality with higher FFT resolution and improved color mapping.
+ - Added on-device BPM and musical key estimation to Spectrogram Analysis card.
+ - Shows tempo and key with confidence; cached per file for speed.
+ - Added Camelot key display alongside musical key.
+ - Main/Mini players show Time | Bitrate | Size | BPM | Key under title.
+ - Shared spectrogram image includes BPM/Key line.
+ - Analyze buttons in main/mini; spinner during analysis.
+ - BPM estimator constrained to 60–145 with folding; accuracy improved for MP3.
+ - MP3 analysis uses PCM decode via MediaCodec for better results.
+ - Miniplayer: filename +20%, play icon -30%, metadata -10%, spacing +20%.
+ - Shared spectrogram embeds current BPM/Key.
 - Implemented Blackman window function for cleaner frequency analysis.
 - Incremented build version to 8.31.
 

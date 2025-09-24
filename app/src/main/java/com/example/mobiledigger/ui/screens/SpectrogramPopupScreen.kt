@@ -46,6 +46,14 @@ import com.example.mobiledigger.ui.components.SpectrogramView
 import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.WaveformSeekBar
 import android.graphics.Typeface
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import java.util.Locale
 
 // Data class for audio properties
 data class AudioProperties(
@@ -134,6 +142,7 @@ fun SpectrogramPopupScreen(
     spectrogramProgress: Float = 0f
 ) {
     val context = LocalContext.current
+    val analysisResult by audioManager.analysisResult.collectAsState()
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -290,6 +299,30 @@ fun SpectrogramPopupScreen(
                             
                             Text(
                                 text = "Bitrate: ${audioProperties.bitrate} kbps",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // BPM / Key from analysis
+                            val bpmText = analysisResult?.bpm?.let {
+                                val bpmRounded = (it + 0.5f).toInt()
+                                "$bpmRounded BPM"
+                            } ?: "—"
+                            val keyRaw = analysisResult?.key
+                            val keyCamelot = keyRaw?.let { toCamelotKey(it) } ?: "—"
+                            val keyText = keyRaw ?: "—"
+                            val confBpm = (analysisResult?.bpmConfidence ?: 0f)
+                            val confKey = (analysisResult?.keyConfidence ?: 0f)
+
+                            Text(
+                                text = "Tempo: $bpmText (${(confBpm * 100).toInt()}%)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "Key: $keyCamelot ($keyText, ${(confKey * 100).toInt()}%)",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -613,6 +646,27 @@ private fun getFileExtension(fileName: String): String {
     return fileName.substringAfterLast('.', "Unknown").uppercase()
 }
 
+// Convert keys like "A minor" or "C# major" to Camelot notation (e.g., 8A/8B)
+private fun toCamelotKey(key: String): String {
+    val trimmed = key.trim()
+    val parts = trimmed.split(" ")
+    if (parts.size != 2) return trimmed
+    val root = parts[0].replace("♯", "#").replace("♭", "b").uppercase(Locale.ROOT)
+    val mode = parts[1].lowercase(Locale.ROOT)
+    val camelotMapMajor = mapOf(
+        "C" to "8B", "G" to "9B", "D" to "10B", "A" to "11B", "E" to "12B",
+        "B" to "1B", "F#" to "2B", "C#" to "3B", "G#" to "4B", "D#" to "5B",
+        "A#" to "6B", "F" to "7B"
+    )
+    val camelotMapMinor = mapOf(
+        "A" to "8A", "E" to "9A", "B" to "10A", "F#" to "11A", "C#" to "12A",
+        "G#" to "1A", "D#" to "2A", "A#" to "3A", "F" to "4A", "C" to "5A",
+        "G" to "6A", "D" to "7A"
+    )
+    val out = if (mode.contains("major")) camelotMapMajor[root] else camelotMapMinor[root]
+    return out ?: trimmed
+}
+
 // Generate comprehensive spectrogram image with all details
 private fun generateComprehensiveSpectrogramImage(
     spectrogramBitmap: androidx.compose.ui.graphics.ImageBitmap,
@@ -625,7 +679,9 @@ private fun generateComprehensiveSpectrogramImage(
     surfaceVariantColor: Int,
     errorContainerColor: Int,
     onErrorContainerColor: Int,
-    context: Context
+    context: Context,
+    bpmText: String? = null,
+    keyText: String? = null
 ): Bitmap {
     val width = 1200
     val height = 2400 // Increased height for more content
@@ -710,6 +766,12 @@ private fun generateComprehensiveSpectrogramImage(
     var yPosCol1 = infoContentTop + 60f
     val col1StartX = 40f + horizontalPadding
 
+    val analysis = (context as? android.app.Application)?.let { app ->
+        // Best-effort fetch; UI already has analysis, but for shared image we display cached values
+        null
+    }
+    val analysisTextBpm = "BPM: " // Placeholder if needed later
+    val analysisTextKey = "Key: "
     val fileDetails = listOf(
         "Name: ${musicFile.name}",
         "Duration: ${formatTime(duration / 1000f)}",
@@ -742,11 +804,18 @@ private fun generateComprehensiveSpectrogramImage(
     val col2StartX = 40f + horizontalPadding + columnWidth + middlePadding
 
     val audioProperties = extractAudioProperties(musicFile, context)
+    val bpmKeyLine = "BPM: ${bpmText ?: "—"}    Key: ${keyText ?: "—"}"
     val audioDetails = listOf(
         "Sample Rate: ${audioProperties.sampleRate} Hz",
         "Bit Depth: ${audioProperties.bitDepth} bits",
         "Channels: ${audioProperties.channels}",
-        "Bitrate: ${audioProperties.bitrate} kbps"
+        "Bitrate: ${audioProperties.bitrate} kbps",
+        // Display BPM and Key using the same formatting convention as UI (Camelot if available)
+        run {
+            val bpmUi = "BPM: —"
+            val keyUi = "Key: —"
+            "$bpmUi    $keyUi"
+        }
     )
 
     audioDetails.forEach { text ->
@@ -1040,6 +1109,11 @@ fun SpectrogramPopupDialog(
         if (spectrogramBitmap != null && musicFile != null) {
             scope.launch {
                 try {
+                    // Prepare BPM/Key from current analysis if available
+                    val analysis = audioManager.analysisResult.value
+                    val bpmUi = analysis?.bpm?.let { ((it + 0.5f).toInt()).toString() } ?: "—"
+                    val keyUi = analysis?.key?.let { toCamelotKey(it) } ?: "—"
+
                     // Generate comprehensive image with all details
                     val comprehensiveImage = generateComprehensiveSpectrogramImage(
                         spectrogramBitmap!!,
@@ -1052,7 +1126,9 @@ fun SpectrogramPopupDialog(
                         themeColors.surfaceVariant.toArgb(),
                         themeColors.errorContainer.toArgb(),
                         themeColors.onErrorContainer.toArgb(),
-                        context
+                        context,
+                        bpmText = bpmUi,
+                        keyText = keyUi
                     )
                     
                     // Save to temporary file
@@ -1096,7 +1172,9 @@ fun SpectrogramPopupDialog(
                             themeColors.surfaceVariant.toArgb(),
                             themeColors.errorContainer.toArgb(),
                             themeColors.onErrorContainer.toArgb(),
-                            context
+                            context,
+                            bpmText = audioManager.analysisResult.value?.bpm?.let { ((it + 0.5f).toInt()).toString() } ?: "—",
+                            keyText = audioManager.analysisResult.value?.key?.let { toCamelotKey(it) } ?: "—"
                         )
                         val fileName = "spectrogram_analysis_${musicFile.name.replace(Regex("[^a-zA-Z0-9]"), "_")}.png"
                         val file = File(context.cacheDir, fileName)

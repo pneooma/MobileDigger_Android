@@ -129,7 +129,8 @@ class AudioManager(private val context: Context) {
     }
     
     // Temp file cache for AIFF files to avoid re-copying with size limit
-    private val maxTempCacheSize = 10 // Limit temp files
+    private val maxTempCacheSize = 5 // Reduced cache size for better memory management
+    private val maxTempFileSize = 200 * 1024 * 1024 // 200MB max per temp file (increased for large AIFF files)
     private val tempFileCache = Collections.synchronizedMap(
         object : LinkedHashMap<String, String>(maxTempCacheSize + 1, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
@@ -137,7 +138,7 @@ class AudioManager(private val context: Context) {
                     // Clean up the temp file when removing from cache
                     try {
                         File(eldest.value).delete()
-                        CrashLogger.log("AudioManager", "Cleaned up temp file: ${eldest.value}")
+                        CrashLogger.log("AudioManager", "Cleaned up temp file during cache clear: ${eldest.value}")
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "Failed to delete temp file: ${eldest.value}", e)
                     }
@@ -169,8 +170,21 @@ class AudioManager(private val context: Context) {
                     isFFmpegPrepared = true
                 }
                 setOnErrorListener { mp, what, extra ->
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer error: what=$what, extra=$extra")
+                    val errorMessage = when (what) {
+                        FFmpegMediaPlayer.MEDIA_ERROR_UNKNOWN -> "Unknown error"
+                        FFmpegMediaPlayer.MEDIA_ERROR_SERVER_DIED -> "Server died"
+                        FFmpegMediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK -> "Not valid for progressive playback"
+                        else -> "Error code: $what"
+                    }
+                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer error: $errorMessage (what=$what, extra=$extra)")
                     isFFmpegPrepared = false
+                    
+                    // Try to reset the player to recover from error state
+                    try {
+                        mp.reset()
+                    } catch (e: Exception) {
+                        CrashLogger.log("AudioManager", "Failed to reset FFmpegMediaPlayer after error", e)
+                    }
                     false
                 }
                 setOnCompletionListener { mp ->
@@ -325,6 +339,13 @@ class AudioManager(private val context: Context) {
             if (isAiffFile) {
                 // Try FFmpegMediaPlayer first for AIFF files (ExoPlayer doesn't support AIFF)
                 CrashLogger.log("AudioManager", "AIFF file detected: ${musicFile.name}")
+                
+                // Check file size for large AIFF files
+                val fileSizeMB = musicFile.size / (1024 * 1024)
+                if (fileSizeMB > 100) {
+                    CrashLogger.log("AudioManager", "Large AIFF file detected (${fileSizeMB}MB), using optimized playback")
+                }
+                
                 CrashLogger.log("AudioManager", "Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)")
                 val ffmpegSuccess = tryPlayWithFFmpegSync(uri)
                 if (ffmpegSuccess) {
@@ -401,12 +422,15 @@ class AudioManager(private val context: Context) {
                     CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepareAsync called")
                     
                     // Wait for preparation to complete (with timeout) using coroutines
-                    val timeout = 5000L // 5 seconds timeout
-                    // Wait for preparation to complete (with timeout)
+                    // Use longer timeout for large files
+                    val fileSizeMB = currentFile?.size?.div(1024 * 1024) ?: 0
+                    val timeout = if (fileSizeMB > 100) 10000L else 3000L // 10 seconds for large files, 3 seconds for normal files
+                    CrashLogger.log("AudioManager", "Using ${timeout}ms timeout for file preparation (file size: ${fileSizeMB}MB)")
+                    
                     val startTime = System.currentTimeMillis()
                     while (!isFFmpegPrepared && (System.currentTimeMillis() - startTime) < timeout) {
                         try {
-                            Thread.sleep(50) // Wait 50ms between checks
+                            Thread.sleep(25) // Reduced wait time for better responsiveness
                         } catch (e: InterruptedException) {
                             CrashLogger.log("AudioManager", "Interrupted while waiting for FFmpegMediaPlayer preparation", e)
                             return false
@@ -466,6 +490,12 @@ class AudioManager(private val context: Context) {
     private fun tryPlayWithExoPlayerSync(uri: Uri): Boolean {
         return try {
             val player = exoPlayerFallback ?: return false
+            
+            // Validate URI before attempting playback
+            if (uri.toString().isEmpty() || uri.toString() == "null" || uri.toString() == ":") {
+                CrashLogger.log("AudioManager", "ExoPlayer received invalid URI: $uri")
+                return false
+            }
             
             CrashLogger.log("AudioManager", "ExoPlayer attempting to play URI: $uri")
             
@@ -661,23 +691,55 @@ class AudioManager(private val context: Context) {
                 return null
             }
             
+            // Check file size first to avoid copying huge files
+            val fileSize = try {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { fd ->
+                    fd.statSize
+                } ?: -1L
+            } catch (e: Exception) {
+                CrashLogger.log("AudioManager", "Could not determine file size for URI: $uri", e)
+                -1L
+            }
+            
+            if (fileSize > maxTempFileSize) {
+                CrashLogger.log("AudioManager", "File too large (${fileSize / (1024 * 1024)}MB), skipping temp file creation")
+                inputStream.close()
+                return null
+            }
+            
+            // For very large AIFF files, log the attempt
+            if (fileSize > 100 * 1024 * 1024) { // 100MB+
+                CrashLogger.log("AudioManager", "Processing large AIFF file (${fileSize / (1024 * 1024)}MB)")
+            }
+            
             // Create temp file
             val tempFile = File.createTempFile("aiff_temp_", ".aiff", context.cacheDir)
             val outputStream = FileOutputStream(tempFile)
             
             // Copy data with larger buffer for better performance
-            val buffer = ByteArray(65536) // 64KB buffer instead of 8KB
+            val buffer = ByteArray(131072) // 128KB buffer for better performance
             var bytesRead: Int
             var totalBytes = 0L
             val startTime = System.currentTimeMillis()
             
-            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                outputStream.write(buffer, 0, bytesRead)
-                totalBytes += bytesRead
+            try {
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                    totalBytes += bytesRead
+                    
+                    // Check if we're exceeding our size limit during copy
+                    if (totalBytes > maxTempFileSize) {
+                        CrashLogger.log("AudioManager", "File exceeded size limit during copy, aborting")
+                        inputStream.close()
+                        outputStream.close()
+                        tempFile.delete()
+                        return null
+                    }
+                }
+            } finally {
+                inputStream.close()
+                outputStream.close()
             }
-            
-            inputStream.close()
-            outputStream.close()
             
             val duration = System.currentTimeMillis() - startTime
             val mbCopied = totalBytes / (1024.0 * 1024.0)

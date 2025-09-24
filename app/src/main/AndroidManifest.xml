@@ -70,15 +70,6 @@
             </intent-filter>
         </receiver>
         
-        <!-- Notification action receiver for progress notifications -->
-        <receiver
-            android:name=".notification.NotificationActionReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.example.mobiledigger.CANCEL_OPERATION" />
-            </intent-filter>
-        </receiver>
-        
         <!-- FileProvider for sharing temporary files (AIFF conversion) -->
         <provider
             android:name="androidx.core.content.FileProvider"

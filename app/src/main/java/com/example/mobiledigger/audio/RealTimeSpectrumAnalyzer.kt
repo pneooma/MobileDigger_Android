@@ -1,15 +1,19 @@
 package com.example.mobiledigger.audio
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.atomic.AtomicBoolean
+import android.annotation.SuppressLint
 
 /**
  * Real-time spectrum analyzer for live audio input
@@ -45,16 +49,16 @@ class RealTimeSpectrumAnalyzer(
     /**
      * Start real-time spectrum analysis
      */
+    @SuppressLint("MissingPermission")
     fun startAnalysis(): Boolean {
         return try {
             if (isRecording.get()) {
                 Log.w("RealTimeSpectrumAnalyzer", "Already recording")
                 return false
             }
-            
-            // Check permissions
-            if (!hasAudioPermission()) {
-                Log.e("RealTimeSpectrumAnalyzer", "No audio permission")
+
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                Log.e("RealTimeSpectrumAnalyzer", "RECORD_AUDIO permission not granted")
                 return false
             }
             
@@ -64,14 +68,19 @@ class RealTimeSpectrumAnalyzer(
                 channelConfig,
                 audioFormat
             ) * 4 // Use 4x minimum buffer size for better performance
-            
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                bufferSize
-            )
+
+            try {
+                audioRecord = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    channelConfig,
+                    audioFormat,
+                    bufferSize
+                )
+            } catch (e: SecurityException) {
+                Log.e("RealTimeSpectrumAnalyzer", "Failed to create AudioRecord", e)
+                return false
+            }
             
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
                 Log.e("RealTimeSpectrumAnalyzer", "Failed to initialize AudioRecord")
@@ -188,24 +197,6 @@ class RealTimeSpectrumAnalyzer(
             Log.e("RealTimeSpectrumAnalyzer", "Error in real-time analysis", e)
         } finally {
             isAnalyzing.set(false)
-        }
-    }
-    
-    private fun hasAudioPermission(): Boolean {
-        return try {
-            // Try to create AudioRecord to check permission
-            val testRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-            )
-            val hasPermission = testRecord.state == AudioRecord.STATE_INITIALIZED
-            testRecord.release()
-            hasPermission
-        } catch (e: Exception) {
-            false
         }
     }
     

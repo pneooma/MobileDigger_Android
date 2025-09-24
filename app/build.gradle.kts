@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-        versionCode = 832
-        versionName = "8.32"
+        versionCode = 855
+        versionName = "8.55"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -77,11 +77,7 @@ dependencies {
     implementation("com.github.wseemann:FFmpegMediaPlayer-core:1.0.5")
     implementation("com.github.wseemann:FFmpegMediaPlayer-native:1.0.5")
     
-    // Dynamic delivery support
-    implementation("com.google.android.play:core:1.10.3")
-    implementation("com.google.android.play:core-ktx:1.8.1")
-    
-    // Keep ExoPlayer as fallback
+    // Media3 for modern media playback
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")

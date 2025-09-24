@@ -8,3 +8,176 @@
 - Enhanced spectrogram quality with higher FFT resolution and improved color mapping.
 - Implemented Blackman window function for cleaner frequency analysis.
 - Incremented build version to 8.31.
+
+- Fixed critical build errors, including missing permissions, deprecated libraries, and incorrect StateFlow usage.
+- Patched several deprecation warnings in the UI code.
+- Corrected build version to 8.32.
+
+- Optimized AIFF file handling for better performance and responsiveness.
+- Improved error handling for media playback failures with detailed error messages.
+- Enhanced temp file cache management with size limits and better cleanup.
+- Added missing attribution tags to AndroidManifest.xml to fix AppOps warnings.
+- Reduced FFmpeg preparation timeout for better responsiveness.
+- Incremented build version to 8.33.
+
+- Fixed critical OutOfMemoryError in file scanning with memory checks and file limits.
+- Fixed FileNotFoundException by adding URI validation before ExoPlayer playback.
+- Fixed DeadObjectException in media session management with proper cleanup.
+- Added memory safety checks to prevent crashes during large file operations.
+- Limited file scanning to 1000 files maximum to prevent memory exhaustion.
+- Incremented build version to 8.34.
+
+- Fixed duration extraction failures and resource conflicts in song loading.
+- Fixed MediaExtractor instantiation failures with better error handling.
+- Fixed setDataSource failures in MediaMetadataRetriever with URI validation.
+- Fixed concurrent access issues by limiting duration extraction to single thread.
+- Added delays between operations to prevent resource conflicts.
+- Improved error logging for better debugging of song loading issues.
+- Incremented build version to 8.35.
+
+- Fixed large AIFF file playback issues (110MB+ files).
+- Increased temp file size limit from 100MB to 200MB for large AIFF files.
+- Added optimized duration extraction for large files (skips MediaExtractor for 150MB+ files).
+- Improved FFmpeg preparation timeout for large files (10 seconds vs 3 seconds).
+- Added file size estimation for large AIFF files when MediaExtractor fails.
+- Enhanced error handling and logging for large file processing.
+- Incremented build version to 8.36.
+
+- Successfully tested and confirmed large AIFF file playback working.
+- All duration extraction and playback optimizations verified.
+- Incremented build version to 8.37.
+
+- Fixed search functionality causing app crashes and freezing.
+- Implemented proper debounced search to prevent multiple concurrent searches.
+- Added memory checks and file limits to prevent search memory issues.
+- Fixed race conditions in search implementation with proper job cancellation.
+- Optimized search performance with batched file processing.
+- Added proper cleanup to prevent memory leaks in search functionality.
+- Incremented build version to 8.38.
+
+- Fixed theme dropdown functionality and UI consistency.
+- Replaced hardcoded colors with MaterialTheme.colorScheme throughout the app.
+- Fixed playlist card colors to use theme colors (tertiary for liked, error for rejected).
+- Updated waveform colors to use theme colors instead of hardcoded gray.
+- Ensured all dropdowns and UI elements follow the selected theme color scheme.
+- Improved theme color consistency across all components.
+- Incremented build version to 8.39.
+
+- Fixed theme selection not working by properly observing theme state in MainActivity.
+- Updated media control buttons with modern Android 16 Material 3 design.
+- Replaced old IconButton style with modern Card-based buttons for previous/next.
+- Enhanced FloatingActionButton for play/pause with better elevation and sizing.
+- Applied consistent modern styling to both main player and mini player controls.
+- Improved button spacing and visual hierarchy for better UX.
+- Incremented build version to 8.40.
+
+- Fixed critical OutOfMemoryError crashes during search functionality.
+- Reduced theme polling frequency from 100ms to 1000ms to reduce memory pressure.
+- Implemented aggressive memory management in search with garbage collection.
+- Reduced search batch sizes: music files (500→200), liked/rejected (200→100).
+- Limited search results to 25 items instead of 50 to prevent UI memory issues.
+- Increased memory threshold check to 100MB before allowing search operations.
+- Added System.gc() call before search to free up memory proactively.
+- Incremented build version to 8.41.
+
+- Fixed theme dropdown not showing by replacing ExposedDropdownMenu with custom dialog.
+- Created dedicated theme selection dialog with scrollable list of all themes.
+- Added visual theme preview with color circles and hex codes for each theme.
+- Improved theme selection UX with clear visual indicators and better layout.
+- Further reduced search memory usage: music files (200→100), liked/rejected (100→50).
+- Increased memory threshold to 150MB and added delay after garbage collection.
+- Enhanced search stability with more aggressive memory management.
+- Incremented build version to 8.42.
+
+- Made media control buttons 20% smaller for better UI proportions.
+- Reduced main player button sizes: previous/next (48→38dp), play/pause (56→45dp).
+- Reduced mini player button sizes: previous/next (36→29dp), play/pause (44→35dp).
+- Restored original v8.0 search functionality with simple, efficient approach.
+- Removed overly aggressive memory restrictions that were limiting search results.
+- Kept basic memory protection (50MB threshold) to prevent crashes.
+- Search now works like v8.0 but with debouncing and race condition protection.
+- Incremented build version to 8.43.
+
+- Restored exact v8.3 search functionality - completely clean and simple.
+- Removed all memory management, debouncing, and job cancellation from search.
+- Search now works exactly like v8.3: fast, simple, and reliable.
+- Changed settings text from "Dynamic Colors" to "Enable Theme" for clarity.
+- Incremented build version to 8.44.
+
+- Added 1.5-second delay to search to prevent crashes from rapid typing.
+- Implemented proper debouncing with job cancellation to prevent concurrent searches.
+- Fixed text color contrast issues by replacing hardcoded colors with theme-aware colors.
+- Updated delete buttons to use MaterialTheme.colorScheme.error and onError.
+- Updated create ZIP button to use MaterialTheme.colorScheme.tertiary and onTertiary.
+- Improved text contrast across all UI elements for better readability.
+- Incremented build version to 8.45.
+
+- Enhanced search stability with comprehensive error handling and try-catch blocks.
+- Added file limit (1000 files) to prevent memory issues during search operations.
+- Improved search logging for better debugging and crash analysis.
+- Added proper cleanup for search jobs to prevent memory leaks.
+- Fixed search crashes by limiting concurrent operations and adding safety checks.
+- Incremented build version to 8.46.
+
+- Fixed search crashes by adding minimum query length (2 characters) and better error handling.
+- Added dropdown info messages for like/reject actions with auto-hide after 3 seconds.
+- Implemented audio playback prioritization - file operations now wait for current file to load and waveform to generate.
+- Added delays between file operations to prevent memory issues with large files.
+- Enhanced search with better file validation and result limiting (50 results max).
+- Incremented build version to 8.47.
+
+- Moved informational messages from bottom snackbar to better display under header.
+- Replaced snackbar system with discreet card-based info messages positioned under the header.
+- Added support for different message types: info, success, error, and loading with appropriate colors and icons.
+- Improved message visibility and user experience with theme-aware colors and proper contrast.
+- All existing messages (loading files, sorting files, etc.) now display in the new location.
+- Incremented build version to 8.48.
+
+- Added animated info messages with fade in/out effects like mini player.
+- Enhanced info message display with better positioning on top of main card.
+- Fixed search crashes by increasing minimum query length to 3 characters and 2-second delay.
+- Improved search stability with more conservative file limits (200 files max, 25 results max).
+- Enhanced playback prioritization - now moves to next song first, waits for playback and waveform generation.
+- Added retry mechanism to ensure playback is stable before file operations.
+- Increased delays between file operations for better stability with large files.
+- Incremented build version to 8.49.
+
+- Fixed search crashes with ultra-conservative approach: 100 files max, 20 results max, batch processing.
+- Repositioned info messages to be absolutely positioned on top without moving other elements.
+- Made info messages smaller (90% width, smaller text/icons) with fade in/out only animations.
+- Added 1.5-second delay after waveform appearance before showing info messages.
+- Enhanced search with batch processing (20 files per batch) and delays between batches.
+- Improved memory management with smaller batch sizes and more frequent delays.
+- Incremented build version to 8.50.
+
+- Fixed info message overlay to not cover entire screen - now positioned directly under header.
+- Improved info message positioning and sizing for better visibility without blocking UI.
+- Enhanced search stability with 2-second debounce and 3+ character minimum requirement.
+- Fixed UI layout issues where info messages were hiding other elements.
+- Incremented build version to 8.51.
+
+8.52
+- Search: added immediate (manual) search button and Enter key trigger.
+- Search: unlimited results across all playlists; no artificial limits.
+- Search dropdown: themed to follow Material color scheme and auto-expands on results.
+- Info message: centered text, removed close button, reduced padding, adjusted offset.
+- Misc: stability tweaks; kept 2s debounced search in background when typing.
+- Incremented build version to 8.52.
+
+8.53
+- Liked subfolder selection no longer auto-plays the first track; current playback is preserved and index set to current file if present.
+- Started theming dialogs/popups to follow Material color scheme consistently.
+- Incremented build version to 8.53.
+
+8.54
+- Subfolder picker (left of TODO/Liked): added multi-select checkboxes and View button to aggregate selected liked subfolders into the Liked playlist; preserves current playback.
+- Removed redundant "View Liked Subfolders" from Actions menu.
+- Dialog theming improvements and centered Settings title.
+- Incremented build version to 8.54.
+
+8.55
+- Restored waveform seeking in main/mini players (re-enabled duration for seek only).
+- Kept time labels and playlist-time/bitrate display removed for performance.
+- Disabled background duration extraction when loading folders/subfolders.
+- Multi-select liked subfolders in tabs row refined and compacted.
+- Incremented build version to 8.55.

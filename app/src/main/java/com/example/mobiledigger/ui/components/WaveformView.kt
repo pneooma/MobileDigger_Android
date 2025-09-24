@@ -78,7 +78,7 @@ fun WaveformView(
             .height(80.dp)
             .padding(horizontal = 16.dp)
             .background(
-                Color.Gray.copy(alpha = 0.1f),
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 RoundedCornerShape(8.dp)
             ),
         contentAlignment = Alignment.Center

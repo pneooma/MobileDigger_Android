@@ -26,11 +26,25 @@ object ResourceManager {
     ): T? = withContext(Dispatchers.IO) {
         var retriever: MediaMetadataRetriever? = null
         try {
+            // Validate URI before attempting to use it
+            if (uri.toString().isEmpty() || uri.toString() == "null" || uri.toString() == ":") {
+                CrashLogger.log("ResourceManager", "Invalid URI for MediaMetadataRetriever: $uri")
+                return@withContext null
+            }
+            
             retriever = MediaMetadataRetriever()
-            retriever.setDataSource(context, uri)
+            
+            // Add timeout and better error handling for setDataSource
+            try {
+                retriever.setDataSource(context, uri)
+            } catch (e: Exception) {
+                CrashLogger.log("ResourceManager", "setDataSource failed for URI: $uri", e)
+                return@withContext null
+            }
+            
             operation(retriever)
         } catch (e: Exception) {
-            CrashLogger.log("ResourceManager", "MediaMetadataRetriever operation failed", e)
+            CrashLogger.log("ResourceManager", "MediaMetadataRetriever operation failed for URI: $uri", e)
             null
         } finally {
             try {
@@ -51,11 +65,25 @@ object ResourceManager {
     ): T? = withContext(Dispatchers.IO) {
         var extractor: MediaExtractor? = null
         try {
+            // Validate URI before attempting to use it
+            if (uri.toString().isEmpty() || uri.toString() == "null" || uri.toString() == ":") {
+                CrashLogger.log("ResourceManager", "Invalid URI for MediaExtractor: $uri")
+                return@withContext null
+            }
+            
             extractor = MediaExtractor()
-            extractor.setDataSource(context, uri, emptyMap<String, String>())
+            
+            // Add better error handling for setDataSource
+            try {
+                extractor.setDataSource(context, uri, emptyMap<String, String>())
+            } catch (e: Exception) {
+                CrashLogger.log("ResourceManager", "MediaExtractor setDataSource failed for URI: $uri", e)
+                return@withContext null
+            }
+            
             operation(extractor)
         } catch (e: Exception) {
-            CrashLogger.log("ResourceManager", "MediaExtractor operation failed", e)
+            CrashLogger.log("ResourceManager", "MediaExtractor operation failed for URI: $uri", e)
             null
         } finally {
             try {
@@ -81,29 +109,50 @@ object ResourceManager {
      */
     suspend fun extractDurationWithFallback(context: Context, uri: Uri): Long = withContext(Dispatchers.IO) {
         try {
+            // Check file size first for large files
+            val fileSize = try {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { fd ->
+                    fd.statSize
+                } ?: -1L
+            } catch (e: Exception) {
+                -1L
+            }
+            
+            val fileSizeMB = fileSize / (1024 * 1024)
+            val isLargeFile = fileSizeMB > 100
+            
+            if (isLargeFile) {
+                CrashLogger.log("ResourceManager", "Large file detected (${fileSizeMB}MB), using optimized duration extraction")
+            }
+            
             // Method 1: MediaMetadataRetriever
             val duration1 = extractDuration(context, uri)
             if (duration1 > 0) return@withContext duration1
             
-            // Method 2: MediaExtractor fallback
-            withMediaExtractor(context, uri) { extractor ->
-                var totalDuration = 0L
-                val trackCount = extractor.trackCount
-                
-                for (i in 0 until trackCount) {
-                    val format = extractor.getTrackFormat(i)
-                    val mime = format.getString(android.media.MediaFormat.KEY_MIME)
+            // Method 2: MediaExtractor fallback (skip for very large files to prevent crashes)
+            if (!isLargeFile || fileSizeMB < 150) {
+                withMediaExtractor(context, uri) { extractor ->
+                    var totalDuration = 0L
+                    val trackCount = extractor.trackCount
                     
-                    if (mime?.startsWith("audio/") == true) {
-                        val duration = format.getLong(android.media.MediaFormat.KEY_DURATION)
-                        if (duration > 0) {
-                            totalDuration = duration / 1000 // Convert to milliseconds
-                            break
+                    for (i in 0 until trackCount) {
+                        val format = extractor.getTrackFormat(i)
+                        val mime = format.getString(android.media.MediaFormat.KEY_MIME)
+                        
+                        if (mime?.startsWith("audio/") == true) {
+                            val duration = format.getLong(android.media.MediaFormat.KEY_DURATION)
+                            if (duration > 0) {
+                                totalDuration = duration / 1000 // Convert to milliseconds
+                                break
+                            }
                         }
                     }
-                }
-                totalDuration
-            } ?: 0L
+                    totalDuration
+                } ?: 0L
+            } else {
+                CrashLogger.log("ResourceManager", "Skipping MediaExtractor for very large file (${fileSizeMB}MB)")
+                0L
+            }
         } catch (e: Exception) {
             CrashLogger.log("ResourceManager", "Failed to extract duration with fallback", e)
             0L

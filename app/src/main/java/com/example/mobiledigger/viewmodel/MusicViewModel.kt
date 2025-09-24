@@ -40,6 +40,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.Job
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.ResourceManager
 import java.util.zip.ZipEntry
@@ -326,13 +327,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
                 CrashLogger.log("MusicViewModel", "Updated musicFiles state")
                 
-                // Extract duration for all files in background (with error handling)
-                try {
-                    extractDurationsForAllFiles(files)
-                } catch (e: Exception) {
-                    CrashLogger.log("MusicViewModel", "Error starting duration extraction", e)
-                    // Continue without duration extraction rather than crashing
-                }
+                // Skip duration extraction to improve performance
                 
                 
                 // Reload playlists when folder is selected
@@ -938,6 +933,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private suspend fun extractDuration(file: MusicFile): Long {
         return try {
+            // Validate file URI before attempting extraction
+            if (file.uri.toString().isEmpty() || file.uri.toString() == "null" || file.uri.toString() == ":") {
+                CrashLogger.log("MusicViewModel", "Invalid URI for duration extraction: ${file.uri}")
+                return 0L
+            }
+            
             val duration = ResourceManager.extractDurationWithFallback(context, file.uri)
             if (duration > 0) {
                 duration
@@ -947,13 +948,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     // Rough estimate: AIF files are typically uncompressed
                     // Assume 44.1kHz, 16-bit, stereo = 176,400 bytes per second
                     val bytesPerSecond = 44100 * 2 * 2 // sample rate * channels * bytes per sample
-                    (file.size * 1000L) / bytesPerSecond
+                    val estimatedDuration = (file.size * 1000L) / bytesPerSecond
+                    
+                    // For large AIFF files, this estimation is often more reliable than MediaExtractor
+                    if (file.size > 100 * 1024 * 1024) { // 100MB+
+                        CrashLogger.log("MusicViewModel", "Using file size estimation for large AIFF file: ${file.name} (${file.size / (1024 * 1024)}MB)")
+                    }
+                    
+                    estimatedDuration
                 } else {
                     0L
                 }
             }
         } catch (e: Exception) {
-            CrashLogger.log("MusicViewModel", "Failed to extract duration for ${file.name}", e)
+            CrashLogger.log("MusicViewModel", "Failed to extract duration for ${file.name} (URI: ${file.uri})", e)
             0L
         }
     }
@@ -1036,8 +1044,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 
                 CrashLogger.log("MusicViewModel", "Available memory: ${availableMemoryMB}MB, using batch size: $batchSize")
                 
-                // Use coroutine semaphore to limit concurrent operations
-                val semaphore = Semaphore(batchSize)
+                // Use coroutine semaphore to limit concurrent operations to prevent resource conflicts
+                val semaphore = Semaphore(1) // Limit to 1 concurrent operation to prevent MediaExtractor conflicts
                 
                 for (i in filesToProcess.indices step batchSize) {
                     val batch = filesToProcess.subList(i, minOf(i + batchSize, filesToProcess.size))
@@ -1061,6 +1069,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                 }
                             }
                         }.awaitAll().filterNotNull()
+                        
+                        // Add delay between batches to prevent resource conflicts
+                        delay(200)
                     
                     withContext(Dispatchers.Main) {
                         try {
@@ -1459,6 +1470,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Cancel all running coroutines in viewModelScope
             viewModelScope.coroutineContext.cancelChildren()
             
+            // Cancel search jobs to prevent memory leaks
+            searchJob?.cancel()
+            debounceJob?.cancel()
+            
             // Stop playback first
             stopPlayback()
             
@@ -1679,6 +1694,34 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // First, ensure audio playback and waveform generation are prioritized
+                // Wait for current file to finish loading and waveform to be generated
+                
+                // Check if we need to move to next song first
+                val currentIndex = _currentIndex.value
+                val musicFiles = _musicFiles.value
+                
+                if (currentIndex < musicFiles.size - 1) {
+                    // Move to next song first
+                    withContext(Dispatchers.Main) {
+                        _currentIndex.value = currentIndex + 1
+                        loadCurrentFile()
+                    }
+                    
+                    // Wait for next song to start playing and waveform to generate
+                    delay(3000) // Give more time for next song to load and waveform to generate
+                    
+                    // Additional check to ensure playback is stable
+                    var retryCount = 0
+                    while (retryCount < 5 && !isPlaying.value) {
+                        delay(500)
+                        retryCount++
+                    }
+                } else {
+                    // If no next song, just wait for current playback to stabilize
+                    delay(2000)
+                }
+                
                 val sortedIndices = selected.sortedDescending() // Sort in reverse order to avoid index shifting
                 val successfullySortedIndices = mutableListOf<Int>()
                 
@@ -1689,6 +1732,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         if (fileManager.sortFile(file, action)) {
                             successfullySortedIndices.add(index)
                         }
+                        // Small delay between file operations to prevent memory issues
+                        delay(200) // Increased delay for better stability
                     }
                 }
                 
@@ -1878,24 +1923,66 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
+    // Search job to prevent multiple concurrent searches
+    private var searchJob: Job? = null
+    private var debounceJob: Job? = null
+    
     fun searchMusic(query: String) {
-        viewModelScope.launch(Dispatchers.Default) {
+        try {
+            // Debounced search (2s), no limits
             if (query.isBlank()) {
                 _searchResults.value = emptyList()
-                return@launch
+                return
             }
+            debounceJob?.cancel()
+            debounceJob = viewModelScope.launch {
+                delay(2000)
+                performSearchNow(query)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error starting search", e)
+        }
+    }
 
-            val allFiles = (_musicFiles.value + _likedFiles.value + _rejectedFiles.value).distinctBy { it.uri }
-            val results = allFiles.filter { file ->
-                file.name.contains(query, ignoreCase = true)
+    // Immediate search with no limits, used by UI button/IME action
+    fun searchMusicImmediate(query: String) {
+        try {
+            if (query.isBlank()) {
+                _searchResults.value = emptyList()
+                return
             }
-            _searchResults.value = results
+            debounceJob?.cancel()
+            performSearchNow(query)
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error starting immediate search", e)
+        }
+    }
+
+    private fun performSearchNow(query: String) {
+        // Cancel any running search
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val allFiles = (_musicFiles.value + _likedFiles.value + _rejectedFiles.value)
+                    .distinctBy { it.uri }
+                val results = allFiles.filter { file ->
+                    try {
+                        file.name.contains(query, ignoreCase = true)
+                    } catch (_: Exception) { false }
+                }
+                _searchResults.value = results
+                CrashLogger.log("MusicViewModel", "Immediate search completed: ${results.size} results")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error in performSearchNow", e)
+                _searchResults.value = emptyList()
+            }
         }
     }
     
     fun clearSearchResults() {
         _searchResults.value = emptyList()
     }
+    
     
     fun updateSearchText(newText: String) {
         _searchText.value = newText
@@ -1921,25 +2008,27 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             try {
                 _isLoading.value = true
                 _errorMessage.value = null
-                stopPlayback()
-                _currentIndex.value = 0
-                _musicFiles.value = emptyList() // Clear current playlist
+                // Preserve current playback
+                val currentlyPlaying = _currentPlayingFile.value
+                val currentUri = currentlyPlaying?.uri
+                // Do not stop playback or reset index here; we only update the list
                 CrashLogger.log("MusicViewModel", "Loading files from subfolder: $subfolderUri")
                 
                 val files = fileManager.loadMusicFilesFromSubfolder(subfolderUri)
                 _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
                 
-                // Extract duration for all files in background (with error handling)
-                try {
-                    extractDurationsForAllFiles(files)
-                } catch (e: Exception) {
-                    CrashLogger.log("MusicViewModel", "Error starting duration extraction for subfolder files", e)
-                }
+                // Skip duration extraction to improve performance
                 
                 if (files.isNotEmpty()) {
-                    _currentIndex.value = 0
-                    loadCurrentFile()
-                    _errorMessage.value = "Loaded ${files.size} tracks from subfolder."
+                    // Keep current file if present in the new list; otherwise do not auto-play
+                    if (currentUri != null) {
+                        val idx = files.indexOfFirst { it.uri == currentUri }
+                        if (idx >= 0) {
+                            _currentIndex.value = idx
+                            // Do NOT call loadCurrentFile(); keep the existing playback
+                        }
+                    }
+                    _errorMessage.value = "Loaded ${files.size} tracks from subfolder (playback preserved)."
                 } else {
                     _errorMessage.value = "No music files found in selected subfolder."
                 }
@@ -2353,55 +2442,45 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun loadFilesFromLikedSubfolder(subfolderName: String) {
+        loadFilesFromLikedSubfolders(listOf(subfolderName))
+    }
+
+    fun loadFilesFromLikedSubfolders(subfolderNames: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val destinationFolder = fileManager.getDestinationFolder()
                 if (destinationFolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "No destination folder selected"
-                    }
+                    withContext(Dispatchers.Main) { _errorMessage.value = "No destination folder selected" }
                     return@launch
                 }
-                
-                // Get the Liked folder within the destination folder
                 val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
                 if (likedFolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Liked folder not found"
-                    }
+                    withContext(Dispatchers.Main) { _errorMessage.value = "Liked folder not found" }
                     return@launch
                 }
-                
-                // Find the specific subfolder
-                val subfolder = likedFolder.findFile(subfolderName)
-                if (subfolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Subfolder '$subfolderName' not found"
+                val currentUri = _currentPlayingFile.value?.uri
+                val collected = mutableListOf<MusicFile>()
+                likedFolder.listFiles()?.forEach { child ->
+                    if (child.isDirectory && subfolderNames.any { it.equals(child.name, ignoreCase = true) }) {
+                        val files = fileManager.listMusicFilesInFolder(child.uri)
+                        collected += files.map { it.copy(sourcePlaylist = PlaylistTab.LIKED, subfolder = child.name) }
                     }
-                    return@launch
                 }
-                
-                // Load files from the subfolder
-                val files = fileManager.listMusicFilesInFolder(subfolder.uri)
-                val filesWithSubfolder = files.map { file ->
-                    file.copy(subfolder = subfolderName, sourcePlaylist = PlaylistTab.LIKED)
-                }
-                
+                val unique = collected.distinctBy { it.uri }
                 withContext(Dispatchers.Main) {
-                    _likedFiles.value = filesWithSubfolder
-                    _currentIndex.value = 0
-                    if (filesWithSubfolder.isNotEmpty()) {
-                        loadCurrentFile()
-                        _errorMessage.value = "Loaded ${filesWithSubfolder.size} files from '$subfolderName'"
-                    } else {
-                        _errorMessage.value = "No files found in '$subfolderName'"
+                    _likedFiles.value = unique
+                    // Preserve current playback; do not auto play first track
+                    if (currentUri != null) {
+                        val idx = unique.indexOfFirst { it.uri == currentUri }
+                        if (idx >= 0) {
+                            _currentIndex.value = idx
+                        }
                     }
+                    _errorMessage.value = "Loaded ${unique.size} files from ${subfolderNames.size} subfolder(s) (playback preserved)."
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _errorMessage.value = "Error loading files from subfolder: ${e.message}"
-                }
-                CrashLogger.log("MusicViewModel", "Error loading files from liked subfolder", e)
+                withContext(Dispatchers.Main) { _errorMessage.value = "Error loading liked subfolders: ${e.message}" }
+                CrashLogger.log("MusicViewModel", "Error loading files from liked subfolders", e)
             }
         }
     }

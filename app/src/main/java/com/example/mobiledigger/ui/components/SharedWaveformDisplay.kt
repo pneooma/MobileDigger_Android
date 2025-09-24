@@ -107,7 +107,7 @@ fun SharedWaveformDisplay(
             sharedState.waveformData != null -> {
                 // Waveform display using WaveformSeekBar
                 val playedColor = MaterialTheme.colorScheme.primary.toArgb()
-                val unplayedColor = Color.Gray.toArgb()
+                val unplayedColor = MaterialTheme.colorScheme.outline.toArgb()
                 
                 AndroidView(
                     factory = { ctx ->

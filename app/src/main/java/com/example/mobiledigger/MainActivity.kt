@@ -10,7 +10,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.delay
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mobiledigger.audio.MusicService
@@ -45,10 +47,31 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             val viewModel: MusicViewModel = viewModel()
+            var isDarkMode by remember { mutableStateOf(viewModel.themeManager.isDarkMode.value) }
+            var useDynamicColor by remember { mutableStateOf(viewModel.themeManager.useDynamicColor.value) }
+            var selectedTheme by remember { mutableStateOf(viewModel.themeManager.selectedTheme.value) }
+            
+            // Update theme when it changes - use a more efficient approach
+            LaunchedEffect(Unit) {
+                // Check theme changes less frequently to reduce memory pressure
+                while (true) {
+                    val currentDarkMode = viewModel.themeManager.isDarkMode.value
+                    val currentDynamicColor = viewModel.themeManager.useDynamicColor.value
+                    val currentTheme = viewModel.themeManager.selectedTheme.value
+                    
+                    if (currentDarkMode != isDarkMode || currentDynamicColor != useDynamicColor || currentTheme != selectedTheme) {
+                        isDarkMode = currentDarkMode
+                        useDynamicColor = currentDynamicColor
+                        selectedTheme = currentTheme
+                    }
+                    delay(1000) // Check every 1 second instead of 100ms
+                }
+            }
+            
             MobileDiggerTheme(
-                darkTheme = viewModel.themeManager.isDarkMode.value,
-                dynamicColor = viewModel.themeManager.useDynamicColor.value,
-                selectedTheme = viewModel.themeManager.selectedTheme.value
+                darkTheme = isDarkMode,
+                dynamicColor = useDynamicColor,
+                selectedTheme = selectedTheme
             ) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MusicPlayerScreen(

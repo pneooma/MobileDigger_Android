@@ -9,6 +9,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.*
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -34,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay // For deprecated icon
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -48,6 +54,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
@@ -59,6 +66,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 
 
 import androidx.compose.ui.platform.LocalConfiguration
@@ -87,6 +95,11 @@ import com.example.mobiledigger.viewmodel.PlaylistTab
 
 import kotlin.math.abs
 import java.util.Locale
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.KeyEventType
 
 private fun formatTime(milliseconds: Long): String {
     val seconds = (milliseconds / 1000).toInt()
@@ -131,6 +144,7 @@ fun MusicPlayerScreen(
     val currentPlaylistFiles by viewModel.currentPlaylistFiles.collectAsState()
     val currentPlayingFile by viewModel.currentPlayingFile.collectAsState()
     val isTransitioning by viewModel.isTransitioning.collectAsState()
+    val lastSortedAction by viewModel.lastSortedAction.collectAsState()
     
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
@@ -146,17 +160,38 @@ fun MusicPlayerScreen(
     
     
     
-    val snackbarHostState = remember { SnackbarHostState() }
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showThemeSelectionDialog by remember { mutableStateOf(false) }
     var showVisualSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
     var showRescanSourceDialog by remember { mutableStateOf(false) } // Added state for rescan source dialog
     var showSearchInput by remember { mutableStateOf(false) } // New state to control search input visibility
     val searchFocusRequester = remember { FocusRequester() }
+    
+    // Info message dropdown state
+    var showInfoMessage by remember { mutableStateOf(false) }
+    var infoMessageText by remember { mutableStateOf("") }
+    var infoMessageType by remember { mutableStateOf("info") } // "info", "success", "error"
     val scope = rememberCoroutineScope()
     var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
+    
+    // Helper function to show info messages with delay after waveform appearance
+    fun showInfoMessage(message: String, type: String = "info") {
+        scope.launch {
+            // Wait for waveform to appear first (delay after file operations)
+            delay(1500) // 1.5 second delay after waveform appearance
+            
+            infoMessageText = message
+            infoMessageType = type
+            showInfoMessage = true
+            
+            // Auto-hide after 3 seconds
+            delay(3000)
+            showInfoMessage = false
+        }
+    }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var deleteActionType by remember { mutableStateOf<PlaylistTab?>(null) } // State for delete all confirmation
     var showShareZipDialog by remember { mutableStateOf(false) } // State for ZIP sharing confirmation
@@ -164,6 +199,8 @@ fun MusicPlayerScreen(
     var showSubfolderDropdown by remember { mutableStateOf(false) } // State for subfolder dropdown
     var showSubfolderManagementDialog by remember { mutableStateOf(false) } // State for subfolder management dialog
     var showSubfolderSelectionDialog by remember { mutableStateOf(false) } // State for subfolder selection dialog from playlist
+    var showLikedSubfoldersViewDialog by remember { mutableStateOf(false) } // New: multi-select liked subfolders to view
+    var selectedLikedSubfolders by remember { mutableStateOf(setOf<String>()) }
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
@@ -228,7 +265,7 @@ fun MusicPlayerScreen(
                     Text(
                         text = msg,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (showDeleteDialogStep >= 3) Color.Red else Color.Unspecified,
+                        color = if (showDeleteDialogStep >= 3) MaterialTheme.colorScheme.error else Color.Unspecified,
                         fontWeight = if (showDeleteDialogStep >= 3) FontWeight.Bold else FontWeight.Normal
                     )
                     if (showDeleteDialogStep >= 2) {
@@ -236,7 +273,7 @@ fun MusicPlayerScreen(
                         Text(
                             text = "This action is IRREVERSIBLE!",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -257,12 +294,12 @@ fun MusicPlayerScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (showDeleteDialogStep >= 3) Color.Red else MaterialTheme.colorScheme.primary
+                        containerColor = if (showDeleteDialogStep >= 3) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                     )
                 ) { 
                     Text(
                         text = if (showDeleteDialogStep >= 4) "DELETE FOREVER" else "Continue",
-                        color = if (showDeleteDialogStep >= 3) Color.White else Color.Unspecified,
+                        color = if (showDeleteDialogStep >= 3) MaterialTheme.colorScheme.onError else Color.Unspecified,
                         fontWeight = if (showDeleteDialogStep >= 4) FontWeight.Bold else FontWeight.Normal
                     ) 
                 }
@@ -301,9 +338,9 @@ fun MusicPlayerScreen(
                         viewModel.dismissDeleteRejectedPrompt()
                         viewModel.deleteRejectedFiles()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { 
-                    Text("Delete Rejected Files", color = Color.White) 
+                    Text("Delete Rejected Files", color = MaterialTheme.colorScheme.onError) 
                 }
             },
             dismissButton = {
@@ -383,9 +420,9 @@ fun MusicPlayerScreen(
                         }
                         deleteActionType = null // Reset the action type
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { 
-                    Text("DELETE ALL", color = Color.White, fontWeight = FontWeight.Bold) 
+                    Text("DELETE ALL", color = MaterialTheme.colorScheme.onError, fontWeight = FontWeight.Bold) 
                 }
             },
             dismissButton = {
@@ -426,9 +463,9 @@ fun MusicPlayerScreen(
                         showShareZipDialog = false
                         viewModel.startShareLikedZip(true)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
                 ) { 
-                    Text("CREATE ZIP", color = Color.White) 
+                    Text("CREATE ZIP", color = MaterialTheme.colorScheme.onTertiary) 
                 }
             },
             dismissButton = {
@@ -521,7 +558,7 @@ fun MusicPlayerScreen(
     if (showSettingsDialog) {
         AlertDialog(
             onDismissRequest = { showSettingsDialog = false },
-            title = { Text("Settings") },
+            title = { Text("Settings", color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
             text = {
                 Column {
                     Row(
@@ -543,7 +580,7 @@ fun MusicPlayerScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Dynamic Colors")
+                    Text("Enable Theme", color = MaterialTheme.colorScheme.onSurface)
                         Switch(
                             checked = !viewModel.themeManager.useDynamicColor.value,
                             onCheckedChange = { viewModel.themeManager.toggleDynamicColor() }
@@ -552,31 +589,16 @@ fun MusicPlayerScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Theme Selection Dropdown
-                    var expanded by remember { mutableStateOf(false) }
+                    // Theme Selection - Using Button to open theme selection dialog
                     val selectedTheme by viewModel.themeManager.selectedTheme
                     
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded }
-                    ) {
-                        OutlinedTextField(
-                            value = selectedTheme.name,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Theme") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
+                    Button(
+                        onClick = { showThemeSelectionDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            AvailableThemes.forEach { theme ->
-                                DropdownMenuItem(
-                                    text = { 
+                    ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -585,19 +607,13 @@ fun MusicPlayerScreen(
                                                 modifier = Modifier
                                                     .size(16.dp)
                                                     .background(
-                                                        theme.primary,
+                                        selectedTheme.primary,
                                                         CircleShape
                                                     )
                                             )
-                                            Text(theme.name)
-                                        }
-                                    },
-                                    onClick = {
-                                        viewModel.themeManager.setSelectedTheme(theme)
-                                        expanded = false
-                                    }
-                                )
-                            }
+                            Text("Theme: ${selectedTheme.name}")
+                            Spacer(modifier = Modifier.weight(1f))
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Theme")
                         }
                     }
                     
@@ -623,6 +639,9 @@ fun MusicPlayerScreen(
                     )
                     Text("• Swipe card left/right to sort")
                     Text("• Tap and drag waveform to seek")
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                 }
             },
             confirmButton = {
@@ -632,6 +651,84 @@ fun MusicPlayerScreen(
             }
         )
     }
+    
+    // Theme Selection Dialog
+    if (showThemeSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeSelectionDialog = false },
+            title = { Text("Select Theme") },
+            text = {
+                LazyColumn(
+                    modifier = Modifier.height(400.dp)
+                ) {
+                    items(AvailableThemes.size) { index ->
+                        val theme = AvailableThemes[index]
+                        Card(
+                            onClick = {
+                                viewModel.themeManager.setSelectedTheme(theme)
+                                showThemeSelectionDialog = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (theme == viewModel.themeManager.selectedTheme.value) 
+                                    MaterialTheme.colorScheme.primaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            theme.primary,
+                                            CircleShape
+                                        )
+                                )
+                                Column {
+                                    Text(
+                                        text = theme.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = if (theme == viewModel.themeManager.selectedTheme.value) 
+                                            FontWeight.Bold 
+                                        else 
+                                            FontWeight.Normal
+                                    )
+                                    Text(
+                                        text = "Primary: #${theme.primary.toArgb().toUInt().toString(16).uppercase().takeLast(6)}, Secondary: #${theme.secondary.toArgb().toUInt().toString(16).uppercase().takeLast(6)}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
+                                if (theme == viewModel.themeManager.selectedTheme.value) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeSelectionDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
     
     // Visual Settings Dialog
     if (showVisualSettingsDialog) {
@@ -650,36 +747,17 @@ fun MusicPlayerScreen(
     // val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // isCompactScreen is used, keeping
     val playlistMaxHeight = screenHeight * 0.65f // Playlist takes 65% of screen
 
-    // Handle error messages with transparent background and white bold text
+    // Handle error messages with better display under header
     errorMessage?.let { message ->
         LaunchedEffect(message) {
-            snackbarHostState.showSnackbar(message)
+            showInfoMessage(message, "info")
             viewModel.clearError()
         }
     }
     
 
     Scaffold(
-        modifier = Modifier,
-        snackbarHost = { 
-            SnackbarHost(
-                hostState = snackbarHostState,
-                snackbar = { snackbarData ->
-                    Snackbar(
-                        modifier = Modifier.padding(16.dp),
-                        containerColor = Color.Black.copy(alpha = 0.3f),
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = snackbarData.visuals.message,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                }
-            )
-        }
+        modifier = Modifier
     ) { paddingValues ->
     Column(
         modifier = Modifier
@@ -734,7 +812,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = ":: v8.14 ::",
+                    text = ":: v8.55 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -868,9 +946,71 @@ viewModel.updateSearchText("")
                             onClick = { menuExpanded = false; showReadmeDialog = true },
                             leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF4CAF50)) }
                         )
+                        
                     }
             }
         }
+        
+        // Animated Info Message Display (positioned absolutely on top, fade in/out only)
+        if (showInfoMessage) {
+            Popup(
+                alignment = Alignment.TopCenter,
+                offset = IntOffset(0, with(LocalDensity.current) { 86.dp.toPx().toInt() }) // ~under header (moved up by 10dp)
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .shadow(8.dp, RoundedCornerShape(8.dp)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when (infoMessageType) {
+                            "success" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.95f)
+                            "error" -> MaterialTheme.colorScheme.error.copy(alpha = 0.95f)
+                            "loading" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.95f)
+                            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+                        }
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp), // reduced inner padding
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center // center contents
+                    ) {
+                        Icon(
+                            when (infoMessageType) {
+                                "success" -> Icons.Default.CheckCircle
+                                "error" -> Icons.Default.Error
+                                "loading" -> Icons.Default.HourglassEmpty
+                                else -> Icons.Default.Info
+                            },
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = when (infoMessageType) {
+                                "success" -> MaterialTheme.colorScheme.onTertiary
+                                "error" -> MaterialTheme.colorScheme.onError
+                                "loading" -> MaterialTheme.colorScheme.onPrimary
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = infoMessageText,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = when (infoMessageType) {
+                                "success" -> MaterialTheme.colorScheme.onTertiary
+                                "error" -> MaterialTheme.colorScheme.onError
+                                "loading" -> MaterialTheme.colorScheme.onPrimary
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        
         // ZIP progress indicator at top of screen
         if (zipInProgress) {
             Card(
@@ -971,7 +1111,7 @@ viewModel.updateSearchText("")
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        Icons.Default.ArrowForward,
+                        Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -1011,7 +1151,7 @@ viewModel.updateSearchText("")
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        Icons.Default.ArrowForward,
+                        Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -1103,6 +1243,11 @@ viewModel.updateSearchText("")
                     }
                 }
 
+                // Auto-expand search dropdown when results arrive (no click needed)
+                LaunchedEffect(searchResults) {
+                    searchExpanded = currentSearchText.isNotBlank() && searchResults.isNotEmpty()
+                }
+
                 ExposedDropdownMenuBox(
                     expanded = searchExpanded,
                     onExpandedChange = { searchExpanded = !searchExpanded },
@@ -1112,20 +1257,21 @@ viewModel.updateSearchText("")
                         value = currentSearchText,
                         onValueChange = { newValue ->
                             viewModel.updateSearchText(newValue)
-                            scope.launch { // Use the scope for delayed search
-                                delay(1500) // 1.5 second delay
-                                if (newValue == currentSearchText && newValue.isNotBlank()) {
-                                    viewModel.searchMusic(newValue)
-                                    searchExpanded = true
-                                } else if (newValue.isBlank()) {
+                            if (newValue.isBlank()) {
                                     viewModel.clearSearchResults()
                                     searchExpanded = false
-                                }
                             }
                         },
                         label = { Text("Search Music") },
                         trailingIcon = {
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (currentSearchText.isNotBlank()) {
+                                    IconButton(onClick = {
+                                        viewModel.searchMusicImmediate(currentSearchText)
+                                        searchExpanded = true
+                                    }) {
+                                        Icon(Icons.Default.Search, contentDescription = "Search")
+                                    }
                                 IconButton(onClick = {
                                     viewModel.updateSearchText("")
                                     viewModel.clearSearchResults()
@@ -1135,18 +1281,35 @@ viewModel.updateSearchText("")
                                 }
                             } else {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = searchExpanded)
+                                }
                             }
                         },
+                        singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor()
                             .focusRequester(searchFocusRequester)
+            .onPreviewKeyEvent { event ->
+                if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_UP) {
+                    val code = event.nativeKeyEvent.keyCode
+                    if (code == android.view.KeyEvent.KEYCODE_ENTER || code == android.view.KeyEvent.KEYCODE_NUMPAD_ENTER) {
+                        if (currentSearchText.isNotBlank()) {
+                            viewModel.searchMusicImmediate(currentSearchText)
+                            searchExpanded = true
+                        }
+                        return@onPreviewKeyEvent true
+                    }
+                }
+                return@onPreviewKeyEvent false
+            }
                     )
-                    if (currentSearchText.isNotBlank() && searchResults.isNotEmpty()) {
+                    if (searchExpanded && searchResults.isNotEmpty()) {
                         ExposedDropdownMenu(
                             expanded = searchExpanded,
                             onDismissRequest = { searchExpanded = false },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
                         ) {
                             searchResults.forEach { musicFile ->
                                 DropdownMenuItem(
@@ -1155,6 +1318,7 @@ viewModel.updateSearchText("")
                                             Text(
                                                 text = musicFile.name,
                                                 style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                                 maxLines = 3,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -1167,13 +1331,10 @@ viewModel.updateSearchText("")
                                     },
                                     onClick = {
                                         viewModel.playFile(musicFile)
-                                        // After playing, hide search input and clear results
-                                        showSearchInput = false 
                                         searchExpanded = false
-                                        viewModel.clearSearchResults()
-                                        viewModel.updateSearchText("")
                                     }
                                 )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                             }
                         }
                     }
@@ -1353,7 +1514,7 @@ viewModel.updateSearchText("")
                                         AnimatedContent(
                                             targetState = file.name,
                                             transitionSpec = {
-                                                fadeIn(animationSpec = animationSpecs.songNameTween) + slideInVertically() with
+                                                fadeIn(animationSpec = animationSpecs.songNameTween) + slideInVertically() togetherWith
                                                 fadeOut(animationSpec = animationSpecs.songNameTween) + slideOutVertically()
                                             },
                                             label = "Song Name Animation"
@@ -1373,23 +1534,7 @@ viewModel.updateSearchText("")
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         
-                                        // Track details: Time, Bitrate, Size - Cache expensive calculations
-                                        val bitrate = remember(file.size, file.duration) { 
-                                            calculateBitrate(file.size, file.duration) 
-                                        }
-                                        val fileSize = remember(file.size) { 
-                                            formatFileSize(file.size) 
-                                        }
-                                        val timeString = remember(file.duration) { 
-                                            formatTime(file.duration) 
-                                        }
-                                        Text(
-                                            text = ":: Time $timeString :: Bitrate ${bitrate} kbps :: Size $fileSize ::",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
+                                        // Removed time/bitrate line for performance
         
         Spacer(modifier = Modifier.height(12.dp))
         
@@ -1411,17 +1556,9 @@ viewModel.updateSearchText("")
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = formatTime(currentPosition),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
+                                            // Hide current position
                                             
-                                            Text(
-                                                text = formatTime(duration),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
+                                            // Hide total duration
                                         }
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
@@ -1432,28 +1569,76 @@ viewModel.updateSearchText("")
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.fillMaxWidth()
     ) {
-                                            // Left side: Music controls
+                                            // Left side: Music controls with modern Android 16 style
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(36.dp)) {
-                                                    Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(20.dp))
-                                                }
+                                                // Previous button with modern style
+                Card(
+                    onClick = { viewModel.previous() },
+                    modifier = Modifier.size(38.dp), // Reduced from 48dp to 38dp (20% smaller)
+                    shape = CircleShape,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.SkipPrevious,
+                            "Previous",
+                            modifier = Modifier.size(19.dp), // Reduced from 24dp to 19dp (20% smaller)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                                                 
-                                                FloatingActionButton(onClick = { viewModel.playPause() }, modifier = Modifier.size(44.dp)) {
+                                                // Play/Pause button with modern FAB style
+                                                FloatingActionButton(
+                                                    onClick = { viewModel.playPause() }, 
+                                                    modifier = Modifier.size(45.dp), // Reduced from 56dp to 45dp (20% smaller)
+                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    elevation = FloatingActionButtonDefaults.elevation(
+                                                        defaultElevation = 6.dp,
+                                                        pressedElevation = 8.dp
+                                                    )
+                                                ) {
             Icon(
                 if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                                     if (isPlaying) "Pause" else "Play",
-                                                        modifier = Modifier.size(22.dp)
+                                                        modifier = Modifier.size(22.dp) // Reduced from 28dp to 22dp (20% smaller)
                                                 )
                                             }
                                             
-                                            IconButton(onClick = { 
+                                                // Next button with modern style
+                                                Card(
+                                                    onClick = { 
                                                     hapticFeedback()
                                                 viewModel.next() 
-                                                }, modifier = Modifier.size(36.dp)) {
-                                                    Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(20.dp))
+                                                    },
+                                                    modifier = Modifier.size(38.dp), // Reduced from 48dp to 38dp (20% smaller)
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.SkipNext,
+                                                            "Next",
+                                                            modifier = Modifier.size(19.dp), // Reduced from 24dp to 19dp (20% smaller)
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
                                                 }
                                             }
                                             
@@ -1557,6 +1742,7 @@ viewModel.updateSearchText("")
                                                                     }
                                                                 )
                                                             }
+                                                            
                                                             
                                                             // Recent subfolders (from history)
                                                             subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
@@ -1683,6 +1869,7 @@ viewModel.updateSearchText("")
                                                                 )
                                                             }
                                                             
+                                                            
                                                             // Recent subfolders (from history)
                                                             subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
                                                                 DropdownMenuItem(
@@ -1764,7 +1951,7 @@ viewModel.updateSearchText("")
                                         modifier = Modifier.weight(1f)
                                     ) {
                                         // Animated content for icon and text
-                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && viewModel.lastSortedAction.value == SortAction.DISLIKE) 0.5f else 1f, animationSpec = animationSpecs.buttonPressTween)
+                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && lastSortedAction == SortAction.DISLIKE) 0.5f else 1f, animationSpec = animationSpecs.buttonPressTween)
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.graphicsLayer(alpha = alpha)) {
                                         Icon(Icons.Default.ThumbDown, contentDescription = null)
                                         Spacer(Modifier.width(8.dp))
@@ -1801,7 +1988,7 @@ viewModel.updateSearchText("")
                                         modifier = Modifier.weight(1f)
                                     ) {
                                         // Animated content for icon and text
-                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && viewModel.lastSortedAction.value == SortAction.LIKE) 0.5f else 1f, animationSpec = animationSpecs.buttonPressTween)
+                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && lastSortedAction == SortAction.LIKE) 0.5f else 1f, animationSpec = animationSpecs.buttonPressTween)
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.graphicsLayer(alpha = alpha)) {
                                         Icon(Icons.Default.Favorite, contentDescription = null)
                                         Spacer(Modifier.width(8.dp))
@@ -2066,34 +2253,72 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                                 PlaylistTab.LIKED -> {
-                                                    // Show liked subfolders for LIKED playlist
+                                                    // Multi-select view of liked subfolders
                                                     val availableSubfolders by viewModel.availableSubfolders.collectAsState()
                                                     val subfolderFileCounts by viewModel.subfolderFileCounts.collectAsState()
+                                                    var selectedViewSubfolders by remember { mutableStateOf(setOf<String>()) }
                                                     
                                                     if (availableSubfolders.isEmpty()) {
                                                         Text("No subfolders found in the liked folder.")
                                                     } else {
-                                                        LazyColumn {
-                                                            // Add option to select the root liked folder
-                                                            item {
+                                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                                            // View all liked files
                                                                 TextButton(onClick = {
-                                                                    // Load all liked files (from root and all subfolders)
                                                                     viewModel.loadLikedFiles()
                                                                     showSubfolderDialog = false
                                                                 }) {
                                                                     Text("../ (All Liked Files)", fontWeight = FontWeight.Bold)
                                                                 }
-                                                            }
-                                                            itemsIndexed(availableSubfolders) { index, subfolderName ->
-                                                                val fileCount = subfolderFileCounts[subfolderName] ?: 0
-                                                                TextButton(onClick = {
-                                                                    // Load files from specific liked subfolder
-                                                                    viewModel.loadFilesFromLikedSubfolder(subfolderName)
-                                                                    showSubfolderDialog = false
-                                                                }) {
-                                                                    Text("$subfolderName ($fileCount files)")
+                                                            Spacer(Modifier.height(8.dp))
+                                                            Text(
+                                                                "Select one or more subfolders to view:",
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                            Spacer(Modifier.height(6.dp))
+                                                            LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                                                                itemsIndexed(availableSubfolders) { _, name ->
+                                                                    val checked = selectedViewSubfolders.contains(name)
+                                                                    Row(
+                                                                        modifier = Modifier
+                                                                            .fillMaxWidth()
+                                                                            .clickable {
+                                                                                selectedViewSubfolders = if (checked) selectedViewSubfolders - name else selectedViewSubfolders + name
+                                                                            }
+                                                                            .padding(vertical = 2.dp),
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                                    ) {
+                                                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                                            Checkbox(
+                                                                                checked = checked,
+                                                                                onCheckedChange = {
+                                                                                    selectedViewSubfolders = if (checked) selectedViewSubfolders - name else selectedViewSubfolders + name
+                                                                                }
+                                                                            )
+                                                                            Text(name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
+                                                                        }
+                                                                        Text(
+                                                                            "${subfolderFileCounts[name] ?: 0}",
+                                                                            style = MaterialTheme.typography.labelSmall,
+                                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                        )
+                                                                    }
                                                                 }
                                                             }
+                                                            Spacer(Modifier.height(10.dp))
+                                                            Button(
+                                                                onClick = {
+                                                                    val list = selectedViewSubfolders.toList()
+                                                                    if (list.isNotEmpty()) {
+                                                                        viewModel.loadFilesFromLikedSubfolders(list)
+                                                                    }
+                                                                    showSubfolderDialog = false
+                                                                },
+                                                                enabled = selectedViewSubfolders.isNotEmpty(),
+                                                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                                                modifier = Modifier.fillMaxWidth()
+                                                            ) { Text("View", color = MaterialTheme.colorScheme.onPrimary) }
                                                         }
                                                     }
                                                 }
@@ -2364,13 +2589,13 @@ viewModel.updateSearchText("")
                                     containerColor = when {
                                         isCurrent -> when (currentPlaylistTab) {
                                             PlaylistTab.TODO -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                            PlaylistTab.LIKED -> Color(0xFF4CAF50).copy(alpha = 0.1f)
-                                            PlaylistTab.REJECTED -> Color(0xFFFFCDD2).copy(alpha = 0.1f)
+                                            PlaylistTab.LIKED -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
+                                            PlaylistTab.REJECTED -> MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
                                         }
                                         else -> when (currentPlaylistTab) {
                                             PlaylistTab.TODO -> MaterialTheme.colorScheme.surface
-                                            PlaylistTab.LIKED -> Color(0xFF4CAF50).copy(alpha = 0.05f)
-                                            PlaylistTab.REJECTED -> Color(0xFFFFCDD2).copy(alpha = 0.05f)
+                                            PlaylistTab.LIKED -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.05f)
+                                            PlaylistTab.REJECTED -> MaterialTheme.colorScheme.error.copy(alpha = 0.05f)
                                         }
                                     }
                                 )
@@ -2417,24 +2642,7 @@ viewModel.updateSearchText("")
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                        // Cache time formatting and subfolder info to avoid recalculation
-                                        val timeText = remember(item.duration, currentPlaylistTab, item.subfolder) {
-                                            if (currentPlaylistTab == PlaylistTab.LIKED) {
-                                                val subfolderInfo = if (item.subfolder != null) {
-                                                    ":: ${item.subfolder} ::"
-                                                } else {
-                                                    ":: Liked ::"
-                                                }
-                                                "Time: ${formatTime(item.duration)} $subfolderInfo"
-                                            } else {
-                                                "Time: ${formatTime(item.duration)}"
-                                            }
-                                        }
-                                        Text(
-                                            text = timeText,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                        // Removed time display in playlist row for performance
 
                                             
                                             // Rating display removed
@@ -2454,7 +2662,10 @@ viewModel.updateSearchText("")
                                                     modifier = Modifier.padding(horizontal = 8.dp)
                                                 )
                                                 IconButton(
-                                                    onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
+                                                    onClick = { 
+                                                        viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                        showInfoMessage("Moved to Liked", "success")
+                                                    },
                                                     modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
                                                 ) {
                                                     Icon(
@@ -2465,7 +2676,10 @@ viewModel.updateSearchText("")
                                                     )
                                                 }
                                                 IconButton(
-                                                    onClick = { viewModel.sortSelectedFiles(SortAction.DISLIKE) },
+                                                    onClick = { 
+                                                        viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                        showInfoMessage("Moved to Rejected", "error")
+                                                    },
                                                     modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
                                                 ) {
                                                     Icon(
@@ -2660,7 +2874,7 @@ viewModel.updateSearchText("")
                                             AnimatedContent(
                                                 targetState = file.name,
                                                 transitionSpec = {
-                                                    fadeIn(animationSpec = animationSpecs.songNameTween) + slideInVertically() with
+                                                    fadeIn(animationSpec = animationSpecs.songNameTween) + slideInVertically() togetherWith
                                                     fadeOut(animationSpec = animationSpecs.songNameTween) + slideOutVertically()
                                                 },
                                                 label = "Miniplayer Song Name Animation",
@@ -2685,34 +2899,82 @@ viewModel.updateSearchText("")
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.Center
                                         ) {
-                                            // First row: PREV PLAY NEXT
+                                            // First row: PREV PLAY NEXT with modern style
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            IconButton(onClick = { 
+                                                // Previous button - mini style
+                                                Card(
+                                                    onClick = { 
                                                     hapticFeedback()
                                                 viewModel.previous() 
-                                            }, modifier = Modifier.size(32.dp)) {
-                                                Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(18.dp))
-                                            }
-                                            
-                                            IconButton(onClick = { 
+                                                    },
+                                                    modifier = Modifier.size(29.dp), // Reduced from 36dp to 29dp (20% smaller)
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.SkipPrevious, 
+                                                            "Previous", 
+                                                            modifier = Modifier.size(14.dp), // Reduced from 18dp to 14dp (20% smaller)
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                                
+                                                // Play/Pause button - mini FAB style
+                                                FloatingActionButton(
+                                                    onClick = { 
                                                     hapticFeedback()
                                                 viewModel.playPause() 
-                                            }, modifier = Modifier.size(40.dp)) {
+                                                    }, 
+                                                    modifier = Modifier.size(35.dp), // Reduced from 44dp to 35dp (20% smaller)
+                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    elevation = FloatingActionButtonDefaults.elevation(
+                                                        defaultElevation = 4.dp,
+                                                        pressedElevation = 6.dp
+                                                    )
+                                                ) {
         Icon(
                                                     if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                                     if (isPlaying) "Pause" else "Play",
-                                                    modifier = Modifier.size(22.dp)
+                                                        modifier = Modifier.size(18.dp) // Reduced from 22dp to 18dp (20% smaller)
                                                 )
                                             }
                                             
-                                            IconButton(onClick = { 
+                                                // Next button - mini style
+                                                Card(
+                                                    onClick = { 
                                                     hapticFeedback()
                                                 viewModel.next() 
-                                            }, modifier = Modifier.size(32.dp)) {
-                                                Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp))
+                                                    },
+                                                    modifier = Modifier.size(29.dp), // Reduced from 36dp to 29dp (20% smaller)
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.SkipNext, 
+                                                            "Next", 
+                                                            modifier = Modifier.size(14.dp), // Reduced from 18dp to 14dp (20% smaller)
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
                                                 }
                                             }
                                             
@@ -2964,6 +3226,7 @@ viewModel.updateSearchText("")
                 )
             },
             text = {
+                var selectedViewSubfolders by remember { mutableStateOf(setOf<String>()) }
                 Column {
                     Text("Select a subfolder to move the current file:")
                     Spacer(modifier = Modifier.height(8.dp))
@@ -2989,7 +3252,7 @@ viewModel.updateSearchText("")
                         }
                     }
                     
-                    // Available subfolders with file counts
+                    // Available subfolders with file counts (tap to move current file)
                     if (availableSubfolders.isNotEmpty()) {
                         Text(
                             "Available subfolders:",
@@ -3018,6 +3281,61 @@ viewModel.updateSearchText("")
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider()
+                        Spacer(Modifier.height(8.dp))
+                        // Multi-select to VIEW liked subfolders (aggregate)
+                        if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                            Text(
+                                "Or select multiple subfolders to view in Liked:",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            availableSubfolders.forEach { name ->
+                                val checked = selectedViewSubfolders.contains(name)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedViewSubfolders = if (checked) selectedViewSubfolders - name else selectedViewSubfolders + name
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(
+                                            checked = checked,
+                                            onCheckedChange = {
+                                                selectedViewSubfolders = if (checked) selectedViewSubfolders - name else selectedViewSubfolders + name
+                                            }
+                                        )
+                                        Text(name, color = MaterialTheme.colorScheme.onSurface)
+                                    }
+                                    Text(
+                                        "${subfolderFileCounts[name] ?: 0}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    val list = selectedViewSubfolders.toList()
+                                    if (list.isNotEmpty()) {
+                                        showSubfolderSelectionDialog = false
+                                        viewModel.loadFilesFromLikedSubfolders(list)
+                                    }
+                                },
+                                enabled = selectedViewSubfolders.isNotEmpty(),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("View", color = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
                     }
@@ -3056,11 +3374,7 @@ viewModel.updateSearchText("")
                     }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { showSubfolderSelectionDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            confirmButton = { TextButton(onClick = { showSubfolderSelectionDialog = false }) { Text("Close") } }
         )
     }
 

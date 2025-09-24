@@ -244,6 +244,7 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         createAndShowNotification()
         return START_STICKY
     }
@@ -282,19 +283,43 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onDestroy() {
-        releaseWakeLock()
-        stopProgressUpdates()
-        unregisterReceiver(notificationReceiver)
-        audioManager?.release()
-        audioManager = null
-        mediaSession?.run {
-            player?.release()
-            release()
-            mediaSession = null
+        try {
+            releaseWakeLock()
+            stopProgressUpdates()
+            unregisterReceiver(notificationReceiver)
+            audioManager?.release()
+            audioManager = null
+            
+            // Safely release media session to prevent DeadObjectException
+            mediaSession?.run {
+                try {
+                    player?.release()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicService", "Error releasing player", e)
+                }
+                try {
+                    release()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicService", "Error releasing media session", e)
+                }
+                mediaSession = null
+            }
+            player = null // Release ExoPlayer instance
+            
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } catch (e: Exception) {
+                CrashLogger.log("MusicService", "Error stopping foreground service", e)
+            }
+            
+            try {
+                notificationManager.cancel(NOTIFICATION_ID)
+            } catch (e: Exception) {
+                CrashLogger.log("MusicService", "Error canceling notification", e)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicService", "Error in onDestroy", e)
         }
-        player = null // Release ExoPlayer instance
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        notificationManager.cancel(NOTIFICATION_ID)
         super.onDestroy()
     }
 

@@ -162,6 +162,15 @@ class FileManager(private val context: Context) {
     ): List<MusicFile> {
         val musicFiles = mutableListOf<MusicFile>()
         Log.d("FileManager", "Starting scanForMusicFiles with extensions: $musicExtensions")
+        
+        // Memory safety: Check available memory before scanning
+        val runtime = Runtime.getRuntime()
+        val availableMemoryMB = (runtime.maxMemory() - runtime.totalMemory() + runtime.freeMemory()) / (1024 * 1024)
+        if (availableMemoryMB < 50) {
+            CrashLogger.log("FileManager", "Low memory detected ($availableMemoryMB MB), skipping file scan")
+            return emptyList()
+        }
+        
         try {
             val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                 directoryUri,
@@ -183,11 +192,15 @@ class FileManager(private val context: Context) {
                     val childUri = DocumentsContract.buildDocumentUriUsingTree(directoryUri, docId)
 
                     if (DocumentsContract.Document.MIME_TYPE_DIR == mimeType) {
-                        // Recurse into subdirectories
-                        try {
-                            musicFiles.addAll(scanForMusicFiles(childUri, isSource))
-                        } catch (e: Exception) {
-                            CrashLogger.log("FileManager", "Failed to scan subfolder $displayName", e)
+                        // Recurse into subdirectories with memory limit
+                        if (musicFiles.size < 1000) { // Limit total files to prevent memory issues
+                            try {
+                                musicFiles.addAll(scanForMusicFiles(childUri, isSource))
+                            } catch (e: Exception) {
+                                CrashLogger.log("FileManager", "Failed to scan subfolder $displayName", e)
+                            }
+                        } else {
+                            CrashLogger.log("FileManager", "File limit reached (1000), skipping remaining directories")
                         }
                         continue
                     }

@@ -1,3 +1,17 @@
+8.72
+- Added always-visible green progress line to waveform displays.
+- Progress line shows current playback position even when waveform is loading.
+- Enhanced visual feedback for seeking and progress tracking.
+- Incremented build version to 8.72.
+
+8.71
+- Fixed animation hanging and dislike button crashes.
+- Improved UI responsiveness during file operations.
+- Added error handling for like/dislike actions.
+- Preserved playback priority during sorting operations.
+- Reduced delays in file sorting operations.
+- Incremented build version to 8.71.
+
  - Miniplayer: adaptive 2–4 line title with dynamic font scaling.
 
 - Increased axis label font size in shared spectrogram image.

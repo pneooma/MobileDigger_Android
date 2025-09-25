@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,18 @@ fun SharedWaveformDisplay(
             },
         contentAlignment = Alignment.Center
     ) {
+        // Always-visible green progress line overlay
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val progressX = localProgress * size.width
+            drawLine(
+                color = Color.Green,
+                start = Offset(progressX, 0f),
+                end = Offset(progressX, size.height),
+                strokeWidth = 2.dp.toPx()
+            )
+        }
         when {
             sharedState.isLoading -> {
                 // Loading indicator

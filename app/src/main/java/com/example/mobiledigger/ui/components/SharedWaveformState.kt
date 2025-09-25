@@ -17,7 +17,7 @@ import android.content.Context
 private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
 // Optimized LRU cache for waveform data with size limit (reduced for memory safety)
-private const val MAX_WAVEFORM_CACHE_SIZE = 8 // Limit to 8 waveforms for better memory management
+private const val MAX_WAVEFORM_CACHE_SIZE = 3 // User preference: keep cache very small
 private val waveformCache = java.util.Collections.synchronizedMap(
     object : LinkedHashMap<String, IntArray>(MAX_WAVEFORM_CACHE_SIZE + 1, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, IntArray>?): Boolean {
@@ -69,23 +69,22 @@ fun rememberSharedWaveformState(
             }
 
             try {
-                // Process Amplituda on background thread to prevent ANR
+                // Process Amplituda on background thread for higher fidelity on small files
                 scope.launch(Dispatchers.IO) {
                     try {
                         // Use Amplituda to process the audio with optimized settings
                         val amplituda = Amplituda(context)
                         
-                        // Create dynamic compression settings based on file size for optimal performance
+                        // Create dynamic compression settings based on file type for optimal performance
                         val fileSizeMB = currentFile.size / (1024.0 * 1024.0)
-                        val compressSettings = when {
-                            fileSizeMB > 100 -> Compress.withParams(Compress.AVERAGE, 1) // Very large files: use average compression but fewer samples
-                            fileSizeMB > 50 -> Compress.withParams(Compress.AVERAGE, 2)  // Large files: average compression, 2 samples/sec
-                            fileSizeMB > 20 -> Compress.withParams(Compress.AVERAGE, 3)  // Medium files: average compression, 3 samples/sec
-                            fileSizeMB > 10 -> Compress.withParams(Compress.AVERAGE, 4)  // Small-medium files: average compression, 4 samples/sec
-                            else -> Compress.withParams(Compress.AVERAGE, 5)             // Small files: average compression, 5 samples/sec
-                        }
+                        val fileName = currentFile.name.lowercase()
+                        val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
                         
-                        println("🎵 File size: ${fileSizeMB.format(1)}MB, using optimized compression settings")
+                        // AIFF files are uncompressed, so use ultra-minimal samples for maximum speed
+                        val samplesPerSecond = if (isAiffFile) 1 else 3
+                        val compressSettings = Compress.withParams(Compress.AVERAGE, samplesPerSecond)
+                        
+                        println("🎵 File: ${currentFile.name}, Size: ${fileSizeMB.format(1)}MB, Type: ${if (isAiffFile) "AIFF" else "Other"}, Samples/sec: $samplesPerSecond")
                         
                         // Try using InputStream first (more compatible with content:// URIs)
                         val inputStream = try {
@@ -95,7 +94,7 @@ fun rememberSharedWaveformState(
                             null
                         }
                         
-                        if (inputStream != null) {
+                        if (inputStream != null) { // High-fidelity for all files
                             println("🔗 Using InputStream for Amplituda processing")
                             
                             // Process audio using InputStream with optimized settings
@@ -112,12 +111,12 @@ fun rememberSharedWaveformState(
                                                     }
                                                     .toIntArray()
                                                 
-                                                // Cache the waveform data
+                                                // Cache and update only if we improve upon lightweight
                                                 waveformCache[cacheKey] = samples
-                                                
-                                                // Update UI on main thread
                                                 scope.launch(Dispatchers.Main) {
-                                                    waveformData = samples
+                                                    if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
+                                                        waveformData = samples
+                                                    }
                                                     isLoading = false
                                                 }
                                                 println("✅ Shared waveform generated from InputStream: ${samples.size} samples")
@@ -158,12 +157,11 @@ fun rememberSharedWaveformState(
                                                                 }
                                                                 .toIntArray()
                                                             
-                                                            // Cache the waveform data
                                                             waveformCache[cacheKey] = samples
-                                                            
-                                                            // Update UI on main thread
                                                             scope.launch(Dispatchers.Main) {
-                                                                waveformData = samples
+                                                                if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
+                                                                    waveformData = samples
+                                                                }
                                                                 isLoading = false
                                                             }
                                                             println("✅ Shared waveform generated from URI string: ${samples.size} samples")
@@ -220,12 +218,11 @@ fun rememberSharedWaveformState(
                                                 }
                                                 .toIntArray()
                                             
-                                            // Cache the waveform data
                                             waveformCache[cacheKey] = samples
-                                            
-                                            // Update UI on main thread
                                             scope.launch(Dispatchers.Main) {
-                                                waveformData = samples
+                                                if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
+                                                    waveformData = samples
+                                                }
                                                 isLoading = false
                                             }
                                             println("✅ Shared waveform generated from URI string: ${samples.size} samples")

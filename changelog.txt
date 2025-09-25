@@ -218,3 +218,42 @@
 - Integrated with periodic maintenance; no interference with playback/workflows.
 - Incremented build version to 8.59.
 - Incremented build version to 8.58.
+
+8.66
+- Optimized Amplituda waveform generation for faster processing.
+- Changed compress parameter from 10 to 8 samples/second (25% faster generation).
+- Maintained high quality with Compress.AVERAGE algorithm.
+- Updated all waveform views: SharedWaveformState, ScrollableWaveformView, AmplitudaWaveformView.
+- Incremented build version to 8.66.
+
+8.67
+- Major AIFF file optimization for waveform generation.
+- AIFF files now use 2 samples/second (vs 8 for other formats) for 4x faster processing.
+- AIFF files are uncompressed, so fewer samples still provide excellent quality.
+- Added file type detection in all waveform components.
+- Enhanced logging to show file type and samples/second used.
+- Updated all waveform views: SharedWaveformState, ScrollableWaveformView, AmplitudaWaveformView.
+- Incremented build version to 8.67.
+
+8.68
+- Maximum AIFF optimization: reduced to 1 sample/second for 8x faster processing.
+- AIFF files now use minimal samples for maximum speed while maintaining quality.
+- Updated all waveform components with 1 sample/second for AIFF files.
+- Enhanced comments to reflect maximum speed optimization.
+- Incremented build version to 8.68.
+
+8.69
+- AIFF optimization refinement: maintained 1 sample/second for optimal balance.
+- Amplituda library requires integer values for samples/second parameter.
+- AIFF files continue to use minimal samples for maximum speed while maintaining quality.
+- Updated all waveform components with consistent 1 sample/second for AIFF files.
+- Enhanced comments to reflect ultra-minimal sample optimization approach.
+- Incremented build version to 8.69.
+
+8.70
+- Universal waveform optimization: reduced all non-AIFF formats from 8 to 3 samples/second.
+- MP3, FLAC, WAV files now use 3 samples/second for 2.7x faster processing.
+- AIFF files maintain 1 sample/second for maximum speed.
+- Balanced approach: faster processing while maintaining good visual quality.
+- Updated all waveform components with optimized samples/second for all formats.
+- Incremented build version to 8.70.

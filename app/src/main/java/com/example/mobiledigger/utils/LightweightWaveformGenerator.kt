@@ -24,11 +24,11 @@ object LightweightWaveformGenerator {
     suspend fun generateFromUri(
         context: Context,
         uri: Uri,
-        barsCount: Int = 30
+        barsCount: Int = 256
     ): IntArray = withContext(Dispatchers.IO) {
         
         // Strict memory safety limits
-        val effectiveBarsCount = minOf(barsCount, 30) // Maximum 30 bars
+        val effectiveBarsCount = barsCount
         
         // Check available memory before proceeding
         val runtime = Runtime.getRuntime()

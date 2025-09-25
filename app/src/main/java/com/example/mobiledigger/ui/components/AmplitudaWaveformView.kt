@@ -83,10 +83,15 @@ fun AmplitudaWaveformView(
                         // Use Amplituda to process the audio with optimized settings
                         val amplituda = Amplituda(context)
                         
-                        // Create optimized compression settings for faster processing
+                        // Create optimized compression settings based on file type
+                        val fileName = currentFile.name.lowercase()
+                        val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
+                        
+                        // AIFF files are uncompressed, so use ultra-minimal samples for maximum speed
+                        val samplesPerSecond = if (isAiffFile) 1 else 3
                         val compressSettings = Compress.withParams(
-                            Compress.AVERAGE, // Use average compression for faster processing
-                            2 // Ultra-fast: 2 samples/second
+                            Compress.AVERAGE,
+                            samplesPerSecond // AIFF: 1 sample/sec, Others: 3 samples/sec
                         )
                         
                         // Try using InputStream first (more compatible with content:// URIs)

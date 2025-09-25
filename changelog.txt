@@ -257,3 +257,13 @@
 - Balanced approach: faster processing while maintaining good visual quality.
 - Updated all waveform components with optimized samples/second for all formats.
 - Incremented build version to 8.70.
+
+8.71
+- Fixed animation hanging during like/dislike operations.
+- Reduced delays in file operations to prevent UI blocking (3000ms → 1000ms, 2000ms → 500ms).
+- Added comprehensive error handling to prevent dislike button crashes.
+- Implemented safe file sorting with proper thread management.
+- Preserved playback priority during file operations using Dispatchers.IO.
+- Added try-catch blocks to all like/dislike button handlers and swipe gestures.
+- Enhanced stability for multi-file operations with reduced delays.
+- Incremented build version to 8.71.

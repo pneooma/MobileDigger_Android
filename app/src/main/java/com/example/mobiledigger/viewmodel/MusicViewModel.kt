@@ -679,7 +679,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             _errorMessage.value = "No current file selected to sort"
             return
         }
-        sortMusicFile(fileToSort, action)
+        
+        // Ensure playback priority - don't block audio operations
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sortMusicFileSafe(fileToSort, action)
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    handleError("sortCurrentFile", e)
+                }
+            }
+        }
     }
 
     private fun sortFileAtIndex(index: Int, action: SortAction) {
@@ -717,6 +727,39 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 }
             } catch (e: Exception) {
                 handleError("sortMusicFile", e)
+            }
+        }
+    }
+    
+    // Safe version that preserves playback priority
+    private suspend fun sortMusicFileSafe(file: MusicFile, action: SortAction) {
+        if (!fileManager.isDestinationSelected()) {
+            withContext(Dispatchers.Main) {
+                _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
+            }
+            return
+        }
+        
+        CrashLogger.log("MusicViewModel", "Safe sorting file: ${file.name} with action $action")
+        
+        try {
+            // Perform file operation on IO thread without blocking audio
+            val success = withContext(Dispatchers.IO) {
+                fileManager.sortFile(file, action)
+            }
+            
+            if (success) {
+                withContext(Dispatchers.Main) {
+                    handleSuccessfulSort(file, action)
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    _errorMessage.value = "Failed to sort file. Please check folder permissions."
+                }
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                handleError("sortMusicFileSafe", e)
             }
         }
     }
@@ -825,16 +868,29 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     fun sortAtIndex(index: Int, action: SortAction) {
-        // This function now delegates to sortMusicFile
+        // This function now delegates to sortMusicFile with error handling
         val files = when (_currentPlaylistTab.value) {
             PlaylistTab.TODO -> _musicFiles.value
             PlaylistTab.LIKED -> _likedFiles.value
             PlaylistTab.REJECTED -> _rejectedFiles.value
         }
-        if (index in files.indices) {
-            sortMusicFile(files[index], action)
-        } else {
+        
+        if (index !in files.indices) {
             _errorMessage.value = "Invalid index for sorting: $index"
+            return
+        }
+        
+        val fileToSort = files[index]
+        
+        // Use safe sorting to prevent crashes
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sortMusicFileSafe(fileToSort, action)
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    handleError("sortAtIndex", e)
+                }
+            }
         }
     }
 
@@ -1765,46 +1821,43 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // First, ensure audio playback and waveform generation are prioritized
-                // Wait for current file to finish loading and waveform to be generated
-                
-                // Check if we need to move to next song first
+                // Reduced delays to prevent animation hanging
                 val currentIndex = _currentIndex.value
                 val musicFiles = _musicFiles.value
                 
                 if (currentIndex < musicFiles.size - 1) {
-                    // Move to next song first
+                    // Move to next song first with minimal delay
                     withContext(Dispatchers.Main) {
                         _currentIndex.value = currentIndex + 1
                         loadCurrentFile()
                     }
                     
-                    // Wait for next song to start playing and waveform to generate
-                    delay(3000) // Give more time for next song to load and waveform to generate
+                    // Reduced wait time to prevent animation hanging
+                    delay(1000) // Reduced from 3000ms
                     
-                    // Additional check to ensure playback is stable
+                    // Quick check for playback stability
                     var retryCount = 0
-                    while (retryCount < 5 && !isPlaying.value) {
-                        delay(500)
+                    while (retryCount < 3 && !isPlaying.value) { // Reduced from 5
+                        delay(300) // Reduced from 500ms
                         retryCount++
                     }
                 } else {
-                    // If no next song, just wait for current playback to stabilize
-                    delay(2000)
+                    // Minimal delay for current playback
+                    delay(500) // Reduced from 2000ms
                 }
                 
-                val sortedIndices = selected.sortedDescending() // Sort in reverse order to avoid index shifting
+                val sortedIndices = selected.sortedDescending()
                 val successfullySortedIndices = mutableListOf<Int>()
                 
-                // Sort files and track successful operations
+                // Sort files with reduced delays
                 for (index in sortedIndices) {
                     if (index in _musicFiles.value.indices) {
                         val file = _musicFiles.value[index]
                         if (fileManager.sortFile(file, action)) {
                             successfullySortedIndices.add(index)
                         }
-                        // Small delay between file operations to prevent memory issues
-                        delay(200) // Increased delay for better stability
+                        // Reduced delay to prevent animation hanging
+                        delay(100) // Reduced from 200ms
                     }
                 }
                 

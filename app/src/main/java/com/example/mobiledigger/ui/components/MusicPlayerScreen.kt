@@ -830,7 +830,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = ":: v8.70 ::",
+                    text = ":: v8.71 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1538,9 +1538,14 @@ viewModel.updateSearchText("")
                                                     isAnimating = true
                                                     // Execute action if threshold met
                                                     if (abs(dragOffset) > 150) {
-                                                        when {
-                                                            dragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
-                                                            dragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                        try {
+                                                            when {
+                                                                dragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
+                                                                dragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            // Handle crash gracefully
+                                                            println("Error in swipe gesture: ${e.message}")
                                                         }
                                                     }
                                                 }
@@ -2034,11 +2039,16 @@ viewModel.updateSearchText("")
                                 ) {
                                     ElevatedButton(
                                         onClick = { 
-                                            hapticFeedback()
-                                            if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                viewModel.sortSelectedFiles(SortAction.DISLIKE)
-                                            } else {
-                                                viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                            try {
+                                                hapticFeedback()
+                                                if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                    viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                } else {
+                                                    viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                }
+                                            } catch (e: Exception) {
+                                                // Handle crash gracefully
+                                                println("Error in main dislike button: ${e.message}")
                                             }
                                         },
                                         colors = ButtonDefaults.elevatedButtonColors(
@@ -2071,11 +2081,16 @@ viewModel.updateSearchText("")
                                     
                                     ElevatedButton(
                                         onClick = { 
-                                            hapticFeedback()
-                                            if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                viewModel.sortSelectedFiles(SortAction.LIKE)
-                                            } else {
-                                                viewModel.sortCurrentFile(SortAction.LIKE)
+                                            try {
+                                                hapticFeedback()
+                                                if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                    viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                } else {
+                                                    viewModel.sortCurrentFile(SortAction.LIKE)
+                                                }
+                                            } catch (e: Exception) {
+                                                // Handle crash gracefully
+                                                println("Error in main like button: ${e.message}")
                                             }
                                         },
                                         colors = ButtonDefaults.elevatedButtonColors(
@@ -2792,7 +2807,12 @@ viewModel.updateSearchText("")
                                             if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.REJECTED) {
                                             IconButton(
                                                 onClick = { 
-                                                    viewModel.sortAtIndex(index, SortAction.LIKE) 
+                                                    try {
+                                                        viewModel.sortAtIndex(index, SortAction.LIKE) 
+                                                    } catch (e: Exception) {
+                                                        // Handle crash gracefully
+                                                        println("Error in like button: ${e.message}")
+                                                    }
                                                 },
                                                 modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
                                             ) {
@@ -2807,7 +2827,12 @@ viewModel.updateSearchText("")
                                             if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
                                             IconButton(
                                                 onClick = { 
-                                                    viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                    try {
+                                                        viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                    } catch (e: Exception) {
+                                                        // Handle crash gracefully
+                                                        println("Error in dislike button: ${e.message}")
+                                                    }
                                                 },
                                                 modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
                                             ) {
@@ -2930,9 +2955,14 @@ viewModel.updateSearchText("")
                                                 miniIsAnimating = true
                                                 // Execute action if threshold met
                                                 if (abs(miniDragOffset) > 100) { // Slightly lower threshold for miniplayer
-                                                    when {
-                                                        miniDragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
-                                                        miniDragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                    try {
+                                                        when {
+                                                            miniDragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
+                                                            miniDragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        // Handle crash gracefully
+                                                        println("Error in miniplayer swipe gesture: ${e.message}")
                                                     }
                                                 }
                                             }

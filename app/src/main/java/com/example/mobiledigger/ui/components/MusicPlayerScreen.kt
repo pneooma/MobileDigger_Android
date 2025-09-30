@@ -71,6 +71,7 @@ import androidx.compose.animation.togetherWith
 
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -156,6 +157,7 @@ fun MusicPlayerScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val showDeleteRejectedPrompt by viewModel.showDeleteRejectedPrompt.collectAsState()
     val currentPlaylistTab by viewModel.currentPlaylistTab.collectAsState()
     val likedFiles by viewModel.likedFiles.collectAsState()
@@ -168,8 +170,11 @@ fun MusicPlayerScreen(
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
     
+    // Local state for analyze prompt dialog
+    var showAnalyzePrompt by remember { mutableStateOf(false) }
     
-
+    // State to trigger spectrogram after delay
+    var triggerSpectrogramAfterDelay by remember { mutableStateOf(false) }
     
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -240,7 +245,6 @@ fun MusicPlayerScreen(
     
     // Shared waveform state - generated once and used by both main and mini players
     val currentFile = currentPlayingFile // Use the actually playing file instead of playlist-based file
-    val context = LocalContext.current
     val sharedWaveformState = rememberSharedWaveformState(currentFile, context)
     
     // Visual settings
@@ -573,6 +577,63 @@ fun MusicPlayerScreen(
         )
     }
     
+    // Handle delayed spectrogram trigger
+    LaunchedEffect(triggerSpectrogramAfterDelay) {
+        if (triggerSpectrogramAfterDelay) {
+            delay(1000) // Wait 1 second for file to be properly loaded
+            if (currentPlayingFile != null) {
+                showSpectrogram = true
+            }
+            triggerSpectrogramAfterDelay = false
+        }
+    }
+    
+    // Analyze prompt dialog when file is opened externally
+    LaunchedEffect(Unit) {
+        while (true) {
+            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            val shouldShowPrompt = prefs.getBoolean("show_analyze_prompt", false)
+            if (shouldShowPrompt && currentPlayingFile != null) {
+                // Clear the flag
+                prefs.edit().apply {
+                    putBoolean("show_analyze_prompt", false)
+                    apply()
+                }
+                // Show the prompt dialog
+                showAnalyzePrompt = true
+            }
+            delay(500) // Check every 500ms
+        }
+    }
+    
+    // Analyze prompt dialog
+    if (showAnalyzePrompt) {
+        AlertDialog(
+            onDismissRequest = { showAnalyzePrompt = false },
+            title = { Text("File Opened") },
+            text = { Text("What would you like to do with this file?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showAnalyzePrompt = false
+                        // Trigger spectrogram after delay to ensure file is properly loaded
+                        triggerSpectrogramAfterDelay = true
+                    }
+                ) {
+                    Text("Generate Spectrogram")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showAnalyzePrompt = false }
+                ) {
+                    Text("Just Listen")
+                }
+            }
+        )
+    }
+    
+    
     if (showSettingsDialog) {
         AlertDialog(
             onDismissRequest = { showSettingsDialog = false },
@@ -830,7 +891,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                         Text(
-                            text = ":: v8.72 ::",
+                            text = ":: v8.96 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -955,7 +1016,11 @@ viewModel.updateSearchText("")
                         HorizontalDivider(); HorizontalDivider(); HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Delete Liked Files", color = Color.Red, fontWeight = FontWeight.Bold) },
-                            onClick = { menuExpanded = false; showDeleteDialogStep = 1 },
+                            onClick = { 
+                                menuExpanded = false
+                                deleteActionType = PlaylistTab.LIKED
+                                showDeleteDialogStep = 1
+                            },
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) }
                         )
                         HorizontalDivider()

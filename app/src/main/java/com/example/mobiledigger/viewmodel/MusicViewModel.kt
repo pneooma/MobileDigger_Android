@@ -257,6 +257,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     CrashLogger.log("MusicViewModel", "Failed to start service or register receiver", e)
                 }
             }
+            
+            // Check for pending external audio files
+            checkForPendingExternalAudio()
+            
             // Restore previously chosen folders if available
             preferences.getDestinationRootUri()?.let { saved ->
                 runCatching {
@@ -2608,4 +2612,275 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
         }
     }
+    
+    // External audio file handling methods
+    private fun checkForPendingExternalAudio() {
+        viewModelScope.launch {
+            try {
+                val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                val hasPendingAudio = prefs.getBoolean("has_pending_audio", false)
+                if (hasPendingAudio) {
+                    val audioUriString = prefs.getString("pending_audio_uri", null)
+                    if (audioUriString != null) {
+                        val audioUri = Uri.parse(audioUriString)
+                        CrashLogger.log("MusicViewModel", "Processing pending external audio file: $audioUri")
+                        handleExternalAudioFile(audioUri)
+                        
+                        // Clear the pending audio flag
+                        prefs.edit().apply {
+                            remove("pending_audio_uri")
+                            putBoolean("has_pending_audio", false)
+                            apply()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error checking for pending external audio", e)
+            }
+        }
+    }
+    
+    fun handleExternalAudioFile(audioUri: Uri) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _errorMessage.value = null
+                
+                CrashLogger.log("MusicViewModel", "Handling external audio file: $audioUri")
+                
+                // Check if we should auto-show spectrogram (only for analyze mode)
+                val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                val shouldShowSpectrogram = prefs.getBoolean("auto_show_spectrogram", false)
+                
+                // Create a MusicFile object from the URI with better error handling
+                val musicFile = try {
+                    createMusicFileFromUri(audioUri)
+                } catch (e: OutOfMemoryError) {
+                    CrashLogger.log("MusicViewModel", "Out of memory while creating MusicFile", e)
+                    System.gc() // Force garbage collection
+                    _errorMessage.value = "File too large to process. Please try a smaller file."
+                    return@launch
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error creating MusicFile from URI", e)
+                    _errorMessage.value = "Error loading file: ${e.message}"
+                    return@launch
+                }
+                
+                if (musicFile != null) {
+                    try {
+                        // Add to the beginning of the TODO playlist and play
+                        val currentFiles = _musicFiles.value.toMutableList()
+                        currentFiles.add(0, musicFile) // Add to beginning
+                        _musicFiles.value = currentFiles
+                        _currentIndex.value = 0
+                        
+                        // Switch to TODO tab if not already there
+                        if (_currentPlaylistTab.value != PlaylistTab.TODO) {
+                            switchPlaylistTab(PlaylistTab.TODO)
+                        }
+                        
+                        // Play the file with error handling
+                        try {
+                            playFile(musicFile)
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error playing external file", e)
+                            _errorMessage.value = "File loaded but playback failed: ${e.message}"
+                            return@launch
+                        }
+                        
+                        if (shouldShowSpectrogram) {
+                            // Clear the flag
+                            prefs.edit().apply {
+                                putBoolean("auto_show_spectrogram", false)
+                                apply()
+                            }
+                            
+                            // Trigger spectrogram generation after a short delay
+                            delay(2000) // Wait for playback to start
+                            showSpectrogramForCurrentFile()
+                            _errorMessage.value = "File loaded for analysis: ${musicFile.name}"
+                        } else {
+                            _errorMessage.value = "Opened external file: ${musicFile.name}"
+                        }
+                        
+                        CrashLogger.log("MusicViewModel", "Successfully opened external audio file: ${musicFile.name}")
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Error processing external file", e)
+                        _errorMessage.value = "Error processing file: ${e.message}"
+                    }
+                } else {
+                    _errorMessage.value = "Could not load the selected audio file"
+                    CrashLogger.log("MusicViewModel", "Failed to create MusicFile from URI: $audioUri")
+                }
+            } catch (e: OutOfMemoryError) {
+                CrashLogger.log("MusicViewModel", "Out of memory in handleExternalAudioFile", e)
+                System.gc() // Force garbage collection
+                _errorMessage.value = "Out of memory. Please try a smaller file."
+            } catch (e: Exception) {
+                handleError("handleExternalAudioFile", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    private suspend fun createMusicFileFromUri(uri: Uri): MusicFile? = withContext(Dispatchers.IO) {
+        try {
+            val fileName = getFileNameFromUri(context, uri)
+            val fileSize = getFileSizeFromUri(context, uri)
+            
+            // For external files opened via "Open with", copy to temporary location for better access
+            val finalUri = if (uri.scheme == "content") {
+                copyContentUriToTempFile(uri, fileName ?: "temp_audio")
+            } else {
+                uri
+            }
+            
+            MusicFile(
+                name = fileName ?: "Unknown",
+                uri = finalUri,
+                size = fileSize ?: 0L,
+                duration = 0L, // Will be extracted later
+                sourcePlaylist = PlaylistTab.TODO
+            )
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error creating MusicFile from URI", e)
+            null
+        }
+    }
+    
+    private suspend fun copyContentUriToTempFile(contentUri: Uri, fileName: String): Uri = withContext(Dispatchers.IO) {
+        try {
+            // Check file size first to avoid memory issues
+            val fileSize = getFileSizeFromUri(context, contentUri) ?: 0L
+            val fileSizeMB = fileSize / (1024 * 1024)
+            
+            // Skip copying for very large files (>100MB) to avoid crashes
+            if (fileSizeMB > 100) {
+                CrashLogger.log("MusicViewModel", "File too large (${fileSizeMB}MB), using original URI")
+                return@withContext contentUri
+            }
+            
+            val tempDir = File(context.cacheDir, "temp_audio")
+            if (!tempDir.exists()) {
+                tempDir.mkdirs()
+            }
+            
+            // Clean up old temp files to prevent storage issues
+            cleanupOldTempFiles(tempDir)
+            
+            val tempFile = File(tempDir, fileName)
+            val inputStream = context.contentResolver.openInputStream(contentUri)
+            
+            if (inputStream == null) {
+                CrashLogger.log("MusicViewModel", "Could not open input stream for URI: $contentUri")
+                return@withContext contentUri
+            }
+            
+            inputStream.use { input ->
+                FileOutputStream(tempFile).use { output ->
+                    // Copy with buffer to handle large files safely
+                    val buffer = ByteArray(8192) // 8KB buffer
+                    var bytesRead: Int
+                    var totalBytes = 0L
+                    
+                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                        output.write(buffer, 0, bytesRead)
+                        totalBytes += bytesRead
+                        
+                        // Check memory pressure every 10MB
+                        if (totalBytes % (10 * 1024 * 1024) == 0L) {
+                            System.gc() // Force garbage collection
+                        }
+                    }
+                }
+            }
+            
+            // Verify the file was copied successfully
+            if (tempFile.exists() && tempFile.length() > 0) {
+                CrashLogger.log("MusicViewModel", "Successfully copied file to temp location: ${tempFile.absolutePath}")
+                Uri.fromFile(tempFile)
+            } else {
+                CrashLogger.log("MusicViewModel", "Temp file copy failed or empty, using original URI")
+                contentUri
+            }
+        } catch (e: OutOfMemoryError) {
+            CrashLogger.log("MusicViewModel", "Out of memory while copying file", e)
+            System.gc() // Force garbage collection
+            contentUri // Fallback to original URI
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error copying content URI to temp file", e)
+            contentUri // Fallback to original URI
+        }
+    }
+    
+    private fun cleanupOldTempFiles(tempDir: File) {
+        try {
+            val files = tempDir.listFiles()
+            if (files != null && files.size > 10) { // Keep only 10 most recent temp files
+                files.sortedByDescending { it.lastModified() }
+                    .drop(10)
+                    .forEach { file ->
+                        try {
+                            if (file.delete()) {
+                                CrashLogger.log("MusicViewModel", "Cleaned up old temp file: ${file.name}")
+                            }
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error deleting temp file: ${file.name}", e)
+                        }
+                    }
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error cleaning up temp files", e)
+        }
+    }
+    
+    private fun getFileNameFromUri(context: Context, uri: Uri): String? {
+        return try {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex >= 0) cursor.getString(nameIndex) else null
+                } else null
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error getting file name from URI", e)
+            null
+        }
+    }
+    
+    private fun getFileSizeFromUri(context: Context, uri: Uri): Long? {
+        return try {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                    if (sizeIndex >= 0) cursor.getLong(sizeIndex) else null
+                } else null
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Error getting file size from URI", e)
+            null
+        }
+    }
+    
+    // Method to show spectrogram for current file
+    private fun showSpectrogramForCurrentFile() {
+        viewModelScope.launch {
+            try {
+                val currentFile = _currentPlayingFile.value
+                if (currentFile != null) {
+                    CrashLogger.log("MusicViewModel", "Auto-showing spectrogram for: ${currentFile.name}")
+                    // Set a flag that the UI can detect to show the spectrogram
+                    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    prefs.edit().apply {
+                        putBoolean("auto_show_spectrogram", true)
+                        apply()
+                    }
+                }
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error showing spectrogram for current file", e)
+            }
+        }
+    }
+    
 }

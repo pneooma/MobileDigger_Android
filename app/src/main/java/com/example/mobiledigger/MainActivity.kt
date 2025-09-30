@@ -1,9 +1,13 @@
 package com.example.mobiledigger
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -44,6 +48,9 @@ class MainActivity : ComponentActivity() {
         
         // Check if this is the first start and show permissions popup
         checkFirstStartAndRequestPermissions()
+        
+        // Handle incoming intent for audio files
+        handleIncomingIntent(intent)
         
         setContent {
             val viewModel: MusicViewModel = viewModel()
@@ -100,6 +107,26 @@ class MainActivity : ComponentActivity() {
         } else {
             // Not first start or permissions already shown, just request permissions silently
             requestStoragePermissions()
+        }
+        
+        // Request battery optimization exemption for background playback
+        requestBatteryOptimizationExemption()
+    }
+    
+    // Request battery optimization exemption for background playback
+    private fun requestBatteryOptimizationExemption() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    android.util.Log.w("MainActivity", "Could not request battery optimization exemption", e)
+                }
+            }
         }
     }
     
@@ -177,5 +204,31 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         // The MusicService is a foreground service and will manage its own lifecycle.
         // It should continue running even when the app is paused if music is playing.
+    }
+    
+    // Handle incoming intents (including when app is already running)
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.let { handleIncomingIntent(it) }
+    }
+    
+    // Process incoming audio file intent
+    private fun handleIncomingIntent(intent: Intent) {
+        when (intent.action) {
+            Intent.ACTION_VIEW -> {
+                val audioUri = intent.data
+                if (audioUri != null) {
+                    android.util.Log.d("MainActivity", "Received audio file intent: $audioUri")
+                    
+                    // Store the URI to be processed by the ViewModel
+                    val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+                    prefs.edit {
+                        putString("pending_audio_uri", audioUri.toString())
+                        putBoolean("has_pending_audio", true)
+                        putBoolean("show_analyze_prompt", true) // Show prompt asking user what they want to do
+                    }
+                }
+            }
+        }
     }
 }

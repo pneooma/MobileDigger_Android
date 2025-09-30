@@ -1,3 +1,185 @@
+8.96
+- Fixed crashes when loading files via "Open with".
+- Added comprehensive error handling for file operations.
+- Improved memory management for large files (>100MB files are skipped).
+- Added buffer-based file copying to prevent memory issues.
+- Added automatic cleanup of old temporary files.
+- Better error messages for users when file loading fails.
+- Incremented build version to 8.96.
+
+8.95
+- Fixed spectrogram file access issue for files opened via "Open with".
+- Files opened via "Open with" are now copied to temporary location for better access.
+- This ensures spectrogram generation can properly access the file content.
+- No more fallback spectrogram due to file access issues.
+- Incremented build version to 8.95.
+
+8.94
+- Fixed spectrogram showing fallback instead of analyzing the opened file.
+- Added delay to ensure file is properly loaded before generating spectrogram.
+- Spectrogram now correctly analyzes the file that was opened via "Open with".
+- No more fallback spectrogram when user chooses "Generate Spectrogram".
+- Incremented build version to 8.94.
+
+8.93
+- Removed automatic spectrogram generation from "Open The File & Spek it".
+- Added user prompt asking whether to generate spectrogram or just listen.
+- User can now choose: "Generate Spectrogram" or "Just Listen".
+- Spectrogram generation uses the main player process when user chooses it.
+- More user control over the Open with behavior.
+- Incremented build version to 8.93.
+
+8.92
+- Removed "Analyze file" feature completely from Open with menu.
+- Deleted AnalyzeFileActivity and all related code.
+- Renamed Open with option to "Open The File & Spek it".
+- Single Open with option now always auto-shows spectrogram.
+- Simplified Open with behavior: opens file, plays it, and shows spectrogram.
+- Cleaned up all analyze-related code and complexity.
+- Incremented build version to 8.92.
+
+8.91
+- Fixed "Analyze file" getting stuck at loading when app is already running.
+- Restored proper file loading flow for "Analyze file" when app is running.
+- "Analyze file" now properly loads the new file and generates spectrogram.
+- No more stuck loading states or slow spectrogram generation.
+- Both scenarios now follow the same proper file loading and spectrogram generation flow.
+- Incremented build version to 8.91.
+
+8.90
+- Fixed remaining multiple app instances issue with "Analyze file" option.
+- Fixed auto-spectrogram generation bug on app startup.
+- Simplified "Analyze file" behavior when app is already running.
+- When app is open and "Analyze file" is selected: Just triggers spectrogram button.
+- When app is closed and "Analyze file" is selected: Opens app and auto-shows spectrogram.
+- Prevents unwanted spectrogram generation on normal app startup.
+- Incremented build version to 8.90.
+
+8.89
+- Fixed multiple app instances issue when using "Analyze file" option.
+- AnalyzeFileActivity now detects if MainActivity is already running.
+- If app is running: Uses existing instance and brings it to front.
+- If app is not running: Starts new instance normally.
+- Prevents duplicate app instances and multiple audio playback.
+- Incremented build version to 8.89.
+
+8.88
+- Restored "Analyze file" option in Open with menu by recreating AnalyzeFileActivity.
+- Fixed issue where "Analyze file" option disappeared from Open with menu.
+- AnalyzeFileActivity now properly redirects to MainActivity with analyze flag.
+- Both "MobileDigger" and "Analyze file" options now appear separately in Open with menu.
+- Incremented build version to 8.88.
+
+8.87
+- Modified "Open with" behavior to differentiate between the two actions.
+- "MobileDigger" action: Opens file, plays it, but does NOT auto-show spectrogram.
+- "Analyze file" action: Opens file, plays it, and auto-shows spectrogram after 2 seconds.
+- Users can now choose between simple playback or analysis with spectrogram.
+- Incremented build version to 8.87.
+
+8.86
+- Fixed "Analyze file" action to trigger main player's spectrogram instead of fallback.
+- Unified spectrogram generation mechanism for both "Open with" and "Analyze file" actions.
+- Both actions now use the same auto_show_spectrogram flag for consistent behavior.
+- Removed duplicate spectrogram triggering logic to prevent conflicts.
+- Incremented build version to 8.86.
+
+8.85
+- Fixed "Analyze file" label missing from Open with menu.
+- Eliminated multiple app instances by consolidating all intent handling in MainActivity.
+- Removed separate AnalyzeFileActivity to prevent instance conflicts.
+- Added custom intent action for "Analyze file" to distinguish from regular "Open with".
+- Both "MobileDigger" and "Analyze file" options now properly appear in Open with menu.
+- Incremented build version to 8.85.
+
+8.84
+- Fixed spectrogram triggering mechanism in MusicViewModel.
+- Simplified AnalyzeFileActivity to always redirect to MainActivity for consistent behavior.
+- Added battery optimization exemption request for indefinite background playback.
+- Fixed both scenarios to properly add files to playlist and trigger spectrograms.
+- Enhanced background playback capabilities with proper foreground service configuration.
+- Incremented build version to 8.84.
+
+8.83
+- Fixed "Analyze file" behavior for both scenarios.
+- Scenario 1 (app closed): Auto-triggers spectrogram after 2 seconds, no prompt.
+- Scenario 2 (app running): Adds file to TODO playlist and auto-triggers spectrogram after 2 seconds.
+- Removed prompt dialog to streamline the analyze file experience.
+- Both scenarios now consistently auto-generate spectrograms.
+- Incremented build version to 8.83.
+
+8.82
+- Enhanced "Analyze file" action to handle app already running scenario.
+- When app is already open and "Analyze file" is selected, it adds file to TODO playlist and prompts user.
+- User can choose to generate spectrogram or cancel the analysis.
+- Prevents opening multiple app instances when app is already running.
+- Incremented build version to 8.82.
+
+8.81
+- Modified "Analyze file" action to automatically generate spectrogram without prompt.
+- "Analyze file" now loads the audio file and directly generates spectrogram after 2 seconds.
+- Removed user prompt dialog for streamlined spectrogram analysis.
+- Incremented build version to 8.81.
+
+8.80
+- Added new "Analyze file" action in "Open with" menu.
+- "Analyze file" loads the audio file and prompts user to generate spectrogram.
+- User can choose to generate spectrogram or cancel the analysis.
+- Provides more control over when spectrogram analysis is performed.
+- Incremented build version to 8.80.
+
+8.79
+- Restored "Open with" functionality that was accidentally removed.
+- Fixed external audio file handling in MusicViewModel.
+- "Open with" now works again - files are added to TODO playlist and played.
+- Auto-spectrogram display still works when files are opened externally.
+- Incremented build version to 8.79.
+
+8.78
+- Fixed "Open with" functionality to automatically show spectrogram.
+- When opening audio files with MobileDigger, spectrogram now auto-generates and displays.
+- Uses existing working spectrogram functionality from main app.
+- Auto-shows spectrogram popup 2 seconds after file starts playing.
+- Incremented build version to 8.78.
+
+8.77
+- Fixed spectrogram display issue in "Spek with MobileDigger" mode.
+- Spectrogram now properly displays the visual representation instead of just text.
+- Created dedicated SpectrogramDisplay component for better visualization.
+- Fixed UI rendering to show actual spectrogram bitmap in the activity.
+- Incremented build version to 8.77.
+
+8.76
+- Fixed spectrogram generation in "Spek with MobileDigger" mode.
+- Spectrogram now automatically generates and displays when opening files.
+- Added separate process configuration for better app separation from other apps.
+- Music playback now continues when switching between apps (WhatsApp, etc.).
+- Fixed process isolation to prevent playback interruption.
+- Incremented build version to 8.76.
+
+8.75
+- Added "Spek with MobileDigger" option in "Open with" menu.
+- New spectrogram-only mode that generates spectrograms without playing audio.
+- Separate activity for spectrogram analysis that doesn't interrupt current playback.
+- Users can analyze audio files visually while keeping their current music playing.
+- Spectrogram-only mode supports all audio formats (MP3, WAV, FLAC, AIFF, MP4, OGG).
+- Incremented build version to 8.75.
+
+8.74
+- Added "Open with" functionality for audio files.
+- App now appears in system's "Open with" menu for audio files.
+- External audio files are automatically added to TODO playlist and played.
+- Supports MP3, WAV, FLAC, AIFF, MP4, and OGG audio formats.
+- Added intent filters for comprehensive audio file handling.
+- External files are added to the beginning of the playlist for immediate playback.
+- Incremented build version to 8.74.
+
+8.73
+- Fixed "Delete Liked Files" action from actions menu not working.
+- Added missing deleteActionType assignment for liked files deletion.
+- Delete liked files now properly triggers 4-step confirmation dialog.
+- Incremented build version to 8.73.
+
 8.72
 - Added always-visible green progress line to waveform displays.
 - Progress line shows current playback position even when waveform is loading.

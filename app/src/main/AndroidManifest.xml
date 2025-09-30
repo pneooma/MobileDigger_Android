@@ -14,6 +14,8 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Permission to prevent battery optimization for background playback -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Permissions for smartwatch integration -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -35,15 +37,64 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label="Open The File &amp; Spek it"
             android:theme="@style/Theme.MobileDigger"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:process=":main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            
+            <!-- Intent filter for audio files - Open with functionality -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            
+            <!-- Specific audio format support -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/mpeg" />
+            </intent-filter>
+            
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/wav" />
+            </intent-filter>
+            
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/flac" />
+            </intent-filter>
+            
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/aiff" />
+            </intent-filter>
+            
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/mp4" />
+            </intent-filter>
+            
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/ogg" />
+            </intent-filter>
+            
         </activity>
         
 
@@ -52,7 +103,8 @@
         <service
             android:name=".audio.MusicService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback">
+            android:foregroundServiceType="mediaPlayback"
+            android:process=":music">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>

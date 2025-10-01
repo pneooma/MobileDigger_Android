@@ -446,6 +446,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "Destination folder canRead: ${destFolder?.canRead()}")
                 CrashLogger.log("MusicViewModel", "Destination folder canWrite: ${destFolder?.canWrite()}")
                 
+                // Ensure subfolders are created immediately
+                fileManager.ensureSubfolders()
+                CrashLogger.log("MusicViewModel", "Subfolders ensured for destination")
+                
             } catch (e: Exception) {
                 CrashLogger.log("MusicViewModel", "Error setting destination", e)
                 _errorMessage.value = "Error setting destination: ${e.message}"

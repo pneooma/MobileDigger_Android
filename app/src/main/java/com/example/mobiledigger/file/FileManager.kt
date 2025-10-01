@@ -342,16 +342,34 @@ class FileManager(private val context: Context) {
     suspend fun sortFile(musicFile: MusicFile, action: SortAction): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val sourceFile = DocumentFile.fromSingleUri(context, musicFile.uri)
-                if (sourceFile == null || !sourceFile.exists()) {
-                    CrashLogger.log("FileManager", "Source file not found: ${musicFile.uri}")
-                    return@withContext false
+                CrashLogger.log("FileManager", "Starting sort operation for: ${musicFile.name} with action: $action")
+                
+                // Handle temporary files differently
+                val sourceFile = if (musicFile.uri.scheme == "file" && musicFile.uri.path?.contains("temp_audio") == true) {
+                    // This is a temporary file, handle it as a regular File
+                    val file = File(musicFile.uri.path!!)
+                    if (!file.exists()) {
+                        CrashLogger.log("FileManager", "Temporary source file not found: ${musicFile.uri}")
+                        return@withContext false
+                    }
+                    CrashLogger.log("FileManager", "Temporary source file found: ${file.name}, exists: ${file.exists()}, canRead: ${file.canRead()}")
+                    null // We'll handle this differently below
+                } else {
+                    // Regular DocumentFile handling
+                    val docFile = DocumentFile.fromSingleUri(context, musicFile.uri)
+                    if (docFile == null || !docFile.exists()) {
+                        CrashLogger.log("FileManager", "Source file not found: ${musicFile.uri}")
+                        return@withContext false
+                    }
+                    CrashLogger.log("FileManager", "Source file found: ${docFile.name}, exists: ${docFile.exists()}, canRead: ${docFile.canRead()}")
+                    docFile
                 }
 
                 val destination = destinationFolder ?: run {
                     CrashLogger.log("FileManager", "Destination folder is not set.")
                     return@withContext false
                 }
+                CrashLogger.log("FileManager", "Destination folder: ${destination.uri}")
 
                 if (!destination.exists()) {
                     CrashLogger.log("FileManager", "Destination folder doesn't exist: ${destination.uri}")
@@ -362,47 +380,81 @@ class FileManager(private val context: Context) {
                     CrashLogger.log("FileManager", "No write permission to destination folder: ${destination.uri}")
                     return@withContext false
                 }
+                CrashLogger.log("FileManager", "Destination folder permissions OK")
 
                 val subFolderName = if (action == SortAction.LIKE) "Liked" else "Rejected"
+                CrashLogger.log("FileManager", "Looking for subfolder: $subFolderName")
                 var targetSubFolder = destination.findFile(subFolderName)
                 if (targetSubFolder == null) {
+                    CrashLogger.log("FileManager", "Subfolder not found, creating: $subFolderName")
                     targetSubFolder = destination.createDirectory(subFolderName)
                     if (targetSubFolder == null) {
                         CrashLogger.log("FileManager", "Failed to create subfolder: $subFolderName in ${destination.uri}")
                         return@withContext false
                     }
+                    CrashLogger.log("FileManager", "Successfully created subfolder: $subFolderName")
+                } else {
+                    CrashLogger.log("FileManager", "Found existing subfolder: $subFolderName")
                 }
+                
                 if (!targetSubFolder.canWrite()) {
                     CrashLogger.log("FileManager", "No write permission to subfolder: ${targetSubFolder.uri}")
                     return@withContext false
                 }
+                CrashLogger.log("FileManager", "Subfolder permissions OK: ${targetSubFolder.uri}")
 
-                val desiredName = sourceFile.name ?: musicFile.name
+                // Handle file copying based on source type
+                val isTemporaryFile = sourceFile == null
+                val desiredName = if (isTemporaryFile) {
+                    musicFile.name
+                } else {
+                    sourceFile!!.name ?: musicFile.name
+                }
                 val safeName = resolveUniqueName(targetSubFolder, desiredName)
-                val target = targetSubFolder.createFile(sourceFile.type ?: "audio/*", safeName)
+                val target = targetSubFolder.createFile("audio/*", safeName)
                     ?: run {
                         CrashLogger.log("FileManager", "Failed to create target file: $safeName")
                         return@withContext false
                     }
 
                 var bytesCopied = 0L
-                contentResolver.openInputStream(sourceFile.uri)?.use { input ->
-                    contentResolver.openOutputStream(target.uri)?.use { output ->
-                        bytesCopied = input.copyTo(output)
-                        output.flush()
+                if (isTemporaryFile) {
+                    // Handle temporary file copying
+                    val tempFile = File(musicFile.uri.path!!)
+                    tempFile.inputStream().use { input ->
+                        contentResolver.openOutputStream(target.uri)?.use { output ->
+                            bytesCopied = input.copyTo(output)
+                            output.flush()
+                        } ?: run {
+                            CrashLogger.log("FileManager", "Unable to open output stream for ${target.uri}")
+                            target.delete()
+                            return@withContext false
+                        }
+                    }
+                    // Delete temporary file after copying
+                    if (!tempFile.delete()) {
+                        CrashLogger.log("FileManager", "Could not delete temporary file: ${tempFile.absolutePath}")
+                    }
+                } else {
+                    // Handle regular DocumentFile copying
+                    contentResolver.openInputStream(sourceFile!!.uri)?.use { input ->
+                        contentResolver.openOutputStream(target.uri)?.use { output ->
+                            bytesCopied = input.copyTo(output)
+                            output.flush()
+                        } ?: run {
+                            CrashLogger.log("FileManager", "Unable to open output stream for ${target.uri}")
+                            target.delete()
+                            return@withContext false
+                        }
                     } ?: run {
-                        CrashLogger.log("FileManager", "Unable to open output stream for ${target.uri}")
+                        CrashLogger.log("FileManager", "Unable to open input stream for ${sourceFile.uri}")
                         target.delete()
                         return@withContext false
                     }
-                } ?: run {
-                    CrashLogger.log("FileManager", "Unable to open input stream for ${sourceFile.uri}")
-                    target.delete()
-                    return@withContext false
-                }
 
-                if (!sourceFile.delete()) {
-                    CrashLogger.log("FileManager", "Copied but failed to delete source: ${sourceFile.uri}")
+                    if (!sourceFile.delete()) {
+                        CrashLogger.log("FileManager", "Could not delete source file: ${sourceFile.uri}")
+                    }
                 }
 
                 CrashLogger.log("FileManager", "Successfully sorted file: ${musicFile.name} to $subFolderName ($bytesCopied bytes)")

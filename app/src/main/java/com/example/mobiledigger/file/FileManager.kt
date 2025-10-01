@@ -61,6 +61,12 @@ class FileManager(private val context: Context) {
     
     fun getSelectedFolder(): DocumentFile? = selectedFolder
     
+    fun clearSelectedFolder() {
+        selectedFolder = null
+        selectedFolderPath = null
+        CrashLogger.log("FileManager", "Cleared selected folder")
+    }
+    
     fun setDestinationFolder(uri: Uri) {
         try {
             context.contentResolver.takePersistableUriPermission(

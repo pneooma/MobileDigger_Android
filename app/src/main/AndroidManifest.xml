@@ -37,11 +37,13 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="Open The File &amp; Spek it"
+            android:label="Open with &amp; Spek"
             android:theme="@style/Theme.MobileDigger"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
             android:screenOrientation="portrait"
-            android:process=":main">
+            android:process=":main"
+            android:attributionTags="main_activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -104,7 +106,8 @@
             android:name=".audio.MusicService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback"
-            android:process=":music">
+            android:process=":music"
+            android:attributionTags="music_service">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
@@ -116,7 +119,8 @@
         <!-- Media button receiver for handling hardware media buttons -->
         <receiver
             android:name=".audio.MediaButtonReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:attributionTags="media_button_receiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
@@ -127,7 +131,8 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true"
+            android:attributionTags="file_provider">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />

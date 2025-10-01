@@ -72,6 +72,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
+import android.net.Uri
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -180,6 +181,12 @@ fun MusicPlayerScreen(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         uri?.let { viewModel.selectFolder(it) }
+    }
+    
+    val destinationFolderLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let { viewModel.selectDestinationFolder(it) }
     }
     
     
@@ -809,6 +816,7 @@ fun MusicPlayerScreen(
     }
 
     
+
     // Visual Settings Dialog
     if (showVisualSettingsDialog) {
         VisualSettingsDialog(
@@ -891,7 +899,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                         Text(
-                            text = ":: v8.96 ::",
+                            text = ":: v9.05 ::",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -907,6 +915,21 @@ fun MusicPlayerScreen(
                 screenWidth < 600.dp -> 3.dp
                 screenWidth < 800.dp -> 4.dp
                 else -> 6.dp
+            }
+            
+            // Home button (always visible) - resets to initial state
+            IconButton(
+                onClick = { 
+                    // Reset to initial state by clearing source folder selection
+                    viewModel.resetToInitialState()
+                },
+                modifier = Modifier.padding(end = buttonSpacing)
+            ) {
+                Icon(
+                    Icons.Default.Home,
+                    contentDescription = "Home",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
             
             // Settings button (always visible)

@@ -25,6 +25,9 @@ import com.example.mobiledigger.ui.theme.MobileDiggerTheme
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.example.mobiledigger.util.CrashLogger
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 
 class MainActivity : ComponentActivity() {
     
@@ -58,20 +61,43 @@ class MainActivity : ComponentActivity() {
             var useDynamicColor by remember { mutableStateOf(viewModel.themeManager.useDynamicColor.value) }
             var selectedTheme by remember { mutableStateOf(viewModel.themeManager.selectedTheme.value) }
             
-            // Update theme when it changes - use a more efficient approach
+            // Update theme when it changes - OPTIMIZED to prevent ANR
             LaunchedEffect(Unit) {
                 // Check theme changes less frequently to reduce memory pressure
-                while (true) {
-                    val currentDarkMode = viewModel.themeManager.isDarkMode.value
-                    val currentDynamicColor = viewModel.themeManager.useDynamicColor.value
-                    val currentTheme = viewModel.themeManager.selectedTheme.value
-                    
-                    if (currentDarkMode != isDarkMode || currentDynamicColor != useDynamicColor || currentTheme != selectedTheme) {
-                        isDarkMode = currentDarkMode
-                        useDynamicColor = currentDynamicColor
-                        selectedTheme = currentTheme
+                while (currentCoroutineContext().isActive) {
+                    try {
+                        val currentDarkMode = viewModel.themeManager.isDarkMode.value
+                        val currentDynamicColor = viewModel.themeManager.useDynamicColor.value
+                        val currentTheme = viewModel.themeManager.selectedTheme.value
+                        
+                        if (currentDarkMode != isDarkMode || currentDynamicColor != useDynamicColor || currentTheme != selectedTheme) {
+                            isDarkMode = currentDarkMode
+                            useDynamicColor = currentDynamicColor
+                            selectedTheme = currentTheme
+                        }
+                        delay(3000) // Increased to 3 seconds to prevent ANR
+                    } catch (e: Exception) {
+                        CrashLogger.log("MainActivity", "Error in theme monitoring", e)
+                        delay(5000) // Longer delay on error
                     }
-                    delay(1000) // Check every 1 second instead of 100ms
+                }
+            }
+            
+            // Monitor for pending external audio files - OPTIMIZED to prevent ANR
+            LaunchedEffect(Unit) {
+                while (currentCoroutineContext().isActive) {
+                    try {
+                        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+                        val hasPendingAudio = prefs.getBoolean("has_pending_audio", false)
+                        if (hasPendingAudio) {
+                            // Force the ViewModel to check for pending audio
+                            viewModel.forceCheckPendingExternalAudio()
+                        }
+                        delay(2000) // Reduced frequency to 2 seconds to prevent ANR
+                    } catch (e: Exception) {
+                        CrashLogger.log("MainActivity", "Error in pending audio monitoring", e)
+                        delay(5000) // Longer delay on error
+                    }
                 }
             }
             
@@ -219,6 +245,7 @@ class MainActivity : ComponentActivity() {
                 val audioUri = intent.data
                 if (audioUri != null) {
                     android.util.Log.d("MainActivity", "Received audio file intent: $audioUri")
+                    CrashLogger.log("MainActivity", "Received audio file intent: $audioUri")
                     
                     // Store the URI to be processed by the ViewModel
                     val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -227,6 +254,11 @@ class MainActivity : ComponentActivity() {
                         putBoolean("has_pending_audio", true)
                         putBoolean("show_analyze_prompt", true) // Show prompt asking user what they want to do
                     }
+                    
+                    // Force the ViewModel to check for pending audio immediately
+                    // This ensures the file is processed even if the app is already running
+                    android.util.Log.d("MainActivity", "Stored pending audio URI, ViewModel will process it")
+                    CrashLogger.log("MainActivity", "Stored pending audio URI, ViewModel will process it")
                 }
             }
         }

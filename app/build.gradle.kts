@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-    versionCode = 896
-    versionName = "8.96"
+    versionCode = 905
+    versionName = "9.05"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -102,6 +102,9 @@ dependencies {
     // Audio waveform processing and display
     implementation("com.github.lincollincol:amplituda:2.2.2")
     implementation("com.github.massoudss:waveformSeekBar:5.0.2")
+    
+    // Optimized FFT library for better spectrogram performance
+    implementation("com.github.wendykierp:JTransforms:3.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

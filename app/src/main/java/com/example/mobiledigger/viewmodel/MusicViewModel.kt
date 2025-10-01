@@ -20,9 +20,7 @@ import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.model.SortResult
 import com.example.mobiledigger.file.FileManager
-import com.example.mobiledigger.file.PreferencesManager
-import com.example.mobiledigger.ui.theme.ThemeManager
-import com.example.mobiledigger.ui.theme.VisualSettingsManager
+import com.example.mobiledigger.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,9 +53,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     val audioManager = AudioManager(application)
     private val fileManager = FileManager(application)
-    val preferences = PreferencesManager(application)
-    val themeManager = ThemeManager(application)
-    val visualSettingsManager = VisualSettingsManager(application)
+    private val settingsRepository = SettingsRepository(application)
+    val preferences = settingsRepository.preferences
+    val themeManager = settingsRepository.themeManager
+    val visualSettingsManager = settingsRepository.visualSettingsManager
     private val context = application.applicationContext
     
     // Mutex to prevent concurrent file loading operations that cause memory pressure
@@ -450,6 +449,60 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             } catch (e: Exception) {
                 CrashLogger.log("MusicViewModel", "Error setting destination", e)
                 _errorMessage.value = "Error setting destination: ${e.message}"
+            }
+        }
+    }
+    
+    // Reset app to initial state (like when first opened)
+    fun resetToInitialState() {
+        viewModelScope.launch {
+            try {
+                CrashLogger.log("MusicViewModel", "Resetting to initial state")
+                
+                // Stop any current playback
+                stopPlayback()
+                
+                // Clear all music files and playlists
+                _musicFiles.value = emptyList()
+                _likedFiles.value = emptyList()
+                _rejectedFiles.value = emptyList()
+                _currentIndex.value = 0
+                _currentPlaylistTab.value = PlaylistTab.TODO
+                
+                // Clear source folder selection
+                preferences.setSourceRootUri(null)
+                fileManager.clearSelectedFolder()
+                
+                // Clear search results
+                _searchResults.value = emptyList()
+                _searchText.value = ""
+                
+                // Clear error messages
+                _errorMessage.value = null
+                _isLoading.value = false
+                
+                // Clear sort results
+                _sortResults.value = emptyList()
+                
+                // Clear multi-selection state
+                _selectedIndices.value = emptySet()
+                _isMultiSelectionMode.value = false
+                
+                // Clear subfolder states
+                _subfolders.value = emptyList()
+                _subfolderHistory.value = emptyList()
+                _availableSubfolders.value = emptyList()
+                _subfolderFileCounts.value = emptyMap()
+                
+                // Clear caches
+                audioManager.clearAllCaches()
+                
+                CrashLogger.log("MusicViewModel", "Successfully reset to initial state")
+                _errorMessage.value = "Welcome! Select a source folder to get started."
+                
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Error resetting to initial state", e)
+                _errorMessage.value = "Error resetting app: ${e.message}"
             }
         }
     }
@@ -2638,6 +2691,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "Error checking for pending external audio", e)
             }
         }
+    }
+    
+    // Public method to force check for pending external audio (called from MainActivity)
+    fun forceCheckPendingExternalAudio() {
+        CrashLogger.log("MusicViewModel", "Force checking for pending external audio")
+        checkForPendingExternalAudio()
     }
     
     fun handleExternalAudioFile(audioUri: Uri) {

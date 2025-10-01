@@ -1,3 +1,93 @@
+9.05
+- FIXED: Home button now navigates to initial landing page instead of showing dialog.
+- Home button resets app to first-time opened state (no source folder selected).
+- Added resetToInitialState() method to MusicViewModel for complete app reset.
+- Added clearSelectedFolder() method to FileManager for proper folder clearing.
+- Home button now shows the welcome screen with "Select Source Folder" message.
+- Removed home dialog implementation as it's no longer needed.
+- Enhanced user experience with proper navigation to initial state.
+- Incremented build version to 9.05.
+
+9.04
+- NEW FEATURE: Added Home button in header for easy folder management.
+- Home dialog shows current source and destination folders with selection options.
+- Added quick actions: Rescan Source and Clear Cache from home dialog.
+- FIXED: Prevented multiple app instances with singleTask launch mode.
+- Changed MainActivity launch mode from singleTop to singleTask for better instance control.
+- Added taskAffinity="" to ensure single task behavior.
+- Fixed "Open with" functionality to reuse existing app instance instead of creating new one.
+- Enhanced folder management UI with organized cards and clear status indicators.
+- Incremented build version to 9.04.
+
+9.03
+- CRITICAL FIX: Fixed IntentReceiver memory leak causing crashes.
+- Fixed missing unregisterReceiver() call in AudioManager.release().
+- Reduced spectrogram cache from 3 to 1 item to prevent memory exhaustion.
+- Lowered memory cleanup thresholds: 85% (emergency), 70% (aggressive), 50% (standard).
+- Added proper broadcast receiver cleanup to prevent memory leaks.
+- Enhanced memory pressure monitoring with more frequent checks.
+- Fixed memory leak that was causing 207MB/207MB and 251MB/251MB exhaustion.
+- Incremented build version to 9.03.
+
+9.02
+- CRITICAL FIX: Resolved ANR (Application Not Responding) crashes.
+- Optimized polling loops to prevent main thread blocking.
+- Reduced spectrogram cache from 10 to 3 items to prevent memory exhaustion.
+- Added aggressive memory management with emergency cleanup at 90% usage.
+- Fixed memory leak causing 212MB/212MB (100% memory usage).
+- Enhanced error handling in LaunchedEffect loops with proper coroutine cancellation.
+- Reduced polling frequency from 500ms to 2-3 seconds to prevent CPU overload.
+- Added proper coroutine context checking to prevent infinite loops.
+- Incremented build version to 9.02.
+
+9.01
+- FIXED: "Open with" functionality now works properly.
+- Fixed app label in "Open with" menu to show "Open with & Spek".
+- Enhanced intent handling to properly process external audio files.
+- Added real-time monitoring for pending external audio files.
+- Fixed issue where app would not respond to "Open with" when already running.
+- Improved external file processing with better error handling and logging.
+- Enhanced user experience for opening audio files from other apps.
+- Incremented build version to 9.01.
+
+9.00
+- CRITICAL FIX: Resolved native FFmpeg crash in setDataSource method.
+- Added comprehensive file validation before passing paths to FFmpeg library.
+- Enhanced error handling for native crashes with proper player reset.
+- Fixed FileNotFoundException issues by validating file existence and readability.
+- Added detailed logging for FFmpeg data source validation and error recovery.
+- Improved stability by preventing null/empty paths from reaching native code.
+- Enhanced crash recovery with proper player state management.
+- Incremented build version to 9.00.
+
+8.99
+- CRITICAL FIX: Resolved OutOfMemoryError crashes in spectrogram generation.
+- Added comprehensive memory management for large spectrogram arrays.
+- Fixed AppOps attributionTag errors by adding proper attribution tags to manifest.
+- Implemented memory checks before creating large spectrogram data arrays.
+- Added fallback mechanisms for memory-intensive operations.
+- Enhanced error handling for file access issues and media session problems.
+- Improved stability and reduced crash frequency significantly.
+- Incremented build version to 8.99.
+
+8.98
+- Major architectural improvements and performance optimizations.
+- Created PlaylistRepository for centralized playlist management (TODO, Liked, Rejected).
+- Created FileOperationsRepository for file operations (ZIP, sharing, moving, deleting).
+- Added AppState data classes to group related StateFlows for better state management.
+- Integrated JTransforms library for optimized FFT performance in spectrogram generation.
+- Created OptimizedFFTService with Blackman windowing and advanced spectrogram features.
+- Created ReactiveAudioService to replace polling with proper Flow-based reactive streams.
+- Improved concurrency patterns and eliminated while(true) loops.
+- Enhanced code maintainability and separation of concerns.
+- Incremented build version to 8.98.
+
+8.97
+- Refactored settings management with new SettingsRepository class.
+- Centralized PreferencesManager, ThemeManager, and VisualSettingsManager instances.
+- Improved code organization and maintainability for settings-related functionality.
+- Incremented build version to 8.97.
+
 8.96
 - Fixed crashes when loading files via "Open with".
 - Added comprehensive error handling for file operations.

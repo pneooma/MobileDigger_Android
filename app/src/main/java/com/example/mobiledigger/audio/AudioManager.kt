@@ -80,12 +80,16 @@ class AudioManager(private val context: Context) {
     private var temporalResolution: Int = 5 // pixels per second
     private var isFFmpegPrepared = false
     
-    // Spectrogram cache with size limit to prevent memory leaks (reduced for memory safety)
-    private val maxCacheSize = 10 // Limit to 10 spectrograms for better memory management
+    // Spectrogram cache with size limit to prevent memory leaks (EXTREMELY REDUCED for memory safety)
+    private val maxCacheSize = 1 // CRITICAL: Limit to only 1 spectrogram to prevent memory exhaustion
     private val spectrogramCache = Collections.synchronizedMap(
         object : LinkedHashMap<String, ImageBitmap>(maxCacheSize + 1, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>?): Boolean {
-                return size > maxCacheSize
+                val shouldRemove = size > maxCacheSize
+                if (shouldRemove) {
+                    CrashLogger.log("AudioManager", "Removing eldest spectrogram from cache to prevent memory leak")
+                }
+                return shouldRemove
             }
         }
     )
@@ -297,19 +301,41 @@ class AudioManager(private val context: Context) {
     private fun getFFmpegDataSource(uri: Uri): String? {
         return try {
             if (uri.scheme == "file") {
-                uri.path
+                val path = uri.path
+                if (path.isNullOrEmpty()) {
+                    CrashLogger.log("AudioManager", "File URI has null or empty path: $uri")
+                    return null
+                }
+                
+                // Validate that the file actually exists
+                val file = File(path)
+                if (!file.exists()) {
+                    CrashLogger.log("AudioManager", "File does not exist: $path")
+                    return null
+                }
+                
+                if (!file.canRead()) {
+                    CrashLogger.log("AudioManager", "File cannot be read: $path")
+                    return null
+                }
+                
+                CrashLogger.log("AudioManager", "Valid file path for FFmpeg: $path")
+                path
             } else {
                 val uriString = uri.toString()
                 val cachedPath = tempFileCache[uriString]
                 if (cachedPath != null && File(cachedPath).exists()) {
+                    CrashLogger.log("AudioManager", "Using cached temp file: $cachedPath")
                     cachedPath
                 } else {
                     val tempFile = copyUriToTempFile(uri)
                     if (tempFile != null) {
                         val tempPath = tempFile.absolutePath
                         tempFileCache[uriString] = tempPath
+                        CrashLogger.log("AudioManager", "Created temp file for FFmpeg: $tempPath")
                         tempPath
                     } else {
+                        CrashLogger.log("AudioManager", "Failed to create temp file for URI: $uri")
                         null
                     }
                 }
@@ -398,22 +424,43 @@ class AudioManager(private val context: Context) {
                 return false
             }
             
-            // Set data source
+            // Additional validation before setDataSource
+            if (dataSource.isEmpty()) {
+                CrashLogger.log("AudioManager", "Data source is empty, cannot set for FFmpegMediaPlayer")
+                return false
+            }
+            
+            // Set data source with additional error handling
             try {
+                CrashLogger.log("AudioManager", "Setting FFmpegMediaPlayer data source: $dataSource")
                 player.setDataSource(dataSource)
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource: $dataSource")
+                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource successful")
+                
                 // Track in-use data source path if it is a file path inside cache
                 currentFFmpegDataSourcePath = try {
                     val f = java.io.File(dataSource)
                     if (f.exists() && f.absolutePath.startsWith(context.cacheDir.absolutePath)) f.absolutePath else null
                 } catch (_: Exception) { null }
             } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource failed", e)
-                // Try to reset the player state
+                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource failed with exception", e)
+                
+                // Try to reset the player state to prevent further crashes
                 try {
                     player.reset()
+                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer reset successful after setDataSource error")
                 } catch (resetException: Exception) {
                     CrashLogger.log("AudioManager", "FFmpegMediaPlayer reset failed after setDataSource error", resetException)
+                }
+                return false
+            } catch (e: Error) {
+                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setDataSource failed with native error", e)
+                
+                // Try to reset the player state to prevent further crashes
+                try {
+                    player.reset()
+                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer reset successful after native error")
+                } catch (resetException: Exception) {
+                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer reset failed after native error", resetException)
                 }
                 return false
             }
@@ -674,7 +721,7 @@ class AudioManager(private val context: Context) {
     }
     
     /**
-     * Monitor memory pressure and clear caches if needed
+     * Monitor memory pressure and clear caches if needed - AGGRESSIVE MEMORY MANAGEMENT
      */
     private fun checkMemoryPressure() {
         try {
@@ -683,10 +730,26 @@ class AudioManager(private val context: Context) {
             val maxMemory = runtime.maxMemory()
             val memoryUsagePercent = (usedMemory * 100) / maxMemory
             
-            if (memoryUsagePercent > 80) { // If using more than 80% of memory
-                CrashLogger.log("AudioManager", "High memory usage detected: ${memoryUsagePercent}%, clearing caches")
-                clearAllCaches()
-                System.gc() // Suggest garbage collection
+            when {
+                memoryUsagePercent > 85 -> {
+                    // CRITICAL: Emergency memory cleanup (lowered threshold)
+                    CrashLogger.log("AudioManager", "CRITICAL: Memory usage at ${memoryUsagePercent}%, emergency cleanup")
+                    clearAllCaches()
+                    spectrogramCache.clear() // Force clear spectrogram cache
+                    System.gc()
+                    Thread.sleep(200) // Give GC more time to work
+                }
+                memoryUsagePercent > 70 -> {
+                    // High memory usage - aggressive cleanup (lowered threshold)
+                    CrashLogger.log("AudioManager", "High memory usage detected: ${memoryUsagePercent}%, aggressive cleanup")
+                    clearAllCaches()
+                    System.gc()
+                }
+                memoryUsagePercent > 50 -> {
+                    // Moderate memory usage - standard cleanup (lowered threshold)
+                    CrashLogger.log("AudioManager", "Moderate memory usage: ${memoryUsagePercent}%, standard cleanup")
+                    clearAllCaches()
+                }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Memory pressure check failed", e)
@@ -765,6 +828,17 @@ class AudioManager(private val context: Context) {
     
     fun release() {
         try {
+            // CRITICAL: Unregister broadcast receiver to prevent memory leak
+            broadcastReceiver?.let { receiver ->
+                try {
+                    context.unregisterReceiver(receiver)
+                    CrashLogger.log("AudioManager", "Broadcast receiver unregistered successfully")
+                } catch (e: Exception) {
+                    CrashLogger.log("AudioManager", "Failed to unregister broadcast receiver", e)
+                }
+                broadcastReceiver = null
+            }
+            
             ffmpegPlayer?.release()
             ffmpegPlayer = null
             exoPlayerFallback?.release()
@@ -793,11 +867,14 @@ class AudioManager(private val context: Context) {
         spectrogramCache.clear()
     }
     
+    // Store the receiver reference for proper cleanup
+    private var broadcastReceiver: BroadcastReceiver? = null
+    
     // Initialize broadcast receiver for cache clearing
     private fun initializeBroadcastReceiver() {
         try {
             val filter = IntentFilter("com.example.mobiledigger.CLEAR_CACHE")
-            val receiver = object : BroadcastReceiver() {
+            broadcastReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     if (intent?.action == "com.example.mobiledigger.CLEAR_CACHE") {
                         clearSpectrogramCache()
@@ -805,10 +882,10 @@ class AudioManager(private val context: Context) {
                 }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                context.registerReceiver(broadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
             } else {
                 @Suppress("DEPRECATION", "UnspecifiedRegisterReceiverFlag")
-                context.registerReceiver(receiver, filter)
+                context.registerReceiver(broadcastReceiver, filter)
             }
             CrashLogger.log("AudioManager", "Broadcast receiver registered successfully")
         } catch (e: Exception) {
@@ -2364,8 +2441,31 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Third quarter range: min=${thirdQuarter.minOrNull()}, max=${thirdQuarter.maxOrNull()}")
             CrashLogger.log("AudioManager", "Last quarter range: min=${lastQuarter.minOrNull()}, max=${lastQuarter.maxOrNull()}")
             
-            // Generate power spectrogram data
-            val spectrogramData = Array(height) { FloatArray(width) }
+            // Memory management: check if spectrogram would be too large
+            val estimatedMemoryMB = (width * height * 4) / (1024 * 1024) // 4 bytes per float
+            if (estimatedMemoryMB > 50) {
+                CrashLogger.log("AudioManager", "Spectrogram too large (${estimatedMemoryMB}MB), reducing dimensions")
+                // Reduce width to prevent memory issues
+                val maxWidth = (50 * 1024 * 1024) / (height * 4) // Calculate max width for 50MB
+                val reducedWidth = minOf(width, maxWidth)
+                CrashLogger.log("AudioManager", "Reducing width from $width to $reducedWidth to prevent OOM")
+                return generateSpectrogramFromAudioData(audioData.copyOfRange(0, (reducedWidth * hopSizeAdjusted).coerceAtMost(audioData.size)))
+            }
+            
+            // Generate power spectrogram data with memory check
+            val spectrogramData = try {
+                Array(height) { FloatArray(width) }
+            } catch (e: OutOfMemoryError) {
+                CrashLogger.log("AudioManager", "OutOfMemoryError creating spectrogram array, using fallback")
+                // Create a minimal MusicFile for fallback
+                val fallbackFile = MusicFile(
+                    uri = Uri.EMPTY,
+                    name = "fallback",
+                    duration = 0L,
+                    size = 0L
+                )
+                return generateFallbackSpectrogram(fallbackFile)
+            }
             var maxPower = 0f
             
             // Memory management: force GC before processing large spectrograms

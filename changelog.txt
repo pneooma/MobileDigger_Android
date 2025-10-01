@@ -1,3 +1,15 @@
+9.06
+- MAJOR FIX: Fixed temporary file sorting for "Open with" functionality.
+- Enhanced FileManager.sortFile() to handle temporary files differently.
+- Added proper detection of temp_audio directory files.
+- Implemented separate file copying logic for temporary vs regular files.
+- Added comprehensive logging for debugging sort operations.
+- Enhanced destination folder setup with immediate subfolder creation.
+- Fixed permission issues with temporary file access.
+- Improved error handling and cleanup for temporary files.
+- This resolves the issue where users couldn't sort files opened via "Open with" menu to Liked/Rejected folders.
+- Incremented build version to 9.06.
+
 9.05
 - FIXED: Home button now navigates to initial landing page instead of showing dialog.
 - Home button resets app to first-time opened state (no source folder selected).

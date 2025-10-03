@@ -10,16 +10,22 @@ class MediaButtonReceiver : BroadcastReceiver() {
     
     companion object {
         const val ACTION_MEDIA_BUTTON = "android.intent.action.MEDIA_BUTTON"
+        private const val PREFS_NAME = "headphone_button_times"
+        private const val KEY_LAST_NEXT = "last_next_tap"
+        private const val KEY_LAST_PREV = "last_prev_tap"
+        private const val DOUBLE_TAP_WINDOW = 500L // 500ms
     }
     
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_MEDIA_BUTTON) {
             val keyEvent = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
             if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {
+                val currentTime = System.currentTimeMillis()
+                val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                
                 when (keyEvent.keyCode) {
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PLAY_PAUSE")
-                        // Send broadcast to MusicService
                         val playPauseIntent = Intent(MusicService.ACTION_PLAY_PAUSE)
                         context.sendBroadcast(playPauseIntent)
                     }
@@ -34,14 +40,12 @@ class MediaButtonReceiver : BroadcastReceiver() {
                         context.sendBroadcast(pauseIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_NEXT -> {
-                        CrashLogger.log("MediaButtonReceiver", "Media button: NEXT")
-                        val nextIntent = Intent(MusicService.ACTION_NEXT)
-                        context.sendBroadcast(nextIntent)
+                        // Defer handling to MediaSession (MusicService) for consistency
+                        CrashLogger.log("MediaButtonReceiver", "Forwarding NEXT to MediaSession via player command")
                     }
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
-                        CrashLogger.log("MediaButtonReceiver", "Media button: PREVIOUS")
-                        val prevIntent = Intent(MusicService.ACTION_PREVIOUS)
-                        context.sendBroadcast(prevIntent)
+                        // Defer handling to MediaSession (MusicService) for consistency
+                        CrashLogger.log("MediaButtonReceiver", "Forwarding PREVIOUS to MediaSession via player command")
                     }
                     KeyEvent.KEYCODE_MEDIA_STOP -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: STOP")

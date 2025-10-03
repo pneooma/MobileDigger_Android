@@ -898,9 +898,9 @@ fun MusicPlayerScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                        Text(
-                            text = ":: v9.06 ::",
-                    style = MaterialTheme.typography.headlineSmall.copy(
+        Text(
+            text = ":: v9.27 ::",
+            style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                         lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
                     ),

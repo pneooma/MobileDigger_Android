@@ -121,7 +121,7 @@
             android:name=".audio.MediaButtonReceiver"
             android:exported="true"
             android:attributionTags="media_button_receiver">
-            <intent-filter>
+            <intent-filter android:priority="999">
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>

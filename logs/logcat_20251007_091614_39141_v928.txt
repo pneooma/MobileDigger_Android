@@ -1,0 +1,265 @@
+10-07 09:16:17.535 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:20.630 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:23.733 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:24.324 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:26.839 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:27.250 D/MusicViewModel(28004): === APP STARTED ===
+10-07 09:16:27.251 D/MusicViewModel(28004): Session counters reset
+10-07 09:16:27.292 I/ExoPlayerImpl(28004): Init d5780e0 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 09:16:27.316 I/biledigger:main(28004): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-07 09:16:27.357 D/AudioManager(28004): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-07 09:16:27.361 D/MusicViewModel(28004): Loading liked files from destination folder: null
+10-07 09:16:27.361 D/MusicViewModel(28004): No destination folder found
+10-07 09:16:27.371 D/MusicViewModel(28004): Loaded subfolder history: 2 items
+10-07 09:16:27.373 I/ActivityManager( 1579): Background started FGS: Allowed [callingPackage: com.example.mobiledigger; callingUid: 10587; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { xflg=0x4 cmp=com.example.mobiledigger/.audio.MusicService }; code:PROC_STATE_TOP; tempAllowListReason:<,reasonCode:SYSTEM_ALLOW_LISTED,duration:9223372036854775807,callingUid:-1>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+10-07 09:16:27.376 D/MusicViewModel(28004): MusicService started successfully.
+10-07 09:16:27.389 I/ActivityManager( 1579): Start proc 28056:com.example.mobiledigger:music/u0a587 for service {com.example.mobiledigger/com.example.mobiledigger.audio.MusicService}
+10-07 09:16:27.409 D/MusicViewModel(28004): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-07 09:16:27.409 D/MusicViewModel(28004): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-07 09:16:27.409 D/MusicViewModel(28004): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 09:16:27.410 D/MusicViewModel(28004): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 09:16:27.416 D/MusicViewModel(28004): Source folder restored (use Rescan to load files)
+10-07 09:16:27.416 D/MusicViewModel(28004): Initialized successfully
+10-07 09:16:27.820 I/ExoPlayerImpl(28056): Init e9c1dc7 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 09:16:27.858 I/iledigger:music(28056): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-07 09:16:27.898 D/AudioManager(28056): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-07 09:16:27.898 I/ExoPlayerImpl(28056): Init b88ed8d [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 09:16:27.915 D/MusicService(28056): Initialized dummy playlist for skip support
+10-07 09:16:27.935 E/MediaControllerCompat(31274): android.os.DeadObjectException
+10-07 09:16:27.959 D/MusicService(28056): MediaSession created successfully
+10-07 09:16:27.979 D/MusicService(28056): Started foreground service with notification
+10-07 09:16:28.044 D/MusicViewModel(28004): Updated liked files StateFlow with 0 files
+10-07 09:16:28.045 D/MusicViewModel(28004): Notification receiver registered successfully
+10-07 09:16:28.072 D/MusicViewModel(28004): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 09:16:28.428 D/MusicViewModel(28004): Found 391 rejected files
+10-07 09:16:28.431 D/MusicViewModel(28004): Updated rejected files StateFlow with 391 files
+10-07 09:16:29.049 D/MusicViewModel(28004): MusicService started successfully.
+10-07 09:16:29.052 D/MusicService(28056): Started foreground service with notification
+10-07 09:16:29.053 D/MusicService(28056): updateNotificationData - Title: MobileDigger, Playing: false, Position: 0, Duration: 0
+10-07 09:16:29.053 D/MusicService(28056): Skipping setMediaItem due to invalid/dummy URI for title: MobileDigger
+10-07 09:16:29.793 I/ActivityManager( 1579): Process com.microsoft.windowsintune.companyportal:auth (pid 22066) has died: cch CEM 
+10-07 09:16:29.902 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056): Playback error
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.os.Looper.loopOnce(Looper.java:251)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.os.Looper.loop(Looper.java:349)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):   Caused by: androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:157)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at java.lang.Thread.run(Thread.java:1119)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):   Caused by: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:2031)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:1983)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:89)
+10-07 09:16:30.956 E/ExoPlayerImplInternal(28056):       ... 7 more
+10-07 09:16:30.978 D/MusicService(28056): Player (MediaSession) Error: Source error
+10-07 09:16:30.978 D/MusicService(28056): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-07 09:16:30.978 D/MusicService(28056): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-07 09:16:30.978 D/MusicService(28056): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-07 09:16:30.978 D/MusicService(28056): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-07 09:16:30.978 D/MusicService(28056): 	at android.os.Looper.loop(Looper.java:349)
+10-07 09:16:30.978 D/MusicService(28056): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-07 09:16:30.978 D/MusicService(28056): Caused by: androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:157)
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-07 09:16:30.978 D/MusicService(28056): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-07 09:16:30.978 D/MusicService(28056): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-07 09:16:30.978 D/MusicService(28056): 	at java.lang.Thread.run(Thread.java:1119)
+10-07 09:16:30.978 D/MusicService(28056): Caused by: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:16:30.978 D/MusicService(28056): 	at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:2031)
+10-07 09:16:30.978 D/MusicService(28056): 	at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:1983)
+10-07 09:16:30.978 D/MusicService(28056): 	at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:89)
+10-07 09:16:30.978 D/MusicService(28056): 	... 7 more
+10-07 09:16:30.984 D/MediaSessionService( 1579): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./128 (userId=0) playbackState=PlaybackState {state=ERROR(7), position=0, buffered position=0, speed=0.0, updated=122632448, actions=7339703, custom actions=[], active item id=0, error=Source error}
+10-07 09:16:30.994 D/MusicService(28056): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-07 09:16:31.012 D/MediaSessionService( 1579): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./128 (userId=0) playbackState=PlaybackState {state=ERROR(7), position=0, buffered position=0, speed=0.0, updated=122632479, actions=7339703, custom actions=[], active item id=0, error=Source error}
+10-07 09:16:31.725 I/ActivityManager( 1579): Process com.azure.authenticator:auth (pid 22225) has died: cch CEM 
+10-07 09:16:32.991 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:36.105 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:39.190 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:42.268 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:45.349 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:48.438 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:51.526 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:54.618 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:57.725 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:00.827 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:03.952 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:07.054 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:10.142 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:13.213 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:16.301 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:19.410 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:22.541 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:24.636 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:25.611 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:28.721 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:31.817 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:34.895 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:37.990 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:41.063 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:44.144 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:47.247 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:50.369 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:53.475 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:56.582 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:17:59.693 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:02.769 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:05.873 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:08.973 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:12.089 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:15.201 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:18.273 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:21.385 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:24.520 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:24.735 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:27.643 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:30.772 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:33.866 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:36.947 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:37.031 D/MusicViewModel(28004): Rescanning source folder: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 09:18:37.032 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:18:37.033 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:18:37.033 D/MusicViewModel(28004): Starting folder selection: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 09:18:37.052 D/MusicViewModel(28004): FileManager.setSelectedFolder completed
+10-07 09:18:37.052 D/MusicViewModel(28004): Saved source folder URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 09:18:37.064 D/FileManager(28004): SAF folder exists: true, canRead: true
+10-07 09:18:37.485 D/MusicViewModel(28004): FileManager.loadMusicFiles completed with 265 files
+10-07 09:18:37.487 D/MusicViewModel(28004): Updated musicFiles state
+10-07 09:18:37.487 D/MusicViewModel(28004): Loading AIFF file: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:18:37.490 D/MusicViewModel(28004): Loading liked files from destination folder: Results
+10-07 09:18:37.490 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:18:37.491 D/AudioManager(28004): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:18:38.137 D/MusicViewModel(28004): Found 97 liked files (including subfolders), 84 unique
+10-07 09:18:38.631 D/MusicViewModel(28004): Playback started successfully for Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:18:38.640 D/MusicViewModel(28004): MusicService started successfully.
+10-07 09:18:38.644 D/MusicViewModel(28004): selectFolder completed successfully
+10-07 09:18:38.645 D/MusicViewModel(28004): Preloaded next song: Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff
+10-07 09:18:38.669 D/MusicService(28056): Started foreground service with notification
+10-07 09:18:38.669 D/MusicService(28056): updateNotificationData - Title: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:18:38.670 D/MusicService(28056): Skipping setMediaItem due to invalid/dummy URI for title: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:18:38.712 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-07 09:18:38.712 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-07 09:18:38.712 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-07 09:18:38.748 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-07 09:18:38.748 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-07 09:18:38.748 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-07 09:18:38.875 D/MusicViewModel(28004): Updated liked files StateFlow with 84 files
+10-07 09:18:38.897 D/MusicViewModel(28004): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 09:18:39.103 D/MusicViewModel(28004): Loaded 2 subfolders.
+10-07 09:18:39.187 D/MusicViewModel(28004): Found 391 rejected files
+10-07 09:18:39.195 D/MusicViewModel(28004): Updated rejected files StateFlow with 391 files
+10-07 09:18:40.032 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:43.110 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:46.193 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:49.270 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:52.343 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:55.415 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:18:58.497 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:01.571 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:04.654 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:07.749 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:10.841 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:13.934 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:17.026 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:20.110 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:23.193 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:25.347 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:26.289 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:29.381 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:30.507 D/MusicViewModel(28004): Safe sorting file: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff with action DISLIKE
+10-07 09:19:30.536 D/FileManager(28004): Source file found: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff, exists: true, canRead: true
+10-07 09:19:32.487 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:32.784 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:19:32.790 D/MusicViewModel(28004): Loading AIFF file: Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff
+10-07 09:19:32.793 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:19:32.794 D/AudioManager(28004): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:19:34.057 D/MusicViewModel(28004): Playback started successfully for Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff
+10-07 09:19:34.066 D/MusicViewModel(28004): MusicService started successfully.
+10-07 09:19:34.073 D/MusicViewModel(28004): Preloaded next song: Bad Bunny - DTMF Hills RMX.wav
+10-07 09:19:34.082 D/MusicService(28056): Started foreground service with notification
+10-07 09:19:34.084 D/MusicService(28056): updateNotificationData - Title: Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:19:34.085 D/MusicService(28056): Skipping setMediaItem due to invalid/dummy URI for title: Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff
+10-07 09:19:34.122 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-07 09:19:34.122 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-07 09:19:34.122 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-07 09:19:34.154 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-07 09:19:34.154 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-07 09:19:34.154 D/ResourceManager(28004): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-07 09:19:34.303 D/MusicViewModel(28004): Refreshed all playlists
+10-07 09:19:34.311 D/MusicViewModel(28004): Loading liked files from destination folder: Results
+10-07 09:19:34.765 D/MusicViewModel(28004): Found 97 liked files (including subfolders), 84 unique
+10-07 09:19:34.783 D/MusicViewModel(28004): Updated liked files StateFlow with 84 files
+10-07 09:19:34.802 D/MusicViewModel(28004): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 09:19:35.190 D/MusicViewModel(28004): Found 392 rejected files
+10-07 09:19:35.194 D/MusicViewModel(28004): Updated rejected files StateFlow with 392 files
+10-07 09:19:35.557 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:36.514 D/MusicViewModel(28004): Safe sorting file: Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff with action DISLIKE
+10-07 09:19:36.533 D/FileManager(28004): Source file found: Sunnyside (US) - House Nation (Original Mix) [Rawsome Deep].aiff, exists: true, canRead: true
+10-07 09:19:38.531 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:19:38.535 D/MusicViewModel(28004): High memory usage detected: 74%, clearing caches
+10-07 09:19:38.602 D/AudioManager(28004): ExoPlayer cleared
+10-07 09:19:38.602 D/AudioManager(28004): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBad%20Bunny%20-%20DTMF%20Hills%20RMX.wav
+10-07 09:19:38.607 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10587/28004 AA=USAGE_MEDIA/CONTENT_TYPE_MUSIC clientId=android.media.AudioManager@1e8032eandroidx.media3.exoplayer.AudioFocusManager$AudioFocusListener@6fc4568 callingPack=com.example.mobiledigger req=1 flags=0x0 sdk=36
+10-07 09:19:38.609 D/AudioManager(28004): ExoPlayer started successfully
+10-07 09:19:38.609 D/AudioManager(28004): ExoPlayer playback successful for: Bad Bunny - DTMF Hills RMX.wav
+10-07 09:19:38.609 D/MusicViewModel(28004): Playback started successfully for Bad Bunny - DTMF Hills RMX.wav
+10-07 09:19:38.610 D/MusicViewModel(28004): MusicService started successfully.
+10-07 09:19:38.612 D/MusicViewModel(28004): Preloaded next song: Doechii - DENIAL IS A RIVER (Hills Remix).mp3
+10-07 09:19:38.626 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:38.628 D/MusicService(28056): Started foreground service with notification
+10-07 09:19:38.629 D/MusicService(28056): updateNotificationData - Title: Bad Bunny - DTMF Hills RMX.wav, Playing: true, Position: 0, Duration: 0
+10-07 09:19:38.629 D/MusicService(28056): Skipping setMediaItem due to invalid/dummy URI for title: Bad Bunny - DTMF Hills RMX.wav
+10-07 09:19:38.871 D/MusicViewModel(28004): Refreshed all playlists
+10-07 09:19:38.877 D/MusicViewModel(28004): Loading liked files from destination folder: Results
+10-07 09:19:39.479 D/MusicViewModel(28004): Found 97 liked files (including subfolders), 84 unique
+10-07 09:19:39.481 D/MusicViewModel(28004): Updated liked files StateFlow with 84 files
+10-07 09:19:39.505 D/MusicViewModel(28004): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 09:19:40.122 D/MusicViewModel(28004): Found 393 rejected files
+10-07 09:19:40.130 D/MusicViewModel(28004): Updated rejected files StateFlow with 393 files
+10-07 09:19:41.741 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:43.586 W/WindowManager( 1579): android.os.DeadObjectException
+10-07 09:19:43.586 W/WindowManager( 1579): android.os.DeadObjectException
+10-07 09:19:44.840 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:45.537 I/ActivityManager( 1579): Process PhantomProcessRecord {61c5d52 29694:29591:/u0a302} died
+10-07 09:19:47.918 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:48.621 I/ActivityManager( 1579): Process PhantomProcessRecord {7ae7ac9 29713:29591:com.microsoft.emmx/u0a302} died
+10-07 09:19:51.036 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:54.148 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:19:57.234 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:00.314 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:03.390 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:06.480 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:09.569 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:12.636 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:15.714 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:18.786 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:21.915 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:25.006 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:28.094 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:30.602 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:31.204 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:34.286 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:37.413 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:40.518 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:43.622 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:46.737 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:49.417 I/ActivityManager( 1579): Process com.example.mobiledigger (pid 30208) has died: bkup TRNB
+10-07 09:20:49.822 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:52.888 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:20:55.968 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse

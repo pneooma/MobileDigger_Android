@@ -1,0 +1,896 @@
+10-06 16:50:21.763 I/ActivityManager( 1579): Background started FGS: Allowed [callingPackage: com.example.mobiledigger; callingUid: 10587; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { xflg=0x4 cmp=com.example.mobiledigger/.audio.MusicService }; code:PROC_STATE_TOP; tempAllowListReason:<,reasonCode:SYSTEM_ALLOW_LISTED,duration:9223372036854775807,callingUid:-1>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+10-06 16:55:21.828 D/MusicViewModel( 5508): Periodic cache clearing completed (memory usage: 91%)
+10-06 16:55:22.362 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:22.641 D/MusicViewModel( 5508): Safe sorting file: 4. Los Ojos Azules.flac with action DISLIKE
+10-06 16:55:22.661 D/FileManager( 5508): Source file found: 4. Los Ojos Azules.flac, exists: true, canRead: true
+10-06 16:55:24.195 D/AudioManager( 5508): ExoPlayer stopped
+10-06 16:55:24.196 D/AudioManager( 5508): ExoPlayer cleared
+10-06 16:55:24.197 D/MusicViewModel( 5508): Loading AIFF file: Vedant Jadia - I'm My Own Boss (Extended Mix) [Great Stuff Recordings].aiff
+10-06 16:55:24.197 D/AudioManager( 5508): ExoPlayer cleared
+10-06 16:55:24.198 D/AudioManager( 5508): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-06 16:55:25.273 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 16:55:25.339 D/MusicViewModel( 5508): Playback started successfully for Vedant Jadia - I'm My Own Boss (Extended Mix) [Great Stuff Recordings].aiff
+10-06 16:55:25.344 D/MusicViewModel( 5508): MusicService started successfully.
+10-06 16:55:25.348 D/MusicViewModel( 5508): Preloaded next song: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav
+10-06 16:55:25.375 D/MusicService( 5560): Started foreground service with notification
+10-06 16:55:25.376 D/MusicService( 5560): updateNotificationData - Title: Vedant Jadia - I'm My Own Boss (Extended Mix) [Great Stuff Recordings].aiff, Playing: true, Position: 0, Duration: 310186
+10-06 16:55:25.376 D/MusicService( 5560): Skipping setMediaItem: invalid/empty URI for title 'Vedant Jadia - I'm My Own Boss (Extended Mix) [Great Stuff Recordings].aiff'
+10-06 16:55:25.431 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:25.550 D/MusicViewModel( 5508): Refreshed all playlists
+10-06 16:55:25.552 D/MusicViewModel( 5508): Loading liked files from destination folder: Results
+10-06 16:55:26.199 D/MusicViewModel( 5508): Found 96 liked files (including subfolders), 83 unique
+10-06 16:55:26.201 D/MusicViewModel( 5508): Updated liked files StateFlow with 83 files
+10-06 16:55:26.219 D/MusicViewModel( 5508): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 16:55:26.450 D/MusicViewModel( 5508): Found 242 rejected files
+10-06 16:55:26.452 D/MusicViewModel( 5508): Updated rejected files StateFlow with 242 files
+10-06 16:55:28.502 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:31.593 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:34.664 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:37.746 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:40.827 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:42.170 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:43.898 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:46.975 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:50.070 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:53.198 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:56.275 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:55:59.366 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:02.470 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:05.560 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:08.631 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:11.721 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:14.836 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:17.926 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:18.276 D/MusicViewModel( 5508): Safe sorting file: Vedant Jadia - I'm My Own Boss (Extended Mix) [Great Stuff Recordings].aiff with action DISLIKE
+10-06 16:56:18.313 D/FileManager( 5508): Source file found: Vedant Jadia - I'm My Own Boss (Extended Mix) [Great Stuff Recordings].aiff, exists: true, canRead: true
+10-06 16:56:19.922 D/AudioManager( 5508): ExoPlayer cleared
+10-06 16:56:19.922 D/MusicViewModel( 5508): Moderate memory usage: 69%, suggesting GC
+10-06 16:56:19.976 D/AudioManager( 5508): ExoPlayer cleared
+10-06 16:56:19.976 D/AudioManager( 5508): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTony%20Guerra%2C%20ADRIANZA%2C%20Camlop%20-%20PRENDIDO.wav
+10-06 16:56:19.978 D/AudioManager( 5508): ExoPlayer started successfully
+10-06 16:56:19.978 D/AudioManager( 5508): ExoPlayer playback successful for: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav
+10-06 16:56:19.978 D/MusicViewModel( 5508): Playback started successfully for Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav
+10-06 16:56:19.980 D/MusicViewModel( 5508): MusicService started successfully.
+10-06 16:56:19.981 D/MusicViewModel( 5508): Preloaded next song: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav
+10-06 16:56:19.987 D/MusicService( 5560): Started foreground service with notification
+10-06 16:56:19.987 D/MusicService( 5560): updateNotificationData - Title: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav, Playing: true, Position: 0, Duration: 0
+10-06 16:56:19.988 D/MusicService( 5560): Skipping setMediaItem: invalid/empty URI for title 'Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav'
+10-06 16:56:20.233 D/MusicViewModel( 5508): Refreshed all playlists
+10-06 16:56:20.236 D/MusicViewModel( 5508): Loading liked files from destination folder: Results
+10-06 16:56:20.777 D/MusicViewModel( 5508): Found 96 liked files (including subfolders), 83 unique
+10-06 16:56:20.778 D/MusicViewModel( 5508): Updated liked files StateFlow with 83 files
+10-06 16:56:20.792 D/MusicViewModel( 5508): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 16:56:20.980 D/MusicViewModel( 5508): Found 243 rejected files
+10-06 16:56:20.982 D/MusicViewModel( 5508): Updated rejected files StateFlow with 243 files
+10-06 16:56:21.020 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:24.114 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:27.218 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:30.325 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:33.405 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:36.492 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:39.582 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:42.246 W/WindowManager( 1579): android.os.DeadObjectException
+10-06 16:56:42.646 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:45.709 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:47.658 D/MusicViewModel( 7457): === APP STARTED ===
+10-06 16:56:47.659 D/MusicViewModel( 7457): Session counters reset
+10-06 16:56:47.697 I/ExoPlayerImpl( 7457): Init 27ce69d [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-06 16:56:47.715 I/biledigger:main( 7457): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-06 16:56:47.737 D/AudioManager( 7457): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-06 16:56:47.739 D/MusicViewModel( 7457): Loading liked files from destination folder: null
+10-06 16:56:47.739 D/MusicViewModel( 7457): No destination folder found
+10-06 16:56:47.744 D/MusicViewModel( 7457): Loaded subfolder history: 2 items
+10-06 16:56:47.744 I/ActivityManager( 1579): Background started FGS: Allowed [callingPackage: com.example.mobiledigger; callingUid: 10587; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { xflg=0x4 cmp=com.example.mobiledigger/.audio.MusicService }; code:PROC_STATE_TOP; tempAllowListReason:<,reasonCode:SYSTEM_ALLOW_LISTED,duration:9223372036854775807,callingUid:-1>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+10-06 16:56:47.747 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 16:56:47.759 I/ActivityManager( 1579): Start proc 7509:com.example.mobiledigger:music/u0a587 for service {com.example.mobiledigger/com.example.mobiledigger.audio.MusicService}
+10-06 16:56:47.772 D/MusicViewModel( 7457): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-06 16:56:47.772 D/MusicViewModel( 7457): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-06 16:56:47.772 D/MusicViewModel( 7457): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-06 16:56:47.773 D/MusicViewModel( 7457): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-06 16:56:47.777 D/MusicViewModel( 7457): Source folder restored (use Rescan to load files)
+10-06 16:56:47.777 D/MusicViewModel( 7457): Initialized successfully
+10-06 16:56:48.112 D/MusicViewModel( 7457): Updated liked files StateFlow with 0 files
+10-06 16:56:48.113 D/MusicViewModel( 7457): Notification receiver registered successfully
+10-06 16:56:48.127 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 16:56:48.128 I/ExoPlayerImpl( 7509): Init bf03748 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-06 16:56:48.157 I/iledigger:music( 7509): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-06 16:56:48.238 D/AudioManager( 7509): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-06 16:56:48.238 I/ExoPlayerImpl( 7509): Init b88ed8d [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-06 16:56:48.252 D/MusicService( 7509): Initialized dummy playlist for skip support
+10-06 16:56:48.280 E/MediaControllerCompat(31274): android.os.DeadObjectException
+10-06 16:56:48.289 D/MusicService( 7509): MediaSession created successfully
+10-06 16:56:48.301 D/MusicService( 7509): Started foreground service with notification
+10-06 16:56:48.376 D/MusicViewModel( 7457): Found 243 rejected files
+10-06 16:56:48.378 D/MusicViewModel( 7457): Updated rejected files StateFlow with 243 files
+10-06 16:56:48.770 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:48.844 D/MusicViewModel( 7457): Rescanning source folder: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-06 16:56:48.845 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:48.847 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:48.848 D/MusicViewModel( 7457): Starting folder selection: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-06 16:56:48.853 D/MusicViewModel( 7457): FileManager.setSelectedFolder completed
+10-06 16:56:48.853 D/MusicViewModel( 7457): Saved source folder URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-06 16:56:48.859 D/FileManager( 7457): SAF folder exists: true, canRead: true
+10-06 16:56:49.117 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 16:56:49.137 D/MusicService( 7509): Started foreground service with notification
+10-06 16:56:49.139 D/MusicService( 7509): updateNotificationData - Title: MobileDigger, Playing: false, Position: 0, Duration: 0
+10-06 16:56:49.164 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 16:56:49.172 D/MusicService( 7509): MediaSession player updated - URI: , Title: MobileDigger, Duration in Meta: 0
+10-06 16:56:49.309 D/MusicViewModel( 7457): FileManager.loadMusicFiles completed with 328 files
+10-06 16:56:49.310 D/MusicViewModel( 7457): Updated musicFiles state
+10-06 16:56:49.312 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:49.312 D/AudioManager( 7457): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTony%20Guerra%2C%20ADRIANZA%2C%20Camlop%20-%20PRENDIDO.wav
+10-06 16:56:49.313 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 16:56:49.319 D/AudioManager( 7457): ExoPlayer started successfully
+10-06 16:56:49.319 D/AudioManager( 7457): ExoPlayer playback successful for: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav
+10-06 16:56:49.319 D/MusicViewModel( 7457): Playback started successfully for Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav
+10-06 16:56:49.324 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 16:56:49.325 D/MusicViewModel( 7457): selectFolder completed successfully
+10-06 16:56:49.326 D/MusicViewModel( 7457): Preloaded next song: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav
+10-06 16:56:49.336 D/MusicService( 7509): Started foreground service with notification
+10-06 16:56:49.337 D/MusicService( 7509): updateNotificationData - Title: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav, Playing: true, Position: 0, Duration: 0
+10-06 16:56:49.348 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 16:56:49.351 D/MusicService( 7509): Player (MediaSession) onPlayWhenReadyChanged: true
+10-06 16:56:49.369 D/MusicService( 7509): MediaSession player updated - URI: , Title: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav, Duration in Meta: 0
+10-06 16:56:49.859 D/MusicViewModel( 7457): Loaded 2 subfolders.
+10-06 16:56:49.935 D/MusicViewModel( 7457): Found 96 liked files (including subfolders), 83 unique
+10-06 16:56:49.936 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 16:56:49.946 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 16:56:50.116 D/MusicViewModel( 7457): Found 243 rejected files
+10-06 16:56:50.138 D/MusicViewModel( 7457): Updated rejected files StateFlow with 243 files
+10-06 16:56:50.620 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:51.642 D/MusicServiceCallback( 7509): HEADPHONE NEXT → map to DISLIKE (single)
+10-06 16:56:51.649 D/MusicViewModel( 7457): Safe sorting file: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav with action DISLIKE
+10-06 16:56:51.653 D/MusicService( 7509): Notification action: DISLIKE
+10-06 16:56:51.669 D/FileManager( 7457): Source file found: Tony Guerra, ADRIANZA, Camlop - PRENDIDO.wav, exists: true, canRead: true
+10-06 16:56:51.845 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 16:56:52.382 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 16:56:52.393 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 16:56:52.393 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 16:56:52.393 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 16:56:52.393 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 16:56:52.393 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 16:56:52.393 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 16:56:52.393 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 16:56:52.393 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 16:56:52.393 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 16:56:52.393 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 16:56:52.393 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 16:56:52.393 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:52.393 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 16:56:52.393 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 16:56:52.393 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 16:56:52.393 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 16:56:52.393 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 16:56:52.393 D/MusicService( 7509): 	... 8 more
+10-06 16:56:52.393 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 16:56:52.393 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 16:56:52.393 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:52.393 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 16:56:52.393 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:52.393 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 16:56:52.393 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 16:56:52.393 D/MusicService( 7509): 	... 12 more
+10-06 16:56:52.396 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 16:56:53.070 D/AudioManager( 7457): ExoPlayer stopped
+10-06 16:56:53.071 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:53.072 D/MusicViewModel( 7457): High memory usage detected: 81%, clearing caches
+10-06 16:56:53.115 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:53.115 D/AudioManager( 7457): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTriCade%2C%20Andre%20Salmon%20-%20The%20Selector%20(Original%20Mix)%20%5BWitty%20Tunes%5D.wav
+10-06 16:56:53.117 D/AudioManager( 7457): ExoPlayer started successfully
+10-06 16:56:53.117 D/AudioManager( 7457): ExoPlayer playback successful for: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav
+10-06 16:56:53.117 D/MusicViewModel( 7457): Playback started successfully for TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav
+10-06 16:56:53.119 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 16:56:53.120 D/MusicViewModel( 7457): Preloaded next song: Discip - Reversed (SNTS MSTR V4).wav
+10-06 16:56:53.142 D/MusicService( 7509): Started foreground service with notification
+10-06 16:56:53.143 D/MusicService( 7509): updateNotificationData - Title: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav, Playing: true, Position: 0, Duration: 0
+10-06 16:56:53.150 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 16:56:53.154 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 0
+10-06 16:56:53.164 D/MusicService( 7509): MediaSession player updated - URI: , Title: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav, Duration in Meta: 0
+10-06 16:56:53.369 D/MusicViewModel( 7457): Refreshed all playlists
+10-06 16:56:53.376 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 16:56:53.552 W/biledigger:main( 7457): Throwing OutOfMemoryError "Failed to allocate a 134215692 byte allocation with 100663296 free bytes and 174MB until OOM, target footprint 186008560, growth limit 268435456" (VmSize 18372516 kB)
+10-06 16:56:53.832 D/MusicViewModel( 7457): Found 83 liked files (including subfolders), 83 unique
+10-06 16:56:53.833 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 16:56:53.848 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 16:56:53.857 D/MusicViewModel( 7457): Found 0 rejected files
+10-06 16:56:53.859 D/MusicViewModel( 7457): Updated rejected files StateFlow with 0 files
+10-06 16:56:54.942 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 16:56:56.170 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 16:56:56.177 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 16:56:56.177 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 16:56:56.177 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 16:56:56.177 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 16:56:56.177 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 16:56:56.177 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 16:56:56.177 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 16:56:56.177 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 16:56:56.177 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 16:56:56.177 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 16:56:56.177 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 16:56:56.177 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:56:56.177 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 16:56:56.177 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 16:56:56.177 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 16:56:56.177 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 16:56:56.177 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 16:56:56.177 D/MusicService( 7509): 	... 8 more
+10-06 16:56:56.177 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 16:56:56.177 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 16:56:56.177 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:56.177 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 16:56:56.177 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:56:56.177 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 16:56:56.177 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 16:56:56.177 D/MusicService( 7509): 	... 12 more
+10-06 16:56:56.180 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 16:56:56.597 D/MusicServiceCallback( 7509): HEADPHONE NEXT → map to DISLIKE (single)
+10-06 16:56:56.599 D/MusicService( 7509): Notification action: DISLIKE
+10-06 16:56:56.603 D/MusicViewModel( 7457): Safe sorting file: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav with action DISLIKE
+10-06 16:56:56.629 D/FileManager( 7457): Source file found: TriCade, Andre Salmon - The Selector (Original Mix) [Witty Tunes].wav, exists: true, canRead: true
+10-06 16:56:58.008 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:56:58.270 D/AudioManager( 7457): ExoPlayer stopped
+10-06 16:56:58.271 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:58.272 D/MusicViewModel( 7457): EMERGENCY: Memory usage at 87%, performing aggressive cleanup
+10-06 16:56:58.340 D/AudioManager( 7457): ExoPlayer cleared
+10-06 16:56:58.340 D/AudioManager( 7457): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FDiscip%20-%20Reversed%20(SNTS%20MSTR%20V4).wav
+10-06 16:56:58.341 D/AudioManager( 7457): ExoPlayer started successfully
+10-06 16:56:58.341 D/AudioManager( 7457): ExoPlayer playback successful for: Discip - Reversed (SNTS MSTR V4).wav
+10-06 16:56:58.341 D/MusicViewModel( 7457): Playback started successfully for Discip - Reversed (SNTS MSTR V4).wav
+10-06 16:56:58.343 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 16:56:58.344 D/MusicViewModel( 7457): Preloaded next song: Koldar - The Night (Extended Mix) [Wh0 Plays].aif
+10-06 16:56:58.353 D/MusicService( 7509): Started foreground service with notification
+10-06 16:56:58.355 D/MusicService( 7509): updateNotificationData - Title: Discip - Reversed (SNTS MSTR V4).wav, Playing: true, Position: 0, Duration: 0
+10-06 16:56:58.365 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 16:56:58.372 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 0
+10-06 16:56:58.382 D/MusicService( 7509): MediaSession player updated - URI: , Title: Discip - Reversed (SNTS MSTR V4).wav, Duration in Meta: 0
+10-06 16:56:58.583 D/MusicViewModel( 7457): Refreshed all playlists
+10-06 16:56:58.598 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 16:56:58.776 D/MusicViewModel( 7457): Found 245 rejected files
+10-06 16:56:58.802 D/MusicViewModel( 7457): Updated rejected files StateFlow with 245 files
+10-06 16:56:58.806 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 16:56:59.428 D/MusicViewModel( 7457): Found 96 liked files (including subfolders), 83 unique
+10-06 16:56:59.429 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 16:57:01.071 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 16:57:01.394 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 16:57:01.427 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 16:57:01.427 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 16:57:01.427 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 16:57:01.427 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 16:57:01.427 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 16:57:01.427 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 16:57:01.427 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 16:57:01.427 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 16:57:01.427 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 16:57:01.427 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 16:57:01.427 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 16:57:01.427 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 16:57:01.427 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 16:57:01.427 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 16:57:01.427 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 16:57:01.427 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 16:57:01.427 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 16:57:01.427 D/MusicService( 7509): 	... 8 more
+10-06 16:57:01.427 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 16:57:01.427 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 16:57:01.427 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:57:01.427 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 16:57:01.427 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 16:57:01.427 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 16:57:01.427 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 16:57:01.427 D/MusicService( 7509): 	... 12 more
+10-06 16:57:01.439 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 16:57:04.140 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:07.217 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:10.301 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:13.368 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:16.439 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:19.522 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:22.596 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:25.695 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:28.790 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:31.885 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:34.990 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:38.087 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:41.182 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:44.287 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:47.391 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:50.477 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:51.564 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:53.553 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:56.635 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:57:59.737 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:02.835 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:05.935 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:09.031 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:12.097 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:15.232 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:18.321 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:21.430 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:24.531 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:27.613 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:30.683 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:33.760 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:36.843 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:39.939 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:43.035 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:46.113 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:49.187 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:52.263 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:54.913 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 16:58:55.102 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:55.150 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 16:58:55.169 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:58:56.178 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 16:59:56.442 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:00.362 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:00.495 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:00.838 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:46.386 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:00:46.489 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:46.530 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:00:46.582 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:46.643 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:49.733 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:50.800 D/MusicServiceCallback( 7509): HEADPHONE NEXT → map to DISLIKE (single)
+10-06 17:00:51.322 D/MusicViewModel( 7457): Safe sorting file: Discip - Reversed (SNTS MSTR V4).wav with action DISLIKE
+10-06 17:00:51.324 D/MusicService( 7509): Notification action: DISLIKE
+10-06 17:00:51.397 D/FileManager( 7457): Source file found: Discip - Reversed (SNTS MSTR V4).wav, exists: true, canRead: true
+10-06 17:00:52.697 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:00:52.796 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:55.251 D/AudioManager( 7457): ExoPlayer stopped
+10-06 17:00:55.256 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:00:55.266 D/MusicViewModel( 7457): Loading AIFF file: Koldar - The Night (Extended Mix) [Wh0 Plays].aif
+10-06 17:00:55.267 D/MusicViewModel( 7457): Moderate memory usage: 65%, suggesting GC
+10-06 17:00:55.554 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:00:55.556 D/AudioManager( 7457): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-06 17:00:55.871 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:57.285 D/MusicViewModel( 7457): Playback started successfully for Koldar - The Night (Extended Mix) [Wh0 Plays].aif
+10-06 17:00:57.295 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 17:00:57.297 D/MusicService( 7509): Started foreground service with notification
+10-06 17:00:57.308 D/MusicViewModel( 7457): Preloaded next song: Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3
+10-06 17:00:57.373 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-06 17:00:57.373 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-06 17:00:57.373 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-06 17:00:57.496 I/BleScanRateOpt(31804): start check call session
+10-06 17:00:57.498 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-06 17:00:57.498 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-06 17:00:57.498 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-06 17:00:57.585 I/biledigger:main( 7457): Compiler allocated 6825KB to compile void com.example.mobiledigger.ui.components.MusicPlayerScreenKt.MusicPlayerScreen(com.example.mobiledigger.viewmodel.MusicViewModel, androidx.compose.foundation.layout.PaddingValues, androidx.compose.runtime.Composer, int, int)
+10-06 17:00:57.698 D/RestrictManager_0_ims( 2955): Call end. init mCounterForIwlanRestrictionInCall
+10-06 17:00:57.801 D/MusicService( 7509): updateNotificationData - Title: Koldar - The Night (Extended Mix) [Wh0 Plays].aif, Playing: true, Position: 0, Duration: 0
+10-06 17:00:57.824 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 17:00:57.826 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 0
+10-06 17:00:57.845 D/MusicService( 7509): MediaSession player updated - URI: , Title: Koldar - The Night (Extended Mix) [Wh0 Plays].aif, Duration in Meta: 0
+10-06 17:00:58.019 D/MusicViewModel( 7457): Refreshed all playlists
+10-06 17:00:58.029 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 17:00:58.310 I/BleScanRateOpt(31804): start check call session
+10-06 17:00:58.962 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:00:59.502 I/BleScanRateOpt(31804): start check call session
+10-06 17:01:00.403 D/MusicViewModel( 7457): Found 96 liked files (including subfolders), 83 unique
+10-06 17:01:00.576 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 17:01:00.656 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:01:00.844 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 17:01:00.856 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 17:01:00.856 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:01:00.856 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:01:00.856 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:01:00.856 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:01:00.856 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 17:01:00.856 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:01:00.856 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:01:00.856 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:01:00.856 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:01:00.856 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 17:01:00.856 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:01:00.856 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:01:00.856 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:01:00.856 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:01:00.856 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:01:00.856 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:01:00.856 D/MusicService( 7509): 	... 8 more
+10-06 17:01:00.856 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:01:00.856 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 17:01:00.856 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:01:00.856 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:01:00.856 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:01:00.856 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:01:00.856 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:01:00.856 D/MusicService( 7509): 	... 12 more
+10-06 17:01:00.859 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 17:01:01.347 D/MusicViewModel( 7457): Found 246 rejected files
+10-06 17:01:01.362 D/MusicViewModel( 7457): Updated rejected files StateFlow with 246 files
+10-06 17:01:02.055 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:02.281 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:05.176 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:08.275 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:08.679 I/BleScanRateOpt(31804): onPrimaryDisplayChanged state=1
+10-06 17:01:08.679 I/BleScanRateOpt(31804): Screen is not interactive, stop scan
+10-06 17:01:08.718 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:01:08.972 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:01:09.004 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:09.085 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:17.113 I/BleScanRateOpt(31804): onPrimaryDisplayChanged state=2
+10-06 17:01:17.126 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:01:17.233 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:17.615 I/BleScanRateOpt(31804): start check call session
+10-06 17:01:23.121 I/BleScanRateOpt(31804): onPrimaryDisplayChanged state=1
+10-06 17:01:23.122 I/BleScanRateOpt(31804): Screen is not interactive, stop scan
+10-06 17:01:23.154 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:01:23.252 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:01:48.081 D/MusicViewModel( 7457): Periodic cache clearing completed (memory usage: 65%)
+10-06 17:02:03.750 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:02:42.511 D/MusicServiceCallback( 7509): HEADPHONE NEXT → map to DISLIKE (single)
+10-06 17:02:43.025 D/MusicService( 7509): Notification action: DISLIKE
+10-06 17:02:43.035 D/MusicViewModel( 7457): Safe sorting file: Koldar - The Night (Extended Mix) [Wh0 Plays].aif with action DISLIKE
+10-06 17:02:43.125 D/FileManager( 7457): Source file found: Koldar - The Night (Extended Mix) [Wh0 Plays].aif, exists: true, canRead: true
+10-06 17:02:46.862 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:02:46.875 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:02:46.877 D/AudioManager( 7457): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FCollin%20Sterling%20-%20Adrenaline%20(Extended%20Mix)%20%5BForever%20Young%20Recordings%5D.mp3
+10-06 17:02:46.890 D/AudioManager( 7457): ExoPlayer started successfully
+10-06 17:02:46.892 D/AudioManager( 7457): ExoPlayer playback successful for: Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3
+10-06 17:02:46.893 D/MusicViewModel( 7457): Playback started successfully for Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3
+10-06 17:02:46.900 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 17:02:46.912 D/MusicViewModel( 7457): Preloaded next song: Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif
+10-06 17:02:46.945 D/MusicService( 7509): Started foreground service with notification
+10-06 17:02:47.411 D/MusicService( 7509): updateNotificationData - Title: Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3, Playing: true, Position: 0, Duration: 0
+10-06 17:02:47.432 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 17:02:47.441 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 0
+10-06 17:02:47.454 D/MusicService( 7509): MediaSession player updated - URI: , Title: Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3, Duration in Meta: 0
+10-06 17:02:47.984 D/MusicViewModel( 7457): Refreshed all playlists
+10-06 17:02:47.990 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 17:02:49.504 D/MusicViewModel( 7457): Found 96 liked files (including subfolders), 83 unique
+10-06 17:02:49.517 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 17:02:49.567 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 17:02:50.071 D/MusicViewModel( 7457): Found 247 rejected files
+10-06 17:02:50.077 D/MusicViewModel( 7457): Updated rejected files StateFlow with 247 files
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:02:50.457 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 17:02:50.489 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 17:02:50.489 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:02:50.489 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:02:50.489 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:02:50.489 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:02:50.489 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 17:02:50.489 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:02:50.489 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:02:50.489 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:02:50.489 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:02:50.489 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 17:02:50.489 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:02:50.489 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:02:50.489 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:02:50.489 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:02:50.489 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:02:50.489 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:02:50.489 D/MusicService( 7509): 	... 8 more
+10-06 17:02:50.489 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:02:50.489 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 17:02:50.489 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:02:50.489 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:02:50.489 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:02:50.489 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:02:50.489 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:02:50.489 D/MusicService( 7509): 	... 12 more
+10-06 17:02:50.502 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 17:03:17.832 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:04:23.174 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:05:24.452 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:05:44.955 D/MusicServiceCallback( 7509): HEADPHONE NEXT → map to DISLIKE (single)
+10-06 17:05:45.470 D/MusicService( 7509): Notification action: DISLIKE
+10-06 17:05:45.475 D/MusicViewModel( 7457): Safe sorting file: Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3 with action DISLIKE
+10-06 17:05:45.543 D/FileManager( 7457): Source file found: Collin Sterling - Adrenaline (Extended Mix) [Forever Young Recordings].mp3, exists: true, canRead: true
+10-06 17:05:48.016 D/AudioManager( 7457): ExoPlayer stopped
+10-06 17:05:48.024 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:05:48.028 D/MusicViewModel( 7457): Loading AIFF file: Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif
+10-06 17:05:48.034 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:05:48.037 D/AudioManager( 7457): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-06 17:05:49.846 D/MusicViewModel( 7457): Playback started successfully for Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif
+10-06 17:05:49.893 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 17:05:49.904 D/MusicViewModel( 7457): Preloaded next song: FGL - Destino (Original Mix) [F.T.F.T records].aiff
+10-06 17:05:49.922 D/MusicService( 7509): Started foreground service with notification
+10-06 17:05:50.025 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-06 17:05:50.025 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-06 17:05:50.025 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-06 17:05:50.089 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-06 17:05:50.089 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-06 17:05:50.089 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-06 17:05:50.415 D/MusicService( 7509): updateNotificationData - Title: Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif, Playing: true, Position: 0, Duration: 0
+10-06 17:05:50.460 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 17:05:50.507 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 0
+10-06 17:05:50.529 D/MusicService( 7509): MediaSession player updated - URI: , Title: Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif, Duration in Meta: 0
+10-06 17:05:50.901 D/MusicViewModel( 7457): Refreshed all playlists
+10-06 17:05:50.918 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 17:05:52.240 D/MusicViewModel( 7457): Found 96 liked files (including subfolders), 83 unique
+10-06 17:05:52.246 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 17:05:52.286 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 17:05:52.859 D/MusicViewModel( 7457): Found 248 rejected files
+10-06 17:05:52.867 D/MusicViewModel( 7457): Updated rejected files StateFlow with 248 files
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:05:53.510 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 17:05:53.537 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 17:05:53.537 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:05:53.537 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:05:53.537 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:05:53.537 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:05:53.537 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 17:05:53.537 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:05:53.537 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:05:53.537 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:05:53.537 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:05:53.537 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 17:05:53.537 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:05:53.537 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:05:53.537 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:05:53.537 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:05:53.537 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:05:53.537 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:05:53.537 D/MusicService( 7509): 	... 8 more
+10-06 17:05:53.537 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:05:53.537 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 17:05:53.537 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:05:53.537 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:05:53.537 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:05:53.537 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:05:53.537 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:05:53.537 D/MusicService( 7509): 	... 12 more
+10-06 17:05:53.548 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 17:06:31.263 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:06:48.524 D/MusicViewModel( 7457): Periodic cache clearing completed (memory usage: 54%)
+10-06 17:07:33.587 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:20.548 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:08:20.664 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:20.668 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:08:20.706 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:20.809 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:22.566 D/MusicServiceCallback( 7509): HEADPHONE NEXT → map to DISLIKE (single)
+10-06 17:08:23.089 D/MusicService( 7509): Notification action: DISLIKE
+10-06 17:08:23.103 D/MusicViewModel( 7457): Safe sorting file: Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif with action DISLIKE
+10-06 17:08:23.214 D/FileManager( 7457): Source file found: Junior Jack & Pat BDS - E.V.O. (Argento Dust Extended Remix).aif, exists: true, canRead: true
+10-06 17:08:23.779 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:26.692 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:08:26.858 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:27.282 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:08:27.286 D/MusicViewModel( 7457): Loading AIFF file: FGL - Destino (Original Mix) [F.T.F.T records].aiff
+10-06 17:08:27.291 D/AudioManager( 7457): ExoPlayer cleared
+10-06 17:08:27.293 D/AudioManager( 7457): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-06 17:08:29.056 D/MusicViewModel( 7457): Playback started successfully for FGL - Destino (Original Mix) [F.T.F.T records].aiff
+10-06 17:08:29.069 D/MusicViewModel( 7457): MusicService started successfully.
+10-06 17:08:29.081 D/MusicViewModel( 7457): Preloaded next song: Rauw Alejandro - Guaban Sexxx (The Ironix Remix).wav
+10-06 17:08:29.087 D/MusicService( 7509): Started foreground service with notification
+10-06 17:08:29.222 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-06 17:08:29.222 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-06 17:08:29.222 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-06 17:08:29.290 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-06 17:08:29.290 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-06 17:08:29.290 D/ResourceManager( 7457): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-06 17:08:29.575 D/MusicService( 7509): updateNotificationData - Title: FGL - Destino (Original Mix) [F.T.F.T records].aiff, Playing: true, Position: 0, Duration: 0
+10-06 17:08:29.592 D/MusicService( 7509): Player (MediaSession) onMediaItemTransition reason: 3
+10-06 17:08:29.601 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 0
+10-06 17:08:29.620 D/MusicService( 7509): MediaSession player updated - URI: , Title: FGL - Destino (Original Mix) [F.T.F.T records].aiff, Duration in Meta: 0
+10-06 17:08:29.970 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:30.175 D/MusicViewModel( 7457): Refreshed all playlists
+10-06 17:08:30.202 D/MusicViewModel( 7457): Loading liked files from destination folder: Results
+10-06 17:08:31.808 D/MusicViewModel( 7457): Found 96 liked files (including subfolders), 83 unique
+10-06 17:08:31.819 D/MusicViewModel( 7457): Updated liked files StateFlow with 83 files
+10-06 17:08:31.900 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:08:31.945 D/MusicViewModel( 7457): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-06 17:08:32.008 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:32.166 I/NearbyDiscovery( 2857): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-06 17:08:32.217 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509): Playback error
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at android.os.Looper.loop(Looper.java:349)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):   Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at java.lang.Thread.run(Thread.java:1119)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):   Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       ... 8 more
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):   Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at libcore.io.Linux.open(Native Method)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:08:32.622 E/ExoPlayerImplInternal( 7509):       ... 12 more
+10-06 17:08:32.640 D/MusicService( 7509): Player (MediaSession) Error: Source error
+10-06 17:08:32.640 D/MusicService( 7509): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-06 17:08:32.640 D/MusicService( 7509): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-06 17:08:32.640 D/MusicService( 7509): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-06 17:08:32.640 D/MusicService( 7509): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-06 17:08:32.640 D/MusicService( 7509): 	at android.os.Looper.loop(Looper.java:349)
+10-06 17:08:32.640 D/MusicService( 7509): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-06 17:08:32.640 D/MusicService( 7509): Caused by: androidx.media3.datasource.FileDataSource$FileDataSourceException: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:205)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.open(FileDataSource.java:116)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-06 17:08:32.640 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-06 17:08:32.640 D/MusicService( 7509): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-06 17:08:32.640 D/MusicService( 7509): 	at java.lang.Thread.run(Thread.java:1119)
+10-06 17:08:32.640 D/MusicService( 7509): Caused by: java.io.FileNotFoundException: : open failed: ENOENT (No such file or directory)
+10-06 17:08:32.640 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:574)
+10-06 17:08:32.640 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:307)
+10-06 17:08:32.640 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:237)
+10-06 17:08:32.640 D/MusicService( 7509): 	at java.io.RandomAccessFile.<init>(RandomAccessFile.java:154)
+10-06 17:08:32.640 D/MusicService( 7509): 	at androidx.media3.datasource.FileDataSource.openLocalFile(FileDataSource.java:186)
+10-06 17:08:32.640 D/MusicService( 7509): 	... 8 more
+10-06 17:08:32.640 D/MusicService( 7509): Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+10-06 17:08:32.640 D/MusicService( 7509): 	at libcore.io.Linux.open(Native Method)
+10-06 17:08:32.640 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:08:32.640 D/MusicService( 7509): 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+10-06 17:08:32.640 D/MusicService( 7509): 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+10-06 17:08:32.640 D/MusicService( 7509): 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+10-06 17:08:32.640 D/MusicService( 7509): 	at libcore.io.IoBridge.open(IoBridge.java:560)
+10-06 17:08:32.640 D/MusicService( 7509): 	... 12 more
+10-06 17:08:32.649 D/MusicService( 7509): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-06 17:08:32.817 D/MusicViewModel( 7457): Found 249 rejected files
+10-06 17:08:32.826 D/MusicViewModel( 7457): Updated rejected files StateFlow with 249 files
+10-06 17:08:33.853 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-06 17:09:03.518 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse

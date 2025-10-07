@@ -1,0 +1,1222 @@
+10-07 09:09:27.335 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:27.456 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:30.541 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:33.642 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:36.236 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8767834381038830173.aiff
+10-07 09:09:36.249 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5071037292999228388.aiff
+10-07 09:09:36.249 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1819591676973251639.aiff
+10-07 09:09:36.249 D/AudioManager(18846): All caches cleared
+10-07 09:09:36.730 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:39.819 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:40.709 D/RingtonePlayer( 2288): requesting AudioFocus
+10-07 09:09:40.711 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10223/2288 AA=USAGE_NOTIFICATION/CONTENT_TYPE_SONIFICATION clientId=android.media.AudioManager@e1b96c5 callingPack=com.android.systemui req=3 flags=0x0 sdk=36
+10-07 09:09:42.590 D/RingtonePlayer( 2288): onCompletion() abandoning AudioFocus
+10-07 09:09:42.591 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10223/2288 clientId=android.media.AudioManager@e1b96c5 callingPack=com.android.systemui
+10-07 09:09:42.917 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:46.021 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:48.473 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:49.093 D/FileManager(18846): Source file found: Pablo FIerro - Agua Salada [WERE HERE].aif, exists: true, canRead: true
+10-07 09:09:49.105 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:51.011 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:09:51.027 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:09:51.027 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:09:51.027 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:09:51.027 D/AudioManager(18846): All playback stopped successfully
+10-07 09:09:51.027 D/AudioManager(18846): Preloaded player released.
+10-07 09:09:51.028 D/AudioManager(18846): Attempting to play file: Viv Castle - Wavey Ravers (ft Kris Kiss) (Extended Mix) MASTER.aif
+10-07 09:09:51.028 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FViv%20Castle%20-%20Wavey%20Ravers%20(ft%20Kris%20Kiss)%20(Extended%20Mix)%20MASTER.aif
+10-07 09:09:51.028 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:09:51.028 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:09:51.028 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:09:51.028 D/AudioManager(18846): All playback stopped successfully
+10-07 09:09:51.028 D/AudioManager(18846): AIFF file detected: Viv Castle - Wavey Ravers (ft Kris Kiss) (Extended Mix) MASTER.aif
+10-07 09:09:51.028 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:09:51.028 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:09:51.182 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7330615671575417471.aiff (52.01MB in 105ms, 495.35MB/s)
+10-07 09:09:51.182 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7330615671575417471.aiff
+10-07 09:09:51.182 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7330615671575417471.aiff
+10-07 09:09:51.183 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:09:52.187 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:09:52.190 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:09:52.190 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:52.190 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:09:52.265 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:09:52.265 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Viv Castle - Wavey Ravers (ft Kris Kiss) (Extended Mix) MASTER.aif
+10-07 09:09:52.271 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:09:52.295 D/MusicService( 6122): Started foreground service with notification
+10-07 09:09:52.297 D/MusicService( 6122): updateNotificationData - Title: Viv Castle - Wavey Ravers (ft Kris Kiss) (Extended Mix) MASTER.aif, Playing: true, Position: 0, Duration: 0
+10-07 09:09:52.298 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Viv Castle - Wavey Ravers (ft Kris Kiss) (Extended Mix) MASTER.aif
+10-07 09:09:52.326 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:09:52.326 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:09:55.316 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:55.547 D/FileManager(18846): Source file found: Viv Castle - Wavey Ravers (ft Kris Kiss) (Extended Mix) MASTER.aif, exists: true, canRead: true
+10-07 09:09:57.366 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:09:57.371 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:09:57.371 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:09:57.371 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:09:57.371 D/AudioManager(18846): All playback stopped successfully
+10-07 09:09:57.371 D/AudioManager(18846): Preloaded player released.
+10-07 09:09:57.372 D/AudioManager(18846): Attempting to play file: Adriatique & Notre Dame & Timbaland & Nelly Furtado - Give It To Me 2025 (JustLuke Bootleg).aif
+10-07 09:09:57.372 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAdriatique%20%26%20Notre%20Dame%20%26%20Timbaland%20%26%20Nelly%20Furtado%20-%20Give%20It%20To%20Me%202025%20(JustLuke%20Bootleg).aif
+10-07 09:09:57.372 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:09:57.372 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:09:57.372 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:09:57.372 D/AudioManager(18846): All playback stopped successfully
+10-07 09:09:57.372 D/AudioManager(18846): AIFF file detected: Adriatique & Notre Dame & Timbaland & Nelly Furtado - Give It To Me 2025 (JustLuke Bootleg).aif
+10-07 09:09:57.372 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:09:57.372 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:09:57.477 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8102598625203363185.aiff (34.85MB in 60ms, 580.85MB/s)
+10-07 09:09:57.477 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8102598625203363185.aiff
+10-07 09:09:57.477 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8102598625203363185.aiff
+10-07 09:09:57.477 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:09:58.434 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:09:58.481 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:09:58.482 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:09:58.483 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:09:58.570 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:09:58.570 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Adriatique & Notre Dame & Timbaland & Nelly Furtado - Give It To Me 2025 (JustLuke Bootleg).aif
+10-07 09:09:58.576 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:09:58.593 D/MusicService( 6122): Started foreground service with notification
+10-07 09:09:58.594 D/MusicService( 6122): updateNotificationData - Title: Adriatique & Notre Dame & Timbaland & Nelly Furtado - Give It To Me 2025 (JustLuke Bootleg).aif, Playing: true, Position: 0, Duration: 0
+10-07 09:09:58.594 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Adriatique & Notre Dame & Timbaland & Nelly Furtado - Give It To Me 2025 (JustLuke Bootleg).aif
+10-07 09:09:58.634 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:09:58.634 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:09:59.872 D/FileManager(18846): Source file found: Adriatique & Notre Dame & Timbaland & Nelly Furtado - Give It To Me 2025 (JustLuke Bootleg).aif, exists: true, canRead: true
+10-07 09:10:01.509 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:01.821 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:01.828 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:10:01.828 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:01.828 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:01.829 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:01.829 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:01.842 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7330615671575417471.aiff
+10-07 09:10:01.852 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8102598625203363185.aiff
+10-07 09:10:01.853 D/AudioManager(18846): All caches cleared
+10-07 09:10:01.910 D/AudioManager(18846): Attempting to play file: Sofiya Nzau, Madism, Robert Miles – Hutia (Extended Edit) [WMG Germany].aif
+10-07 09:10:01.910 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSofiya%20Nzau%2C%20Madism%2C%20Robert%20Miles%20%E2%80%93%20Hutia%20(Extended%20Edit)%20%5BWMG%20Germany%5D.aif
+10-07 09:10:01.910 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:01.911 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:01.911 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:01.911 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:01.911 D/AudioManager(18846): AIFF file detected: Sofiya Nzau, Madism, Robert Miles – Hutia (Extended Edit) [WMG Germany].aif
+10-07 09:10:01.911 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:10:01.911 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:10:02.038 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7786644134134082723.aiff (39.46MB in 77ms, 512.43MB/s)
+10-07 09:10:02.038 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7786644134134082723.aiff
+10-07 09:10:02.038 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7786644134134082723.aiff
+10-07 09:10:02.039 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:10:03.043 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:10:03.044 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:10:03.044 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:10:03.122 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:10:03.123 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Sofiya Nzau, Madism, Robert Miles – Hutia (Extended Edit) [WMG Germany].aif
+10-07 09:10:03.129 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:03.144 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:03.145 D/MusicService( 6122): updateNotificationData - Title: Sofiya Nzau, Madism, Robert Miles – Hutia (Extended Edit) [WMG Germany].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:10:03.146 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Sofiya Nzau, Madism, Robert Miles – Hutia (Extended Edit) [WMG Germany].aif
+10-07 09:10:03.184 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:10:03.184 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:10:04.585 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:05.800 D/FileManager(18846): Source file found: Sofiya Nzau, Madism, Robert Miles – Hutia (Extended Edit) [WMG Germany].aif, exists: true, canRead: true
+10-07 09:10:07.652 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:07.667 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:07.672 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:10:07.672 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:07.672 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:07.672 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:07.672 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:07.679 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7786644134134082723.aiff
+10-07 09:10:07.679 D/AudioManager(18846): All caches cleared
+10-07 09:10:07.720 D/AudioManager(18846): Attempting to play file: ESSE. - Ticket For 2.aif
+10-07 09:10:07.720 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FESSE.%20-%20Ticket%20For%202.aif
+10-07 09:10:07.720 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:07.720 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:07.720 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:07.720 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:07.720 D/AudioManager(18846): AIFF file detected: ESSE. - Ticket For 2.aif
+10-07 09:10:07.720 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:10:07.720 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:10:07.848 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2124005091391639695.aiff (47.60MB in 84ms, 566.63MB/s)
+10-07 09:10:07.848 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2124005091391639695.aiff
+10-07 09:10:07.849 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2124005091391639695.aiff
+10-07 09:10:07.849 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:10:08.857 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:10:08.859 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:10:08.860 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:10:08.934 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:10:08.935 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: ESSE. - Ticket For 2.aif
+10-07 09:10:08.944 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:08.967 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:08.969 D/MusicService( 6122): updateNotificationData - Title: ESSE. - Ticket For 2.aif, Playing: true, Position: 0, Duration: 0
+10-07 09:10:08.969 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: ESSE. - Ticket For 2.aif
+10-07 09:10:09.007 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:10:09.007 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:10:10.748 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:12.635 D/FileManager(18846): Source file found: ESSE. - Ticket For 2.aif, exists: true, canRead: true
+10-07 09:10:13.851 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:14.502 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:14.507 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:10:14.508 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:14.508 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:14.508 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:14.509 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:14.524 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2124005091391639695.aiff
+10-07 09:10:14.524 D/AudioManager(18846): All caches cleared
+10-07 09:10:14.577 D/AudioManager(18846): Attempting to play file: Bushbaby - Pumpin Jumpin [Extended].aif
+10-07 09:10:14.577 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBushbaby%20-%20Pumpin%20Jumpin%20%5BExtended%5D.aif
+10-07 09:10:14.577 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:14.577 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:14.577 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:14.577 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:14.577 D/AudioManager(18846): AIFF file detected: Bushbaby - Pumpin Jumpin [Extended].aif
+10-07 09:10:14.577 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:10:14.577 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:10:14.721 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8309096571931352810.aiff (57.83MB in 97ms, 596.15MB/s)
+10-07 09:10:14.721 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8309096571931352810.aiff
+10-07 09:10:14.722 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8309096571931352810.aiff
+10-07 09:10:14.722 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:10:15.727 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:10:15.728 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:10:15.728 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:10:15.811 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:10:15.811 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Bushbaby - Pumpin Jumpin [Extended].aif
+10-07 09:10:15.822 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:15.846 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:15.848 D/MusicService( 6122): updateNotificationData - Title: Bushbaby - Pumpin Jumpin [Extended].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:10:15.848 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Bushbaby - Pumpin Jumpin [Extended].aif
+10-07 09:10:15.886 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:10:15.886 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:10:16.932 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:17.579 D/FileManager(18846): Source file found: Bushbaby - Pumpin Jumpin [Extended].aif, exists: true, canRead: true
+10-07 09:10:19.450 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:19.457 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:10:19.457 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:19.457 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:19.458 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:19.458 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:19.468 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8309096571931352810.aiff
+10-07 09:10:19.468 D/AudioManager(18846): All caches cleared
+10-07 09:10:19.532 D/AudioManager(18846): Attempting to play file: Laurent Garnier - Man With The Red Face (Florist (BE) Edit) 2.wav
+10-07 09:10:19.532 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FLaurent%20Garnier%20-%20Man%20With%20The%20Red%20Face%20(Florist%20(BE)%20Edit)%202.wav
+10-07 09:10:19.532 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:19.532 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:19.532 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:19.532 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:19.533 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FLaurent%20Garnier%20-%20Man%20With%20The%20Red%20Face%20(Florist%20(BE)%20Edit)%202.wav
+10-07 09:10:19.534 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:10:19.534 D/AudioManager(18846): ExoPlayer playback successful for: Laurent Garnier - Man With The Red Face (Florist (BE) Edit) 2.wav
+10-07 09:10:19.535 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:19.548 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:19.550 D/MusicService( 6122): updateNotificationData - Title: Laurent Garnier - Man With The Red Face (Florist (BE) Edit) 2.wav, Playing: true, Position: 0, Duration: 0
+10-07 09:10:19.551 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Laurent Garnier - Man With The Red Face (Florist (BE) Edit) 2.wav
+10-07 09:10:20.010 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:21.985 D/FileManager(18846): Source file found: Laurent Garnier - Man With The Red Face (Florist (BE) Edit) 2.wav, exists: true, canRead: true
+10-07 09:10:23.071 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:23.662 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:23.662 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:23.663 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:10:23.663 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:23.663 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:23.664 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:23.664 D/AudioManager(18846): Attempting to play file: Austin Feldman - Nobody (Extended Mix).aif
+10-07 09:10:23.664 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAustin%20Feldman%20-%20Nobody%20(Extended%20Mix).aif
+10-07 09:10:23.664 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:23.664 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:23.664 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:23.664 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:23.664 D/AudioManager(18846): AIFF file detected: Austin Feldman - Nobody (Extended Mix).aif
+10-07 09:10:23.664 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:10:23.664 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:10:23.773 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6485656518377237599.aiff (46.35MB in 70ms, 662.16MB/s)
+10-07 09:10:23.773 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6485656518377237599.aiff
+10-07 09:10:23.773 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6485656518377237599.aiff
+10-07 09:10:23.773 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:10:24.779 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:10:24.780 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:10:24.780 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:10:24.859 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:10:24.860 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Austin Feldman - Nobody (Extended Mix).aif
+10-07 09:10:24.867 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:24.908 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:24.912 D/MusicService( 6122): updateNotificationData - Title: Austin Feldman - Nobody (Extended Mix).aif, Playing: true, Position: 0, Duration: 0
+10-07 09:10:24.913 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Austin Feldman - Nobody (Extended Mix).aif
+10-07 09:10:24.958 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:10:24.958 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:10:26.145 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:27.557 D/FileManager(18846): Source file found: Austin Feldman - Nobody (Extended Mix).aif, exists: true, canRead: true
+10-07 09:10:29.218 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:29.460 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:29.467 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:10:29.467 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:29.467 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:29.467 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:29.468 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:29.468 D/AudioManager(18846): Attempting to play file: Michael Jackson - Thriller (Black Coffee Remix).wav
+10-07 09:10:29.468 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMichael%20Jackson%20-%20Thriller%20(Black%20Coffee%20Remix).wav
+10-07 09:10:29.468 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:29.468 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:29.468 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:29.468 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:29.468 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMichael%20Jackson%20-%20Thriller%20(Black%20Coffee%20Remix).wav
+10-07 09:10:29.470 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:10:29.470 D/AudioManager(18846): ExoPlayer playback successful for: Michael Jackson - Thriller (Black Coffee Remix).wav
+10-07 09:10:29.472 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:29.497 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:29.498 D/MusicService( 6122): updateNotificationData - Title: Michael Jackson - Thriller (Black Coffee Remix).wav, Playing: true, Position: 0, Duration: 0
+10-07 09:10:29.498 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Michael Jackson - Thriller (Black Coffee Remix).wav
+10-07 09:10:32.265 D/FileManager(18846): Source file found: Michael Jackson - Thriller (Black Coffee Remix).wav, exists: true, canRead: true
+10-07 09:10:32.284 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:33.993 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:33.994 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:33.994 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:10:33.995 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:33.995 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:33.995 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:34.002 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6485656518377237599.aiff
+10-07 09:10:34.002 D/AudioManager(18846): All caches cleared
+10-07 09:10:35.376 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:38.455 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:41.551 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:44.626 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:47.736 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:48.766 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:48.790 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:48.793 D/MusicService( 6122): updateNotificationData - Title: Gorillaz - Feel Good Inc (Notre Dame Edit).mp3, Playing: true, Position: 0, Duration: 0
+10-07 09:10:48.794 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Gorillaz - Feel Good Inc (Notre Dame Edit).mp3
+10-07 09:10:49.097 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:50.856 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:52.188 D/FileManager(18846): Source file found: Gorillaz - Feel Good Inc (Notre Dame Edit).mp3, exists: true, canRead: true
+10-07 09:10:53.934 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:10:54.145 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:54.146 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:54.146 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:54.147 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:54.148 D/AudioManager(18846): Preloaded player released.
+10-07 09:10:54.149 D/AudioManager(18846): Attempting to play file: Emily Nash - On & On (Extended Mix) [Good Company].aiff
+10-07 09:10:54.150 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FEmily%20Nash%20-%20On%20%26%20On%20(Extended%20Mix)%20%5BGood%20Company%5D.aiff
+10-07 09:10:54.150 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:10:54.151 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:10:54.151 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:10:54.152 D/AudioManager(18846): All playback stopped successfully
+10-07 09:10:54.152 D/AudioManager(18846): AIFF file detected: Emily Nash - On & On (Extended Mix) [Good Company].aiff
+10-07 09:10:54.152 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:10:54.152 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:10:54.357 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1009645594703514169.aiff (52.24MB in 128ms, 408.15MB/s)
+10-07 09:10:54.357 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1009645594703514169.aiff
+10-07 09:10:54.357 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1009645594703514169.aiff
+10-07 09:10:54.358 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:10:55.363 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:10:55.364 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:10:55.364 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:10:55.438 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:10:55.439 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Emily Nash - On & On (Extended Mix) [Good Company].aiff
+10-07 09:10:55.447 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:10:55.469 D/MusicService( 6122): Started foreground service with notification
+10-07 09:10:55.471 D/MusicService( 6122): updateNotificationData - Title: Emily Nash - On & On (Extended Mix) [Good Company].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:10:55.471 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Emily Nash - On & On (Extended Mix) [Good Company].aiff
+10-07 09:10:55.499 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:10:55.499 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:10:57.001 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:00.095 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:00.456 D/FileManager(18846): Source file found: Emily Nash - On & On (Extended Mix) [Good Company].aiff, exists: true, canRead: true
+10-07 09:11:02.496 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:02.508 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:11:02.508 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:02.509 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:02.509 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:02.509 D/AudioManager(18846): Preloaded player released.
+10-07 09:11:02.524 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1009645594703514169.aiff
+10-07 09:11:02.524 D/AudioManager(18846): All caches cleared
+10-07 09:11:02.614 D/AudioManager(18846): Attempting to play file: MR. JOE - This Is A New Life  [Madorasindahouse Records].aiff
+10-07 09:11:02.614 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMR.%20JOE%20-%20This%20Is%20A%20New%20Life%20%20%5BMadorasindahouse%20Records%5D.aiff
+10-07 09:11:02.614 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:02.614 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:02.614 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:02.614 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:02.615 D/AudioManager(18846): AIFF file detected: MR. JOE - This Is A New Life  [Madorasindahouse Records].aiff
+10-07 09:11:02.615 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:11:02.615 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:11:02.757 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5863507855810595034.aiff (65.62MB in 98ms, 669.57MB/s)
+10-07 09:11:02.758 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5863507855810595034.aiff
+10-07 09:11:02.758 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5863507855810595034.aiff
+10-07 09:11:02.758 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:11:03.178 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:03.763 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:11:03.764 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:11:03.764 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:11:03.846 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:11:03.846 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: MR. JOE - This Is A New Life  [Madorasindahouse Records].aiff
+10-07 09:11:03.851 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:11:03.866 D/MusicService( 6122): Started foreground service with notification
+10-07 09:11:03.867 D/MusicService( 6122): updateNotificationData - Title: MR. JOE - This Is A New Life  [Madorasindahouse Records].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:11:03.869 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: MR. JOE - This Is A New Life  [Madorasindahouse Records].aiff
+10-07 09:11:03.907 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:11:03.907 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:11:06.261 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:09.050 D/FileManager(18846): Source file found: MR. JOE - This Is A New Life  [Madorasindahouse Records].aiff, exists: true, canRead: true
+10-07 09:11:09.323 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:11.026 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:11.032 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:11:11.033 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:11.033 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:11.033 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:11.040 D/AudioManager(18846): Preloaded player released.
+10-07 09:11:11.040 D/AudioManager(18846): Attempting to play file: Sister Nancy - Bam Bam ( Yas Cepeda Afro House ) v5.mp3
+10-07 09:11:11.040 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSister%20Nancy%20-%20Bam%20Bam%20(%20Yas%20Cepeda%20Afro%20House%20)%20v5.mp3
+10-07 09:11:11.040 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:11.041 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:11.041 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:11.041 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:11.041 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSister%20Nancy%20-%20Bam%20Bam%20(%20Yas%20Cepeda%20Afro%20House%20)%20v5.mp3
+10-07 09:11:11.044 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:11:11.044 D/AudioManager(18846): ExoPlayer playback successful for: Sister Nancy - Bam Bam ( Yas Cepeda Afro House ) v5.mp3
+10-07 09:11:11.051 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:11:11.065 D/MusicService( 6122): Started foreground service with notification
+10-07 09:11:11.065 D/MusicService( 6122): updateNotificationData - Title: Sister Nancy - Bam Bam ( Yas Cepeda Afro House ) v5.mp3, Playing: true, Position: 0, Duration: 0
+10-07 09:11:11.066 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Sister Nancy - Bam Bam ( Yas Cepeda Afro House ) v5.mp3
+10-07 09:11:12.412 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:15.501 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:18.603 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:21.677 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:24.754 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:27.860 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:28.681 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:30.979 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:32.813 D/RingtonePlayer( 2288): requesting AudioFocus
+10-07 09:11:32.814 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10223/2288 AA=USAGE_NOTIFICATION/CONTENT_TYPE_SONIFICATION clientId=android.media.AudioManager@757dd47 callingPack=com.android.systemui req=3 flags=0x0 sdk=36
+10-07 09:11:34.058 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:34.734 D/RingtonePlayer( 2288): onCompletion() abandoning AudioFocus
+10-07 09:11:34.734 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10223/2288 clientId=android.media.AudioManager@757dd47 callingPack=com.android.systemui
+10-07 09:11:35.477 D/RingtonePlayer( 2288): requesting AudioFocus
+10-07 09:11:35.479 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10223/2288 AA=USAGE_NOTIFICATION/CONTENT_TYPE_SONIFICATION clientId=android.media.AudioManager@c1127cf callingPack=com.android.systemui req=3 flags=0x0 sdk=36
+10-07 09:11:37.144 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:37.442 D/RingtonePlayer( 2288): onCompletion() abandoning AudioFocus
+10-07 09:11:37.443 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10223/2288 clientId=android.media.AudioManager@c1127cf callingPack=com.android.systemui
+10-07 09:11:40.214 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:43.285 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:46.363 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:48.777 D/FileManager(18846): Source file found: Sister Nancy - Bam Bam ( Yas Cepeda Afro House ) v5.mp3, exists: true, canRead: true
+10-07 09:11:49.437 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:50.654 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:50.654 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:50.654 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:11:50.655 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:50.655 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:50.655 D/AudioManager(18846): Preloaded player released.
+10-07 09:11:50.702 D/AudioManager(18846): Attempting to play file: Spacho &Lamor - Make U (MSTR 11.8).wav
+10-07 09:11:50.702 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSpacho%20%26Lamor%20-%20Make%20U%20(MSTR%2011.8).wav
+10-07 09:11:50.702 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:50.703 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:50.703 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:50.703 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:50.703 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSpacho%20%26Lamor%20-%20Make%20U%20(MSTR%2011.8).wav
+10-07 09:11:50.704 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:11:50.704 D/AudioManager(18846): ExoPlayer playback successful for: Spacho &Lamor - Make U (MSTR 11.8).wav
+10-07 09:11:50.705 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:11:50.714 D/MusicService( 6122): Started foreground service with notification
+10-07 09:11:50.715 D/MusicService( 6122): updateNotificationData - Title: Spacho &Lamor - Make U (MSTR 11.8).wav, Playing: true, Position: 0, Duration: 0
+10-07 09:11:50.715 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Spacho &Lamor - Make U (MSTR 11.8).wav
+10-07 09:11:50.765 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:52.506 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:54.483 D/FileManager(18846): Source file found: Spacho &Lamor - Make U (MSTR 11.8).wav, exists: true, canRead: true
+10-07 09:11:55.572 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:11:56.248 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:56.248 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:56.249 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:11:56.251 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:56.251 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:56.251 D/AudioManager(18846): Preloaded player released.
+10-07 09:11:56.301 D/AudioManager(18846): Attempting to play file: Tiga - Mind Dimension (Adam Sellouk Remix).aiff
+10-07 09:11:56.301 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTiga%20-%20Mind%20Dimension%20(Adam%20Sellouk%20Remix).aiff
+10-07 09:11:56.302 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:11:56.302 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:11:56.302 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:11:56.302 D/AudioManager(18846): All playback stopped successfully
+10-07 09:11:56.302 D/AudioManager(18846): AIFF file detected: Tiga - Mind Dimension (Adam Sellouk Remix).aiff
+10-07 09:11:56.302 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:11:56.302 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:11:56.427 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5265772700400922557.aiff (51.56MB in 81ms, 636.49MB/s)
+10-07 09:11:56.427 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5265772700400922557.aiff
+10-07 09:11:56.428 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5265772700400922557.aiff
+10-07 09:11:56.428 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:11:57.433 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:11:57.434 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:11:57.435 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:11:57.511 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:11:57.512 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Tiga - Mind Dimension (Adam Sellouk Remix).aiff
+10-07 09:11:57.518 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:11:57.543 D/MusicService( 6122): Started foreground service with notification
+10-07 09:11:57.544 D/MusicService( 6122): updateNotificationData - Title: Tiga - Mind Dimension (Adam Sellouk Remix).aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:11:57.544 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Tiga - Mind Dimension (Adam Sellouk Remix).aiff
+10-07 09:11:57.610 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:11:57.610 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:11:58.677 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:01.764 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:04.877 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:07.990 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:11.077 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:14.211 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:15.122 D/FileManager(18846): Source file found: Tiga - Mind Dimension (Adam Sellouk Remix).aiff, exists: true, canRead: true
+10-07 09:12:16.958 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:17.019 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:12:17.020 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:17.020 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:17.021 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:17.022 D/AudioManager(18846): Preloaded player released.
+10-07 09:12:17.047 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5863507855810595034.aiff
+10-07 09:12:17.057 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5265772700400922557.aiff
+10-07 09:12:17.057 D/AudioManager(18846): All caches cleared
+10-07 09:12:17.120 D/AudioManager(18846): Attempting to play file: 19-26 - Resurge.mp3
+10-07 09:12:17.120 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F19-26%20-%20Resurge.mp3
+10-07 09:12:17.120 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:17.120 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:17.120 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:17.120 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:17.120 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F19-26%20-%20Resurge.mp3
+10-07 09:12:17.122 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:12:17.122 D/AudioManager(18846): ExoPlayer playback successful for: 19-26 - Resurge.mp3
+10-07 09:12:17.126 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:12:17.130 D/MusicService( 6122): Started foreground service with notification
+10-07 09:12:17.130 D/MusicService( 6122): updateNotificationData - Title: 19-26 - Resurge.mp3, Playing: true, Position: 0, Duration: 0
+10-07 09:12:17.130 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: 19-26 - Resurge.mp3
+10-07 09:12:17.284 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:18.693 D/FileManager(18846): Source file found: 19-26 - Resurge.mp3, exists: true, canRead: true
+10-07 09:12:20.383 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:20.515 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:20.515 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:20.515 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:12:20.515 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:20.516 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:20.516 D/AudioManager(18846): Preloaded player released.
+10-07 09:12:20.516 D/AudioManager(18846): Attempting to play file: SIAMESE060 01 Andrea Oliva - Another Life.wav
+10-07 09:12:20.516 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSIAMESE060%2001%20Andrea%20Oliva%20-%20Another%20Life.wav
+10-07 09:12:20.516 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:20.516 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:20.516 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:20.516 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:20.516 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSIAMESE060%2001%20Andrea%20Oliva%20-%20Another%20Life.wav
+10-07 09:12:20.517 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:12:20.517 D/AudioManager(18846): ExoPlayer playback successful for: SIAMESE060 01 Andrea Oliva - Another Life.wav
+10-07 09:12:20.519 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:12:20.527 D/MusicService( 6122): Started foreground service with notification
+10-07 09:12:20.530 D/MusicService( 6122): updateNotificationData - Title: SIAMESE060 01 Andrea Oliva - Another Life.wav, Playing: true, Position: 0, Duration: 0
+10-07 09:12:20.530 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: SIAMESE060 01 Andrea Oliva - Another Life.wav
+10-07 09:12:23.467 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:25.410 D/FileManager(18846): Source file found: SIAMESE060 01 Andrea Oliva - Another Life.wav, exists: true, canRead: true
+10-07 09:12:26.549 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:27.257 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:27.258 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:27.258 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:12:27.259 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:27.259 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:27.260 D/AudioManager(18846): Preloaded player released.
+10-07 09:12:27.310 D/AudioManager(18846): Attempting to play file: TOYZZ - BACKSPIN EXTENDED (TOYZZ MASTER) [22.1kHz].wav
+10-07 09:12:27.310 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTOYZZ%20-%20BACKSPIN%20EXTENDED%20(TOYZZ%20MASTER)%20%5B22.1kHz%5D.wav
+10-07 09:12:27.310 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:27.310 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:27.310 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:27.310 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:27.310 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTOYZZ%20-%20BACKSPIN%20EXTENDED%20(TOYZZ%20MASTER)%20%5B22.1kHz%5D.wav
+10-07 09:12:27.311 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:12:27.311 D/AudioManager(18846): ExoPlayer playback successful for: TOYZZ - BACKSPIN EXTENDED (TOYZZ MASTER) [22.1kHz].wav
+10-07 09:12:27.313 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:12:27.322 D/MusicService( 6122): Started foreground service with notification
+10-07 09:12:27.324 D/MusicService( 6122): updateNotificationData - Title: TOYZZ - BACKSPIN EXTENDED (TOYZZ MASTER) [22.1kHz].wav, Playing: true, Position: 0, Duration: 0
+10-07 09:12:27.324 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: TOYZZ - BACKSPIN EXTENDED (TOYZZ MASTER) [22.1kHz].wav
+10-07 09:12:29.619 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:31.674 D/FileManager(18846): Source file found: TOYZZ - BACKSPIN EXTENDED (TOYZZ MASTER) [22.1kHz].wav, exists: true, canRead: true
+10-07 09:12:32.689 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:33.500 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:33.501 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:33.501 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:12:33.502 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:33.502 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:33.502 D/AudioManager(18846): Preloaded player released.
+10-07 09:12:33.551 D/AudioManager(18846): Attempting to play file: Erik Bruce, Moonface - Astral Drift (Moonface Remix) [PROGNOSIS].aif
+10-07 09:12:33.551 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErik%20Bruce%2C%20Moonface%20-%20Astral%20Drift%20(Moonface%20Remix)%20%5BPROGNOSIS%5D.aif
+10-07 09:12:33.551 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:33.552 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:33.552 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:33.552 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:33.552 D/AudioManager(18846): AIFF file detected: Erik Bruce, Moonface - Astral Drift (Moonface Remix) [PROGNOSIS].aif
+10-07 09:12:33.552 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:12:33.552 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:12:33.706 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4386716006584116337.aiff (82.13MB in 121ms, 678.76MB/s)
+10-07 09:12:33.706 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4386716006584116337.aiff
+10-07 09:12:33.706 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4386716006584116337.aiff
+10-07 09:12:33.706 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:12:34.711 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:12:34.712 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:12:34.712 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:12:34.789 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:12:34.790 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Erik Bruce, Moonface - Astral Drift (Moonface Remix) [PROGNOSIS].aif
+10-07 09:12:34.797 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:12:34.809 D/MusicService( 6122): Started foreground service with notification
+10-07 09:12:34.837 D/MusicService( 6122): updateNotificationData - Title: Erik Bruce, Moonface - Astral Drift (Moonface Remix) [PROGNOSIS].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:12:34.838 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Erik Bruce, Moonface - Astral Drift (Moonface Remix) [PROGNOSIS].aif
+10-07 09:12:34.852 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:12:34.853 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:12:35.772 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:37.581 D/FileManager(18846): Source file found: Erik Bruce, Moonface - Astral Drift (Moonface Remix) [PROGNOSIS].aif, exists: true, canRead: true
+10-07 09:12:38.851 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:40.352 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:40.360 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:12:40.360 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:40.361 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:40.361 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:40.362 D/AudioManager(18846): Preloaded player released.
+10-07 09:12:40.385 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4386716006584116337.aiff
+10-07 09:12:40.386 D/AudioManager(18846): All caches cleared
+10-07 09:12:40.472 D/AudioManager(18846): Attempting to play file: Joe Bermudez & Dana McKeon - Daydream Therapy (Extended Mix) [617 Records].aif
+10-07 09:12:40.472 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FJoe%20Bermudez%20%26%20Dana%20McKeon%20-%20Daydream%20Therapy%20(Extended%20Mix)%20%5B617%20Records%5D.aif
+10-07 09:12:40.472 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:12:40.472 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:12:40.472 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:12:40.472 D/AudioManager(18846): All playback stopped successfully
+10-07 09:12:40.473 D/AudioManager(18846): AIFF file detected: Joe Bermudez & Dana McKeon - Daydream Therapy (Extended Mix) [617 Records].aif
+10-07 09:12:40.473 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:12:40.473 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:12:40.580 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4453957566341860352.aiff (35.28MB in 64ms, 551.23MB/s)
+10-07 09:12:40.581 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4453957566341860352.aiff
+10-07 09:12:40.581 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4453957566341860352.aiff
+10-07 09:12:40.581 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:12:41.586 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:12:41.587 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:12:41.587 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:12:41.663 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:12:41.664 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Joe Bermudez & Dana McKeon - Daydream Therapy (Extended Mix) [617 Records].aif
+10-07 09:12:41.677 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:12:41.696 D/MusicService( 6122): Started foreground service with notification
+10-07 09:12:41.709 D/MusicService( 6122): updateNotificationData - Title: Joe Bermudez & Dana McKeon - Daydream Therapy (Extended Mix) [617 Records].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:12:41.710 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Joe Bermudez & Dana McKeon - Daydream Therapy (Extended Mix) [617 Records].aif
+10-07 09:12:41.792 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:12:41.792 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:12:41.926 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:45.009 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:48.091 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:50.833 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:51.155 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:54.230 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:12:57.300 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:00.368 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:01.586 D/FileManager(18846): Source file found: Joe Bermudez & Dana McKeon - Daydream Therapy (Extended Mix) [617 Records].aif, exists: true, canRead: true
+10-07 09:13:03.443 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:03.537 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:03.545 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:13:03.545 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:03.545 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:03.545 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:03.546 D/AudioManager(18846): Preloaded player released.
+10-07 09:13:03.547 D/AudioManager(18846): Attempting to play file: Missed Call - Wanna Make You Happy.aif
+10-07 09:13:03.547 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMissed%20Call%20-%20Wanna%20Make%20You%20Happy.aif
+10-07 09:13:03.547 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:03.547 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:03.547 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:03.547 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:03.547 D/AudioManager(18846): AIFF file detected: Missed Call - Wanna Make You Happy.aif
+10-07 09:13:03.547 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:13:03.547 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:13:03.840 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5360251126812224697.aiff (45.92MB in 245ms, 187.43MB/s)
+10-07 09:13:03.840 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5360251126812224697.aiff
+10-07 09:13:03.840 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5360251126812224697.aiff
+10-07 09:13:03.840 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:13:04.843 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:13:04.845 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:13:04.846 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:13:04.919 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:13:04.919 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Missed Call - Wanna Make You Happy.aif
+10-07 09:13:04.930 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:13:04.954 D/MusicService( 6122): Started foreground service with notification
+10-07 09:13:04.955 D/MusicService( 6122): updateNotificationData - Title: Missed Call - Wanna Make You Happy.aif, Playing: true, Position: 0, Duration: 0
+10-07 09:13:04.956 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Missed Call - Wanna Make You Happy.aif
+10-07 09:13:04.977 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:13:04.978 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:13:06.513 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:07.262 D/FileManager(18846): Source file found: Missed Call - Wanna Make You Happy.aif, exists: true, canRead: true
+10-07 09:13:09.226 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:09.233 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:13:09.233 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:09.233 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:09.233 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:09.234 D/AudioManager(18846): Preloaded player released.
+10-07 09:13:09.234 D/AudioManager(18846): Attempting to play file: Nick Castle 'White River'  [Labyrinth Records].aif
+10-07 09:13:09.234 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNick%20Castle%20'White%20River'%20%20%5BLabyrinth%20Records%5D.aif
+10-07 09:13:09.234 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:09.234 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:09.234 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:09.234 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:09.234 D/AudioManager(18846): AIFF file detected: Nick Castle 'White River'  [Labyrinth Records].aif
+10-07 09:13:09.234 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:13:09.234 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:13:09.510 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7386784420264462120.aiff (49.71MB in 224ms, 221.91MB/s)
+10-07 09:13:09.510 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7386784420264462120.aiff
+10-07 09:13:09.511 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7386784420264462120.aiff
+10-07 09:13:09.511 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:13:09.594 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:10.516 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:13:10.518 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:13:10.518 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:13:10.597 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:13:10.598 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Nick Castle 'White River'  [Labyrinth Records].aif
+10-07 09:13:10.607 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:13:10.647 D/MusicService( 6122): Started foreground service with notification
+10-07 09:13:10.649 D/MusicService( 6122): updateNotificationData - Title: Nick Castle 'White River'  [Labyrinth Records].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:13:10.649 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Nick Castle 'White River'  [Labyrinth Records].aif
+10-07 09:13:10.679 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:13:10.679 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:13:12.694 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:15.785 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:18.891 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:21.978 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:24.784 D/FileManager(18846): Source file found: Nick Castle 'White River'  [Labyrinth Records].aif, exists: true, canRead: true
+10-07 09:13:25.052 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:26.773 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:26.786 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:13:26.786 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:26.786 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:26.786 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:26.787 D/AudioManager(18846): Preloaded player released.
+10-07 09:13:26.847 D/AudioManager(18846): Attempting to play file: Oskido feat. Candy - Tsa Ma Ndebele (Manoo Remix Extended) [Legend Live].aif
+10-07 09:13:26.847 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FOskido%20feat.%20Candy%20-%20Tsa%20Ma%20Ndebele%20(Manoo%20Remix%20Extended)%20%5BLegend%20Live%5D.aif
+10-07 09:13:26.847 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:26.848 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:26.848 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:26.848 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:26.848 D/AudioManager(18846): AIFF file detected: Oskido feat. Candy - Tsa Ma Ndebele (Manoo Remix Extended) [Legend Live].aif
+10-07 09:13:26.848 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:13:26.848 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:13:27.032 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8461828723930891386.aiff (85.33MB in 134ms, 636.82MB/s)
+10-07 09:13:27.032 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8461828723930891386.aiff
+10-07 09:13:27.033 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8461828723930891386.aiff
+10-07 09:13:27.033 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:13:28.040 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:13:28.041 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:13:28.042 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:13:28.118 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:13:28.118 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Oskido feat. Candy - Tsa Ma Ndebele (Manoo Remix Extended) [Legend Live].aif
+10-07 09:13:28.125 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:13:28.131 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:28.148 D/MusicService( 6122): Started foreground service with notification
+10-07 09:13:28.152 D/MusicService( 6122): updateNotificationData - Title: Oskido feat. Candy - Tsa Ma Ndebele (Manoo Remix Extended) [Legend Live].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:13:28.153 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Oskido feat. Candy - Tsa Ma Ndebele (Manoo Remix Extended) [Legend Live].aif
+10-07 09:13:28.176 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:13:28.176 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:13:31.208 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:34.299 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:36.506 D/FileManager(18846): Source file found: Oskido feat. Candy - Tsa Ma Ndebele (Manoo Remix Extended) [Legend Live].aif, exists: true, canRead: true
+10-07 09:13:37.369 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:38.378 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:38.394 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:13:38.394 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:38.394 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:38.394 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:38.396 D/AudioManager(18846): Preloaded player released.
+10-07 09:13:38.455 D/AudioManager(18846): Attempting to play file: Tennant - I Saw You (Extended).aif
+10-07 09:13:38.455 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTennant%20-%20I%20Saw%20You%20(Extended).aif
+10-07 09:13:38.455 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:38.455 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:38.456 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:38.456 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:38.456 D/AudioManager(18846): AIFF file detected: Tennant - I Saw You (Extended).aif
+10-07 09:13:38.456 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:13:38.456 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:13:38.549 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7648884185716681158.aiff (38.34MB in 65ms, 589.86MB/s)
+10-07 09:13:38.549 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7648884185716681158.aiff
+10-07 09:13:38.549 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7648884185716681158.aiff
+10-07 09:13:38.550 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:13:39.551 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:13:39.552 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:13:39.553 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:13:39.649 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:13:39.651 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Tennant - I Saw You (Extended).aif
+10-07 09:13:39.668 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:13:39.678 D/MusicService( 6122): Started foreground service with notification
+10-07 09:13:39.804 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:13:39.804 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:13:40.171 D/MusicService( 6122): updateNotificationData - Title: Tennant - I Saw You (Extended).aif, Playing: true, Position: 0, Duration: 0
+10-07 09:13:40.171 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Tennant - I Saw You (Extended).aif
+10-07 09:13:40.428 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:43.497 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:46.590 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:49.671 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:50.935 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:52.433 D/FileManager(18846): Source file found: Tennant - I Saw You (Extended).aif, exists: true, canRead: true
+10-07 09:13:52.742 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:54.558 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:54.571 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:13:54.572 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:54.572 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:54.573 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:54.574 D/AudioManager(18846): Preloaded player released.
+10-07 09:13:54.583 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4453957566341860352.aiff
+10-07 09:13:54.592 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5360251126812224697.aiff
+10-07 09:13:54.603 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7386784420264462120.aiff
+10-07 09:13:54.618 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8461828723930891386.aiff
+10-07 09:13:54.623 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7648884185716681158.aiff
+10-07 09:13:54.623 D/AudioManager(18846): All caches cleared
+10-07 09:13:54.671 D/AudioManager(18846): Attempting to play file: Tujamo x RELOVA - Jump Into The Bag (Extended Mix) [HEXAGON].aif
+10-07 09:13:54.671 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTujamo%20x%20RELOVA%20-%20Jump%20Into%20The%20Bag%20(Extended%20Mix)%20%5BHEXAGON%5D.aif
+10-07 09:13:54.671 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:13:54.671 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:13:54.671 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:13:54.671 D/AudioManager(18846): All playback stopped successfully
+10-07 09:13:54.671 D/AudioManager(18846): AIFF file detected: Tujamo x RELOVA - Jump Into The Bag (Extended Mix) [HEXAGON].aif
+10-07 09:13:54.671 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:13:54.671 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:13:54.796 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3511446661024570817.aiff (46.03MB in 72ms, 639.37MB/s)
+10-07 09:13:54.796 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3511446661024570817.aiff
+10-07 09:13:54.796 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3511446661024570817.aiff
+10-07 09:13:54.797 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:13:55.801 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:13:55.802 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:13:55.802 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:13:55.850 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:13:55.882 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:13:55.882 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Tujamo x RELOVA - Jump Into The Bag (Extended Mix) [HEXAGON].aif
+10-07 09:13:55.888 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:13:55.904 D/MusicService( 6122): Started foreground service with notification
+10-07 09:13:55.906 D/MusicService( 6122): updateNotificationData - Title: Tujamo x RELOVA - Jump Into The Bag (Extended Mix) [HEXAGON].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:13:55.907 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Tujamo x RELOVA - Jump Into The Bag (Extended Mix) [HEXAGON].aif
+10-07 09:13:55.935 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:13:55.935 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:13:58.964 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:02.057 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:04.594 D/FileManager(18846): Source file found: Tujamo x RELOVA - Jump Into The Bag (Extended Mix) [HEXAGON].aif, exists: true, canRead: true
+10-07 09:14:05.124 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:06.747 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:06.760 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:14:06.760 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:06.761 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:06.761 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:06.762 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:06.773 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3511446661024570817.aiff
+10-07 09:14:06.773 D/AudioManager(18846): All caches cleared
+10-07 09:14:06.826 D/AudioManager(18846): Attempting to play file: The Echols Brothers and Santonio Echols - Work (Mannywya Dub Mix) [N.C.M label Detroit].aif
+10-07 09:14:06.826 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FThe%20Echols%20Brothers%20and%20Santonio%20Echols%20-%20Work%20(Mannywya%20Dub%20Mix)%20%5BN.C.M%20label%20Detroit%5D.aif
+10-07 09:14:06.826 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:06.826 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:06.826 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:06.826 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:06.826 D/AudioManager(18846): AIFF file detected: The Echols Brothers and Santonio Echols - Work (Mannywya Dub Mix) [N.C.M label Detroit].aif
+10-07 09:14:06.826 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:14:06.826 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:14:06.942 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4568624204000045439.aiff (47.46MB in 77ms, 616.36MB/s)
+10-07 09:14:06.942 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4568624204000045439.aiff
+10-07 09:14:06.943 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4568624204000045439.aiff
+10-07 09:14:06.943 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:14:07.947 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:14:07.949 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:14:07.950 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:14:08.026 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:14:08.026 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: The Echols Brothers and Santonio Echols - Work (Mannywya Dub Mix) [N.C.M label Detroit].aif
+10-07 09:14:08.033 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:08.063 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:08.069 D/MusicService( 6122): updateNotificationData - Title: The Echols Brothers and Santonio Echols - Work (Mannywya Dub Mix) [N.C.M label Detroit].aif, Playing: true, Position: 0, Duration: 0
+10-07 09:14:08.070 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: The Echols Brothers and Santonio Echols - Work (Mannywya Dub Mix) [N.C.M label Detroit].aif
+10-07 09:14:08.081 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:14:08.081 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:14:08.189 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:10.159 D/RingtonePlayer( 2288): requesting AudioFocus
+10-07 09:14:10.161 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10223/2288 AA=USAGE_NOTIFICATION/CONTENT_TYPE_SONIFICATION clientId=android.media.AudioManager@387ba33 callingPack=com.android.systemui req=3 flags=0x0 sdk=36
+10-07 09:14:11.075 D/FileManager(18846): Source file found: The Echols Brothers and Santonio Echols - Work (Mannywya Dub Mix) [N.C.M label Detroit].aif, exists: true, canRead: true
+10-07 09:14:11.255 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:12.003 D/RingtonePlayer( 2288): onCompletion() abandoning AudioFocus
+10-07 09:14:12.009 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10223/2288 clientId=android.media.AudioManager@387ba33 callingPack=com.android.systemui
+10-07 09:14:13.178 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:13.184 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:14:13.184 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:13.184 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:13.184 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:13.185 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:13.195 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4568624204000045439.aiff
+10-07 09:14:13.196 D/AudioManager(18846): All caches cleared
+10-07 09:14:13.240 D/AudioManager(18846): Attempting to play file: The Echols Brothers and Santonio Echols - Work (Stacy Kidd House 4 Life Remix) [N.C.M label De.aif
+10-07 09:14:13.241 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FThe%20Echols%20Brothers%20and%20Santonio%20Echols%20-%20Work%20(Stacy%20Kidd%20House%204%20Life%20Remix)%20%5BN.C.M%20label%20De.aif
+10-07 09:14:13.241 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:13.241 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:13.241 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:13.241 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:13.241 D/AudioManager(18846): AIFF file detected: The Echols Brothers and Santonio Echols - Work (Stacy Kidd House 4 Life Remix) [N.C.M label De.aif
+10-07 09:14:13.241 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:14:13.241 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:14:13.390 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6536434901472111873.aiff (71.56MB in 121ms, 591.41MB/s)
+10-07 09:14:13.390 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6536434901472111873.aiff
+10-07 09:14:13.390 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6536434901472111873.aiff
+10-07 09:14:13.390 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:14:14.343 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:14.394 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:14:14.395 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:14:14.395 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:14:14.470 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:14:14.470 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: The Echols Brothers and Santonio Echols - Work (Stacy Kidd House 4 Life Remix) [N.C.M label De.aif
+10-07 09:14:14.477 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:14.496 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:14.497 D/MusicService( 6122): updateNotificationData - Title: The Echols Brothers and Santonio Echols - Work (Stacy Kidd House 4 Life Remix) [N.C.M label De.aif, Playing: true, Position: 0, Duration: 0
+10-07 09:14:14.497 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: The Echols Brothers and Santonio Echols - Work (Stacy Kidd House 4 Life Remix) [N.C.M label De.aif
+10-07 09:14:14.531 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:14:14.532 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:14:17.424 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:17.537 D/FileManager(18846): Source file found: The Echols Brothers and Santonio Echols - Work (Stacy Kidd House 4 Life Remix) [N.C.M label De.aif, exists: true, canRead: true
+10-07 09:14:19.668 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:19.674 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:14:19.674 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:19.674 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:19.674 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:19.674 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:19.675 D/AudioManager(18846): Attempting to play file: AL Gee - Memories (Original Mix).wav
+10-07 09:14:19.675 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAL%20Gee%20-%20Memories%20(Original%20Mix).wav
+10-07 09:14:19.675 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:19.675 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:19.675 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:19.675 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:19.675 D/AudioManager(18846): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAL%20Gee%20-%20Memories%20(Original%20Mix).wav
+10-07 09:14:19.676 D/AudioManager(18846): ExoPlayer started successfully
+10-07 09:14:19.677 D/AudioManager(18846): ExoPlayer playback successful for: AL Gee - Memories (Original Mix).wav
+10-07 09:14:19.682 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:19.692 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:19.693 D/MusicService( 6122): updateNotificationData - Title: AL Gee - Memories (Original Mix).wav, Playing: true, Position: 0, Duration: 0
+10-07 09:14:19.693 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: AL Gee - Memories (Original Mix).wav
+10-07 09:14:20.504 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:21.642 D/FileManager(18846): Source file found: AL Gee - Memories (Original Mix).wav, exists: true, canRead: true
+10-07 09:14:23.453 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:23.453 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:23.454 D/AudioManager(18846): ExoPlayer stopped
+10-07 09:14:23.455 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:23.455 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:23.456 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:23.456 D/AudioManager(18846): Attempting to play file: Lavelle Dupree - Sound of House (Extended Mix).aif
+10-07 09:14:23.456 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FLavelle%20Dupree%20-%20Sound%20of%20House%20(Extended%20Mix).aif
+10-07 09:14:23.456 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:23.456 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:23.457 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:23.457 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:23.457 D/AudioManager(18846): AIFF file detected: Lavelle Dupree - Sound of House (Extended Mix).aif
+10-07 09:14:23.457 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:14:23.457 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:14:23.568 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:23.618 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_818320681360555945.aiff (51.18MB in 99ms, 516.93MB/s)
+10-07 09:14:23.618 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_818320681360555945.aiff
+10-07 09:14:23.618 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_818320681360555945.aiff
+10-07 09:14:23.619 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:14:24.623 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:14:24.625 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:14:24.625 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:14:24.697 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:14:24.698 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Lavelle Dupree - Sound of House (Extended Mix).aif
+10-07 09:14:24.719 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:24.749 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:24.751 D/MusicService( 6122): updateNotificationData - Title: Lavelle Dupree - Sound of House (Extended Mix).aif, Playing: true, Position: 0, Duration: 0
+10-07 09:14:24.752 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Lavelle Dupree - Sound of House (Extended Mix).aif
+10-07 09:14:24.788 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:14:24.788 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:14:26.662 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:27.570 D/FileManager(18846): Source file found: Lavelle Dupree - Sound of House (Extended Mix).aif, exists: true, canRead: true
+10-07 09:14:29.611 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:29.619 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:14:29.620 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:29.620 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:29.620 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:29.620 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:29.668 D/AudioManager(18846): Attempting to play file: Lavelle Dupree - Baso (Extended Mix).aif
+10-07 09:14:29.668 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FLavelle%20Dupree%20-%20Baso%20(Extended%20Mix).aif
+10-07 09:14:29.668 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:29.668 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:29.668 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:29.668 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:29.668 D/AudioManager(18846): AIFF file detected: Lavelle Dupree - Baso (Extended Mix).aif
+10-07 09:14:29.669 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:14:29.669 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:14:29.731 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:29.803 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_591390648702493041.aiff (48.28MB in 87ms, 554.98MB/s)
+10-07 09:14:29.803 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_591390648702493041.aiff
+10-07 09:14:29.803 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_591390648702493041.aiff
+10-07 09:14:29.804 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:14:30.807 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:14:30.808 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:14:30.808 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:14:30.875 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:14:30.875 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Lavelle Dupree - Baso (Extended Mix).aif
+10-07 09:14:30.880 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:30.897 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:30.898 D/MusicService( 6122): updateNotificationData - Title: Lavelle Dupree - Baso (Extended Mix).aif, Playing: true, Position: 0, Duration: 0
+10-07 09:14:30.898 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Lavelle Dupree - Baso (Extended Mix).aif
+10-07 09:14:30.928 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:14:30.928 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:14:32.807 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:35.912 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:36.343 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6536434901472111873.aiff
+10-07 09:14:36.358 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_818320681360555945.aiff
+10-07 09:14:36.358 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_591390648702493041.aiff
+10-07 09:14:36.358 D/AudioManager(18846): All caches cleared
+10-07 09:14:37.638 D/FileManager(18846): Source file found: Lavelle Dupree - Baso (Extended Mix).aif, exists: true, canRead: true
+10-07 09:14:38.995 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:39.872 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:39.898 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:14:39.899 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:39.899 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:39.899 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:39.900 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:39.901 D/AudioManager(18846): Attempting to play file: Erick Diaz, Freshcobar & Lavelle Dupree - Want This To End (Extended Mix).aif
+10-07 09:14:39.901 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErick%20Diaz%2C%20Freshcobar%20%26%20Lavelle%20Dupree%20-%20Want%20This%20To%20End%20(Extended%20Mix).aif
+10-07 09:14:39.901 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:39.901 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:39.902 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:39.902 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:39.902 D/AudioManager(18846): AIFF file detected: Erick Diaz, Freshcobar & Lavelle Dupree - Want This To End (Extended Mix).aif
+10-07 09:14:39.902 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:14:39.902 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:14:40.061 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5084228720157277948.aiff (50.92MB in 118ms, 431.54MB/s)
+10-07 09:14:40.061 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5084228720157277948.aiff
+10-07 09:14:40.061 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5084228720157277948.aiff
+10-07 09:14:40.062 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:14:41.067 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:14:41.068 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:14:41.069 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:14:41.152 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:14:41.153 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Erick Diaz, Freshcobar & Lavelle Dupree - Want This To End (Extended Mix).aif
+10-07 09:14:41.162 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:41.182 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:41.183 D/MusicService( 6122): updateNotificationData - Title: Erick Diaz, Freshcobar & Lavelle Dupree - Want This To End (Extended Mix).aif, Playing: true, Position: 0, Duration: 0
+10-07 09:14:41.184 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Erick Diaz, Freshcobar & Lavelle Dupree - Want This To End (Extended Mix).aif
+10-07 09:14:41.218 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:14:41.218 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:14:42.076 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:45.157 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:47.357 D/FileManager(18846): Source file found: Erick Diaz, Freshcobar & Lavelle Dupree - Want This To End (Extended Mix).aif, exists: true, canRead: true
+10-07 09:14:48.236 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:49.460 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:49.471 D/AudioManager(18846): FFmpegMediaPlayer stopped
+10-07 09:14:49.471 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:49.471 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:49.472 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:49.473 D/AudioManager(18846): Preloaded player released.
+10-07 09:14:49.484 D/AudioManager(18846): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5084228720157277948.aiff
+10-07 09:14:49.485 D/AudioManager(18846): All caches cleared
+10-07 09:14:49.555 D/AudioManager(18846): Attempting to play file: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:14:49.555 D/AudioManager(18846): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAntss%20-%20Wave%20Of%20Changes%20(Extended%20Mix)%20%5BKaluki%20Musik%5D.aiff
+10-07 09:14:49.555 D/AudioManager(18846): Stopping all playback before starting new file
+10-07 09:14:49.555 D/AudioManager(18846): FFmpegMediaPlayer reset
+10-07 09:14:49.555 D/AudioManager(18846): ExoPlayer cleared
+10-07 09:14:49.555 D/AudioManager(18846): All playback stopped successfully
+10-07 09:14:49.555 D/AudioManager(18846): AIFF file detected: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:14:49.555 D/AudioManager(18846): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:14:49.555 D/AudioManager(18846): FFmpegMediaPlayer is available, attempting playback
+10-07 09:14:49.694 D/AudioManager(18846): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4895770183317007329.aiff (51.96MB in 92ms, 564.74MB/s)
+10-07 09:14:49.694 D/AudioManager(18846): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4895770183317007329.aiff
+10-07 09:14:49.694 D/AudioManager(18846): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4895770183317007329.aiff
+10-07 09:14:49.694 D/AudioManager(18846): FFmpegMediaPlayer setDataSource successful
+10-07 09:14:50.698 D/AudioManager(18846): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:14:50.699 D/AudioManager(18846): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:14:50.699 D/AudioManager(18846): FFmpegMediaPlayer volume set to maximum
+10-07 09:14:50.779 D/AudioManager(18846): FFmpegMediaPlayer started after proper preparation
+10-07 09:14:50.779 D/AudioManager(18846): FFmpegMediaPlayer playback successful for AIFF: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:14:50.785 D/MusicViewModel(18846): MusicService started successfully.
+10-07 09:14:50.802 D/MusicService( 6122): Started foreground service with notification
+10-07 09:14:50.824 D/MusicService( 6122): updateNotificationData - Title: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:14:50.825 D/MusicService( 6122): Skipping setMediaItem due to invalid/dummy URI for title: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:14:50.834 D/AudioManager(18846): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:14:50.834 D/AudioManager(18846): FFmpegMediaPlayer prepared successfully
+10-07 09:14:51.302 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:52.448 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:54.373 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:14:56.387 D/FileManager(18846): Source file found: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff, exists: true, canRead: true
+10-07 09:14:57.447 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:00.512 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:01.423 D/AudioManager(26264): Broadcast receiver registered successfully
+10-07 09:15:01.424 D/AudioManager(26264): Attempting to create FFmpegMediaPlayer...
+10-07 09:15:01.449 D/AudioManager(26264): FFmpegMediaPlayer created successfully
+10-07 09:15:01.450 D/AudioManager(26264): FFmpegMediaPlayer listeners set successfully
+10-07 09:15:01.463 I/ExoPlayerImpl(26264): Init d5780e0 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 09:15:01.485 I/biledigger:main(26264): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-07 09:15:01.510 D/AudioManager(26264): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-07 09:15:01.517 I/ActivityManager( 1579): Background started FGS: Allowed [callingPackage: com.example.mobiledigger; callingUid: 10587; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { xflg=0x4 cmp=com.example.mobiledigger/.audio.MusicService }; code:PROC_STATE_TOP; tempAllowListReason:<,reasonCode:SYSTEM_ALLOW_LISTED,duration:9223372036854775807,callingUid:-1>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+10-07 09:15:01.519 D/MusicViewModel(26264): MusicService started successfully.
+10-07 09:15:01.534 I/ActivityManager( 1579): Start proc 26319:com.example.mobiledigger:music/u0a587 for service {com.example.mobiledigger/com.example.mobiledigger.audio.MusicService}
+10-07 09:15:01.856 D/AudioManager(26319): Broadcast receiver registered successfully
+10-07 09:15:01.857 D/AudioManager(26319): Attempting to create FFmpegMediaPlayer...
+10-07 09:15:01.894 D/AudioManager(26319): FFmpegMediaPlayer created successfully
+10-07 09:15:01.894 D/AudioManager(26319): FFmpegMediaPlayer listeners set successfully
+10-07 09:15:01.914 I/ExoPlayerImpl(26319): Init e9c1dc7 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 09:15:01.939 I/iledigger:music(26319): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-07 09:15:01.970 D/AudioManager(26319): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-07 09:15:01.970 I/ExoPlayerImpl(26319): Init b88ed8d [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 09:15:01.984 D/MusicService(26319): Initialized dummy playlist for skip support
+10-07 09:15:02.038 D/MusicService(26319): MediaSession created successfully
+10-07 09:15:02.052 D/MusicService(26319): Started foreground service with notification
+10-07 09:15:02.956 D/MusicViewModel(26264): MusicService started successfully.
+10-07 09:15:02.971 D/MusicService(26319): Started foreground service with notification
+10-07 09:15:02.973 D/MusicService(26319): updateNotificationData - Title: MobileDigger, Playing: false, Position: 0, Duration: 0
+10-07 09:15:02.974 D/MusicService(26319): Skipping setMediaItem due to invalid/dummy URI for title: MobileDigger
+10-07 09:15:03.610 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319): Playback error
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.os.Looper.loopOnce(Looper.java:251)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.os.Looper.loop(Looper.java:349)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):   Caused by: androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:157)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at java.lang.Thread.run(Thread.java:1119)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):   Caused by: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:2031)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:1983)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:89)
+10-07 09:15:05.068 E/ExoPlayerImplInternal(26319):       ... 7 more
+10-07 09:15:05.097 D/MusicService(26319): Player (MediaSession) Error: Source error
+10-07 09:15:05.097 D/MusicService(26319): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-07 09:15:05.097 D/MusicService(26319): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-07 09:15:05.097 D/MusicService(26319): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-07 09:15:05.097 D/MusicService(26319): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-07 09:15:05.097 D/MusicService(26319): 	at android.os.Looper.loop(Looper.java:349)
+10-07 09:15:05.097 D/MusicService(26319): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-07 09:15:05.097 D/MusicService(26319): Caused by: androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:157)
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-07 09:15:05.097 D/MusicService(26319): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-07 09:15:05.097 D/MusicService(26319): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-07 09:15:05.097 D/MusicService(26319): 	at java.lang.Thread.run(Thread.java:1119)
+10-07 09:15:05.097 D/MusicService(26319): Caused by: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 09:15:05.097 D/MusicService(26319): 	at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:2031)
+10-07 09:15:05.097 D/MusicService(26319): 	at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:1983)
+10-07 09:15:05.097 D/MusicService(26319): 	at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:89)
+10-07 09:15:05.097 D/MusicService(26319): 	... 7 more
+10-07 09:15:05.107 D/MusicService(26319): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-07 09:15:05.168 D/AudioManager(26264): Stopping all playback before starting new file
+10-07 09:15:05.168 D/AudioManager(26264): FFmpegMediaPlayer reset
+10-07 09:15:05.168 D/AudioManager(26264): ExoPlayer cleared
+10-07 09:15:05.168 D/AudioManager(26264): All playback stopped successfully
+10-07 09:15:05.170 D/AudioManager(26264): Preloaded player released.
+10-07 09:15:05.171 D/AudioManager(26264): Stopping all playback before starting new file
+10-07 09:15:05.171 D/AudioManager(26264): FFmpegMediaPlayer reset
+10-07 09:15:05.171 D/AudioManager(26264): ExoPlayer cleared
+10-07 09:15:05.172 D/AudioManager(26264): All playback stopped successfully
+10-07 09:15:05.172 D/AudioManager(26264): Preloaded player released.
+10-07 09:15:05.188 D/FileManager(26264): SAF folder exists: true, canRead: true
+10-07 09:15:05.782 D/AudioManager(26264): Attempting to play file: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:15:05.782 D/AudioManager(26264): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAntss%20-%20Wave%20Of%20Changes%20(Extended%20Mix)%20%5BKaluki%20Musik%5D.aiff
+10-07 09:15:05.786 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10587/26264 AA=USAGE_MEDIA/CONTENT_TYPE_MUSIC clientId=android.media.AudioManager@3710a85com.example.mobiledigger.audio.AudioManager$$ExternalSyntheticLambda4@3430da callingPack=com.example.mobiledigger req=1 flags=0x1 sdk=36
+10-07 09:15:05.787 D/AudioManager(26264): Stopping all playback before starting new file
+10-07 09:15:05.787 D/AudioManager(26264): FFmpegMediaPlayer reset
+10-07 09:15:05.788 D/AudioManager(26264): ExoPlayer cleared
+10-07 09:15:05.789 D/AudioManager(26264): All playback stopped successfully
+10-07 09:15:05.789 D/AudioManager(26264): AIFF file detected: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:15:05.789 D/AudioManager(26264): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:15:05.789 D/AudioManager(26264): FFmpegMediaPlayer is available, attempting playback
+10-07 09:15:05.869 D/AudioManager(26264): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1492046755469240716.aiff (51.96MB in 48ms, 1082.42MB/s)
+10-07 09:15:05.869 D/AudioManager(26264): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1492046755469240716.aiff
+10-07 09:15:05.869 D/AudioManager(26264): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1492046755469240716.aiff
+10-07 09:15:05.870 D/AudioManager(26264): FFmpegMediaPlayer setDataSource successful
+10-07 09:15:06.713 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:06.874 D/AudioManager(26264): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:15:06.874 D/AudioManager(26264): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:15:06.874 D/AudioManager(26264): FFmpegMediaPlayer volume set to maximum
+10-07 09:15:06.941 D/AudioManager(26264): FFmpegMediaPlayer started after proper preparation
+10-07 09:15:06.942 D/AudioManager(26264): FFmpegMediaPlayer playback successful for AIFF: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:15:06.957 D/MusicViewModel(26264): MusicService started successfully.
+10-07 09:15:06.974 D/MusicService(26319): Started foreground service with notification
+10-07 09:15:06.979 D/MusicService(26319): updateNotificationData - Title: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:15:06.980 D/MusicService(26319): Skipping setMediaItem due to invalid/dummy URI for title: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff
+10-07 09:15:07.188 D/AudioManager(26264): FFmpegMediaPlayer prepared successfully
+10-07 09:15:07.188 D/AudioManager(26264): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:15:09.788 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:12.865 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:15.959 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:19.043 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:22.121 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:24.060 W/lacrima (26395): Start AnrAppDeathDetector... X.1za
+10-07 09:15:24.148 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:24.228 W/lacrima (26395): Start AnrDetector... com.facebook.acra.anr.multisignal.MultiSignalANRDetector
+10-07 09:15:24.228 W/MultiSignalANRDetectorLacrima(26395): Starting
+10-07 09:15:24.228 W/ProcessAnrErrorMonitor(26395): startMonitoring with delay: 0
+10-07 09:15:24.234 W/ProcessAnrErrorMonitor(26395): Starting process monitor checks for process 'com.instagram.android'
+10-07 09:15:24.234 W/MultiSignalANRDetectorLacrima(26395): Started monitoring
+10-07 09:15:24.399 W/SessionScopedProviderInitializer(26395): Initialize com.instagram.audio.AudioFocusUserSessionStart start
+10-07 09:15:24.399 W/SessionScopedProviderInitializer(26395): Initialize com.instagram.audio.AudioFocusUserSessionStart end
+10-07 09:15:24.890 W/lacrima (26723): Start AnrAppDeathDetector... X.1za
+10-07 09:15:25.218 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:26.252 W/MultiSignalANRDetectorLacrima(26395): Pausing error state checks
+10-07 09:15:28.283 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:28.851 D/FileManager(26264): Source file found: Antss - Wave Of Changes (Extended Mix) [Kaluki Musik].aiff, exists: true, canRead: true
+10-07 09:15:30.794 D/AudioManager(26264): Stopping all playback before starting new file
+10-07 09:15:30.803 D/AudioManager(26264): FFmpegMediaPlayer stopped
+10-07 09:15:30.803 D/AudioManager(26264): FFmpegMediaPlayer reset
+10-07 09:15:30.803 D/AudioManager(26264): ExoPlayer cleared
+10-07 09:15:30.803 D/AudioManager(26264): All playback stopped successfully
+10-07 09:15:30.804 D/AudioManager(26264): Preloaded player released.
+10-07 09:15:30.805 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10587/26264 clientId=android.media.AudioManager@3710a85com.example.mobiledigger.audio.AudioManager$$ExternalSyntheticLambda4@3430da callingPack=com.example.mobiledigger
+10-07 09:15:30.806 D/AudioManager(26264): Attempting to play file: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:15:30.807 D/AudioManager(26264): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FGino%20Da%20Koda%2C%20Nick%20Garc%C3%ADa%20(NL)%20-%20Bruk%20Wine%20(Original%20Mix)%20%5BNoZzo%20Music%5D.aiff
+10-07 09:15:30.807 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10587/26264 AA=USAGE_MEDIA/CONTENT_TYPE_MUSIC clientId=android.media.AudioManager@3710a85com.example.mobiledigger.audio.AudioManager$$ExternalSyntheticLambda4@3430da callingPack=com.example.mobiledigger req=1 flags=0x1 sdk=36
+10-07 09:15:30.808 D/AudioManager(26264): Stopping all playback before starting new file
+10-07 09:15:30.808 D/AudioManager(26264): FFmpegMediaPlayer reset
+10-07 09:15:30.809 D/AudioManager(26264): ExoPlayer cleared
+10-07 09:15:30.809 D/AudioManager(26264): All playback stopped successfully
+10-07 09:15:30.809 D/AudioManager(26264): AIFF file detected: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:15:30.809 D/AudioManager(26264): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 09:15:30.810 D/AudioManager(26264): FFmpegMediaPlayer is available, attempting playback
+10-07 09:15:30.965 D/AudioManager(26264): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2061963626174792197.aiff (61.41MB in 110ms, 558.31MB/s)
+10-07 09:15:30.966 D/AudioManager(26264): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2061963626174792197.aiff
+10-07 09:15:30.966 D/AudioManager(26264): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2061963626174792197.aiff
+10-07 09:15:30.966 D/AudioManager(26264): FFmpegMediaPlayer setDataSource successful
+10-07 09:15:31.354 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:31.969 D/AudioManager(26264): FFmpegMediaPlayer prepare (sync) completed
+10-07 09:15:31.970 D/AudioManager(26264): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-07 09:15:31.971 D/AudioManager(26264): FFmpegMediaPlayer volume set to maximum
+10-07 09:15:32.032 D/AudioManager(26264): FFmpegMediaPlayer started after proper preparation
+10-07 09:15:32.033 D/AudioManager(26264): FFmpegMediaPlayer playback successful for AIFF: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:15:32.040 D/MusicViewModel(26264): MusicService started successfully.
+10-07 09:15:32.065 D/MusicService(26319): Started foreground service with notification
+10-07 09:15:32.070 D/MusicService(26319): updateNotificationData - Title: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff, Playing: true, Position: 0, Duration: 0
+10-07 09:15:32.070 D/MusicService(26319): Skipping setMediaItem due to invalid/dummy URI for title: Gino Da Koda, Nick García (NL) - Bruk Wine (Original Mix) [NoZzo Music].aiff
+10-07 09:15:32.144 D/AudioManager(26264): FFmpegMediaPlayer info: what=802, extra=0
+10-07 09:15:32.144 D/AudioManager(26264): FFmpegMediaPlayer prepared successfully
+10-07 09:15:33.315 D/RingtonePlayer( 2288): requesting AudioFocus
+10-07 09:15:33.316 I/MediaFocusControl( 1579): requestAudioFocus() from uid/pid 10223/2288 AA=USAGE_NOTIFICATION/CONTENT_TYPE_SONIFICATION clientId=android.media.AudioManager@5beb233 callingPack=com.android.systemui req=3 flags=0x0 sdk=36
+10-07 09:15:33.854 D/RingtonePlayer( 2288): in STOP: abandonning AudioFocus
+10-07 09:15:33.854 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10223/2288 clientId=android.media.AudioManager@5beb233 callingPack=com.android.systemui
+10-07 09:15:34.436 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:37.499 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:40.561 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:43.633 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:46.701 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:49.789 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:52.873 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:55.941 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:15:59.058 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:02.136 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:03.812 I/AppExitInfoManager(27571): getExitInfo() exitType: ANR
+10-07 09:16:05.200 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:08.274 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:11.364 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 09:16:12.574 D/AudioManager(26264): Stopping all playback before starting new file
+10-07 09:16:12.608 D/AudioManager(26264): FFmpegMediaPlayer stopped
+10-07 09:16:12.613 D/AudioManager(26264): FFmpegMediaPlayer reset
+10-07 09:16:12.615 D/AudioManager(26264): ExoPlayer cleared
+10-07 09:16:12.616 D/AudioManager(26264): All playback stopped successfully
+10-07 09:16:12.619 D/AudioManager(26264): Preloaded player released.
+10-07 09:16:12.620 I/MediaFocusControl( 1579): abandonAudioFocus() from uid/pid 10587/26264 clientId=android.media.AudioManager@3710a85com.example.mobiledigger.audio.AudioManager$$ExternalSyntheticLambda4@3430da callingPack=com.example.mobiledigger
+10-07 09:16:12.645 D/AudioManager(26264): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1492046755469240716.aiff
+10-07 09:16:12.690 D/AudioManager(26264): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2061963626174792197.aiff
+10-07 09:16:12.691 D/AudioManager(26264): All caches cleared
+10-07 09:16:12.695 D/AudioManager(26264): Broadcast receiver unregistered successfully
+10-07 09:16:12.699 I/ExoPlayerImpl(26264): Release d5780e0 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36] [media3.common, media3.exoplayer, media3.decoder]
+10-07 09:16:12.705 D/AudioManager(26264): AudioManager released
+10-07 09:16:12.948 D/AudioManager(26319): Broadcast receiver unregistered successfully
+10-07 09:16:12.951 I/ExoPlayerImpl(26319): Release e9c1dc7 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36] [media3.common, media3.exoplayer, media3.decoder, media3.session, media3.datasource]
+10-07 09:16:12.957 D/AudioManager(26319): AudioManager released
+10-07 09:16:12.957 I/ExoPlayerImpl(26319): Release b88ed8d [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36] [media3.common, media3.exoplayer, media3.decoder, media3.session, media3.datasource]
+10-07 09:16:14.427 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse

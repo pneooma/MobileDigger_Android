@@ -37,7 +37,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="Open with &amp; Spek"
+            android:label="@string/app_name"
             android:theme="@style/Theme.MobileDigger"
             android:launchMode="singleTask"
             android:taskAffinity=""

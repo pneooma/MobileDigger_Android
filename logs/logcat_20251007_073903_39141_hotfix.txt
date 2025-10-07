@@ -1,0 +1,384 @@
+10-07 07:39:06.409 D/MusicViewModel( 2747): Updated liked files StateFlow with 0 files
+10-07 07:39:06.410 D/MusicViewModel( 2747): Notification receiver registered successfully
+10-07 07:39:06.442 D/MusicViewModel( 2747): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 07:39:06.442 I/ExoPlayerImpl( 2837): Init bf03748 [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 07:39:06.476 I/iledigger:music( 2837): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed
+10-07 07:39:06.543 D/AudioManager( 2837): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-07 07:39:06.543 I/ExoPlayerImpl( 2837): Init b88ed8d [AndroidXMedia3/1.3.1] [husky, Pixel 8 Pro, Google, 36]
+10-07 07:39:06.558 D/MusicService( 2837): Initialized dummy playlist for skip support
+10-07 07:39:06.584 E/MediaControllerCompat(31274): android.os.DeadObjectException
+10-07 07:39:06.597 D/MusicService( 2837): MediaSession created successfully
+10-07 07:39:06.615 D/MusicService( 2837): Started foreground service with notification
+10-07 07:39:06.746 D/MusicViewModel( 2747): Found 277 rejected files
+10-07 07:39:06.753 D/MusicViewModel( 2747): Updated rejected files StateFlow with 277 files
+10-07 07:39:06.962 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:07.423 D/MusicViewModel( 2747): MusicService started successfully.
+10-07 07:39:07.443 D/MusicService( 2837): Started foreground service with notification
+10-07 07:39:07.445 D/MusicService( 2837): updateNotificationData - Title: MobileDigger, Playing: false, Position: 0, Duration: 0
+10-07 07:39:07.447 D/MusicService( 2837): Skipping setMediaItem due to invalid/dummy URI for title: MobileDigger
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837): Playback error
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.os.Handler.dispatchMessage(Handler.java:106)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.os.Looper.dispatchMessage(Looper.java:315)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.os.Looper.loopOnce(Looper.java:251)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.os.Looper.loop(Looper.java:349)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.os.HandlerThread.run(HandlerThread.java:100)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):   Caused by: androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:157)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at java.lang.Thread.run(Thread.java:1119)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):   Caused by: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:2031)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:1983)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:89)
+10-07 07:39:09.626 E/ExoPlayerImplInternal( 2837):       ... 7 more
+10-07 07:39:09.642 D/MusicService( 2837): Player (MediaSession) Error: Source error
+10-07 07:39:09.642 D/MusicService( 2837): androidx.media3.exoplayer.ExoPlaybackException: Source error
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:717)
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:689)
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.os.Looper.loop(Looper.java:349)
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.os.HandlerThread.run(HandlerThread.java:100)
+10-07 07:39:09.642 D/MusicService( 2837): Caused by: androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:157)
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.datasource.DefaultDataSource.open(DefaultDataSource.java:275)
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.datasource.StatsDataSource.open(StatsDataSource.java:86)
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1029)
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+10-07 07:39:09.642 D/MusicService( 2837): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-07 07:39:09.642 D/MusicService( 2837): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-07 07:39:09.642 D/MusicService( 2837): 	at java.lang.Thread.run(Thread.java:1119)
+10-07 07:39:09.642 D/MusicService( 2837): Caused by: java.io.FileNotFoundException: No content provider: content://dummy/1
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:2031)
+10-07 07:39:09.642 D/MusicService( 2837): 	at android.content.ContentResolver.openTypedAssetFileDescriptor(ContentResolver.java:1983)
+10-07 07:39:09.642 D/MusicService( 2837): 	at androidx.media3.datasource.ContentDataSource.open(ContentDataSource.java:89)
+10-07 07:39:09.642 D/MusicService( 2837): 	... 7 more
+10-07 07:39:09.646 D/MediaSessionService( 1579): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./125 (userId=0) playbackState=PlaybackState {state=ERROR(7), position=0, buffered position=0, speed=0.0, updated=116791111, actions=7339703, custom actions=[], active item id=0, error=Source error}
+10-07 07:39:09.651 D/MusicService( 2837): Player (MediaSession) onPlaybackStateChanged: 1, Duration: -9223372036854775807, Position: 0
+10-07 07:39:09.675 D/MediaSessionService( 1579): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./125 (userId=0) playbackState=PlaybackState {state=ERROR(7), position=0, buffered position=0, speed=0.0, updated=116791141, actions=7339703, custom actions=[], active item id=0, error=Source error}
+10-07 07:39:10.066 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:10.113 D/MusicViewModel( 2747): Rescanning source folder: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 07:39:10.114 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:39:10.117 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:39:10.118 D/MusicViewModel( 2747): Starting folder selection: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 07:39:10.126 D/MusicViewModel( 2747): FileManager.setSelectedFolder completed
+10-07 07:39:10.126 D/MusicViewModel( 2747): Saved source folder URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-07 07:39:10.139 D/FileManager( 2747): SAF folder exists: true, canRead: true
+10-07 07:39:10.842 D/MusicViewModel( 2747): FileManager.loadMusicFiles completed with 379 files
+10-07 07:39:10.844 D/MusicViewModel( 2747): Updated musicFiles state
+10-07 07:39:10.845 D/MusicViewModel( 2747): Loading AIFF file: Randoree, High Notes - That's Ill [Make The Girls Dance Records].aiff
+10-07 07:39:10.846 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:39:10.846 D/AudioManager( 2747): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 07:39:10.847 D/MusicViewModel( 2747): Loading liked files from destination folder: Results
+10-07 07:39:11.855 D/MusicViewModel( 2747): Found 97 liked files (including subfolders), 84 unique
+10-07 07:39:12.002 D/MusicViewModel( 2747): Playback started successfully for Randoree, High Notes - That's Ill [Make The Girls Dance Records].aiff
+10-07 07:39:12.037 D/MusicViewModel( 2747): MusicService started successfully.
+10-07 07:39:12.039 D/MusicViewModel( 2747): selectFolder completed successfully
+10-07 07:39:12.048 D/MusicViewModel( 2747): Preloaded next song: Felipe Puertes - Dope Shit (Original Version) [Make The Girls Dance Records].wav
+10-07 07:39:12.064 D/MusicService( 2837): Started foreground service with notification
+10-07 07:39:12.065 D/MusicService( 2837): updateNotificationData - Title: Randoree, High Notes - That's Ill [Make The Girls Dance Records].aiff, Playing: true, Position: 0, Duration: 0
+10-07 07:39:12.066 D/MusicService( 2837): Skipping setMediaItem due to invalid/dummy URI for title: Randoree, High Notes - That's Ill [Make The Girls Dance Records].aiff
+10-07 07:39:12.140 D/ResourceManager( 2747): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-07 07:39:12.140 D/ResourceManager( 2747): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-07 07:39:12.140 D/ResourceManager( 2747): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-07 07:39:12.183 D/ResourceManager( 2747): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1104)
+10-07 07:39:12.183 D/ResourceManager( 2747): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:52)
+10-07 07:39:12.183 D/ResourceManager( 2747): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1054)
+10-07 07:39:12.434 D/MusicViewModel( 2747): Updated liked files StateFlow with 84 files
+10-07 07:39:12.460 D/MusicViewModel( 2747): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 07:39:12.750 D/MusicViewModel( 2747): Loaded 2 subfolders.
+10-07 07:39:12.766 D/MusicViewModel( 2747): Found 277 rejected files
+10-07 07:39:12.837 D/MusicViewModel( 2747): Updated rejected files StateFlow with 277 files
+10-07 07:39:13.160 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:16.247 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:19.370 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:20.248 D/MusicServiceCallback( 2837): HEADPHONE NEXT → map to DISLIKE (single)
+10-07 07:39:20.251 D/MusicService( 2837): Notification action: DISLIKE
+10-07 07:39:20.270 D/MusicViewModel( 2747): Safe sorting file: Randoree, High Notes - That's Ill [Make The Girls Dance Records].aiff with action DISLIKE
+10-07 07:39:20.322 D/FileManager( 2747): Source file found: Randoree, High Notes - That's Ill [Make The Girls Dance Records].aiff, exists: true, canRead: true
+10-07 07:39:22.494 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:22.572 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:39:22.573 D/MusicViewModel( 2747): High memory usage detected: 76%, clearing caches
+10-07 07:39:22.623 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:39:22.623 D/AudioManager( 2747): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FFelipe%20Puertes%20-%20Dope%20Shit%20(Original%20Version)%20%5BMake%20The%20Girls%20Dance%20Records%5D.wav
+10-07 07:39:22.627 D/AudioManager( 2747): ExoPlayer started successfully
+10-07 07:39:22.627 D/AudioManager( 2747): ExoPlayer playback successful for: Felipe Puertes - Dope Shit (Original Version) [Make The Girls Dance Records].wav
+10-07 07:39:22.627 D/MusicViewModel( 2747): Playback started successfully for Felipe Puertes - Dope Shit (Original Version) [Make The Girls Dance Records].wav
+10-07 07:39:22.630 D/MusicViewModel( 2747): MusicService started successfully.
+10-07 07:39:22.631 D/MusicViewModel( 2747): Preloaded next song: Monolink - Powerful Play (Andhim Remix).wav
+10-07 07:39:22.639 D/MusicService( 2837): Started foreground service with notification
+10-07 07:39:22.640 D/MusicService( 2837): updateNotificationData - Title: Felipe Puertes - Dope Shit (Original Version) [Make The Girls Dance Records].wav, Playing: true, Position: 0, Duration: 0
+10-07 07:39:22.640 D/MusicService( 2837): Skipping setMediaItem due to invalid/dummy URI for title: Felipe Puertes - Dope Shit (Original Version) [Make The Girls Dance Records].wav
+10-07 07:39:22.873 D/MusicViewModel( 2747): Refreshed all playlists
+10-07 07:39:22.875 D/MusicViewModel( 2747): Loading liked files from destination folder: Results
+10-07 07:39:23.329 D/MusicViewModel( 2747): Found 97 liked files (including subfolders), 84 unique
+10-07 07:39:23.346 D/MusicViewModel( 2747): Updated liked files StateFlow with 84 files
+10-07 07:39:23.361 D/MusicViewModel( 2747): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 07:39:23.582 D/MusicViewModel( 2747): Found 278 rejected files
+10-07 07:39:23.583 D/MusicViewModel( 2747): Updated rejected files StateFlow with 278 files
+10-07 07:39:25.591 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:28.687 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:31.753 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:34.825 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:37.895 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:40.970 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:44.041 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:47.117 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:50.188 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:51.949 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:53.253 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:56.341 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:39:59.422 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:02.494 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:05.571 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:08.661 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:11.754 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:14.858 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:17.931 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:21.011 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:24.088 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:27.171 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:30.245 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:33.322 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:36.414 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:39.508 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:42.585 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:45.659 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:48.734 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:51.827 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:54.914 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:56.604 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:40:57.993 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:01.065 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:04.144 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:07.239 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:10.320 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:13.401 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:15.930 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:41:16.225 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:16.273 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:41:16.281 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:42:03.210 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:43:53.377 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:44:06.359 D/MusicViewModel( 2747): Periodic cache clearing completed (memory usage: 76%)
+10-07 07:44:53.515 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:45:17.391 D/AudioManager( 2747): ExoPlayer playback completed
+10-07 07:45:17.395 D/MusicViewModel( 2747): Track completed, playing next.
+10-07 07:45:17.737 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:45:17.739 D/AudioManager( 2747): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMonolink%20-%20Powerful%20Play%20(Andhim%20Remix).wav
+10-07 07:45:17.750 D/AudioManager( 2747): ExoPlayer started successfully
+10-07 07:45:17.751 D/AudioManager( 2747): ExoPlayer playback successful for: Monolink - Powerful Play (Andhim Remix).wav
+10-07 07:45:17.752 D/MusicViewModel( 2747): Playback started successfully for Monolink - Powerful Play (Andhim Remix).wav
+10-07 07:45:17.779 D/MusicViewModel( 2747): MusicService started successfully.
+10-07 07:45:17.791 D/MusicViewModel( 2747): Preloaded next song: it's murph & Nat Slater - Chemicals.wav
+10-07 07:45:17.800 D/MusicService( 2837): Started foreground service with notification
+10-07 07:45:17.817 D/MusicViewModel( 2747): MusicService started successfully.
+10-07 07:45:17.820 D/MusicService( 2837): Started foreground service with notification
+10-07 07:45:18.287 D/MusicService( 2837): updateNotificationData - Title: Monolink - Powerful Play (Andhim Remix).wav, Playing: true, Position: 354454, Duration: 354460
+10-07 07:45:18.288 D/MusicService( 2837): Skipping setMediaItem due to invalid/dummy URI for title: Monolink - Powerful Play (Andhim Remix).wav
+10-07 07:45:18.308 D/MusicService( 2837): updateNotificationData - Title: Monolink - Powerful Play (Andhim Remix).wav, Playing: true, Position: 354454, Duration: 354460
+10-07 07:45:18.309 D/MusicService( 2837): Skipping setMediaItem due to invalid/dummy URI for title: Monolink - Powerful Play (Andhim Remix).wav
+10-07 07:46:13.109 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:28.246 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:46:28.382 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:28.420 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:46:28.427 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:28.519 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:30.930 D/MusicViewModel( 2747): Safe sorting file: Monolink - Powerful Play (Andhim Remix).wav with action DISLIKE
+10-07 07:46:30.958 D/FileManager( 2747): Source file found: Monolink - Powerful Play (Andhim Remix).wav, exists: true, canRead: true
+10-07 07:46:31.498 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:32.613 D/AudioManager( 2747): ExoPlayer stopped
+10-07 07:46:32.614 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:46:32.614 D/MusicViewModel( 2747): Moderate memory usage: 66%, suggesting GC
+10-07 07:46:32.644 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:46:32.644 D/AudioManager( 2747): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2Fit's%20murph%20%26%20Nat%20Slater%20-%20Chemicals.wav
+10-07 07:46:32.645 D/AudioManager( 2747): ExoPlayer started successfully
+10-07 07:46:32.645 D/AudioManager( 2747): ExoPlayer playback successful for: it's murph & Nat Slater - Chemicals.wav
+10-07 07:46:32.645 D/MusicViewModel( 2747): Playback started successfully for it's murph & Nat Slater - Chemicals.wav
+10-07 07:46:32.647 D/MusicViewModel( 2747): MusicService started successfully.
+10-07 07:46:32.651 D/MusicViewModel( 2747): Preloaded next song: Alan Fitzpatrick, Wehbba - Take U Higher (Original Mix) [We Are The Brave].aiff
+10-07 07:46:32.654 D/MusicService( 2837): Started foreground service with notification
+10-07 07:46:32.656 D/MusicService( 2837): updateNotificationData - Title: it's murph & Nat Slater - Chemicals.wav, Playing: true, Position: 0, Duration: 0
+10-07 07:46:32.656 D/MusicService( 2837): Skipping setMediaItem due to invalid/dummy URI for title: it's murph & Nat Slater - Chemicals.wav
+10-07 07:46:32.687 I/biledigger:main( 2747): Compiler allocated 6825KB to compile void com.example.mobiledigger.ui.components.MusicPlayerScreenKt.MusicPlayerScreen(com.example.mobiledigger.viewmodel.MusicViewModel, androidx.compose.foundation.layout.PaddingValues, androidx.compose.runtime.Composer, int, int)
+10-07 07:46:32.857 D/MusicViewModel( 2747): Refreshed all playlists
+10-07 07:46:32.910 D/MusicViewModel( 2747): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-07 07:46:33.197 D/MusicViewModel( 2747): Found 279 rejected files
+10-07 07:46:33.211 D/MusicViewModel( 2747): Updated rejected files StateFlow with 279 files
+10-07 07:46:33.215 D/MusicViewModel( 2747): Loading liked files from destination folder: Results
+10-07 07:46:33.773 D/MusicViewModel( 2747): Found 97 liked files (including subfolders), 84 unique
+10-07 07:46:33.774 D/MusicViewModel( 2747): Updated liked files StateFlow with 84 files
+10-07 07:46:34.371 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:46:34.566 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:35.747 I/AppExitInfoManager( 3512): getExitInfo() exitType: ANR
+10-07 07:46:37.626 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:38.814 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:40.694 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:43.757 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:46.829 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:49.902 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:52.972 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:56.037 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:46:59.119 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:02.186 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:05.266 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:08.335 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:11.418 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:14.492 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:17.561 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:20.627 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:23.697 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:26.770 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:29.828 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:32.907 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:35.977 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:39.045 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:39.274 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:42.129 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:45.245 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:48.340 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:51.427 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:54.494 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:47:57.593 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:00.663 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:03.737 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:06.808 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:09.903 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:13.008 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:16.083 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:19.213 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:22.336 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:25.440 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:28.556 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:31.670 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:34.777 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:37.916 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:39.590 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:41.016 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:44.121 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:47.221 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:50.327 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:53.456 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:56.570 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:48:59.706 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:02.810 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:05.970 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:08.760 D/MusicViewModel( 2747): Memory usage acceptable (8%), skipping cache clear
+10-07 07:49:09.067 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:12.155 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:15.235 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:18.312 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:21.396 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:24.486 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:27.570 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:30.652 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:33.494 D/MusicViewModel( 2747): Safe sorting file: it's murph & Nat Slater - Chemicals.wav with action DISLIKE
+10-07 07:49:33.528 D/FileManager( 2747): Source file found: it's murph & Nat Slater - Chemicals.wav, exists: true, canRead: true
+10-07 07:49:33.721 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:35.266 D/AudioManager( 2747): ExoPlayer stopped
+10-07 07:49:35.266 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:49:35.267 D/MusicViewModel( 2747): Loading AIFF file: Alan Fitzpatrick, Wehbba - Take U Higher (Original Mix) [We Are The Brave].aiff
+10-07 07:49:35.267 D/AudioManager( 2747): ExoPlayer cleared
+10-07 07:49:35.267 D/AudioManager( 2747): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-07 07:49:36.152 F/DEBUG   ( 4945):       #32 pc 00000000000943f0  /data/app/~~1ES0TtU5QmjcJUvRq4utMg==/com.example.mobiledigger-ZHh_6HQwqW_DdY6OGrbBAA==/base.apk (offset 0x411b000) (com.example.mobiledigger.viewmodel.MusicViewModel.loadCurrentFile+0)
+10-07 07:49:36.152 F/DEBUG   ( 4945):       #37 pc 0000000000093aec  /data/app/~~1ES0TtU5QmjcJUvRq4utMg==/com.example.mobiledigger-ZHh_6HQwqW_DdY6OGrbBAA==/base.apk (offset 0x411b000) (com.example.mobiledigger.viewmodel.MusicViewModel.handleSuccessfulSort+0)
+10-07 07:49:36.152 F/DEBUG   ( 4945):       #42 pc 000000000009300c  /data/app/~~1ES0TtU5QmjcJUvRq4utMg==/com.example.mobiledigger-ZHh_6HQwqW_DdY6OGrbBAA==/base.apk (offset 0x411b000) (com.example.mobiledigger.viewmodel.MusicViewModel.access$handleSuccessfulSort+0)
+10-07 07:49:36.152 F/DEBUG   ( 4945):       #47 pc 000000000008ec30  /data/app/~~1ES0TtU5QmjcJUvRq4utMg==/com.example.mobiledigger-ZHh_6HQwqW_DdY6OGrbBAA==/base.apk (offset 0x411b000) (com.example.mobiledigger.viewmodel.MusicViewModel$sortMusicFileSafe$3.invokeSuspend+0)
+10-07 07:49:36.152 F/DEBUG   ( 4945):       #88 pc 00000000001330ac  /system/lib64/libandroid_runtime.so (android::AndroidRuntime::start(char const*, android::Vector<android::String8> const&, bool)+892) (BuildId: 2c41cbf37dbf26de0ad69008fa837015)
+10-07 07:49:36.756 W/WindowManager( 1579): android.os.DeadObjectException
+10-07 07:49:36.836 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:39.917 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:43.007 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:46.166 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:49.306 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:52.433 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:55.525 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:49:58.628 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:01.749 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:04.905 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:07.125 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:08.058 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:11.143 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:14.228 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:17.350 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:20.478 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:23.630 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:26.740 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:29.837 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:32.960 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:36.099 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:39.243 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:42.360 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:45.443 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:48.585 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:51.765 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:54.916 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:50:58.029 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:01.109 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:04.217 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:07.348 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:10.460 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:13.579 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:15.490 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:16.711 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:19.849 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:22.993 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:26.118 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:29.197 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:32.324 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:34.119 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:51:34.416 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:51:34.476 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:51:34.499 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:13.594 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:52:13.712 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:52:13.716 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:13.767 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:13.809 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:16.927 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:19.733 I/NearbyDiscovery(16232): (REDACTED) ApFastPairScanner: eventType=%s, intReq=%s, scanning=%s, scanAllowed=%s, bleEnabled=%s, lockScanRate=%s, startScanningByLowPowerMode=%s
+10-07 07:52:20.030 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:23.147 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:25.416 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:26.282 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:29.482 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:32.628 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:35.737 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:38.936 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:42.106 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:45.326 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:48.456 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:51.600 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:54.741 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:52:57.887 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:01.024 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:04.158 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:07.302 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:10.454 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:13.643 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:16.820 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:19.964 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:23.166 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:26.350 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:29.546 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:32.684 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:35.791 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:38.893 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:41.984 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:44.229 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:45.102 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:48.185 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:51.275 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:54.448 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:53:57.582 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:54:00.753 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse
+10-07 07:54:03.874 I/WifiHAL ( 1074): In GetCachedScanResultsCommand::handleResponse

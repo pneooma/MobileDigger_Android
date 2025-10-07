@@ -1,3 +1,47 @@
+9.28
+- Added comprehensive genre metadata system with smart inference and background processing
+- Genre display: Shows on separate row with smaller font and music note icon (♪ Genre)
+- Smart genre inference: Detects House, Techno, Afro House, Dance, Electronic, Remix from filenames
+- Background metadata loading: Processes 5 files at a time with 500ms delays to avoid disrupting playback
+- Compact loading progress bar: Shows "Loading genres... (X/Y)" with horizontal layout to save space
+- Loading bar positioning: Dynamically slides up when notification messages disappear
+- Enhanced debugging: Comprehensive logging for metadata extraction and UI display issues
+- Triggers metadata loading automatically on folder selection and after like/dislike actions
+- Maintains original playlist order while loading genres in background
+- Version bumped to 9.28
+
+9.32
+- Fixed genre display: Sort playlist to show files with genres at the top
+- Files with genre metadata now appear first in playlist for better visibility
+- Enhanced logging to verify genre sorting and display
+- Version bumped to 9.32
+
+9.31
+- Fixed StateFlow update issue: Create completely new list instances to ensure UI recomposition
+- Enhanced StateFlow verification logging to track genre updates
+- Fixed genre display by ensuring proper StateFlow change detection
+- Version bumped to 9.31
+
+9.30
+- Debug version: Added UI debugging to track genre display in playlist
+- Enhanced StateFlow update logging to verify metadata reaches UI
+- Added MusicPlayerScreen debug logs to see what's being rendered
+- Version bumped to 9.30
+
+9.29
+- Debug version: Added extensive logging for metadata extraction
+- Enhanced genre extraction with full metadata debugging (title, artist, album, genre)
+- Added detailed batch processing logs to troubleshoot missing genre display
+- Version bumped to 9.29
+
+9.28
+- Added genre metadata display in playlist format: <filename> :: <genre> ::
+- Implemented batch metadata loading system (10 files at a time)
+- Genre extracted using MediaMetadataRetriever with ResourceManager for safe handling
+- Metadata loading starts automatically when files are loaded
+- Only displays genre if available, otherwise shows filename only
+- Version bumped to 9.28
+
 9.27
 - AirPods: Map single NEXT → DISLIKE, single PREVIOUS → LIKE
 - Implemented in MediaSession.Callback onPlayerCommandRequest

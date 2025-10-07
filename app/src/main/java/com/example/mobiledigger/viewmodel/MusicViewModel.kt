@@ -1929,10 +1929,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 val sortedIndices = selected.sortedDescending()
                 val successfullySortedIndices = mutableListOf<Int>()
                 
+                // Get current playlist based on current tab
+                val currentFiles = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
+                }
+                
                 // Sort files with reduced delays
                 for (index in sortedIndices) {
-                    if (index in _musicFiles.value.indices) {
-                        val file = _musicFiles.value[index]
+                    if (index in currentFiles.indices) {
+                        val file = currentFiles[index]
                         if (fileManager.sortFile(file, action)) {
                             successfullySortedIndices.add(index)
                         }
@@ -1947,8 +1954,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     _selectedIndices.value = emptySet()
                     _isMultiSelectionMode.value = false
                     
-                    // Refresh the music files list by removing successfully sorted files
-                    val updatedFiles = _musicFiles.value.toMutableList()
+                    // Refresh the appropriate playlist by removing successfully sorted files
+                    val updatedFiles = currentFiles.toMutableList()
                     
                     // Remove successfully sorted files in reverse order to maintain indices
                     successfullySortedIndices.sortedDescending().forEach { index ->
@@ -1957,7 +1964,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         }
                     }
                     
-                    _musicFiles.value = updatedFiles
+                    // Update the correct playlist based on current tab
+                    when (_currentPlaylistTab.value) {
+                        PlaylistTab.TODO -> _musicFiles.value = updatedFiles
+                        PlaylistTab.LIKED -> _likedFiles.value = updatedFiles
+                        PlaylistTab.REJECTED -> _rejectedFiles.value = updatedFiles
+                    }
                     
                     // Adjust current index if needed
                     if (_currentIndex.value >= updatedFiles.size && updatedFiles.isNotEmpty()) {
@@ -2306,26 +2318,34 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     _metadataLoadingProgress.value = 0
                     _metadataLoadingTotal.value = currentFiles.size
                     
-                    // Process files in batches of 5 to be less disruptive
-                    val batchSize = 5
+                    // Process files in batches of 3 to prevent resource exhaustion and crashes
+                    val batchSize = 3
                     var processedCount = 0
                     
                     for (i in currentFiles.indices step batchSize) {
                         val batch = currentFiles.subList(i, minOf(i + batchSize, currentFiles.size))
                         
-                        // Load metadata for this batch
-                        val updatedBatch = batch.map { file ->
-                            if (file.genre == null) {
-                                CrashLogger.log("MusicViewModel", "Processing file for metadata: ${file.name}")
-                                val genre = extractGenreMetadata(file)
-                                val updatedFile = file.copy(genre = genre)
-                                CrashLogger.log("MusicViewModel", "Updated file ${file.name} with genre: $genre")
-                                updatedFile
-                            } else {
-                                CrashLogger.log("MusicViewModel", "File ${file.name} already has genre: ${file.genre}")
-                                file // Already has genre
-                            }
+                // Load metadata for this batch - process ONE file at a time to avoid resource exhaustion
+                val updatedBatch = mutableListOf<MusicFile>()
+                for (file in batch) {
+                    try {
+                        if (file.genre == null) {
+                            CrashLogger.log("MusicViewModel", "Processing file for metadata: ${file.name}")
+                            val genre = extractGenreMetadata(file)
+                            val updatedFile = file.copy(genre = genre)
+                            CrashLogger.log("MusicViewModel", "Updated file ${file.name} with genre: $genre")
+                            updatedBatch.add(updatedFile)
+                            // Small delay between files to prevent resource exhaustion
+                            delay(50)
+                        } else {
+                            CrashLogger.log("MusicViewModel", "File ${file.name} already has genre: ${file.genre}")
+                            updatedBatch.add(file) // Already has genre
                         }
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Error extracting metadata for ${file.name}", e)
+                        updatedBatch.add(file) // Add original file without genre on error
+                    }
+                }
                         
                         // Update the appropriate playlist with the new metadata
                         withContext(Dispatchers.Main) {

@@ -1,3 +1,17 @@
+9.30
+- CRITICAL FIX: Fixed Fatal signal 6 (SIGABRT) native crash during metadata loading
+- Changed metadata processing to sequential (one file at a time) instead of parallel to prevent resource exhaustion
+- Reduced batch size from 5 to 3 files to further reduce memory pressure
+- Added 50ms delay between file processing and proper error handling for failed metadata extraction
+- Prevents MediaMetadataRetriever from overwhelming system resources with AIFF files
+- Version bumped to 9.30
+
+9.29
+- CRITICAL FIX: Fixed crash when using like/dislike in multiselect mode on LIKED or REJECTED tabs
+- Fixed IndexOutOfBoundsException by ensuring multiselect operations use correct playlist based on current tab
+- Multiselect now properly handles sorting files from any tab (TODO, LIKED, REJECTED)
+- Version bumped to 9.29
+
 9.28
 - Added comprehensive genre metadata system with smart inference and background processing
 - Genre display: Shows on separate row with smaller font and music note icon (♪ Genre)

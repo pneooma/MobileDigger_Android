@@ -50,7 +50,12 @@ class MusicService : MediaSessionService() {
     internal var audioManager: AudioManager? = null // Made internal
     private var progressUpdateHandler: Handler? = null
     private var progressUpdateRunnable: Runnable? = null
-
+    
+    // Headphone double-tap detection state
+    private var lastNextTapTime: Long = 0L
+    private var lastPreviousTapTime: Long = 0L
+    private val doubleTapWindowMs: Long = 500L
+    
     companion object {
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "music_playback_channel"
@@ -98,9 +103,29 @@ class MusicService : MediaSessionService() {
         ): MediaSession.ConnectionResult {
             val playerCommands = Player.Commands.Builder()
                 .addAllCommands()
+                .remove(Player.COMMAND_STOP) // Remove stop command to hide system stop button
                 .build()
             val sessionCommands = SessionCommands.Builder().build()
             return MediaSession.ConnectionResult.accept(sessionCommands, playerCommands)
+        }
+
+        // AirPods: Map single NEXT → DISLIKE, single PREVIOUS → LIKE
+        override fun onPlayerCommandRequest(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            playerCommand: Int
+        ): Int {
+            when (playerCommand) {
+                Player.COMMAND_SEEK_TO_NEXT -> {
+                    try { sendBroadcast(Intent(ACTION_DISLIKE).apply { setPackage(packageName) }) } catch (_: Exception) {}
+                    return SessionResult.RESULT_ERROR_NOT_SUPPORTED
+                }
+                Player.COMMAND_SEEK_TO_PREVIOUS -> {
+                    try { sendBroadcast(Intent(ACTION_LIKE).apply { setPackage(packageName) }) } catch (_: Exception) {}
+                    return SessionResult.RESULT_ERROR_NOT_SUPPORTED
+                }
+            }
+            return super.onPlayerCommandRequest(session, controller, playerCommand)
         }
 
     }
@@ -113,12 +138,12 @@ class MusicService : MediaSessionService() {
                     togglePlayPause()
                 }
                 ACTION_NEXT -> {
-                    CrashLogger.log("MusicService", "Notification action: NEXT")
-                    sendBroadcast(Intent(ACTION_NEXT))
+                    CrashLogger.log("MusicService", "Notification/Headphone action: NEXT → seekToNext")
+                    try { player?.seekToNext() } catch (e: Exception) { CrashLogger.log("MusicService", "seekToNext failed", e) }
                 }
                 ACTION_PREVIOUS -> {
-                    CrashLogger.log("MusicService", "Notification action: PREVIOUS")
-                    sendBroadcast(Intent(ACTION_PREVIOUS))
+                    CrashLogger.log("MusicService", "Notification/Headphone action: PREVIOUS → seekToPrevious")
+                    try { player?.seekToPrevious() } catch (e: Exception) { CrashLogger.log("MusicService", "seekToPrevious failed", e) }
                 }
                 ACTION_LIKE -> {
                     CrashLogger.log("MusicService", "Notification action: LIKE")
@@ -173,6 +198,26 @@ class MusicService : MediaSessionService() {
                 .setWakeMode(C.WAKE_MODE_LOCAL)
                 .build()
 
+            // Ensure NEXT/PREV commands are always available by providing a minimal playlist
+            try {
+                val dummyItem1 = MediaItem.Builder()
+                    .setMediaId("dummy1")
+                    .setUri(Uri.parse("content://dummy/1"))
+                    .setMediaMetadata(MediaMetadata.Builder().setTitle("Dummy 1").build())
+                    .build()
+                val dummyItem2 = MediaItem.Builder()
+                    .setMediaId("dummy2")
+                    .setUri(Uri.parse("content://dummy/2"))
+                    .setMediaMetadata(MediaMetadata.Builder().setTitle("Dummy 2").build())
+                    .build()
+                player?.setMediaItems(listOf(dummyItem1, dummyItem2))
+                player?.prepare()
+                player?.repeatMode = Player.REPEAT_MODE_ALL
+                CrashLogger.log("MusicService", "Initialized dummy playlist for skip support")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicService", "Failed to initialize dummy playlist", e)
+            }
+
             player?.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     CrashLogger.log("MusicService", "Player (MediaSession) onPlaybackStateChanged: $playbackState, Duration: ${this@MusicService.player?.duration}, Position: ${this@MusicService.player?.currentPosition}")
@@ -215,6 +260,19 @@ class MusicService : MediaSessionService() {
                  override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                     CrashLogger.log("MusicService", "Player (MediaSession) Error: ${error.message}", error)
                 }
+                
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    CrashLogger.log("MusicService", "Player (MediaSession) isPlaying changed: $isPlaying")
+                }
+                
+                override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+                    CrashLogger.log("MusicService", "Player (MediaSession) onMediaItemTransition reason: $reason")
+                    // Detect if this was triggered by skip next/previous from headphones
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK) {
+                        // This might be from headphone buttons
+                        CrashLogger.log("MusicService", "Media item transition from SEEK - possible headphone button")
+                    }
+                }
             })
 
             mediaSession = MediaSession.Builder(this, player!!)
@@ -243,6 +301,7 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         createAndShowNotification()
         return START_STICKY
     }
@@ -281,19 +340,43 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onDestroy() {
-        releaseWakeLock()
-        stopProgressUpdates()
-        unregisterReceiver(notificationReceiver)
-        audioManager?.release()
-        audioManager = null
-        mediaSession?.run {
-            player?.release()
-            release()
-            mediaSession = null
+        try {
+            releaseWakeLock()
+            stopProgressUpdates()
+            unregisterReceiver(notificationReceiver)
+            audioManager?.release()
+            audioManager = null
+            
+            // Safely release media session to prevent DeadObjectException
+            mediaSession?.run {
+                try {
+                    player?.release()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicService", "Error releasing player", e)
+                }
+                try {
+                    release()
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicService", "Error releasing media session", e)
+                }
+                mediaSession = null
+            }
+            player = null // Release ExoPlayer instance
+            
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } catch (e: Exception) {
+                CrashLogger.log("MusicService", "Error stopping foreground service", e)
+            }
+            
+            try {
+                notificationManager.cancel(NOTIFICATION_ID)
+            } catch (e: Exception) {
+                CrashLogger.log("MusicService", "Error canceling notification", e)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicService", "Error in onDestroy", e)
         }
-        player = null // Release ExoPlayer instance
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        notificationManager.cancel(NOTIFICATION_ID)
         super.onDestroy()
     }
 

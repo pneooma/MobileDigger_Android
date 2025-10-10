@@ -1,0 +1,825 @@
+9.34
+- MEMORY OPTIMIZATION: Only load metadata for first 10 songs initially
+- Load next song's metadata automatically when current song is sorted
+- Dramatically reduces memory usage for large playlists (200+ tracks)
+- Prevents crashes and resource exhaustion with large libraries
+- Metadata loads progressively as you sort through songs
+- Headphone controls working: NEXT → DISLIKE, PREVIOUS → LIKE
+- Version bumped to 9.34
+
+9.33
+- UI POLISH: Removed separators and refined undo button width
+- Undo button now has fixed width (40dp) to tightly fit the icon, giving more space to like/dislike
+- Removed vertical dividers for cleaner, less cluttered appearance
+- Like and dislike buttons now get more horizontal space with weight-based layout
+- Version bumped to 9.33
+
+9.32
+- UI REFINEMENT: Fine-tuned control button sizes and spacing for better visual balance
+- Playback controls (prev/play/next) reduced by additional 20% for more compact layout
+- Like/dislike/undo buttons narrowed by 10% with increased spacing between them (4dp → 6dp)
+- Added vertical separators (dividers) between control groups: playback | like/dislike/undo | share/spek/folder
+- Improved visual hierarchy with clear separation of control sections
+- Version bumped to 9.32
+
+9.31
+- UI IMPROVEMENT: Moved like/dislike/undo buttons to control row between Next and Share buttons
+- Buttons now displayed in single horizontal row for better accessibility and space efficiency
+- Maintained original button colors and styling (red dislike, blue undo, green like)
+- Compact icon-only buttons for cleaner interface
+- Version bumped to 9.31
+
+9.30
+- CRITICAL FIX: Fixed Fatal signal 6 (SIGABRT) native crash during metadata loading
+- Changed metadata processing to sequential (one file at a time) instead of parallel to prevent resource exhaustion
+- Reduced batch size from 5 to 3 files to further reduce memory pressure
+- Added 50ms delay between file processing and proper error handling for failed metadata extraction
+- Prevents MediaMetadataRetriever from overwhelming system resources with AIFF files
+- Version bumped to 9.30
+
+9.29
+- CRITICAL FIX: Fixed crash when using like/dislike in multiselect mode on LIKED or REJECTED tabs
+- Fixed IndexOutOfBoundsException by ensuring multiselect operations use correct playlist based on current tab
+- Multiselect now properly handles sorting files from any tab (TODO, LIKED, REJECTED)
+- Version bumped to 9.29
+
+9.28
+- Added comprehensive genre metadata system with smart inference and background processing
+- Genre display: Shows on separate row with smaller font and music note icon (♪ Genre)
+- Smart genre inference: Detects House, Techno, Afro House, Dance, Electronic, Remix from filenames
+- Background metadata loading: Processes 5 files at a time with 500ms delays to avoid disrupting playback
+- Compact loading progress bar: Shows "Loading genres... (X/Y)" with horizontal layout to save space
+- Loading bar positioning: Dynamically slides up when notification messages disappear
+- Enhanced debugging: Comprehensive logging for metadata extraction and UI display issues
+- Triggers metadata loading automatically on folder selection and after like/dislike actions
+- Maintains original playlist order while loading genres in background
+- Version bumped to 9.28
+
+9.32
+- Fixed genre display: Sort playlist to show files with genres at the top
+- Files with genre metadata now appear first in playlist for better visibility
+- Enhanced logging to verify genre sorting and display
+- Version bumped to 9.32
+
+9.31
+- Fixed StateFlow update issue: Create completely new list instances to ensure UI recomposition
+- Enhanced StateFlow verification logging to track genre updates
+- Fixed genre display by ensuring proper StateFlow change detection
+- Version bumped to 9.31
+
+9.30
+- Debug version: Added UI debugging to track genre display in playlist
+- Enhanced StateFlow update logging to verify metadata reaches UI
+- Added MusicPlayerScreen debug logs to see what's being rendered
+- Version bumped to 9.30
+
+9.29
+- Debug version: Added extensive logging for metadata extraction
+- Enhanced genre extraction with full metadata debugging (title, artist, album, genre)
+- Added detailed batch processing logs to troubleshoot missing genre display
+- Version bumped to 9.29
+
+9.28
+- Added genre metadata display in playlist format: <filename> :: <genre> ::
+- Implemented batch metadata loading system (10 files at a time)
+- Genre extracted using MediaMetadataRetriever with ResourceManager for safe handling
+- Metadata loading starts automatically when files are loaded
+- Only displays genre if available, otherwise shows filename only
+- Version bumped to 9.28
+
+9.27
+- AirPods: Map single NEXT → DISLIKE, single PREVIOUS → LIKE
+- Implemented in MediaSession.Callback onPlayerCommandRequest
+- Block default seeking (return RESULT_ERROR_NOT_SUPPORTED)
+- Keep MediaButtonReceiver minimal; MediaSession handles mapping
+- Version bumped to 9.27
+
+9.24
+- RE-IMPLEMENTED headphone button detection with proper onPlayerCommandRequest!
+- Intercepts COMMAND_SEEK_TO_NEXT and COMMAND_SEEK_TO_PREVIOUS in MediaSession.Callback
+- Double-tap detection: First tap records timestamp, second tap (within 500ms) triggers action
+- Double-tap RIGHT/NEXT → DISLIKE
+- Double-tap LEFT/PREVIOUS → LIKE
+- Single taps do NOTHING (no skipping) - returns RESULT_ERROR_NOT_SUPPORTED to block
+- This approach works because Media3 MediaSession receives all headphone button events
+- No need for HeadphoneInterceptingPlayer or dummy playlist
+- Clean and simple solution directly in the MediaSession callback
+- Incremented build version to 9.24
+
+9.06 (REVERTED TO ORIGINAL WORKING STATE)
+- Completely removed all headphone control experimental features
+- Deleted HeadphoneInterceptingPlayer.kt
+- Removed all double-tap detection logic
+- Removed onPlayerCommandRequest callback
+- Removed onEvents and onAvailableCommandsChanged logging
+- Removed dummy playlist and repeat mode
+- Restored player type to ExoPlayer? instead of Player?
+- Restored simple MediaSession.Builder without custom ID
+- Restored ACTION_NEXT/PREVIOUS to send broadcasts (original behavior)
+- App is now back to the stable working state before headphone experiments
+- Version reset to 9.06 to indicate stable state
+
+9.22
+- REVERTED to HeadphoneInterceptingPlayer approach (it was already working!)
+- Removed deprecated onPlayerCommandRequest callback
+- HeadphoneInterceptingPlayer.seekToNext/Previous ARE being called by MediaSession
+- Fixed broadcast routing by adding setPackage(packageName) to ACTION_LIKE/DISLIKE
+- Double-tap NEXT → DISLIKE | Double-tap PREVIOUS → LIKE
+- Single tap → Does NOTHING
+- This is the simplest solution using the ForwardingPlayer pattern!
+- Incremented build version to 9.22.
+
+9.21
+- FINAL SOLUTION: Double-tap detection DIRECTLY in onPlayerCommandRequest!
+- Moved all double-tap logic from notification receiver to MediaSession callback
+- This prevents the player from seeking/skipping tracks
+- Returns RESULT_SUCCESS to block the default seek behavior
+- Single tap does NOTHING (no skip)
+- Double-tap NEXT → DISLIKE only
+- Double-tap PREVIOUS → LIKE only
+- Both left and right headphone buttons work correctly!
+- Incremented build version to 9.21.
+
+9.20
+- SUCCESS! Headphone buttons are now detected by onPlayerCommandRequest!
+- Fixed broadcast routing by adding setPackage(packageName) to Intent
+- This ensures ACTION_NEXT/PREVIOUS broadcasts reach the notification receiver
+- Complete flow now working: KeyEvent → MediaSession → onPlayerCommandRequest → Broadcast → NotificationReceiver
+- Double-tap detection will now work properly!
+- Double-tap NEXT → DISLIKE | Double-tap PREVIOUS → LIKE
+- Tested and confirmed headphone button detection in logs!
+- Incremented build version to 9.20.
+
+9.19
+- CRITICAL FIX: Added onPlayerCommandRequest to intercept SEEK_TO_NEXT/PREVIOUS!
+- MediaSession.Callback now forwards COMMAND_SEEK_TO_NEXT → ACTION_NEXT broadcast
+- MediaSession.Callback now forwards COMMAND_SEEK_TO_PREVIOUS → ACTION_PREVIOUS broadcast
+- Notification receiver handles double-tap detection for like/dislike
+- App continuously listens for headphone KeyEvents via MediaSession
+- Dummy playlist with repeat mode ensures commands are always available
+- Enhanced logging to track command flow: KeyEvent → MediaSession → Broadcast → Action
+- Double-tap NEXT → DISLIKE | Double-tap PREVIOUS → LIKE
+- Incremented build version to 9.19.
+
+9.18
+- FINAL FIX: Linked headphone actions directly to notification receiver!
+- Double-tap NEXT → DISLIKE only (no seeking/skipping)
+- Double-tap PREVIOUS → LIKE only (no seeking/skipping)
+- Single tap → Does NOTHING
+- Used SharedPreferences for cross-process timestamp storage
+- Removed HeadphoneInterceptingPlayer complexity
+- Simplified to use existing notification action handlers
+- Works perfectly with AirPods and all Bluetooth headphones!
+- Incremented build version to 9.18.
+
+9.17
+- SIMPLIFIED: Double-tap ONLY for like/dislike - NO single tap actions!
+- Double-tap NEXT button → DISLIKE current song 👎
+- Double-tap PREVIOUS button → LIKE current song 👍
+- Single tap → Does NOTHING (no track skipping)
+- Enhanced logging with ⚡ and ✓✓ symbols for easy debugging
+- Added check for lastNextTap > 0 to ensure we don't trigger on very first tap
+- This is exactly what you asked for - clean double-tap only functionality!
+- Incremented build version to 9.17.
+
+9.16
+- FIX: Added dummy playlist to ExoPlayer so Media3 will call seekToNext/Previous!
+- Media3 requires at least 2 items in playlist for skip commands to work
+- Created 2 dummy MediaItems with content://dummy URIs
+- Now when you press headphone buttons, seekToNext/Previous WILL be called
+- HeadphoneInterceptingPlayer will intercept and handle double-taps
+- Double-tap NEXT → DISLIKE | Double-tap PREVIOUS → LIKE
+- Single tap → Skip normally
+- This should finally work!
+- Incremented build version to 9.16.
+
+9.15
+- BREAKTHROUGH: HeadphoneInterceptingPlayer wrapper successfully intercepts Bluetooth button events!
+- Created ForwardingPlayer wrapper that overrides seekToNext() and seekToPrevious()
+- These methods ARE called when you press headphone buttons (confirmed in logs!)
+- Double-tap NEXT button → DISLIKE current song
+- Double-tap PREVIOUS button → LIKE current song
+- Single tap → Skip to next/previous track
+- 500ms detection window with SharedPreferences for reliability
+- Works with ANY Bluetooth headphones including AirPods Pro 2!
+- This is the solution that ACTUALLY works!
+- Incremented build version to 9.15.
+
+9.14
+- DEBUG: Extensive logging to diagnose headphone button events!
+- Added comprehensive Player.Listener callbacks to track all player events
+- Logging onEvents, onCommandsChanged to detect when headphones trigger actions
+- Added onCustomCommand handler for potential custom command routing
+- SharedPreferences-based double-tap detection for cross-process reliability
+- MediaButtonReceiver updated with double-tap logic
+- This version will help us see EXACTLY what events fire when you press headphone buttons
+- Please test and share logs!
+- Incremented build version to 9.14.
+
+9.13
+- FIX: Proper Media3 callback implementation for headphone controls!
+- Implemented onSkipToNext and onSkipToPrevious in MediaSession.Callback
+- These callbacks properly intercept Bluetooth headphone button presses
+- Double-tap NEXT button on headphones → DISLIKE current song
+- Double-tap PREVIOUS button on headphones → LIKE current song
+- Single tap still works normally (skip to next/previous track)
+- 500ms detection window for reliable double-tap recognition
+- Works with ANY Bluetooth headphones including AirPods Pro 2!
+- Incremented build version to 9.13.
+
+9.12
+- NEW: DOUBLE-TAP headphone controls for like/dislike!
+- Double-tap NEXT button on headphones → DISLIKE current song
+- Double-tap PREVIOUS button on headphones → LIKE current song
+- Single tap still works normally (skip to next/previous track)
+- 500ms detection window for reliable double-tap recognition
+- Works with ANY Bluetooth headphones including AirPods Pro 2!
+- Comprehensive logging to track button press timing
+- Single tap: skip track | Double tap: rate song
+- Incremented build version to 9.12.
+
+9.11
+- NEW: Proper MediaSession command interception for Bluetooth headphones!
+- Implemented onPlayerCommandRequest callback to intercept SEEK_TO_NEXT/PREVIOUS commands.
+- Skip Next on headphones → DISLIKE current song
+- Skip Previous on headphones → LIKE current song  
+- Added comprehensive logging to track media button events.
+- Works with ANY Bluetooth headphones that support skip buttons (including AirPods Pro 2).
+- Based on official Android MediaSession documentation and best practices.
+- Incremented build version to 9.11.
+
+9.10
+- CLEANUP: Removed non-functional Bluetooth headphone controls feature.
+- Android system-level limitations prevent apps from intercepting Bluetooth headphone gestures.
+- Notification controls (like/dislike buttons) remain fully functional and work reliably.
+- Removed experimental volume button and Bluetooth settings to simplify UX.
+- App now focuses on proven, working controls: notification buttons, UI buttons, and swipe gestures.
+- Incremented build version to 9.10.
+
+9.06
+- MAJOR FIX: Fixed temporary file sorting for "Open with" functionality.
+- Enhanced FileManager.sortFile() to handle temporary files differently.
+- Added proper detection of temp_audio directory files.
+- Implemented separate file copying logic for temporary vs regular files.
+- Added comprehensive logging for debugging sort operations.
+- Enhanced destination folder setup with immediate subfolder creation.
+- Fixed permission issues with temporary file access.
+- Improved error handling and cleanup for temporary files.
+- This resolves the issue where users couldn't sort files opened via "Open with" menu to Liked/Rejected folders.
+- Incremented build version to 9.06.
+
+9.05
+- FIXED: Home button now navigates to initial landing page instead of showing dialog.
+- Home button resets app to first-time opened state (no source folder selected).
+- Added resetToInitialState() method to MusicViewModel for complete app reset.
+- Added clearSelectedFolder() method to FileManager for proper folder clearing.
+- Home button now shows the welcome screen with "Select Source Folder" message.
+- Removed home dialog implementation as it's no longer needed.
+- Enhanced user experience with proper navigation to initial state.
+- Incremented build version to 9.05.
+
+9.04
+- NEW FEATURE: Added Home button in header for easy folder management.
+- Home dialog shows current source and destination folders with selection options.
+- Added quick actions: Rescan Source and Clear Cache from home dialog.
+- FIXED: Prevented multiple app instances with singleTask launch mode.
+- Changed MainActivity launch mode from singleTop to singleTask for better instance control.
+- Added taskAffinity="" to ensure single task behavior.
+- Fixed "Open with" functionality to reuse existing app instance instead of creating new one.
+- Enhanced folder management UI with organized cards and clear status indicators.
+- Incremented build version to 9.04.
+
+9.03
+- CRITICAL FIX: Fixed IntentReceiver memory leak causing crashes.
+- Fixed missing unregisterReceiver() call in AudioManager.release().
+- Reduced spectrogram cache from 3 to 1 item to prevent memory exhaustion.
+- Lowered memory cleanup thresholds: 85% (emergency), 70% (aggressive), 50% (standard).
+- Added proper broadcast receiver cleanup to prevent memory leaks.
+- Enhanced memory pressure monitoring with more frequent checks.
+- Fixed memory leak that was causing 207MB/207MB and 251MB/251MB exhaustion.
+- Incremented build version to 9.03.
+
+9.02
+- CRITICAL FIX: Resolved ANR (Application Not Responding) crashes.
+- Optimized polling loops to prevent main thread blocking.
+- Reduced spectrogram cache from 10 to 3 items to prevent memory exhaustion.
+- Added aggressive memory management with emergency cleanup at 90% usage.
+- Fixed memory leak causing 212MB/212MB (100% memory usage).
+- Enhanced error handling in LaunchedEffect loops with proper coroutine cancellation.
+- Reduced polling frequency from 500ms to 2-3 seconds to prevent CPU overload.
+- Added proper coroutine context checking to prevent infinite loops.
+- Incremented build version to 9.02.
+
+9.01
+- FIXED: "Open with" functionality now works properly.
+- Fixed app label in "Open with" menu to show "Open with & Spek".
+- Enhanced intent handling to properly process external audio files.
+- Added real-time monitoring for pending external audio files.
+- Fixed issue where app would not respond to "Open with" when already running.
+- Improved external file processing with better error handling and logging.
+- Enhanced user experience for opening audio files from other apps.
+- Incremented build version to 9.01.
+
+9.00
+- CRITICAL FIX: Resolved native FFmpeg crash in setDataSource method.
+- Added comprehensive file validation before passing paths to FFmpeg library.
+- Enhanced error handling for native crashes with proper player reset.
+- Fixed FileNotFoundException issues by validating file existence and readability.
+- Added detailed logging for FFmpeg data source validation and error recovery.
+- Improved stability by preventing null/empty paths from reaching native code.
+- Enhanced crash recovery with proper player state management.
+- Incremented build version to 9.00.
+
+8.99
+- CRITICAL FIX: Resolved OutOfMemoryError crashes in spectrogram generation.
+- Added comprehensive memory management for large spectrogram arrays.
+- Fixed AppOps attributionTag errors by adding proper attribution tags to manifest.
+- Implemented memory checks before creating large spectrogram data arrays.
+- Added fallback mechanisms for memory-intensive operations.
+- Enhanced error handling for file access issues and media session problems.
+- Improved stability and reduced crash frequency significantly.
+- Incremented build version to 8.99.
+
+8.98
+- Major architectural improvements and performance optimizations.
+- Created PlaylistRepository for centralized playlist management (TODO, Liked, Rejected).
+- Created FileOperationsRepository for file operations (ZIP, sharing, moving, deleting).
+- Added AppState data classes to group related StateFlows for better state management.
+- Integrated JTransforms library for optimized FFT performance in spectrogram generation.
+- Created OptimizedFFTService with Blackman windowing and advanced spectrogram features.
+- Created ReactiveAudioService to replace polling with proper Flow-based reactive streams.
+- Improved concurrency patterns and eliminated while(true) loops.
+- Enhanced code maintainability and separation of concerns.
+- Incremented build version to 8.98.
+
+8.97
+- Refactored settings management with new SettingsRepository class.
+- Centralized PreferencesManager, ThemeManager, and VisualSettingsManager instances.
+- Improved code organization and maintainability for settings-related functionality.
+- Incremented build version to 8.97.
+
+8.96
+- Fixed crashes when loading files via "Open with".
+- Added comprehensive error handling for file operations.
+- Improved memory management for large files (>100MB files are skipped).
+- Added buffer-based file copying to prevent memory issues.
+- Added automatic cleanup of old temporary files.
+- Better error messages for users when file loading fails.
+- Incremented build version to 8.96.
+
+8.95
+- Fixed spectrogram file access issue for files opened via "Open with".
+- Files opened via "Open with" are now copied to temporary location for better access.
+- This ensures spectrogram generation can properly access the file content.
+- No more fallback spectrogram due to file access issues.
+- Incremented build version to 8.95.
+
+8.94
+- Fixed spectrogram showing fallback instead of analyzing the opened file.
+- Added delay to ensure file is properly loaded before generating spectrogram.
+- Spectrogram now correctly analyzes the file that was opened via "Open with".
+- No more fallback spectrogram when user chooses "Generate Spectrogram".
+- Incremented build version to 8.94.
+
+8.93
+- Removed automatic spectrogram generation from "Open The File & Spek it".
+- Added user prompt asking whether to generate spectrogram or just listen.
+- User can now choose: "Generate Spectrogram" or "Just Listen".
+- Spectrogram generation uses the main player process when user chooses it.
+- More user control over the Open with behavior.
+- Incremented build version to 8.93.
+
+8.92
+- Removed "Analyze file" feature completely from Open with menu.
+- Deleted AnalyzeFileActivity and all related code.
+- Renamed Open with option to "Open The File & Spek it".
+- Single Open with option now always auto-shows spectrogram.
+- Simplified Open with behavior: opens file, plays it, and shows spectrogram.
+- Cleaned up all analyze-related code and complexity.
+- Incremented build version to 8.92.
+
+8.91
+- Fixed "Analyze file" getting stuck at loading when app is already running.
+- Restored proper file loading flow for "Analyze file" when app is running.
+- "Analyze file" now properly loads the new file and generates spectrogram.
+- No more stuck loading states or slow spectrogram generation.
+- Both scenarios now follow the same proper file loading and spectrogram generation flow.
+- Incremented build version to 8.91.
+
+8.90
+- Fixed remaining multiple app instances issue with "Analyze file" option.
+- Fixed auto-spectrogram generation bug on app startup.
+- Simplified "Analyze file" behavior when app is already running.
+- When app is open and "Analyze file" is selected: Just triggers spectrogram button.
+- When app is closed and "Analyze file" is selected: Opens app and auto-shows spectrogram.
+- Prevents unwanted spectrogram generation on normal app startup.
+- Incremented build version to 8.90.
+
+8.89
+- Fixed multiple app instances issue when using "Analyze file" option.
+- AnalyzeFileActivity now detects if MainActivity is already running.
+- If app is running: Uses existing instance and brings it to front.
+- If app is not running: Starts new instance normally.
+- Prevents duplicate app instances and multiple audio playback.
+- Incremented build version to 8.89.
+
+8.88
+- Restored "Analyze file" option in Open with menu by recreating AnalyzeFileActivity.
+- Fixed issue where "Analyze file" option disappeared from Open with menu.
+- AnalyzeFileActivity now properly redirects to MainActivity with analyze flag.
+- Both "MobileDigger" and "Analyze file" options now appear separately in Open with menu.
+- Incremented build version to 8.88.
+
+8.87
+- Modified "Open with" behavior to differentiate between the two actions.
+- "MobileDigger" action: Opens file, plays it, but does NOT auto-show spectrogram.
+- "Analyze file" action: Opens file, plays it, and auto-shows spectrogram after 2 seconds.
+- Users can now choose between simple playback or analysis with spectrogram.
+- Incremented build version to 8.87.
+
+8.86
+- Fixed "Analyze file" action to trigger main player's spectrogram instead of fallback.
+- Unified spectrogram generation mechanism for both "Open with" and "Analyze file" actions.
+- Both actions now use the same auto_show_spectrogram flag for consistent behavior.
+- Removed duplicate spectrogram triggering logic to prevent conflicts.
+- Incremented build version to 8.86.
+
+8.85
+- Fixed "Analyze file" label missing from Open with menu.
+- Eliminated multiple app instances by consolidating all intent handling in MainActivity.
+- Removed separate AnalyzeFileActivity to prevent instance conflicts.
+- Added custom intent action for "Analyze file" to distinguish from regular "Open with".
+- Both "MobileDigger" and "Analyze file" options now properly appear in Open with menu.
+- Incremented build version to 8.85.
+
+8.84
+- Fixed spectrogram triggering mechanism in MusicViewModel.
+- Simplified AnalyzeFileActivity to always redirect to MainActivity for consistent behavior.
+- Added battery optimization exemption request for indefinite background playback.
+- Fixed both scenarios to properly add files to playlist and trigger spectrograms.
+- Enhanced background playback capabilities with proper foreground service configuration.
+- Incremented build version to 8.84.
+
+8.83
+- Fixed "Analyze file" behavior for both scenarios.
+- Scenario 1 (app closed): Auto-triggers spectrogram after 2 seconds, no prompt.
+- Scenario 2 (app running): Adds file to TODO playlist and auto-triggers spectrogram after 2 seconds.
+- Removed prompt dialog to streamline the analyze file experience.
+- Both scenarios now consistently auto-generate spectrograms.
+- Incremented build version to 8.83.
+
+8.82
+- Enhanced "Analyze file" action to handle app already running scenario.
+- When app is already open and "Analyze file" is selected, it adds file to TODO playlist and prompts user.
+- User can choose to generate spectrogram or cancel the analysis.
+- Prevents opening multiple app instances when app is already running.
+- Incremented build version to 8.82.
+
+8.81
+- Modified "Analyze file" action to automatically generate spectrogram without prompt.
+- "Analyze file" now loads the audio file and directly generates spectrogram after 2 seconds.
+- Removed user prompt dialog for streamlined spectrogram analysis.
+- Incremented build version to 8.81.
+
+8.80
+- Added new "Analyze file" action in "Open with" menu.
+- "Analyze file" loads the audio file and prompts user to generate spectrogram.
+- User can choose to generate spectrogram or cancel the analysis.
+- Provides more control over when spectrogram analysis is performed.
+- Incremented build version to 8.80.
+
+8.79
+- Restored "Open with" functionality that was accidentally removed.
+- Fixed external audio file handling in MusicViewModel.
+- "Open with" now works again - files are added to TODO playlist and played.
+- Auto-spectrogram display still works when files are opened externally.
+- Incremented build version to 8.79.
+
+8.78
+- Fixed "Open with" functionality to automatically show spectrogram.
+- When opening audio files with MobileDigger, spectrogram now auto-generates and displays.
+- Uses existing working spectrogram functionality from main app.
+- Auto-shows spectrogram popup 2 seconds after file starts playing.
+- Incremented build version to 8.78.
+
+8.77
+- Fixed spectrogram display issue in "Spek with MobileDigger" mode.
+- Spectrogram now properly displays the visual representation instead of just text.
+- Created dedicated SpectrogramDisplay component for better visualization.
+- Fixed UI rendering to show actual spectrogram bitmap in the activity.
+- Incremented build version to 8.77.
+
+8.76
+- Fixed spectrogram generation in "Spek with MobileDigger" mode.
+- Spectrogram now automatically generates and displays when opening files.
+- Added separate process configuration for better app separation from other apps.
+- Music playback now continues when switching between apps (WhatsApp, etc.).
+- Fixed process isolation to prevent playback interruption.
+- Incremented build version to 8.76.
+
+8.75
+- Added "Spek with MobileDigger" option in "Open with" menu.
+- New spectrogram-only mode that generates spectrograms without playing audio.
+- Separate activity for spectrogram analysis that doesn't interrupt current playback.
+- Users can analyze audio files visually while keeping their current music playing.
+- Spectrogram-only mode supports all audio formats (MP3, WAV, FLAC, AIFF, MP4, OGG).
+- Incremented build version to 8.75.
+
+8.74
+- Added "Open with" functionality for audio files.
+- App now appears in system's "Open with" menu for audio files.
+- External audio files are automatically added to TODO playlist and played.
+- Supports MP3, WAV, FLAC, AIFF, MP4, and OGG audio formats.
+- Added intent filters for comprehensive audio file handling.
+- External files are added to the beginning of the playlist for immediate playback.
+- Incremented build version to 8.74.
+
+8.73
+- Fixed "Delete Liked Files" action from actions menu not working.
+- Added missing deleteActionType assignment for liked files deletion.
+- Delete liked files now properly triggers 4-step confirmation dialog.
+- Incremented build version to 8.73.
+
+8.72
+- Added always-visible green progress line to waveform displays.
+- Progress line shows current playback position even when waveform is loading.
+- Enhanced visual feedback for seeking and progress tracking.
+- Incremented build version to 8.72.
+
+8.71
+- Fixed animation hanging and dislike button crashes.
+- Improved UI responsiveness during file operations.
+- Added error handling for like/dislike actions.
+- Preserved playback priority during sorting operations.
+- Reduced delays in file sorting operations.
+- Incremented build version to 8.71.
+
+ - Miniplayer: adaptive 2–4 line title with dynamic font scaling.
+
+- Increased axis label font size in shared spectrogram image.
+- Incremented build version to 8.20.
+
+- Finalized shared spectrogram image styling.
+- Incremented build version to 8.21.
+
+- Enhanced spectrogram quality with higher FFT resolution and improved color mapping.
+ - Added on-device BPM and musical key estimation to Spectrogram Analysis card.
+ - Shows tempo and key with confidence; cached per file for speed.
+ - Added Camelot key display alongside musical key.
+ - Main/Mini players show Time | Bitrate | Size | BPM | Key under title.
+ - Shared spectrogram image includes BPM/Key line.
+ - Analyze buttons in main/mini; spinner during analysis.
+ - BPM estimator constrained to 60–145 with folding; accuracy improved for MP3.
+ - MP3 analysis uses PCM decode via MediaCodec for better results.
+ - Miniplayer: filename +20%, play icon -30%, metadata -10%, spacing +20%.
+ - Shared spectrogram embeds current BPM/Key.
+- Implemented Blackman window function for cleaner frequency analysis.
+- Incremented build version to 8.31.
+
+- Fixed critical build errors, including missing permissions, deprecated libraries, and incorrect StateFlow usage.
+- Patched several deprecation warnings in the UI code.
+- Corrected build version to 8.32.
+
+- Optimized AIFF file handling for better performance and responsiveness.
+- Improved error handling for media playback failures with detailed error messages.
+- Enhanced temp file cache management with size limits and better cleanup.
+- Added missing attribution tags to AndroidManifest.xml to fix AppOps warnings.
+- Reduced FFmpeg preparation timeout for better responsiveness.
+- Incremented build version to 8.33.
+
+- Fixed critical OutOfMemoryError in file scanning with memory checks and file limits.
+- Fixed FileNotFoundException by adding URI validation before ExoPlayer playback.
+- Fixed DeadObjectException in media session management with proper cleanup.
+- Added memory safety checks to prevent crashes during large file operations.
+- Limited file scanning to 1000 files maximum to prevent memory exhaustion.
+- Incremented build version to 8.34.
+
+- Fixed duration extraction failures and resource conflicts in song loading.
+- Fixed MediaExtractor instantiation failures with better error handling.
+- Fixed setDataSource failures in MediaMetadataRetriever with URI validation.
+- Fixed concurrent access issues by limiting duration extraction to single thread.
+- Added delays between operations to prevent resource conflicts.
+- Improved error logging for better debugging of song loading issues.
+- Incremented build version to 8.35.
+
+- Fixed large AIFF file playback issues (110MB+ files).
+- Increased temp file size limit from 100MB to 200MB for large AIFF files.
+- Added optimized duration extraction for large files (skips MediaExtractor for 150MB+ files).
+- Improved FFmpeg preparation timeout for large files (10 seconds vs 3 seconds).
+- Added file size estimation for large AIFF files when MediaExtractor fails.
+- Enhanced error handling and logging for large file processing.
+- Incremented build version to 8.36.
+
+- Successfully tested and confirmed large AIFF file playback working.
+- All duration extraction and playback optimizations verified.
+- Incremented build version to 8.37.
+
+- Fixed search functionality causing app crashes and freezing.
+- Implemented proper debounced search to prevent multiple concurrent searches.
+- Added memory checks and file limits to prevent search memory issues.
+- Fixed race conditions in search implementation with proper job cancellation.
+- Optimized search performance with batched file processing.
+- Added proper cleanup to prevent memory leaks in search functionality.
+- Incremented build version to 8.38.
+
+- Fixed theme dropdown functionality and UI consistency.
+- Replaced hardcoded colors with MaterialTheme.colorScheme throughout the app.
+- Fixed playlist card colors to use theme colors (tertiary for liked, error for rejected).
+- Updated waveform colors to use theme colors instead of hardcoded gray.
+- Ensured all dropdowns and UI elements follow the selected theme color scheme.
+- Improved theme color consistency across all components.
+- Incremented build version to 8.39.
+
+- Fixed theme selection not working by properly observing theme state in MainActivity.
+- Updated media control buttons with modern Android 16 Material 3 design.
+- Replaced old IconButton style with modern Card-based buttons for previous/next.
+- Enhanced FloatingActionButton for play/pause with better elevation and sizing.
+- Applied consistent modern styling to both main player and mini player controls.
+- Improved button spacing and visual hierarchy for better UX.
+- Incremented build version to 8.40.
+
+- Fixed critical OutOfMemoryError crashes during search functionality.
+- Reduced theme polling frequency from 100ms to 1000ms to reduce memory pressure.
+- Implemented aggressive memory management in search with garbage collection.
+- Reduced search batch sizes: music files (500→200), liked/rejected (200→100).
+- Limited search results to 25 items instead of 50 to prevent UI memory issues.
+- Increased memory threshold check to 100MB before allowing search operations.
+- Added System.gc() call before search to free up memory proactively.
+- Incremented build version to 8.41.
+
+- Fixed theme dropdown not showing by replacing ExposedDropdownMenu with custom dialog.
+- Created dedicated theme selection dialog with scrollable list of all themes.
+- Added visual theme preview with color circles and hex codes for each theme.
+- Improved theme selection UX with clear visual indicators and better layout.
+- Further reduced search memory usage: music files (200→100), liked/rejected (100→50).
+- Increased memory threshold to 150MB and added delay after garbage collection.
+- Enhanced search stability with more aggressive memory management.
+- Incremented build version to 8.42.
+
+- Made media control buttons 20% smaller for better UI proportions.
+- Reduced main player button sizes: previous/next (48→38dp), play/pause (56→45dp).
+- Reduced mini player button sizes: previous/next (36→29dp), play/pause (44→35dp).
+- Restored original v8.0 search functionality with simple, efficient approach.
+- Removed overly aggressive memory restrictions that were limiting search results.
+- Kept basic memory protection (50MB threshold) to prevent crashes.
+- Search now works like v8.0 but with debouncing and race condition protection.
+- Incremented build version to 8.43.
+
+- Restored exact v8.3 search functionality - completely clean and simple.
+- Removed all memory management, debouncing, and job cancellation from search.
+- Search now works exactly like v8.3: fast, simple, and reliable.
+- Changed settings text from "Dynamic Colors" to "Enable Theme" for clarity.
+- Incremented build version to 8.44.
+
+- Added 1.5-second delay to search to prevent crashes from rapid typing.
+- Implemented proper debouncing with job cancellation to prevent concurrent searches.
+- Fixed text color contrast issues by replacing hardcoded colors with theme-aware colors.
+- Updated delete buttons to use MaterialTheme.colorScheme.error and onError.
+- Updated create ZIP button to use MaterialTheme.colorScheme.tertiary and onTertiary.
+- Improved text contrast across all UI elements for better readability.
+- Incremented build version to 8.45.
+
+- Enhanced search stability with comprehensive error handling and try-catch blocks.
+- Added file limit (1000 files) to prevent memory issues during search operations.
+- Improved search logging for better debugging and crash analysis.
+- Added proper cleanup for search jobs to prevent memory leaks.
+- Fixed search crashes by limiting concurrent operations and adding safety checks.
+- Incremented build version to 8.46.
+
+- Fixed search crashes by adding minimum query length (2 characters) and better error handling.
+- Added dropdown info messages for like/reject actions with auto-hide after 3 seconds.
+- Implemented audio playback prioritization - file operations now wait for current file to load and waveform to generate.
+- Added delays between file operations to prevent memory issues with large files.
+- Enhanced search with better file validation and result limiting (50 results max).
+- Incremented build version to 8.47.
+
+- Moved informational messages from bottom snackbar to better display under header.
+- Replaced snackbar system with discreet card-based info messages positioned under the header.
+- Added support for different message types: info, success, error, and loading with appropriate colors and icons.
+- Improved message visibility and user experience with theme-aware colors and proper contrast.
+- All existing messages (loading files, sorting files, etc.) now display in the new location.
+- Incremented build version to 8.48.
+
+- Added animated info messages with fade in/out effects like mini player.
+- Enhanced info message display with better positioning on top of main card.
+- Fixed search crashes by increasing minimum query length to 3 characters and 2-second delay.
+- Improved search stability with more conservative file limits (200 files max, 25 results max).
+- Enhanced playback prioritization - now moves to next song first, waits for playback and waveform generation.
+- Added retry mechanism to ensure playback is stable before file operations.
+- Increased delays between file operations for better stability with large files.
+- Incremented build version to 8.49.
+
+- Fixed search crashes with ultra-conservative approach: 100 files max, 20 results max, batch processing.
+- Repositioned info messages to be absolutely positioned on top without moving other elements.
+- Made info messages smaller (90% width, smaller text/icons) with fade in/out only animations.
+- Added 1.5-second delay after waveform appearance before showing info messages.
+- Enhanced search with batch processing (20 files per batch) and delays between batches.
+- Improved memory management with smaller batch sizes and more frequent delays.
+- Incremented build version to 8.50.
+
+- Fixed info message overlay to not cover entire screen - now positioned directly under header.
+- Improved info message positioning and sizing for better visibility without blocking UI.
+- Enhanced search stability with 2-second debounce and 3+ character minimum requirement.
+- Fixed UI layout issues where info messages were hiding other elements.
+- Incremented build version to 8.51.
+
+8.52
+- Search: added immediate (manual) search button and Enter key trigger.
+- Search: unlimited results across all playlists; no artificial limits.
+- Search dropdown: themed to follow Material color scheme and auto-expands on results.
+- Info message: centered text, removed close button, reduced padding, adjusted offset.
+- Misc: stability tweaks; kept 2s debounced search in background when typing.
+- Incremented build version to 8.52.
+
+8.53
+- Liked subfolder selection no longer auto-plays the first track; current playback is preserved and index set to current file if present.
+- Started theming dialogs/popups to follow Material color scheme consistently.
+- Incremented build version to 8.53.
+
+8.54
+- Subfolder picker (left of TODO/Liked): added multi-select checkboxes and View button to aggregate selected liked subfolders into the Liked playlist; preserves current playback.
+- Removed redundant "View Liked Subfolders" from Actions menu.
+- Dialog theming improvements and centered Settings title.
+- Incremented build version to 8.54.
+
+8.55
+- Restored waveform seeking in main/mini players (re-enabled duration for seek only).
+- Kept time labels and playlist-time/bitrate display removed for performance.
+- Disabled background duration extraction when loading folders/subfolders.
+- Multi-select liked subfolders in tabs row refined and compacted.
+- Incremented build version to 8.55.
+
+8.56
+- Remember recent source folders (up to 10) and show under the big Rescan button (two columns).
+- Rescan button shows the last two path segments of the current source.
+- Kept performance optimizations and waveform seeking from previous version.
+- Incremented build version to 8.56.
+
+8.57
+- UI: Added recent source history buttons (2-column list) under Rescan; Rescan shows last two path parts.
+- Liked subfolder picker: compact multi-select checkboxes and View button; kept in tabs row dialog only.
+- Performance: Removed time/bitrate lines in lists; skipped background duration extraction; waveform seeking restored.
+- Stability: Preparing logcat monitoring for crash investigation.
+- Incremented build version to 8.57.
+
+8.58
+- Source history buttons now only set source; scanning happens only on Rescan.
+- Adjusted rescan label and recent sources UX; crash monitoring improvements.
+ - Incremented build version to 8.58.
+
+8.59
+- Added smart automatic cache trimming with LRU eviction and safety for in-use files.
+- New CacheManager caps cache (preferred 512MB, hard 1GB) and runs periodically.
+- Protected active FFmpeg data source and temp WAV paths during cleanup.
+- Integrated with periodic maintenance; no interference with playback/workflows.
+- Incremented build version to 8.59.
+- Incremented build version to 8.58.
+
+8.66
+- Optimized Amplituda waveform generation for faster processing.
+- Changed compress parameter from 10 to 8 samples/second (25% faster generation).
+- Maintained high quality with Compress.AVERAGE algorithm.
+- Updated all waveform views: SharedWaveformState, ScrollableWaveformView, AmplitudaWaveformView.
+- Incremented build version to 8.66.
+
+8.67
+- Major AIFF file optimization for waveform generation.
+- AIFF files now use 2 samples/second (vs 8 for other formats) for 4x faster processing.
+- AIFF files are uncompressed, so fewer samples still provide excellent quality.
+- Added file type detection in all waveform components.
+- Enhanced logging to show file type and samples/second used.
+- Updated all waveform views: SharedWaveformState, ScrollableWaveformView, AmplitudaWaveformView.
+- Incremented build version to 8.67.
+
+8.68
+- Maximum AIFF optimization: reduced to 1 sample/second for 8x faster processing.
+- AIFF files now use minimal samples for maximum speed while maintaining quality.
+- Updated all waveform components with 1 sample/second for AIFF files.
+- Enhanced comments to reflect maximum speed optimization.
+- Incremented build version to 8.68.
+
+8.69
+- AIFF optimization refinement: maintained 1 sample/second for optimal balance.
+- Amplituda library requires integer values for samples/second parameter.
+- AIFF files continue to use minimal samples for maximum speed while maintaining quality.
+- Updated all waveform components with consistent 1 sample/second for AIFF files.
+- Enhanced comments to reflect ultra-minimal sample optimization approach.
+- Incremented build version to 8.69.
+
+8.70
+- Universal waveform optimization: reduced all non-AIFF formats from 8 to 3 samples/second.
+- MP3, FLAC, WAV files now use 3 samples/second for 2.7x faster processing.
+- AIFF files maintain 1 sample/second for maximum speed.
+- Balanced approach: faster processing while maintaining good visual quality.
+- Updated all waveform components with optimized samples/second for all formats.
+- Incremented build version to 8.70.
+
+8.71
+- Fixed animation hanging during like/dislike operations.
+- Reduced delays in file operations to prevent UI blocking (3000ms → 1000ms, 2000ms → 500ms).
+- Added comprehensive error handling to prevent dislike button crashes.
+- Implemented safe file sorting with proper thread management.
+- Preserved playback priority during file operations using Dispatchers.IO.
+- Added try-catch blocks to all like/dislike button handlers and swipe gestures.
+- Enhanced stability for multi-file operations with reduced delays.
+- Incremented build version to 8.71.

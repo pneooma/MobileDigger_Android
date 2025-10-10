@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-        versionCode = 53
-        versionName = "5.3"
+        versionCode = 934
+        versionName = "9.34"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -77,11 +77,7 @@ dependencies {
     implementation("com.github.wseemann:FFmpegMediaPlayer-core:1.0.5")
     implementation("com.github.wseemann:FFmpegMediaPlayer-native:1.0.5")
     
-    // Dynamic delivery support
-    implementation("com.google.android.play:core:1.10.3")
-    implementation("com.google.android.play:core-ktx:1.8.1")
-    
-    // Keep ExoPlayer as fallback
+    // Media3 for modern media playback
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")
@@ -102,6 +98,13 @@ dependencies {
     
     // Icons
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
+    
+    // Audio waveform processing and display
+    implementation("com.github.lincollincol:amplituda:2.2.2")
+    implementation("com.github.massoudss:waveformSeekBar:5.0.2")
+    
+    // Optimized FFT library for better spectrogram performance
+    implementation("com.github.wendykierp:JTransforms:3.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

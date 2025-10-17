@@ -10,8 +10,7 @@ data class MusicFile(
     val duration: Long,
     val size: Long = 0L,
     val sourcePlaylist: PlaylistTab = PlaylistTab.TODO,
-    val subfolder: String? = null, // Subfolder name for liked files
-    val genre: String? = null // Genre metadata from file
+    val subfolder: String? = null // Subfolder name for liked files
 )
 
 enum class SortAction {

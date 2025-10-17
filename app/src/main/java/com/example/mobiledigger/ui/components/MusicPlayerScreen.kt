@@ -235,11 +235,6 @@ fun MusicPlayerScreen(
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
     
-    // Metadata loading progress
-    val isMetadataLoading by viewModel.isMetadataLoading.collectAsState()
-    val metadataLoadingProgress by viewModel.metadataLoadingProgress.collectAsState()
-    val metadataLoadingTotal by viewModel.metadataLoadingTotal.collectAsState()
-    
     val currentSearchText by viewModel.searchText.collectAsState() // Moved here
     val searchResults by viewModel.searchResults.collectAsState() // Moved here
     
@@ -1117,58 +1112,6 @@ viewModel.updateSearchText("")
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
-                    }
-                }
-            }
-        }
-        
-        // Metadata loading progress bar - dynamically positioned
-        if (isMetadataLoading && metadataLoadingTotal > 0) {
-            Popup(
-                alignment = Alignment.TopCenter,
-                offset = IntOffset(0, with(LocalDensity.current) { 
-                    if (showInfoMessage) 130.dp.toPx().toInt() else 86.dp.toPx().toInt() // Slide up when no info message
-                })
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .shadow(4.dp, RoundedCornerShape(8.dp)),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                Icons.Default.MusicNote,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = "Loading genres... ($metadataLoadingProgress/$metadataLoadingTotal)",
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.weight(1f)
-                            )
-                            LinearProgressIndicator(
-                                progress = if (metadataLoadingTotal > 0) metadataLoadingProgress.toFloat() / metadataLoadingTotal.toFloat() else 0f,
-                                modifier = Modifier.weight(2f),
-                                color = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                            )
-                        }
                     }
                 }
             }
@@ -2878,10 +2821,7 @@ viewModel.updateSearchText("")
                                     Column(modifier = Modifier.weight(1f)) {
                                         // Filename
                                         Text(
-                                            text = item.name.also { 
-                                                // Debug log to see what's being displayed
-                                                android.util.Log.d("MusicPlayerScreen", "Displaying filename: ${item.name}, genre: ${item.genre}")
-                                            },
+                                            text = item.name,
                                             style = if (isCurrent) {
                                                 // For current song, use larger font but allow multiple lines
                                                 MaterialTheme.typography.bodyLarge.copy(
@@ -2895,35 +2835,10 @@ viewModel.updateSearchText("")
                                             },
                                             color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.Unspecified,
                                             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                            maxLines = 2, // Reduced to allow space for genre
+                                            maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier.fillMaxWidth()
                                         )
-                                        
-                                        // Genre on separate row with smaller font
-                                        if (item.genre != null && item.genre.isNotBlank()) {
-                                            Text(
-                                                text = "♪ ${item.genre}".also {
-                                                    android.util.Log.d("MusicPlayerScreen", "Showing genre for ${item.name}: ${item.genre}")
-                                                },
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f,
-                                                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 0.8f
-                                                ),
-                                                color = if (isCurrent) {
-                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                                                } else {
-                                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                                },
-                                                fontWeight = FontWeight.Normal,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        } else {
-                                            // Debug: Show when genre is missing
-                                            android.util.Log.d("MusicPlayerScreen", "No genre for ${item.name}: genre=${item.genre}")
-                                        }
                                         
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,

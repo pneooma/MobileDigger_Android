@@ -1,3 +1,14 @@
+9.35
+- MAJOR PERFORMANCE IMPROVEMENT: Instant playback when like/dislike - no more delays!
+- Implemented background file operation queue system using Kotlin Channel and single-threaded dispatcher
+- Like/dislike now immediately plays next track while file moves happen in background
+- Queue prevents crashes from rapid clicking - operations process safely one-by-one
+- REMOVED: Complete genre metadata system (memory hungry, unreliable results)
+- Removed genre extraction, display, and loading progress UI
+- Significantly reduced memory usage and improved app responsiveness
+- Tested and confirmed working perfectly
+- Version bumped to 9.35
+
 9.30
 - CRITICAL FIX: Fixed Fatal signal 6 (SIGABRT) native crash during metadata loading
 - Changed metadata processing to sequential (one file at a time) instead of parallel to prevent resource exhaustion

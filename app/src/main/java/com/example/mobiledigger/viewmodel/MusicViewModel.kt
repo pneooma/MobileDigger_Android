@@ -39,6 +39,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.CacheManager
 import com.example.mobiledigger.util.ResourceManager
@@ -62,15 +63,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // Mutex to prevent concurrent file loading operations that cause memory pressure
     private val fileLoadingMutex = Mutex()
     
-    // Metadata loading system - load only 5 files at a time
-    private val metadataLoadingMutex = Mutex()
-    private val _metadataLoadingProgress = MutableStateFlow(0)
-    val metadataLoadingProgress: StateFlow<Int> = _metadataLoadingProgress.asStateFlow()
-    private val _isMetadataLoading = MutableStateFlow(false)
-    val isMetadataLoading: StateFlow<Boolean> = _isMetadataLoading.asStateFlow()
-    private val _metadataLoadingTotal = MutableStateFlow(0)
-    val metadataLoadingTotal: StateFlow<Int> = _metadataLoadingTotal.asStateFlow()
-    private var metadataLoadingJob: Job? = null
+    // Background file operation queue system - prevents blocking playback
+    private sealed class FileOperation {
+        data class Move(val file: MusicFile, val action: SortAction) : FileOperation()
+    }
+    
+    private val fileOperationChannel = Channel<FileOperation>(Channel.UNLIMITED)
+    private val fileOperationDispatcher = Dispatchers.IO.limitedParallelism(1) // Single-threaded queue
+    private var fileOperationWorker: Job? = null
     
     // Broadcast receiver for notification actions
     private val notificationReceiver = object : BroadcastReceiver() {
@@ -238,6 +238,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             audioManager.setPlaybackCompletionListener(this) // Register listener
             startPositionUpdates()
             
+            // Start background file operation worker
+            startFileOperationWorker()
+            CrashLogger.log("MusicViewModel", "File operation worker started")
+            
             // Load playlists at startup
             loadLikedFiles()
             loadRejectedFiles()
@@ -314,6 +318,41 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             _errorMessage.value = "Failed to initialize audio: ${e.message}"
         }
     }
+    
+    /**
+     * Background file operation worker - processes file moves in queue
+     * This prevents blocking the UI and audio playback during file operations
+     */
+    private fun startFileOperationWorker() {
+        fileOperationWorker = viewModelScope.launch(fileOperationDispatcher) {
+            CrashLogger.log("FileOperationWorker", "Worker started, waiting for operations...")
+            for (operation in fileOperationChannel) {
+                try {
+                    when (operation) {
+                        is FileOperation.Move -> {
+                            CrashLogger.log("FileOperationWorker", "Processing move: ${operation.file.name} -> ${operation.action}")
+                            
+                            if (!fileManager.isDestinationSelected()) {
+                                CrashLogger.log("FileOperationWorker", "No destination folder selected, skipping move")
+                                continue
+                            }
+                            
+                            val success = fileManager.sortFile(operation.file, operation.action)
+                            
+                            if (success) {
+                                CrashLogger.log("FileOperationWorker", "Successfully moved: ${operation.file.name}")
+                            } else {
+                                CrashLogger.log("FileOperationWorker", "Failed to move: ${operation.file.name}")
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("FileOperationWorker", "Error processing operation", e)
+                    // Continue processing next operation even if one fails
+                }
+            }
+        }
+    }
 
     private fun loadRecentSources() {
         try {
@@ -384,9 +423,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 
                 _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
                 CrashLogger.log("MusicViewModel", "Updated musicFiles state")
-                
-                // Start metadata loading in background without interfering with playback
-                startMetadataLoading()
                 
                 // Skip duration extraction to improve performance
                 
@@ -710,9 +746,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Save to preferences
             val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
             prefs.edit().putStringSet("liked_files", updatedLikedFiles.map { it.uri.toString() }.toSet()).apply()
-            
-            // Trigger metadata loading for next batch after like action
-            startMetadataLoading()
         }
     }
     
@@ -724,9 +757,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Save to preferences
             val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
             prefs.edit().putStringSet("rejected_files", updatedRejectedFiles.map { it.uri.toString() }.toSet()).apply()
-            
-            // Trigger metadata loading for next batch after dislike action
-            startMetadataLoading()
         }
     }
 
@@ -760,14 +790,27 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             return
         }
         
-        // Ensure playback priority - don't block audio operations
-        viewModelScope.launch(Dispatchers.IO) {
+        CrashLogger.log("MusicViewModel", "sortCurrentFile: ${fileToSort.name} with action $action")
+        
+        // ⚡ INSTANT PLAYBACK: Process UI and playback immediately, file move happens in background
+        viewModelScope.launch(Dispatchers.Main) {
             try {
-                sortMusicFileSafe(fileToSort, action)
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    handleError("sortCurrentFile", e)
+                // 1. Queue the file operation in background (non-blocking)
+                if (fileManager.isDestinationSelected()) {
+                    fileOperationChannel.send(FileOperation.Move(fileToSort, action))
+                    CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
+                } else {
+                    _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
                 }
+                
+                // 2. Immediately update UI and counters
+                handleSuccessfulSort(fileToSort, action)
+                
+                // 3. Immediately move to next track (no waiting!)
+                // The file will be moved in background while next track plays
+                
+            } catch (e: Exception) {
+                handleError("sortCurrentFile", e)
             }
         }
     }
@@ -812,37 +855,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     // Safe version that preserves playback priority
-    private suspend fun sortMusicFileSafe(file: MusicFile, action: SortAction) {
-        if (!fileManager.isDestinationSelected()) {
-            withContext(Dispatchers.Main) {
-                _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
-            }
-            return
-        }
-        
-        CrashLogger.log("MusicViewModel", "Safe sorting file: ${file.name} with action $action")
-        
-        try {
-            // Perform file operation on IO thread without blocking audio
-            val success = withContext(Dispatchers.IO) {
-                fileManager.sortFile(file, action)
-            }
-            
-            if (success) {
-                withContext(Dispatchers.Main) {
-                    handleSuccessfulSort(file, action)
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    _errorMessage.value = "Failed to sort file. Please check folder permissions."
-                }
-            }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                handleError("sortMusicFileSafe", e)
-            }
-        }
-    }
 
     private fun handleSuccessfulSort(sortedFile: MusicFile, action: SortAction) {
         try {
@@ -962,14 +974,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         val fileToSort = files[index]
         
-        // Use safe sorting to prevent crashes
-        viewModelScope.launch(Dispatchers.IO) {
+        // Use queue-based sorting for instant response
+        viewModelScope.launch(Dispatchers.Main) {
             try {
-                sortMusicFileSafe(fileToSort, action)
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    handleError("sortAtIndex", e)
+                // Queue the file operation in background (non-blocking)
+                if (fileManager.isDestinationSelected()) {
+                    fileOperationChannel.send(FileOperation.Move(fileToSort, action))
+                    CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
+                } else {
+                    _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
+                    return@launch
                 }
+                
+                // Immediately update UI
+                handleSuccessfulSort(fileToSort, action)
+                
+            } catch (e: Exception) {
+                handleError("sortAtIndex", e)
             }
         }
     }
@@ -2254,170 +2275,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _errorMessage.value = "Error loading subfolder: ${e.message}"
             } finally {
                 _isLoading.value = false
-            }
-        }
-    }
-    
-    /**
-     * Extract genre metadata from a music file
-     */
-    private suspend fun extractGenreMetadata(musicFile: MusicFile): String? = withContext(Dispatchers.IO) {
-        return@withContext try {
-            CrashLogger.log("MusicViewModel", "Extracting genre for: ${musicFile.name}")
-            val genre = ResourceManager.withMediaMetadataRetriever(context, musicFile.uri) { retriever ->
-                // Try to extract all available metadata for debugging
-                val title = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)
-                val artist = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                val album = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM)
-                val genre = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_GENRE)
-                
-                CrashLogger.log("MusicViewModel", "Metadata for ${musicFile.name}: title=$title, artist=$artist, album=$album, genre=$genre")
-                genre
-            }
-            CrashLogger.log("MusicViewModel", "Extracted genre for ${musicFile.name}: $genre")
-            
-            // If no genre in metadata, try to infer from filename patterns
-            val finalGenre = if (genre.isNullOrBlank()) {
-                when {
-                    musicFile.name.contains("house", ignoreCase = true) -> "House"
-                    musicFile.name.contains("techno", ignoreCase = true) -> "Techno"  
-                    musicFile.name.contains("afro", ignoreCase = true) -> "Afro House"
-                    musicFile.name.contains("dance", ignoreCase = true) -> "Dance"
-                    musicFile.name.contains("electronic", ignoreCase = true) -> "Electronic"
-                    musicFile.name.contains("remix", ignoreCase = true) -> "Remix"
-                    else -> null
-                }
-            } else {
-                genre
-            }
-            
-            if (finalGenre != genre) {
-                CrashLogger.log("MusicViewModel", "Inferred genre for ${musicFile.name}: $finalGenre (original: $genre)")
-            }
-            
-            finalGenre
-        } catch (e: Exception) {
-            CrashLogger.log("MusicViewModel", "Failed to extract genre for ${musicFile.name}", e)
-            null
-        }
-    }
-    
-    /**
-     * Load metadata for files in batches of 10
-     */
-    fun startMetadataLoading() {
-        metadataLoadingJob?.cancel()
-        metadataLoadingJob = viewModelScope.launch(Dispatchers.IO) {
-            metadataLoadingMutex.withLock {
-                try {
-                    val currentFiles = getCurrentPlaylistFiles()
-                    if (currentFiles.isEmpty()) return@withLock
-                    
-                    CrashLogger.log("MusicViewModel", "Starting metadata loading for ${currentFiles.size} files")
-                    _isMetadataLoading.value = true
-                    _metadataLoadingProgress.value = 0
-                    _metadataLoadingTotal.value = currentFiles.size
-                    
-                    // Process files in batches of 3 to prevent resource exhaustion and crashes
-                    val batchSize = 3
-                    var processedCount = 0
-                    
-                    for (i in currentFiles.indices step batchSize) {
-                        val batch = currentFiles.subList(i, minOf(i + batchSize, currentFiles.size))
-                        
-                // Load metadata for this batch - process ONE file at a time to avoid resource exhaustion
-                val updatedBatch = mutableListOf<MusicFile>()
-                for (file in batch) {
-                    try {
-                        if (file.genre == null) {
-                            CrashLogger.log("MusicViewModel", "Processing file for metadata: ${file.name}")
-                            val genre = extractGenreMetadata(file)
-                            val updatedFile = file.copy(genre = genre)
-                            CrashLogger.log("MusicViewModel", "Updated file ${file.name} with genre: $genre")
-                            updatedBatch.add(updatedFile)
-                            // Small delay between files to prevent resource exhaustion
-                            delay(50)
-                        } else {
-                            CrashLogger.log("MusicViewModel", "File ${file.name} already has genre: ${file.genre}")
-                            updatedBatch.add(file) // Already has genre
-                        }
-                    } catch (e: Exception) {
-                        CrashLogger.log("MusicViewModel", "Error extracting metadata for ${file.name}", e)
-                        updatedBatch.add(file) // Add original file without genre on error
-                    }
-                }
-                        
-                        // Update the appropriate playlist with the new metadata
-                        withContext(Dispatchers.Main) {
-                            when (_currentPlaylistTab.value) {
-                                PlaylistTab.TODO -> {
-                                    // Create completely new list to ensure StateFlow detects change
-                                    val currentFiles = _musicFiles.value
-                                    val newFiles = currentFiles.mapIndexed { index, file ->
-                                        val batchIndex = updatedBatch.indexOfFirst { it.uri == file.uri }
-                                        if (batchIndex >= 0) {
-                                            val updatedFile = updatedBatch[batchIndex]
-                                            CrashLogger.log("MusicViewModel", "Replacing file at index $index: ${file.name} (old genre: ${file.genre}) -> ${updatedFile.name} (new genre: ${updatedFile.genre})")
-                                            updatedFile
-                                        } else {
-                                            file
-                                        }
-                                    }
-                                    
-                                    // Update files with metadata but keep original order to avoid disrupting playback
-                                    _musicFiles.value = newFiles
-                                    CrashLogger.log("MusicViewModel", "Updated TODO playlist StateFlow with ${newFiles.size} files (background metadata update)")
-                                    // Verify the update worked
-                                    val filesWithGenre = newFiles.filter { it.genre != null }
-                                    CrashLogger.log("MusicViewModel", "StateFlow verification: ${filesWithGenre.size} files now have genres")
-                                    
-                                    // Log files with genres found
-                                    filesWithGenre.take(3).forEach { file ->
-                                        CrashLogger.log("MusicViewModel", "Background metadata: ${file.name} -> genre: ${file.genre}")
-                                    }
-                                }
-                                PlaylistTab.LIKED -> {
-                                    val updatedFiles = _likedFiles.value.toMutableList()
-                                    updatedBatch.forEachIndexed { batchIndex, updatedFile ->
-                                        val globalIndex = i + batchIndex
-                                        if (globalIndex < updatedFiles.size) {
-                                            updatedFiles[globalIndex] = updatedFile
-                                            CrashLogger.log("MusicViewModel", "Updated LIKED file at index $globalIndex: ${updatedFile.name} with genre: ${updatedFile.genre}")
-                                        }
-                                    }
-                                    _likedFiles.value = updatedFiles
-                                    CrashLogger.log("MusicViewModel", "Updated LIKED playlist StateFlow with ${updatedFiles.size} files")
-                                }
-                                PlaylistTab.REJECTED -> {
-                                    val updatedFiles = _rejectedFiles.value.toMutableList()
-                                    updatedBatch.forEachIndexed { batchIndex, updatedFile ->
-                                        val globalIndex = i + batchIndex
-                                        if (globalIndex < updatedFiles.size) {
-                                            updatedFiles[globalIndex] = updatedFile
-                                            CrashLogger.log("MusicViewModel", "Updated REJECTED file at index $globalIndex: ${updatedFile.name} with genre: ${updatedFile.genre}")
-                                        }
-                                    }
-                                    _rejectedFiles.value = updatedFiles
-                                    CrashLogger.log("MusicViewModel", "Updated REJECTED playlist StateFlow with ${updatedFiles.size} files")
-                                }
-                            }
-                        }
-                        
-                        processedCount += batch.size
-                        _metadataLoadingProgress.value = processedCount
-                        
-                        CrashLogger.log("MusicViewModel", "Loaded metadata for batch ${i/batchSize + 1}, processed $processedCount/${currentFiles.size} files")
-                        
-                        // Longer delay between batches to be less disruptive to playback
-                        delay(500)
-                    }
-                    
-                    CrashLogger.log("MusicViewModel", "Metadata loading completed for ${processedCount} files")
-                    _isMetadataLoading.value = false
-                } catch (e: Exception) {
-                    CrashLogger.log("MusicViewModel", "Error during metadata loading", e)
-                    _isMetadataLoading.value = false
-                }
             }
         }
     }

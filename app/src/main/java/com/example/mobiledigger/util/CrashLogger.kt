@@ -48,14 +48,34 @@ object CrashLogger {
         }.start()
     }
     
+    // Performance timing helper
+    private val timingMap = mutableMapOf<String, Long>()
+    
+    fun startTiming(key: String) {
+        synchronized(timingMap) {
+            timingMap[key] = System.currentTimeMillis()
+        }
+    }
+    
+    fun endTiming(tag: String, key: String, message: String = "") {
+        val elapsed = synchronized(timingMap) {
+            val start = timingMap.remove(key) ?: return
+            System.currentTimeMillis() - start
+        }
+        log(tag, "⏱️ $key took ${elapsed}ms ${if (message.isNotEmpty()) "- $message" else ""}")
+    }
+    
     fun log(tag: String, message: String, throwable: Throwable? = null) {
         val timestamp = dateFormat.format(Date())
+        val threadName = Thread.currentThread().name
+        val threadId = Thread.currentThread().id
+        
         val logEntry = if (throwable != null) {
             val stackTrace = StringWriter()
             throwable.printStackTrace(PrintWriter(stackTrace))
-            "[$timestamp] [$tag] $message\nException: ${throwable.javaClass.simpleName}: ${throwable.message}\nStack trace:\n$stackTrace"
+            "[$timestamp] [Thread:$threadName-$threadId] [$tag] $message\nException: ${throwable.javaClass.simpleName}: ${throwable.message}\nStack trace:\n$stackTrace"
         } else {
-            "[$timestamp] [$tag] $message"
+            "[$timestamp] [Thread:$threadName-$threadId] [$tag] $message"
         }
         
         synchronized(lock) {

@@ -1,0 +1,200 @@
+10-21 22:24:22.548 D/AudioManager( 1174): ExoPlayer playback successful for: Errow - Body (Extended Mix) [Retail Records].aiff
+10-21 22:24:22.548 D/MusicViewModel( 1174): Playback started successfully for Errow - Body (Extended Mix) [Retail Records].aiff
+10-21 22:24:22.551 D/MusicViewModel( 1174): MusicService started successfully.
+10-21 22:24:22.555 D/MusicViewModel( 1174): Preloaded next song: Anthony - French Kiss Master.wav
+10-21 22:24:22.556 D/MusicService(  439): Started foreground service with notification
+10-21 22:24:22.557 I/MediaProvider( 4471): Observed non-standard /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/.nomedia
+10-21 22:24:22.557 D/MusicService(  439): updateNotificationData - Title: Errow - Body (Extended Mix) [Retail Records].aiff, Playing: true, Position: 2153, Duration: 503960
+10-21 22:24:22.561 D/MediaProvider( 4471): Open with FUSE. FilePath: /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/Errow - Body (Extended Mix) [Retail Records].aiff. Uid: 10082. Media Capabilities Uid: 0. ShouldRedact: false. ShouldTranscode: false
+10-21 22:24:22.564 I/MediaProvider( 4471): Observed non-standard /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/.nomedia
+10-21 22:24:22.565 D/MediaSessionService( 1795): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./128 (userId=0) playbackState=PlaybackState {state=ERROR(7), position=2153, buffered position=2153, speed=0.0, updated=92356043, actions=7339703, custom actions=[], active item id=0, error=Source error}
+10-21 22:24:22.566 D/MusicService(  439): Player (MediaSession) onMediaItemTransition reason: 3
+10-21 22:24:22.567 D/MediaSessionService( 1795): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./128 (userId=0) playbackState=PlaybackState {state=ERROR(7), position=2153, buffered position=2153, speed=0.0, updated=92356045, actions=7339703, custom actions=[], active item id=0, error=Source error}
+10-21 22:24:22.568 E/MediaControlProfile(31311): onCurrentPlayerStateUpdated: base actions not supported, player actions= 6ffeb7, expected at least= 7f
+10-21 22:24:22.568 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.570 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.570 D/MediaProvider( 4471): Open with FUSE. FilePath: /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/Errow - Body (Extended Mix) [Retail Records].aiff. Uid: 10082. Media Capabilities Uid: 0. ShouldRedact: false. ShouldTranscode: false
+10-21 22:24:22.570 D/MusicService(  439): Player (MediaSession) onPlaybackStateChanged: 2, Duration: -9223372036854775807, Position: 2153
+10-21 22:24:22.570 W/MediaControlGattService(31311): Feature PLAYER_NAME support: true
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature PLAYER_ICON_URL support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature PLAYER_ICON_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature CURRENT_TRACK_SEGMENT_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature CURRENT_TRACK_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature NEXT_TRACK_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature CURRENT_GROUP_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature PARENT_GROUP_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature SEARCH_RESULT_OBJ_ID support: false
+10-21 22:24:22.571 W/MediaControlGattService(31311): Feature TRACK_TITLE support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature TRACK_DURATION support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature TRACK_POSITION support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature TRACK_POSITION_NOTIFY support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature SEEKING_SPEED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature SEEKING_SPEED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature SEEKING_SPEED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature PLAYING_ORDER_SUPPORTED support: true
+10-21 22:24:22.572 W/MediaControlGattService(31311): Feature PLAYING_ORDER support: true
+10-21 22:24:22.573 W/MediaControlGattService(31311): Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED support: true
+10-21 22:24:22.573 W/MediaControlGattService(31311): Feature TRACK_POSITION support: true
+10-21 22:24:22.573 W/MediaControlGattService(31311): Feature TRACK_POSITION_NOTIFY support: true
+10-21 22:24:22.573 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.573 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.573 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.574 W/MediaControlGattService(31311): Feature PLAYER_NAME support: true
+10-21 22:24:22.574 W/MediaControlGattService(31311): Feature PLAYER_NAME support: true
+10-21 22:24:22.574 W/MediaControlGattService(31311): Feature PLAYER_NAME support: true
+10-21 22:24:22.574 W/MediaControlGattService(31311): Feature PLAYER_NAME_NOTIFY support: true
+10-21 22:24:22.575 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED support: true
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature PLAYING_ORDER_SUPPORTED support: true
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature PLAYING_ORDER support: true
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature PLAYER_ICON_OBJ_ID support: false
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature PLAYER_ICON_URL support: false
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED support: true
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature TRACK_TITLE support: true
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature TRACK_TITLE support: true
+10-21 22:24:22.575 W/MediaControlGattService(31311): Feature TRACK_TITLE_NOTIFY support: true
+10-21 22:24:22.576 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.576 W/MediaControlGattService(31311): Feature TRACK_DURATION support: true
+10-21 22:24:22.576 W/MediaControlGattService(31311): Feature TRACK_DURATION support: true
+10-21 22:24:22.576 W/MediaControlGattService(31311): Feature TRACK_DURATION_NOTIFY support: true
+10-21 22:24:22.577 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.578 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.578 W/MediaControlGattService(31311): Feature TRACK_CHANGED support: true
+10-21 22:24:22.578 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.578 I/MediaSessionStack( 1795): onPlaybackStateChanged - Pushing session to top | record: com.example.mobiledigger/androidx.media3.session.id./128 (userId=0)
+10-21 22:24:22.579 D/MediaSessionService( 1795): onSessionPlaybackStateChanged: record=com.example.mobiledigger/androidx.media3.session.id./128 (userId=0) playbackState=PlaybackState {state=BUFFERING(6), position=2153, buffered position=2153, speed=0.0, updated=92356056, actions=7339703, custom actions=[], active item id=0, error=null}
+10-21 22:24:22.579 W/MediaControlGattService(31311): Feature PLAYING_ORDER_SUPPORTED support: true
+10-21 22:24:22.579 W/MediaControlGattService(31311): Feature PLAYING_ORDER support: true
+10-21 22:24:22.579 W/MediaControlGattService(31311): Feature PLAYING_ORDER_NOTIFY support: true
+10-21 22:24:22.580 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.580 I/MediaProvider( 4471): Observed non-standard /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/.nomedia
+10-21 22:24:22.580 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.581 D/MusicService(  439): MediaSession player updated - URI: , Title: Errow - Body (Extended Mix) [Retail Records].aiff, Duration in Meta: 503960
+10-21 22:24:22.581 D/BackgroundInstallControlService( 1795): Package event received: 0
+10-21 22:24:22.582 I/bluetooth(31311): system/btif/avrcp/avrcp_service.cc:532 SendMediaUpdate: track_changed=true :  play_state=true :  queue=true
+10-21 22:24:22.582 W/avrcp   (31311): system/profile/avrcp/device.cc:1650 HandleNowPlayingUpdate: Device is not registered for now playing updates
+10-21 22:24:22.582 W/avrcp   (31311): system/profile/avrcp/device.cc:1742 HandlePlayPosUpdate: Device is not registered for play position updates
+10-21 22:24:22.582 W/avrcp   (31311): system/profile/avrcp/device.cc:1625 HandleTrackUpdate: Device is not registered for track changed updates
+10-21 22:24:22.582 W/MediaPlayerWrapper(31311): onMetadataChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.583 W/MediaPlayerWrapper(31311): onMetadataChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.584 E/MediaPlayerWrapper(31311): The callback playback state doesn't match the current state
+10-21 22:24:22.584 W/MediaPlayerWrapper(31311): onPlaybackStateChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.584 I/avrcp   (31311): system/profile/avrcp/connection_handler.cc:587 SendMessage: SendMessage to handle=0x0
+10-21 22:24:22.584 E/MediaPlayerWrapper(31311): The callback playback state doesn't match the current state
+10-21 22:24:22.586 E/MediaPlayerWrapper(31311): The callback playback state doesn't match the current state
+10-21 22:24:22.586 W/MediaPlayerWrapper(31311): onPlaybackStateChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.586 E/MediaPlayerWrapper(31311): The callback playback state doesn't match the current state
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 0 per_rate_size 32, data_rem_len 1152
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 1 per_rate_size 32, data_rem_len 1120
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 2 per_rate_size 32, data_rem_len 1088
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 3 per_rate_size 32, data_rem_len 1056
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 4 per_rate_size 32, data_rem_len 1024
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 5 per_rate_size 32, data_rem_len 992
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 6 per_rate_size 32, data_rem_len 960
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 7 per_rate_size 32, data_rem_len 928
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 8 per_rate_size 32, data_rem_len 896
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 9 per_rate_size 32, data_rem_len 864
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 10 per_rate_size 32, data_rem_len 832
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 11 per_rate_size 32, data_rem_len 800
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 12 per_rate_size 32, data_rem_len 768
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 13 per_rate_size 32, data_rem_len 736
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 14 per_rate_size 32, data_rem_len 704
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 15 per_rate_size 32, data_rem_len 672
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 16 per_rate_size 32, data_rem_len 640
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 17 per_rate_size 32, data_rem_len 608
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 18 per_rate_size 32, data_rem_len 576
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 19 per_rate_size 32, data_rem_len 544
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 20 per_rate_size 32, data_rem_len 512
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 21 per_rate_size 32, data_rem_len 480
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 22 per_rate_size 32, data_rem_len 448
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 23 per_rate_size 32, data_rem_len 416
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 24 per_rate_size 32, data_rem_len 384
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 25 per_rate_size 32, data_rem_len 352
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 26 per_rate_size 32, data_rem_len 320
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 27 per_rate_size 32, data_rem_len 288
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 28 per_rate_size 32, data_rem_len 256
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 29 per_rate_size 32, data_rem_len 224
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 30 per_rate_size 32, data_rem_len 192
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 31 per_rate_size 32, data_rem_len 160
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 32 per_rate_size 32, data_rem_len 128
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 33 per_rate_size 32, data_rem_len 96
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 34 per_rate_size 32, data_rem_len 64
+10-21 22:24:22.588 I/WifiHAL ( 1411): index: 35 per_rate_size 32, data_rem_len 32
+10-21 22:24:22.588 E/MediaControlProfile(31311): onCurrentPlayerStateUpdated: base actions not supported, player actions= 6ffeb7, expected at least= 7f
+10-21 22:24:22.588 E/libbinder.IPCThreadState( 1411): binder thread pool (1 threads) starved for 143 ms
+10-21 22:24:22.589 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED support: true
+10-21 22:24:22.589 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED support: true
+10-21 22:24:22.589 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED support: true
+10-21 22:24:22.589 W/MediaControlGattService(31311): Feature PLAYBACK_SPEED_NOTIFY support: true
+10-21 22:24:22.589 D/MediaProvider( 4471): Open with FUSE. FilePath: /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/Errow - Body (Extended Mix) [Retail Records].aiff. Uid: 10082. Media Capabilities Uid: 0. ShouldRedact: false. ShouldTranscode: false
+10-21 22:24:22.589 I/WifiHAL ( 1411): Getting cached scan results, iface handle = 0xb400006d7eddb5d0
+10-21 22:24:22.589 E/WifiHAL ( 1411): Creating message to get cached scan results
+10-21 22:24:22.589 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature TRACK_POSITION support: true
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature TRACK_POSITION_NOTIFY support: true
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.590 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature PLAYER_NAME support: true
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature PLAYER_NAME support: true
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED support: true
+10-21 22:24:22.590 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.591 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.591 I/BluetoothAdapterProperties(31311): getBondedDevices: length=10
+10-21 22:24:22.591 W/MediaControlGattService(31311): Feature MEDIA_STATE support: true
+10-21 22:24:22.591 W/MediaControlGattService(31311): Feature SEEKING_SPEED support: true
+10-21 22:24:22.591 W/MediaControlGattService(31311): Feature SEEKING_SPEED support: true
+10-21 22:24:22.591 W/MediaControlGattService(31311): Feature SEEKING_SPEED support: true
+10-21 22:24:22.592 W/MediaPlayerWrapper(31311): onPlaybackStateChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.594 D/BTAudioSessionAidl( 1346): GetSupportedLatencyModes - Supported LatencyMode= FREE
+10-21 22:24:22.597 I/WifiHAL ( 1411): In GetCachedScanResultsCommand::handleResponse
+10-21 22:24:22.601 W/MediaPlayerWrapper(31311): onQueueChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.603 W/MediaPlayerWrapper(31311): onQueueChanged(): com.example.mobiledigger tried to update with no new data
+10-21 22:24:22.616 W/libbinder.Parcel( 1544): Expecting binder but got null!
+10-21 22:24:22.619 D/ResourceManager( 1174): setDataSource failed for URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErrow%20-%20Body%20(Extended%20Mix)%20%5BRetail%20Records%5D.aiff
+10-21 22:24:22.619 D/ResourceManager( 1174): java.lang.RuntimeException: setDataSource failed: status = 0x80000000
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at android.media.MediaMetadataRetriever._setDataSource(Native Method)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at android.media.MediaMetadataRetriever.setDataSource(MediaMetadataRetriever.java:310)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at android.media.MediaMetadataRetriever.setDataSource(MediaMetadataRetriever.java:334)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at android.media.MediaMetadataRetriever.setDataSource(MediaMetadataRetriever.java:383)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$withMediaMetadataRetriever$2.invokeSuspend(ResourceManager.kt:39)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$withMediaMetadataRetriever$2.invoke(Unknown Source:8)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$withMediaMetadataRetriever$2.invoke(Unknown Source:4)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:78)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:167)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source:1)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager.withMediaMetadataRetriever(ResourceManager.kt:26)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$extractDuration$2.invokeSuspend(ResourceManager.kt:101)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$extractDuration$2.invoke(Unknown Source:8)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$extractDuration$2.invoke(Unknown Source:4)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturnIgnoreTimeout(Undispatched.kt:89)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.TimeoutKt.setupTimeout(Timeout.kt:151)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.TimeoutKt.withTimeout(Timeout.kt:46)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager.extractDuration(ResourceManager.kt:100)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$extractDurationWithFallback$2.invokeSuspend(ResourceManager.kt:129)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$extractDurationWithFallback$2.invoke(Unknown Source:8)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager$extractDurationWithFallback$2.invoke(Unknown Source:4)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:78)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:167)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source:1)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.util.ResourceManager.extractDurationWithFallback(ResourceManager.kt:110)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.viewmodel.MusicViewModel.extractDuration(MusicViewModel.kt:1144)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$extractDuration(MusicViewModel.kt:53)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at com.example.mobiledigger.viewmodel.MusicViewModel$loadCurrentFile$1.invokeSuspend(MusicViewModel.kt:1094)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:115)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:103)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:584)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:793)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:697)
+10-21 22:24:22.619 D/ResourceManager( 1174): 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:684)
+10-21 22:24:22.626 I/avrcp   (31311): system/profile/avrcp/connection_handler.cc:587 SendMessage: SendMessage to handle=0x0
+10-21 22:24:22.628 I/MediaProvider( 4471): Observed non-standard /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/.nomedia
+10-21 22:24:22.634 D/MediaProvider( 4471): Open with FUSE. FilePath: /storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private/Errow - Body (Extended Mix) [Retail Records].aiff. Uid: 10082. Media Capabilities Uid: 0. ShouldRedact: false. ShouldTranscode: false
+10-21 22:24:22.637 W/FileSource( 1174): offset/length adjusted from 0/576460752303423487 to 0/45570912

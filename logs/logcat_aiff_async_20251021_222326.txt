@@ -1,0 +1,320 @@
+10-21 22:23:30.294 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:30.294 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:30.295 D/AudioManager(32753): ExoPlayer stopped
+10-21 22:23:30.295 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:30.295 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:30.295 D/AudioManager(32753): Preloaded player released.
+10-21 22:23:30.296 D/AudioManager(32753): Attempting to play file: Be No Rain - Fallen Leaf (Massano Remix _ Extended).wav
+10-21 22:23:30.296 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBe%20No%20Rain%20-%20Fallen%20Leaf%20(Massano%20Remix%20_%20Extended).wav
+10-21 22:23:30.296 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:30.296 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:30.296 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:30.296 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:30.296 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBe%20No%20Rain%20-%20Fallen%20Leaf%20(Massano%20Remix%20_%20Extended).wav
+10-21 22:23:30.297 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:30.297 D/AudioManager(32753): ExoPlayer playback successful for: Be No Rain - Fallen Leaf (Massano Remix _ Extended).wav
+10-21 22:23:30.356 I/System.out(32753): 🎵 Starting shared waveform generation for: Be No Rain - Fallen Leaf (Massano Remix _ Extended).wav
+10-21 22:23:30.357 I/System.out(32753): 🎵 File: Be No Rain - Fallen Leaf (Massano Remix _ Extended).wav, Size: 58.9MB, Type: Other, Samples/sec: 3
+10-21 22:23:30.874 I/System.out(32753): ✅ Shared waveform generated from InputStream: 15081 samples
+10-21 22:23:30.874 I/System.out(32753): 🎵 First 10 amplitudes: 0, 48, 52, 44, 30, 20, 11, 7, 5, 3
+10-21 22:23:30.875 I/System.out(32753): 🎵 Amplitude range: min=0, max=72
+10-21 22:23:35.243 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:35.243 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:35.244 D/AudioManager(32753): ExoPlayer stopped
+10-21 22:23:35.244 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:35.244 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:35.245 D/AudioManager(32753): Preloaded player released.
+10-21 22:23:35.245 D/AudioManager(32753): All caches cleared
+10-21 22:23:35.295 D/AudioManager(32753): Attempting to play file: CamelPhat & ARTBAT ft. RHODES - For A Feeling (Adam Sellouk & Y Do I Remix) (MST).wav
+10-21 22:23:35.295 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FCamelPhat%20%26%20ARTBAT%20ft.%20RHODES%20-%20For%20A%20Feeling%20(Adam%20Sellouk%20%26%20Y%20Do%20I%20Remix)%20(MST).wav
+10-21 22:23:35.296 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:35.296 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:35.296 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:35.296 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:35.296 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FCamelPhat%20%26%20ARTBAT%20ft.%20RHODES%20-%20For%20A%20Feeling%20(Adam%20Sellouk%20%26%20Y%20Do%20I%20Remix)%20(MST).wav
+10-21 22:23:35.297 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:35.297 D/AudioManager(32753): ExoPlayer playback successful for: CamelPhat & ARTBAT ft. RHODES - For A Feeling (Adam Sellouk & Y Do I Remix) (MST).wav
+10-21 22:23:35.337 I/System.out(32753): 🎵 Starting shared waveform generation for: CamelPhat & ARTBAT ft. RHODES - For A Feeling (Adam Sellouk & Y Do I Remix) (MST).wav
+10-21 22:23:35.341 I/System.out(32753): 🎵 File: CamelPhat & ARTBAT ft. RHODES - For A Feeling (Adam Sellouk & Y Do I Remix) (MST).wav, Size: 48.7MB, Type: Other, Samples/sec: 3
+10-21 22:23:35.842 I/System.out(32753): ✅ Shared waveform generated from InputStream: 12469 samples
+10-21 22:23:35.842 I/System.out(32753): 🎵 First 10 amplitudes: 47, 64, 52, 63, 53, 61, 60, 47, 44, 28
+10-21 22:23:35.844 I/System.out(32753): 🎵 Amplitude range: min=0, max=68
+10-21 22:23:40.436 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:40.436 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:40.437 D/AudioManager(32753): ExoPlayer stopped
+10-21 22:23:40.438 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:40.439 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:40.439 D/AudioManager(32753): Preloaded player released.
+10-21 22:23:40.439 D/AudioManager(32753): Attempting to play file: GREG - Girls Like That (Extended Mix).wav
+10-21 22:23:40.439 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FGREG%20-%20Girls%20Like%20That%20(Extended%20Mix).wav
+10-21 22:23:40.440 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:40.440 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:40.440 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:40.440 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:40.440 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FGREG%20-%20Girls%20Like%20That%20(Extended%20Mix).wav
+10-21 22:23:40.442 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:40.442 D/AudioManager(32753): ExoPlayer playback successful for: GREG - Girls Like That (Extended Mix).wav
+10-21 22:23:40.492 I/System.out(32753): 🎵 Starting shared waveform generation for: GREG - Girls Like That (Extended Mix).wav
+10-21 22:23:40.493 I/System.out(32753): 🎵 File: GREG - Girls Like That (Extended Mix).wav, Size: 54.7MB, Type: Other, Samples/sec: 3
+10-21 22:23:41.108 I/System.out(32753): ✅ Shared waveform generated from InputStream: 13994 samples
+10-21 22:23:41.108 I/System.out(32753): 🎵 First 10 amplitudes: 26, 16, 2, 3, 1, 0, 1, 1, 2, 1
+10-21 22:23:41.108 I/System.out(32753): 🎵 Amplitude range: min=0, max=72
+10-21 22:23:49.813 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:49.813 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:49.814 D/AudioManager(32753): ExoPlayer stopped
+10-21 22:23:49.815 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:49.815 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:49.815 D/AudioManager(32753): Preloaded player released.
+10-21 22:23:49.815 D/AudioManager(32753): Attempting to play file: Lucas & Steve & DJ All Empty - Bodies (feat. Bella Perozzi) [Extended Mix].mp3
+10-21 22:23:49.816 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FLucas%20%26%20Steve%20%26%20DJ%20All%20Empty%20-%20Bodies%20(feat.%20Bella%20Perozzi)%20%5BExtended%20Mix%5D.mp3
+10-21 22:23:49.816 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:49.816 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:49.816 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:49.816 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:49.816 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FLucas%20%26%20Steve%20%26%20DJ%20All%20Empty%20-%20Bodies%20(feat.%20Bella%20Perozzi)%20%5BExtended%20Mix%5D.mp3
+10-21 22:23:49.818 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:49.818 D/AudioManager(32753): ExoPlayer playback successful for: Lucas & Steve & DJ All Empty - Bodies (feat. Bella Perozzi) [Extended Mix].mp3
+10-21 22:23:49.900 I/System.out(32753): 🎵 Starting shared waveform generation for: Lucas & Steve & DJ All Empty - Bodies (feat. Bella Perozzi) [Extended Mix].mp3
+10-21 22:23:49.901 I/System.out(32753): 🎵 File: Lucas & Steve & DJ All Empty - Bodies (feat. Bella Perozzi) [Extended Mix].mp3, Size: 12.2MB, Type: Other, Samples/sec: 3
+10-21 22:23:50.478 I/System.out(32753): ✅ Shared waveform generated from InputStream: 749 samples
+10-21 22:23:50.480 I/System.out(32753): 🎵 First 10 amplitudes: 0, 39, 39, 25, 37, 39, 36, 38, 36, 33
+10-21 22:23:50.480 I/System.out(32753): 🎵 Amplitude range: min=0, max=51
+10-21 22:23:52.594 D/AudioManager(32753): Attempting to play file: 01 - S_Zer0 - Hypnotized (Extended Mix) [CROCUS].wav
+10-21 22:23:52.594 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F01%20-%20S_Zer0%20-%20Hypnotized%20(Extended%20Mix)%20%5BCROCUS%5D.wav
+10-21 22:23:52.594 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:52.594 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:52.595 D/AudioManager(32753): ExoPlayer stopped
+10-21 22:23:52.595 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:52.595 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:52.595 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F01%20-%20S_Zer0%20-%20Hypnotized%20(Extended%20Mix)%20%5BCROCUS%5D.wav
+10-21 22:23:52.597 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:52.597 D/AudioManager(32753): ExoPlayer playback successful for: 01 - S_Zer0 - Hypnotized (Extended Mix) [CROCUS].wav
+10-21 22:23:52.635 I/System.out(32753): 🎵 Starting shared waveform generation for: 01 - S_Zer0 - Hypnotized (Extended Mix) [CROCUS].wav
+10-21 22:23:52.636 I/System.out(32753): 🎵 File: 01 - S_Zer0 - Hypnotized (Extended Mix) [CROCUS].wav, Size: 53.5MB, Type: Other, Samples/sec: 3
+10-21 22:23:53.146 I/System.out(32753): ✅ Shared waveform generated from InputStream: 13698 samples
+10-21 22:23:53.146 I/System.out(32753): 🎵 First 10 amplitudes: 55, 71, 65, 48, 38, 36, 34, 24, 13, 5
+10-21 22:23:53.146 I/System.out(32753): 🎵 Amplitude range: min=0, max=78
+10-21 22:23:56.823 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:56.824 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:56.824 D/AudioManager(32753): ExoPlayer stopped
+10-21 22:23:56.825 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:56.825 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:56.826 D/AudioManager(32753): Preloaded player released.
+10-21 22:23:56.826 D/AudioManager(32753): All caches cleared
+10-21 22:23:56.880 D/AudioManager(32753): Attempting to play file: Errow - Body (Extended Mix) [Retail Records].aiff
+10-21 22:23:56.880 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErrow%20-%20Body%20(Extended%20Mix)%20%5BRetail%20Records%5D.aiff
+10-21 22:23:56.880 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:56.880 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:56.880 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:56.880 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:56.880 D/AudioManager(32753): AIFF file detected: Errow - Body (Extended Mix) [Retail Records].aiff
+10-21 22:23:56.880 D/AudioManager(32753): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:23:56.881 D/AudioManager(32753): FFmpegMediaPlayer is available, attempting playback
+10-21 22:23:56.971 D/AudioManager(32753): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_430285648712256926.aiff (43.46MB in 64ms, 679.06MB/s)
+10-21 22:23:56.971 D/AudioManager(32753): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_430285648712256926.aiff
+10-21 22:23:56.971 D/AudioManager(32753): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_430285648712256926.aiff
+10-21 22:23:56.972 D/AudioManager(32753): FFmpegMediaPlayer setDataSource successful
+10-21 22:23:56.972 D/AudioManager(32753): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-21 22:23:56.972 D/AudioManager(32753): FFmpegMediaPlayer volume set to maximum
+10-21 22:23:56.972 D/AudioManager(32753): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:23:56.973 D/AudioManager(32753): ❌ FFmpegMediaPlayer prepareAsync failed
+10-21 22:23:56.973 D/AudioManager(32753): java.lang.IllegalStateException
+10-21 22:23:56.973 D/AudioManager(32753): 	at wseemann.media.FFmpegMediaPlayer.prepareAsync(Native Method)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.example.mobiledigger.audio.AudioManager.tryPlayWithFFmpegSync(AudioManager.kt:493)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.example.mobiledigger.audio.AudioManager.playFile(AudioManager.kt:387)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.loadCurrentFile(MusicViewModel.kt:1074)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.handleSuccessfulSort(MusicViewModel.kt:897)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$handleSuccessfulSort(MusicViewModel.kt:53)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel$sortCurrentFile$1.invokeSuspend(MusicViewModel.kt:807)
+10-21 22:23:56.973 D/AudioManager(32753): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+10-21 22:23:56.973 D/AudioManager(32753): 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+10-21 22:23:56.973 D/AudioManager(32753): 	at android.os.Handler.handleCallback(Handler.java:1041)
+10-21 22:23:56.973 D/AudioManager(32753): 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-21 22:23:56.973 D/AudioManager(32753): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-21 22:23:56.973 D/AudioManager(32753): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-21 22:23:56.973 D/AudioManager(32753): 	at android.os.Looper.loop(Looper.java:349)
+10-21 22:23:56.973 D/AudioManager(32753): 	at android.app.ActivityThread.main(ActivityThread.java:9041)
+10-21 22:23:56.973 D/AudioManager(32753): 	at java.lang.reflect.Method.invoke(Native Method)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-21 22:23:56.973 D/AudioManager(32753): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+10-21 22:23:56.973 D/AudioManager(32753): FFmpegMediaPlayer failed for AIFF, trying ExoPlayer fallback (will likely fail)
+10-21 22:23:56.973 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErrow%20-%20Body%20(Extended%20Mix)%20%5BRetail%20Records%5D.aiff
+10-21 22:23:56.974 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:56.974 D/AudioManager(32753): ExoPlayer playback successful for: Errow - Body (Extended Mix) [Retail Records].aiff
+10-21 22:23:57.022 E/FFmpegMediaPlayer(32753): Error (-38,0)
+10-21 22:23:57.023 D/AudioManager(32753): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:23:57.023 D/AudioManager(32753): FFmpegMediaPlayer playback completed
+10-21 22:23:57.025 I/System.out(32753): 🎵 Starting shared waveform generation for: Errow - Body (Extended Mix) [Retail Records].aiff
+10-21 22:23:57.027 I/System.out(32753): 🎵 File: Errow - Body (Extended Mix) [Retail Records].aiff, Size: 43.5MB, Type: AIFF, Samples/sec: 1
+10-21 22:23:57.113 D/AudioManager(32753): Attempting to play file: Anthony - French Kiss Master.wav
+10-21 22:23:57.113 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAnthony%20-%20French%20Kiss%20Master.wav
+10-21 22:23:57.113 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:57.113 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:57.114 D/AudioManager(32753): ExoPlayer playback completed
+10-21 22:23:57.114 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:57.115 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:57.115 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAnthony%20-%20French%20Kiss%20Master.wav
+10-21 22:23:57.116 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:57.116 D/AudioManager(32753): ExoPlayer playback successful for: Anthony - French Kiss Master.wav
+10-21 22:23:57.187 I/System.out(32753): 🎵 Starting shared waveform generation for: Anthony - French Kiss Master.wav
+10-21 22:23:57.188 I/System.out(32753): 🎵 File: Anthony - French Kiss Master.wav, Size: 100.5MB, Type: Other, Samples/sec: 3
+10-21 22:23:57.322 D/AudioManager(32753): Attempting to play file: Errow - Give It To Me (Extended Mix) [Retail Records].aiff
+10-21 22:23:57.322 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErrow%20-%20Give%20It%20To%20Me%20(Extended%20Mix)%20%5BRetail%20Records%5D.aiff
+10-21 22:23:57.322 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:57.323 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:57.323 D/AudioManager(32753): ExoPlayer playback completed
+10-21 22:23:57.324 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:57.324 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:57.324 D/AudioManager(32753): AIFF file detected: Errow - Give It To Me (Extended Mix) [Retail Records].aiff
+10-21 22:23:57.324 D/AudioManager(32753): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:23:57.324 D/AudioManager(32753): FFmpegMediaPlayer is available, attempting playback
+10-21 22:23:57.397 I/System.out(32753): ✅ Shared waveform generated from InputStream: 11069 samples
+10-21 22:23:57.397 I/System.out(32753): 🎵 First 10 amplitudes: 38, 20, 10, 7, 6, 4, 2, 1, 0, 0
+10-21 22:23:57.397 I/System.out(32753): 🎵 Amplitude range: min=0, max=65
+10-21 22:23:57.742 D/AudioManager(32753): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1934443837366210359.aiff (38.74MB in 364ms, 106.42MB/s)
+10-21 22:23:57.743 D/AudioManager(32753): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1934443837366210359.aiff
+10-21 22:23:57.743 D/AudioManager(32753): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1934443837366210359.aiff
+10-21 22:23:57.743 D/AudioManager(32753): FFmpegMediaPlayer setDataSource successful
+10-21 22:23:57.743 D/AudioManager(32753): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-21 22:23:57.743 D/AudioManager(32753): FFmpegMediaPlayer volume set to maximum
+10-21 22:23:57.743 D/AudioManager(32753): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:23:57.744 D/AudioManager(32753): ❌ FFmpegMediaPlayer prepareAsync failed
+10-21 22:23:57.744 D/AudioManager(32753): java.lang.IllegalStateException
+10-21 22:23:57.744 D/AudioManager(32753): 	at wseemann.media.FFmpegMediaPlayer.prepareAsync(Native Method)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.example.mobiledigger.audio.AudioManager.tryPlayWithFFmpegSync(AudioManager.kt:493)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.example.mobiledigger.audio.AudioManager.playFile(AudioManager.kt:387)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.loadCurrentFile(MusicViewModel.kt:1074)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$loadCurrentFile(MusicViewModel.kt:53)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel$next$1.invokeSuspend(MusicViewModel.kt:621)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:235)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:168)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:474)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:508)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:497)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:595)
+10-21 22:23:57.744 D/AudioManager(32753): 	at kotlinx.coroutines.android.HandlerContext$scheduleResumeAfterDelay$$inlined$Runnable$1.run(Runnable.kt:19)
+10-21 22:23:57.744 D/AudioManager(32753): 	at android.os.Handler.handleCallback(Handler.java:1041)
+10-21 22:23:57.744 D/AudioManager(32753): 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-21 22:23:57.744 D/AudioManager(32753): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-21 22:23:57.744 D/AudioManager(32753): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-21 22:23:57.744 D/AudioManager(32753): 	at android.os.Looper.loop(Looper.java:349)
+10-21 22:23:57.744 D/AudioManager(32753): 	at android.app.ActivityThread.main(ActivityThread.java:9041)
+10-21 22:23:57.744 D/AudioManager(32753): 	at java.lang.reflect.Method.invoke(Native Method)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-21 22:23:57.744 D/AudioManager(32753): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+10-21 22:23:57.744 D/AudioManager(32753): FFmpegMediaPlayer failed for AIFF, trying ExoPlayer fallback (will likely fail)
+10-21 22:23:57.744 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FErrow%20-%20Give%20It%20To%20Me%20(Extended%20Mix)%20%5BRetail%20Records%5D.aiff
+10-21 22:23:57.745 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:57.746 D/AudioManager(32753): ExoPlayer playback successful for: Errow - Give It To Me (Extended Mix) [Retail Records].aiff
+10-21 22:23:57.823 D/AudioManager(32753): Attempting to play file: Gonzalo Lodi - Deserto (Original Mix).wav
+10-21 22:23:57.823 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FGonzalo%20Lodi%20-%20Deserto%20(Original%20Mix).wav
+10-21 22:23:57.823 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:23:57.823 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:23:57.824 D/AudioManager(32753): ExoPlayer playback completed
+10-21 22:23:57.825 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:23:57.825 D/AudioManager(32753): All playback stopped successfully
+10-21 22:23:57.825 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FGonzalo%20Lodi%20-%20Deserto%20(Original%20Mix).wav
+10-21 22:23:57.827 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:23:57.828 D/AudioManager(32753): ExoPlayer playback successful for: Gonzalo Lodi - Deserto (Original Mix).wav
+10-21 22:23:57.877 I/System.out(32753): 🎵 Starting shared waveform generation for: Errow - Give It To Me (Extended Mix) [Retail Records].aiff
+10-21 22:23:57.878 I/System.out(32753): 🎵 File: Errow - Give It To Me (Extended Mix) [Retail Records].aiff, Size: 38.7MB, Type: AIFF, Samples/sec: 1
+10-21 22:23:57.928 D/AudioManager(32753): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_430285648712256926.aiff
+10-21 22:23:57.932 D/AudioManager(32753): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1934443837366210359.aiff
+10-21 22:23:57.932 D/AudioManager(32753): All caches cleared
+10-21 22:24:05.467 D/AudioManager(32753): Attempting to play file: Hidden Empire - Turn It Up (Extended Mix) [Interstellar Recordings].aiff
+10-21 22:24:05.468 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FHidden%20Empire%20-%20Turn%20It%20Up%20(Extended%20Mix)%20%5BInterstellar%20Recordings%5D.aiff
+10-21 22:24:05.468 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:24:05.468 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:24:05.469 D/AudioManager(32753): ExoPlayer playback completed
+10-21 22:24:05.469 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:24:05.469 D/AudioManager(32753): All playback stopped successfully
+10-21 22:24:05.470 D/AudioManager(32753): AIFF file detected: Hidden Empire - Turn It Up (Extended Mix) [Interstellar Recordings].aiff
+10-21 22:24:05.470 D/AudioManager(32753): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:24:05.470 D/AudioManager(32753): FFmpegMediaPlayer is available, attempting playback
+10-21 22:24:05.597 D/AudioManager(32753): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2749088139085779876.aiff (51.91MB in 89ms, 583.29MB/s)
+10-21 22:24:05.597 D/AudioManager(32753): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2749088139085779876.aiff
+10-21 22:24:05.597 D/AudioManager(32753): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2749088139085779876.aiff
+10-21 22:24:05.597 D/AudioManager(32753): FFmpegMediaPlayer setDataSource successful
+10-21 22:24:05.598 D/AudioManager(32753): FFmpegMediaPlayer audio stream type set to STREAM_MUSIC
+10-21 22:24:05.598 D/AudioManager(32753): FFmpegMediaPlayer volume set to maximum
+10-21 22:24:05.598 D/AudioManager(32753): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:24:05.599 D/AudioManager(32753): ❌ FFmpegMediaPlayer prepareAsync failed
+10-21 22:24:05.599 D/AudioManager(32753): java.lang.IllegalStateException
+10-21 22:24:05.599 D/AudioManager(32753): 	at wseemann.media.FFmpegMediaPlayer.prepareAsync(Native Method)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.example.mobiledigger.audio.AudioManager.tryPlayWithFFmpegSync(AudioManager.kt:493)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.example.mobiledigger.audio.AudioManager.playFile(AudioManager.kt:387)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.loadCurrentFile(MusicViewModel.kt:1074)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel.access$loadCurrentFile(MusicViewModel.kt:53)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.example.mobiledigger.viewmodel.MusicViewModel$next$1.invokeSuspend(MusicViewModel.kt:621)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:235)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:168)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:474)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:508)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:497)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:595)
+10-21 22:24:05.599 D/AudioManager(32753): 	at kotlinx.coroutines.android.HandlerContext$scheduleResumeAfterDelay$$inlined$Runnable$1.run(Runnable.kt:19)
+10-21 22:24:05.599 D/AudioManager(32753): 	at android.os.Handler.handleCallback(Handler.java:1041)
+10-21 22:24:05.599 D/AudioManager(32753): 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-21 22:24:05.599 D/AudioManager(32753): 	at android.os.Looper.dispatchMessage(Looper.java:315)
+10-21 22:24:05.599 D/AudioManager(32753): 	at android.os.Looper.loopOnce(Looper.java:251)
+10-21 22:24:05.599 D/AudioManager(32753): 	at android.os.Looper.loop(Looper.java:349)
+10-21 22:24:05.599 D/AudioManager(32753): 	at android.app.ActivityThread.main(ActivityThread.java:9041)
+10-21 22:24:05.599 D/AudioManager(32753): 	at java.lang.reflect.Method.invoke(Native Method)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-21 22:24:05.599 D/AudioManager(32753): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+10-21 22:24:05.599 D/AudioManager(32753): FFmpegMediaPlayer failed for AIFF, trying ExoPlayer fallback (will likely fail)
+10-21 22:24:05.599 D/AudioManager(32753): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FHidden%20Empire%20-%20Turn%20It%20Up%20(Extended%20Mix)%20%5BInterstellar%20Recordings%5D.aiff
+10-21 22:24:05.601 D/AudioManager(32753): ExoPlayer started successfully
+10-21 22:24:05.601 D/AudioManager(32753): ExoPlayer playback successful for: Hidden Empire - Turn It Up (Extended Mix) [Interstellar Recordings].aiff
+10-21 22:24:05.648 I/System.out(32753): 🎵 Starting shared waveform generation for: Gonzalo Lodi - Deserto (Original Mix).wav
+10-21 22:24:05.650 I/System.out(32753): 🎵 File: Gonzalo Lodi - Deserto (Original Mix).wav, Size: 53.6MB, Type: Other, Samples/sec: 3
+10-21 22:24:05.792 D/AudioManager(32753): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2749088139085779876.aiff
+10-21 22:24:05.793 D/AudioManager(32753): All caches cleared
+10-21 22:24:13.563 D/AudioManager(32753): Attempting to play file: Hidden Empire - You Are Mad (Extended Mix) [Interstellar Recordings].aiff
+10-21 22:24:13.564 D/AudioManager(32753): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FHidden%20Empire%20-%20You%20Are%20Mad%20(Extended%20Mix)%20%5BInterstellar%20Recordings%5D.aiff
+10-21 22:24:13.564 D/AudioManager(32753): Stopping all playback before starting new file
+10-21 22:24:13.564 D/AudioManager(32753): FFmpegMediaPlayer reset
+10-21 22:24:13.565 D/AudioManager(32753): ExoPlayer playback completed
+10-21 22:24:13.566 D/AudioManager(32753): ExoPlayer cleared
+10-21 22:24:13.566 D/AudioManager(32753): All playback stopped successfully
+10-21 22:24:13.566 D/AudioManager(32753): AIFF file detected: Hidden Empire - You Are Mad (Extended Mix) [Interstellar Recordings].aiff
+10-21 22:24:13.566 D/AudioManager(32753): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:24:13.566 D/AudioManager(32753): FFmpegMediaPlayer is available, attempting playback
+10-21 22:24:13.702 D/AudioManager(32753): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6475103474905483188.aiff (54.75MB in 109ms, 502.32MB/s)
+10-21 22:24:13.702 D/AudioManager(32753): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6475103474905483188.aiff
+10-21 22:24:13.702 D/AudioManager(32753): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6475103474905483188.aiff
+10-21 22:24:14.490 F/DEBUG   ( 1140):       #12 pc 0000000000592b44  /data/app/~~rZZLKB2N-dA4YAIZXEzwOQ==/com.example.mobiledigger-SlrtUMFbTICQsS-PumLVRw==/base.apk (offset 0x34e0000) (wseemann.media.FFmpegMediaPlayer.setDataSource+0)
+10-21 22:24:14.490 F/DEBUG   ( 1140):       #17 pc 0000000000592b28  /data/app/~~rZZLKB2N-dA4YAIZXEzwOQ==/com.example.mobiledigger-SlrtUMFbTICQsS-PumLVRw==/base.apk (offset 0x34e0000) (wseemann.media.FFmpegMediaPlayer.setDataSource+0)
+10-21 22:24:14.490 F/DEBUG   ( 1140):       #22 pc 000000000000bef8  /data/app/~~rZZLKB2N-dA4YAIZXEzwOQ==/com.example.mobiledigger-SlrtUMFbTICQsS-PumLVRw==/base.apk (offset 0x40c6000) (com.example.mobiledigger.audio.AudioManager.tryPlayWithFFmpegSync+0)
+10-21 22:24:14.490 F/DEBUG   ( 1140):       #27 pc 000000000000b9e8  /data/app/~~rZZLKB2N-dA4YAIZXEzwOQ==/com.example.mobiledigger-SlrtUMFbTICQsS-PumLVRw==/base.apk (offset 0x40c6000) (com.example.mobiledigger.audio.AudioManager.playFile+0)
+10-21 22:24:17.123 D/AudioManager( 1174): Broadcast receiver registered successfully
+10-21 22:24:17.123 D/AudioManager( 1174): Attempting to create FFmpegMediaPlayer...
+10-21 22:24:17.150 D/AudioManager( 1174): FFmpegMediaPlayer created successfully
+10-21 22:24:17.150 D/AudioManager( 1174): FFmpegMediaPlayer listeners set successfully
+10-21 22:24:17.213 D/AudioManager( 1174): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-21 22:24:18.182 D/AudioManager( 1174): Stopping all playback before starting new file
+10-21 22:24:18.182 D/AudioManager( 1174): FFmpegMediaPlayer reset
+10-21 22:24:18.182 D/AudioManager( 1174): ExoPlayer cleared
+10-21 22:24:18.182 D/AudioManager( 1174): All playback stopped successfully
+10-21 22:24:18.183 D/AudioManager( 1174): Preloaded player released.
+10-21 22:24:18.184 D/AudioManager( 1174): Stopping all playback before starting new file
+10-21 22:24:18.184 D/AudioManager( 1174): FFmpegMediaPlayer reset
+10-21 22:24:18.184 D/AudioManager( 1174): ExoPlayer cleared
+10-21 22:24:18.184 D/AudioManager( 1174): All playback stopped successfully
+10-21 22:24:18.184 D/AudioManager( 1174): Preloaded player released.
+10-21 22:24:18.894 D/AudioManager( 1174): Attempting to play file: 32 - Kuar [Henrik Schwarz Remix].flac
+10-21 22:24:18.894 D/AudioManager( 1174): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F32%20-%20Kuar%20%5BHenrik%20Schwarz%20Remix%5D.flac
+10-21 22:24:18.894 D/AudioManager( 1174): Stopping all playback before starting new file
+10-21 22:24:18.894 D/AudioManager( 1174): FFmpegMediaPlayer reset
+10-21 22:24:18.895 D/AudioManager( 1174): ExoPlayer cleared
+10-21 22:24:18.895 D/AudioManager( 1174): All playback stopped successfully
+10-21 22:24:18.895 D/AudioManager( 1174): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F32%20-%20Kuar%20%5BHenrik%20Schwarz%20Remix%5D.flac
+10-21 22:24:18.902 D/AudioManager( 1174): ExoPlayer started successfully
+10-21 22:24:18.903 D/AudioManager( 1174): ExoPlayer playback successful for: 32 - Kuar [Henrik Schwarz Remix].flac
+10-21 22:24:19.307 I/System.out( 1174): 🎵 Starting shared waveform generation for: 32 - Kuar [Henrik Schwarz Remix].flac
+10-21 22:24:19.325 I/System.out( 1174): 🎵 File: 32 - Kuar [Henrik Schwarz Remix].flac, Size: 59.6MB, Type: Other, Samples/sec: 3
+10-21 22:24:20.738 I/System.out( 1174): ✅ Shared waveform generated from InputStream: 4824 samples
+10-21 22:24:20.738 I/System.out( 1174): 🎵 First 10 amplitudes: 0, 46, 35, 15, 14, 11, 31, 8, 19, 16
+10-21 22:24:20.740 I/System.out( 1174): 🎵 Amplitude range: min=0, max=56

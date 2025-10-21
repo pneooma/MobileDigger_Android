@@ -1,3 +1,52 @@
+9.40
+- 🔧 CRITICAL FIX: Reverted FileDescriptor approach - FFmpegMediaPlayer doesn't support it
+- v9.39 FileDescriptor was accepted by setDataSource() but failed during playback (Error 0/-38)
+- Issue: FFmpegMediaPlayer needs file path, not FileDescriptor (or FD must stay open, too complex)
+- Restored stable temp file approach with fast async preparation (~80-100ms copy time)
+- AIFF playback now working reliably again with prepareAsync() optimization from v9.38
+- Confirmed: Temp file + prepareAsync() is the optimal solution for FFmpegMediaPlayer
+- Version bumped to 9.40
+
+9.39
+- ⚡ EXPERIMENTAL: Zero-copy AIFF playback using FileDescriptor (FAILED - see v9.40)
+- Attempt direct file access via FileDescriptor to eliminate 80ms file copy overhead
+- FileDescriptor approach tries first, falls back to temp file if it fails
+- If successful, AIFF files will load with ZERO I/O delay (instant!)
+- If FileDescriptor fails with FFmpegMediaPlayer, seamlessly falls back to proven temp file method
+- Added comprehensive logging to track FileDescriptor success/failure rate
+- Maintains stability while testing performance optimization
+- Version bumped to 9.39
+
+9.38
+- ⚡ MAJOR FIX: Eliminated AIFF playback lag - now instant!
+- Refactored FFmpegMediaPlayer to use non-blocking prepareAsync() instead of blocking prepare()
+- Removed 1-second UI freeze when loading AIFF files
+- Playback now starts automatically in onPreparedListener callback
+- Audio stream type and volume set BEFORE preparation for better compatibility
+- AIFF files now load as fast as other formats (~80ms file copy only)
+- Improved user experience - no more waiting for AIFF files to start
+- Version bumped to 9.38
+
+9.37
+- 📝 VERSION UPDATE: Version bumped to 9.37
+- Researched latest AIFF playback solutions for Android
+- FFmpeg-Kit and Mobile-FFmpeg have been retired and removed from Maven repositories
+- Confirmed FFmpegMediaPlayer (v1.0.5) is still the most stable option for AIFF playback
+- Maintained current AIFF handling implementation (working as expected)
+- Updated version number for tracking purposes
+- Version bumped to 9.37
+
+9.36
+- 📊 ENHANCED LOGGING SYSTEM: Added detailed performance tracking and crash diagnostics
+- Added thread name/ID to all log entries for better debugging
+- Added startTiming/endTiming helpers for performance profiling
+- AIFF playback now logs detailed timing for each step (datasource, setDataSource, prepare, etc.)
+- Added emoji indicators for log clarity (🎵 ✅ ❌ ⏳ ⏱️ 📁 📊)
+- Log progress every 500ms during AIFF prepare to track slowness
+- All logs include timestamps, thread info, and full stack traces for exceptions
+- This version is for diagnostics - helps identify crash points and slow operations
+- Version bumped to 9.36
+
 9.35
 - MAJOR PERFORMANCE IMPROVEMENT: Instant playback when like/dislike - no more delays!
 - Implemented background file operation queue system using Kotlin Channel and single-threaded dispatcher

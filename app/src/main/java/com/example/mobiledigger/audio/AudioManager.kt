@@ -175,8 +175,17 @@ class AudioManager(private val context: Context) {
             
             ffmpegPlayer?.apply {
                 setOnPreparedListener { mp ->
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepared successfully")
+                    CrashLogger.log("AudioManager", "🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW")
                     isFFmpegPrepared = true
+                    try {
+                        // Set audio settings NOW that player is prepared
+                        mp.setAudioStreamType(AndroidAudioManager.STREAM_MUSIC)
+                        mp.setVolume(1.0f, 1.0f)
+                        mp.start()
+                        CrashLogger.log("AudioManager", "✅ Playback started automatically after async prepare")
+                    } catch (e: Exception) {
+                        CrashLogger.log("AudioManager", "❌ Failed to start playback in onPreparedListener", e)
+                    }
                 }
                 setOnErrorListener { mp, what, extra ->
                     val errorMessage = when (what) {
@@ -465,74 +474,16 @@ class AudioManager(private val context: Context) {
                 return false
             }
             
+            // Use ASYNC preparation to avoid blocking UI thread (NO LAG!)
+            // Audio settings will be configured in onPreparedListener callback after preparation completes
             try {
-                // Try synchronous preparation first
-                player.prepare()
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepare (sync) completed")
-                isFFmpegPrepared = true
+                CrashLogger.log("AudioManager", "⚡ Starting NON-BLOCKING prepareAsync() for instant playback")
+                player.prepareAsync()
+                CrashLogger.log("AudioManager", "✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)")
+                // Playback will start automatically in onPreparedListener callback (lines 177-190)
+                // This returns immediately without blocking!
             } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepare (sync) failed, trying async", e)
-                
-                // Fallback to async preparation
-                try {
-                    player.prepareAsync()
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepareAsync called")
-                    
-                    // Wait for preparation to complete (with timeout) using coroutines
-                    // Use longer timeout for large files
-                    val fileSizeMB = currentFile?.size?.div(1024 * 1024) ?: 0
-                    val timeout = if (fileSizeMB > 100) 10000L else 3000L // 10 seconds for large files, 3 seconds for normal files
-                    CrashLogger.log("AudioManager", "Using ${timeout}ms timeout for file preparation (file size: ${fileSizeMB}MB)")
-                    
-                    val startTime = System.currentTimeMillis()
-                    while (!isFFmpegPrepared && (System.currentTimeMillis() - startTime) < timeout) {
-                        try {
-                            Thread.sleep(25) // Reduced wait time for better responsiveness
-                        } catch (e: InterruptedException) {
-                            CrashLogger.log("AudioManager", "Interrupted while waiting for FFmpegMediaPlayer preparation", e)
-                            return false
-                        }
-                    }
-                    
-                    if (!isFFmpegPrepared) {
-                        CrashLogger.log("AudioManager", "FFmpegMediaPlayer preparation timeout after ${timeout}ms")
-                        return false
-                    }
-                    
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer preparation completed, starting playback")
-                } catch (e2: Exception) {
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer prepareAsync failed", e2)
-                    return false
-                }
-            }
-            
-            // Set audio stream type for better compatibility
-            try {
-                player.setAudioStreamType(AndroidAudioManager.STREAM_MUSIC)
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer audio stream type set to STREAM_MUSIC")
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setAudioStreamType failed", e)
-            }
-            
-            // Set volume to maximum
-            try {
-                player.setVolume(1.0f, 1.0f)
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer volume set to maximum")
-        } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer setVolume failed", e)
-            }
-            
-            // Now start playback after preparation is complete
-            try {
-                if (isFFmpegPrepared) {
-                    player.start()
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer started after proper preparation")
-                } else {
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer not prepared, cannot start")
-                    return false
-                }
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer start failed", e)
+                CrashLogger.log("AudioManager", "❌ FFmpegMediaPlayer prepareAsync failed", e)
                 return false
             }
             

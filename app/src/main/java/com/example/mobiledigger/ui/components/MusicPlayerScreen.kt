@@ -898,13 +898,13 @@ fun MusicPlayerScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                        Text(
-                            text = ":: v9.30 ::",
+        Text(
+            text = ":: v9.40 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
-                        lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
-                    ),
-                    fontWeight = FontWeight.Bold,
+                fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
+                lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
+            ),
+            fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }

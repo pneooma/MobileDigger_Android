@@ -1,0 +1,200 @@
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at aezo.call(PG:446)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at biso.call(PG:3)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at bitg.call(PG:9)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at bisx.run(PG:55)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at java.lang.Thread.run(Thread.java:1119)
+10-17 20:42:49.670 E/SQLiteCursor( 8881): 	at bish.run(PG:6)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): requesting column name with table name -- cluster_kernel.kernel_media_key
+10-17 20:42:49.671 E/SQLiteCursor( 8881): java.lang.Exception
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at android.database.sqlite.SQLiteCursor.getColumnIndex(SQLiteCursor.java:181)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at android.database.AbstractCursor.getColumnIndexOrThrow(AbstractCursor.java:364)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at android.database.CursorWrapper.getColumnIndexOrThrow(CursorWrapper.java:92)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at asdx.apply(PG:80)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at b$$ExternalSyntheticApiModelOutline14.m(D8$$SyntheticClass:42)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bnxv.accept(PG:40)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.stream.w2.accept(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:4)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.desugar.sun.nio.fs.g.y(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.b1.forEachRemaining(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.stream.a.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:21)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.stream.a.s(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:8)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.stream.o2.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:5)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.stream.a.d(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:35)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at j$.util.stream.l3.collect(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:88)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at asef.b(PG:275)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at asef.a(PG:40)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at atrz.a(PG:48)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at atsr.a(PG:1087)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at atst.a(PG:413)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at com.google.android.apps.photos.search.pfc.impl.OnDeviceFaceClusteringTask.a(PG:280)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bjru.a(PG:156)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bpdo.a(PG:3)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bpcs.run(PG:19)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bpdq.run(PG:5)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bpbk.execute(PG:1)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bpcn.m(PG:6)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bjry.y(PG:9)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bjry.l(PG:37)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bjsd.e(PG:8)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at aezo.call(PG:446)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at biso.call(PG:3)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bitg.call(PG:9)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bisx.run(PG:55)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at java.lang.Thread.run(Thread.java:1119)
+10-17 20:42:49.671 E/SQLiteCursor( 8881): 	at bish.run(PG:6)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): requesting column name with table name -- cluster_kernel.face_cluster_media_key
+10-17 20:42:49.672 E/SQLiteCursor( 8881): java.lang.Exception
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at android.database.sqlite.SQLiteCursor.getColumnIndex(SQLiteCursor.java:181)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at android.database.AbstractCursor.getColumnIndexOrThrow(AbstractCursor.java:364)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at android.database.CursorWrapper.getColumnIndexOrThrow(CursorWrapper.java:92)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at asdx.apply(PG:80)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at b$$ExternalSyntheticApiModelOutline14.m(D8$$SyntheticClass:42)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bnxv.accept(PG:40)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.w2.accept(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:4)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.desugar.sun.nio.fs.g.y(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.b1.forEachRemaining(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.a.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:21)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.a.s(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:8)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.o2.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:5)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.a.d(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:35)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.l3.collect(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:88)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at asef.b(PG:275)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at asef.a(PG:40)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at atrz.a(PG:48)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at atsr.a(PG:1087)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at atst.a(PG:413)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at com.google.android.apps.photos.search.pfc.impl.OnDeviceFaceClusteringTask.a(PG:280)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjru.a(PG:156)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpdo.a(PG:3)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpcs.run(PG:19)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpdq.run(PG:5)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpbk.execute(PG:1)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpcn.m(PG:6)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjry.y(PG:9)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjry.l(PG:37)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjsd.e(PG:8)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at aezo.call(PG:446)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at biso.call(PG:3)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bitg.call(PG:9)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bisx.run(PG:55)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at java.lang.Thread.run(Thread.java:1119)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bish.run(PG:6)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): requesting column name with table name -- cluster_kernel.search_cluster_media_key
+10-17 20:42:49.672 E/SQLiteCursor( 8881): java.lang.Exception
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at android.database.sqlite.SQLiteCursor.getColumnIndex(SQLiteCursor.java:181)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at android.database.AbstractCursor.getColumnIndexOrThrow(AbstractCursor.java:364)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at android.database.CursorWrapper.getColumnIndexOrThrow(CursorWrapper.java:92)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at asdx.apply(PG:80)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at b$$ExternalSyntheticApiModelOutline14.m(D8$$SyntheticClass:42)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bnxv.accept(PG:40)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.w2.accept(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:4)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.desugar.sun.nio.fs.g.y(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.b1.forEachRemaining(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.a.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:21)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.a.s(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:8)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.o2.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:5)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.a.d(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:35)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at j$.util.stream.l3.collect(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:88)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at asef.b(PG:275)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at asef.a(PG:40)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at atrz.a(PG:48)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at atsr.a(PG:1087)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at atst.a(PG:413)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at com.google.android.apps.photos.search.pfc.impl.OnDeviceFaceClusteringTask.a(PG:280)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjru.a(PG:156)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpdo.a(PG:3)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpcs.run(PG:19)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpdq.run(PG:5)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpbk.execute(PG:1)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bpcn.m(PG:6)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjry.y(PG:9)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjry.l(PG:37)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bjsd.e(PG:8)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at aezo.call(PG:446)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at biso.call(PG:3)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bitg.call(PG:9)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bisx.run(PG:55)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at java.lang.Thread.run(Thread.java:1119)
+10-17 20:42:49.672 E/SQLiteCursor( 8881): 	at bish.run(PG:6)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): requesting column name with table name -- cluster_kernel.kernel_proto
+10-17 20:42:49.673 E/SQLiteCursor( 8881): java.lang.Exception
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at android.database.sqlite.SQLiteCursor.getColumnIndex(SQLiteCursor.java:181)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at android.database.AbstractCursor.getColumnIndexOrThrow(AbstractCursor.java:364)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at android.database.CursorWrapper.getColumnIndexOrThrow(CursorWrapper.java:92)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at asdx.apply(PG:80)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at b$$ExternalSyntheticApiModelOutline14.m(D8$$SyntheticClass:42)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bnxv.accept(PG:40)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.stream.w2.accept(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:4)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.desugar.sun.nio.fs.g.y(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.b1.forEachRemaining(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:24)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.stream.a.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:21)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.stream.a.s(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:8)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.stream.o2.a(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:5)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.stream.a.d(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:35)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at j$.util.stream.l3.collect(r8-map-id-e5b4e969d53916d8b8435a3e9acb230f04092a571b29954f82c17e4573b726ca:88)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at asef.b(PG:275)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at asef.a(PG:40)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at atrz.a(PG:48)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at atsr.a(PG:1087)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at atst.a(PG:413)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at com.google.android.apps.photos.search.pfc.impl.OnDeviceFaceClusteringTask.a(PG:280)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bjru.a(PG:156)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bpdo.a(PG:3)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bpcs.run(PG:19)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bpdq.run(PG:5)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bpbk.execute(PG:1)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bpcn.m(PG:6)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bjry.y(PG:9)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bjry.l(PG:37)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bjsd.e(PG:8)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at aezo.call(PG:446)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at biso.call(PG:3)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bitg.call(PG:9)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bisx.run(PG:55)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at java.lang.Thread.run(Thread.java:1119)
+10-17 20:42:49.673 E/SQLiteCursor( 8881): 	at bish.run(PG:6)
+10-17 20:42:49.681 I/WM-WorkerWrapper( 8890): Worker result SUCCESS for Work [ id=d8831968-9645-4032-8d4c-19ad38678382, tags={ com.microsoft.office.outlook.calendar.workers.EventNotificationWorker, EventNotificationWorker_Periodic } ]
+10-17 20:42:49.703 V/GrammaticalInflectionUtils( 1923): AttributionSource: android.content.AttributionSource@de13b357 does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-17 20:42:49.710 I/Zygote  ( 1455): Entering forkRepeatedly native zygote loop
+10-17 20:42:49.715 D/ActivityManager( 1923): sync unfroze 12715 com.Slack for 6
+10-17 20:42:49.715 D/WM-DelayedWorkTracker(12715): Scheduling work 7b048e12-40eb-48f5-8421-154e2d0a6d37
+10-17 20:42:49.716 D/WM-GreedyScheduler(12715): Starting tracking for 7b048e12-40eb-48f5-8421-154e2d0a6d37
+10-17 20:42:49.720 D/ConnectivityService( 1923): Returning BLOCKED NetworkInfo to uid=10369
+10-17 20:42:49.721 D/ActivityManager( 1923): sync unfroze 6779 com.android.chrome for 6
+10-17 20:42:49.724 D/ActivityManager( 1923): sync unfroze 7440 com.android.vending for 6
+10-17 20:42:49.724 D/WM-ConstraintTracker(12715): NetworkStateTracker24: initial state = NetworkState(isConnected=false, isValidated=false, isMetered=true, isNotRoaming=true)
+10-17 20:42:49.724 D/WM-NetworkStateTracker(12715): Registering network callback
+10-17 20:42:49.725 D/ConnectivityService( 1923): requestNetwork for uid/pid:10369/12715 activeRequest: null callbackRequest: 2970 [NetworkRequest [ REQUEST id=2971, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10369 RequestorUid: 10369 RequestorPkg: com.Slack UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-17 20:42:49.725 D/ActivityManager( 1923): sync unfroze 9349 com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 for 6
+10-17 20:42:49.725 D/ActivityManager( 1923): pid 6629 com.google.android.adservices.api received sync transactions while frozen, killing
+10-17 20:42:49.725 I/ActivityManager( 1923): Killing 6629:com.google.android.adservices.api/u0a260 (adj 945): Sync transaction while in frozen state
+10-17 20:42:49.729 D/WM-NetworkStateTracker(12715): Network capabilities changed: [ Transports: WIFI Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&VALIDATED&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED LinkUpBandwidth>=139616Kbps LinkDnBandwidth>=90245Kbps TransportInfo: <SSID: <unknown ssid>, BSSID: 02:00:00:00:00:00, MAC: 02:00:00:00:00:00, IP: /192.168.1.9, Security type: 4, Supplicant state: COMPLETED, Wi-Fi standard: 11ax, RSSI: -76, Link speed: 816Mbps, Tx Link speed: 816Mbps, Max Supported Tx Link speed: 2401Mbps, Rx Link speed: 432Mbps, Max Supported Rx Link speed: 2401Mbps, Frequency: 5300MHz, Net ID: -1, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: -1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none><none>MLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>> SignalStrength: -76 UnderlyingNetworks: Null]
+10-17 20:42:49.729 D/WM-GreedyScheduler(12715): Constraints not met: Cancelling work ID WorkGenerationalId(workSpecId=7b048e12-40eb-48f5-8421-154e2d0a6d37, generation=0)
+10-17 20:42:49.729 D/WM-GreedyScheduler(12715): Constraints met: Scheduling work ID WorkGenerationalId(workSpecId=7b048e12-40eb-48f5-8421-154e2d0a6d37, generation=0)
+10-17 20:42:49.731 D/ActivityManager( 1923): sync unfroze 9257 com.android.chrome:privileged_process0 for 6
+10-17 20:42:49.732 D/OemPaidWifiNetworkFactory( 1923): got request NetworkRequest [ REQUEST id=2971, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10369 RequestorUid: 10369 RequestorPkg: com.Slack UnderlyingNetworks: Null] ]
+10-17 20:42:49.732 D/MultiInternetWifiNetworkFactory( 1923): got request NetworkRequest [ REQUEST id=2971, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10369 RequestorUid: 10369 RequestorPkg: com.Slack UnderlyingNetworks: Null] ]
+10-17 20:42:49.735 D/ConnectivityService( 1923): NetReassign [2971 : null → 105] [c 0] [a 4] [i 5]
+10-17 20:42:49.737 D/WifiNetworkFactory( 1923): got request NetworkRequest [ REQUEST id=2971, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10369 RequestorUid: 10369 RequestorPkg: com.Slack UnderlyingNetworks: Null] ]
+10-17 20:42:49.737 D/UntrustedWifiNetworkFactory( 1923): got request NetworkRequest [ REQUEST id=2971, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10369 RequestorUid: 10369 RequestorPkg: com.Slack UnderlyingNetworks: Null] ]
+10-17 20:42:49.742 D/ActivityManager( 1923): sync unfroze 14076 com.linkedin.android for 6
+10-17 20:42:49.743 D/Zygote  ( 1455): Forked child process 9487
+10-17 20:42:49.745 I/ActivityManager( 1923): Start proc 9487:ro.mercador/u0a274 for service {ro.mercador/androidx.work.impl.background.systemjob.SystemJobService}
+10-17 20:42:49.746 W/ProcessStats( 1923): Tracking association SourceState{194cc6d system/1000 ImpBg #67399} whose proc state 6 is better than process ProcessState{806865d com.Slack/10369 pkg=com.Slack} proc state 14 (4 skipped)
+10-17 20:42:49.754 D/ActivityManager( 1923): sync unfroze 25394 com.reddit.frontpage for 6
+10-17 20:42:49.755 D/ActivityManager( 1923): sync unfroze 2886 com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 for 6
+10-17 20:42:49.761 W/zygote64( 9487): Activation of cgroup controller +memory failed in path /sys/fs/cgroup/apps/uid_10274: Invalid argument
+10-17 20:42:49.762 D/ActivityThread( 2886): Package [com.example.mobiledigger] reported as REPLACED, but missing application info. Assuming REMOVED.
+10-17 20:42:49.764 D/ActivityThread( 2886): Package [com.example.mobiledigger] reported as REPLACED, but missing application info. Assuming REMOVED.
+10-17 20:42:49.759 W/.android.chrome( 6779): Suspending all threads took: 27.374ms
+10-17 20:42:49.769 I/Zygote  ( 9487): Process 9487 crated for ro.mercador
+10-17 20:42:49.770 I/ro.mercador( 9487): Using CollectorTypeCMC GC.

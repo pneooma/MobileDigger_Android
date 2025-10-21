@@ -1,11 +1,16 @@
 9.40
-- 🔧 CRITICAL FIX: Reverted FileDescriptor approach - FFmpegMediaPlayer doesn't support it
-- v9.39 FileDescriptor was accepted by setDataSource() but failed during playback (Error 0/-38)
-- Issue: FFmpegMediaPlayer needs file path, not FileDescriptor (or FD must stay open, too complex)
-- Restored stable temp file approach with fast async preparation (~80-100ms copy time)
-- AIFF playback now working reliably again with prepareAsync() optimization from v9.38
-- Confirmed: Temp file + prepareAsync() is the optimal solution for FFmpegMediaPlayer
-- Version bumped to 9.40
+- 🎵 WORKING VERSION: AIFF playback fully functional with optimized performance
+- ✅ v9.38 fix (prepareAsync for instant UI response) working perfectly
+- ✅ Temp file approach stable (~80-100ms copy time, non-blocking UI)
+- ✅ Fixed fdsan crash by protecting in-use temp files during cache clearing
+- 🛡️ Cache clearing now skips deletion of currentFFmpegDataSourcePath (prevents fd crashes)
+- 🛡️ currentFFmpegDataSourcePath cleared on player.reset() to mark files as deletable
+- ⚡ AIFF playback: Fast copy + async preparation = instant and stable
+- 🔧 FileDescriptor approach tested and reverted (v9.39) - not compatible with FFmpegMediaPlayer
+- ⚠️ Known limitation: Some AIFF files may cause waveform generation crashes (Amplituda native library bug)
+- 📝 Waveform crashes are native SIGSEGV that cannot be caught - limitation documented in code
+- 🎯 Core functionality working: AIFF files play perfectly with proper temp file lifecycle management
+- Version: 9.40 - Stable AIFF playback with documented waveform limitation
 
 9.39
 - ⚡ EXPERIMENTAL: Zero-copy AIFF playback using FileDescriptor (FAILED - see v9.40)

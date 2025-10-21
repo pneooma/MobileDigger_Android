@@ -144,6 +144,12 @@ class AudioManager(private val context: Context) {
         object : LinkedHashMap<String, String>(maxTempCacheSize + 1, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
                 if (size > maxTempCacheSize && eldest != null) {
+                    // CRITICAL: Don't delete file if it's currently in use by FFmpegMediaPlayer!
+                    if (eldest.value == currentFFmpegDataSourcePath) {
+                        CrashLogger.log("AudioManager", "⚠️ Skipping deletion of in-use temp file: ${eldest.value}")
+                        return false // Don't remove it from cache
+                    }
+                    
                     // Clean up the temp file when removing from cache
                     try {
                         File(eldest.value).delete()
@@ -546,6 +552,7 @@ class AudioManager(private val context: Context) {
                         CrashLogger.log("AudioManager", "FFmpegMediaPlayer stopped")
                     }
                     player.reset()
+                    currentFFmpegDataSourcePath = null // Mark file as no longer in use
                     CrashLogger.log("AudioManager", "FFmpegMediaPlayer reset")
                 } catch (e: Exception) {
                     CrashLogger.log("AudioManager", "Error stopping FFmpegMediaPlayer", e)
@@ -657,6 +664,14 @@ class AudioManager(private val context: Context) {
             // Also clean up temp files when clearing caches
             tempFileCache.keys.toList().forEach { key ->
                 tempFileCache.remove(key)?.let { tempPath ->
+                    // CRITICAL: Don't delete file if it's currently in use by FFmpegMediaPlayer!
+                    if (tempPath == currentFFmpegDataSourcePath) {
+                        CrashLogger.log("AudioManager", "⚠️ Skipping deletion of in-use temp file: $tempPath")
+                        // Put it back in the cache since it's still needed
+                        tempFileCache[key] = tempPath
+                        return@let
+                    }
+                    
                     try {
                         File(tempPath).delete()
                         CrashLogger.log("AudioManager", "Cleaned up temp file during cache clear: $tempPath")
@@ -792,6 +807,7 @@ class AudioManager(private val context: Context) {
             
             ffmpegPlayer?.release()
             ffmpegPlayer = null
+            currentFFmpegDataSourcePath = null // Clear tracking before cleanup
             exoPlayerFallback?.release()
             exoPlayerFallback = null
             spectrogramCache.clear()

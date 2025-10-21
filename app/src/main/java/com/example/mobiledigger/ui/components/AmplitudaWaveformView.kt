@@ -80,6 +80,10 @@ fun AmplitudaWaveformView(
                 // Process Amplituda on background thread to prevent ANR
                 scope.launch(Dispatchers.IO) {
                     try {
+                        // IMPORTANT: Native SIGSEGV crashes cannot be caught here!
+                        // If Amplituda's native code crashes, the app will terminate.
+                        // This try-catch only catches Kotlin/Java exceptions, not native crashes.
+                        
                         // Use Amplituda to process the audio with optimized settings
                         val amplituda = Amplituda(context)
                         

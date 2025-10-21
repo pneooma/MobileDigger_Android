@@ -1442,4 +1442,1735 @@
 10-21 22:37:45.182 D/MusicViewModel( 6707): High memory usage detected: 72%, clearing caches
 10-21 22:37:45.188 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2511732930434367817.aiff
 10-21 22:37:45.191 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7576981608863848650.aiff
-10-21 22:37:45.197 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example
+10-21 22:37:45.197 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6851547387625595690.aiff
+10-21 22:37:45.197 D/AudioManager( 6707): All caches cleared
+10-21 22:37:45.272 D/AudioManager( 6707): Attempting to play file: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:37:45.272 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSavage%20-%20Dancing%20In%20The%20Dark%20(Original%20Mix).aiff
+10-21 22:37:45.272 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:45.273 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:45.273 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:45.273 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:45.273 D/AudioManager( 6707): AIFF file detected: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:37:45.273 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:37:45.273 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:37:45.357 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3895959991101270643.aiff (36.00MB in 66ms, 545.43MB/s)
+10-21 22:37:45.357 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3895959991101270643.aiff
+10-21 22:37:45.357 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3895959991101270643.aiff
+10-21 22:37:45.358 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:37:45.358 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:37:45.358 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:37:45.358 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:37:45.359 D/MusicViewModel( 6707): Playback started successfully for Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:37:45.360 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:45.362 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:45.362 D/MusicViewModel( 6707): Preloaded next song: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:45.450 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:37:45.450 D/MusicViewModel( 6707): Loading AIFF file: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:45.450 D/AudioManager( 6707): Attempting to play file: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:45.450 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSonny%20Bass%20%26%20Ken%20Bauer%20-%20Desire%20(Extended)%20%5BFUTURE%20RAVE%20MUSIC%5D.aiff
+10-21 22:37:45.450 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:45.459 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:45.460 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:45.460 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:45.460 D/AudioManager( 6707): AIFF file detected: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:45.460 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:37:45.460 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:37:45.464 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:37:45.540 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3101376687364006213.aiff (43.65MB in 61ms, 715.53MB/s)
+10-21 22:37:45.540 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3101376687364006213.aiff
+10-21 22:37:45.540 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3101376687364006213.aiff
+10-21 22:37:45.540 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:37:45.540 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:37:45.541 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:37:45.541 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:45.541 D/MusicViewModel( 6707): Playback started successfully for Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:45.542 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:45.544 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:45.544 D/MusicViewModel( 6707): Preloaded next song: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:45.631 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:37:45.695 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:37:45.695 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:37:45.695 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:37:46.428 D/MusicViewModel( 6707): Found 559 rejected files
+10-21 22:37:46.468 D/MusicViewModel( 6707): Updated rejected files StateFlow with 559 files
+10-21 22:37:46.470 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:37:47.408 D/MusicViewModel( 6707): Found 14 liked files (including subfolders), 14 unique
+10-21 22:37:47.409 D/MusicViewModel( 6707): Updated liked files StateFlow with 14 files
+10-21 22:37:49.055 D/MusicViewModel( 6707): sortCurrentFile: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff with action DISLIKE
+10-21 22:37:49.057 D/MusicViewModel( 6707): File operation queued: Sonny Bass & Ken Bauer - Desire (Extended) [FUTURE RAVE MUSIC].aiff
+10-21 22:37:49.057 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:49.065 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:37:49.066 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:49.066 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:49.066 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:49.067 D/AudioManager( 6707): Preloaded player released.
+10-21 22:37:49.067 D/MusicViewModel( 6707): Loading AIFF file: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:49.067 D/AudioManager( 6707): Attempting to play file: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:49.067 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FThe%20Aston%20Shuffle%20-%20Fountain%20(Extended%20Mix)%20%5BOnly%20100s%5D.aiff
+10-21 22:37:49.068 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:49.068 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:49.068 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:49.068 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:49.068 D/AudioManager( 6707): AIFF file detected: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:49.068 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:37:49.068 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:37:49.174 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6933080182089413515.aiff (46.51MB in 74ms, 628.50MB/s)
+10-21 22:37:49.174 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6933080182089413515.aiff
+10-21 22:37:49.174 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6933080182089413515.aiff
+10-21 22:37:49.175 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:37:49.175 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:37:49.175 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:37:49.176 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:49.176 D/MusicViewModel( 6707): Playback started successfully for The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:49.178 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:49.179 D/MusicViewModel( 6707): Preloaded next song: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:49.265 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:37:49.265 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:37:49.265 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:37:49.267 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:37:49.396 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:37:49.398 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:37:49.829 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:37:49.842 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:37:49.853 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:37:50.314 D/MusicViewModel( 6707): Found 560 rejected files
+10-21 22:37:50.337 D/MusicViewModel( 6707): Updated rejected files StateFlow with 560 files
+10-21 22:37:53.226 D/MusicViewModel( 6707): sortCurrentFile: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff with action DISLIKE
+10-21 22:37:53.232 D/MusicViewModel( 6707): File operation queued: The Aston Shuffle - Fountain (Extended Mix) [Only 100s].aiff
+10-21 22:37:53.233 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:53.239 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:37:53.239 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:53.240 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:53.240 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:53.240 D/AudioManager( 6707): Preloaded player released.
+10-21 22:37:53.240 D/MusicViewModel( 6707): Loading AIFF file: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:53.240 D/MusicViewModel( 6707): Moderate memory usage: 63%, suggesting GC
+10-21 22:37:53.283 D/AudioManager( 6707): Attempting to play file: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:53.283 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTHE%20PRODIGY%20-%20NO%20GOOD%20(LAWZ%20EDIT%20EXTENDED).aiff
+10-21 22:37:53.283 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:53.283 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:53.283 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:53.283 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:53.283 D/AudioManager( 6707): AIFF file detected: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:53.283 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:37:53.283 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:37:53.763 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3770748260094297478.aiff (44.95MB in 454ms, 99.01MB/s)
+10-21 22:37:53.763 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3770748260094297478.aiff
+10-21 22:37:53.763 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3770748260094297478.aiff
+10-21 22:37:53.763 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:37:53.764 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:37:53.764 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:37:53.764 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:53.764 D/MusicViewModel( 6707): Playback started successfully for THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:53.766 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:53.774 D/MusicViewModel( 6707): Preloaded next song: Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:53.879 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:37:53.879 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:37:53.880 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:37:53.933 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:37:54.000 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:37:54.004 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:37:54.520 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:37:54.524 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:37:54.539 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:37:54.992 D/MusicViewModel( 6707): Found 561 rejected files
+10-21 22:37:54.994 D/MusicViewModel( 6707): Updated rejected files StateFlow with 561 files
+10-21 22:37:56.683 D/MusicViewModel( 6707): sortCurrentFile: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff with action DISLIKE
+10-21 22:37:56.690 D/MusicViewModel( 6707): File operation queued: THE PRODIGY - NO GOOD (LAWZ EDIT EXTENDED).aiff
+10-21 22:37:56.691 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:56.702 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:37:56.702 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:56.702 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:56.702 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:56.703 D/AudioManager( 6707): Preloaded player released.
+10-21 22:37:56.703 D/MusicViewModel( 6707): Loading AIFF file: Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:56.703 D/MusicViewModel( 6707): High memory usage detected: 74%, clearing caches
+10-21 22:37:56.711 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3895959991101270643.aiff
+10-21 22:37:56.719 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3101376687364006213.aiff
+10-21 22:37:56.725 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6933080182089413515.aiff
+10-21 22:37:56.730 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3770748260094297478.aiff
+10-21 22:37:56.730 D/AudioManager( 6707): All caches cleared
+10-21 22:37:56.769 D/AudioManager( 6707): Attempting to play file: Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:56.769 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNon%20Grata%20(GR)%20-%20Strike%20(Extended%20Mix).aiff
+10-21 22:37:56.769 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:56.769 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:56.769 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:56.769 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:56.769 D/AudioManager( 6707): AIFF file detected: Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:56.770 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:37:56.770 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:37:56.905 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5583221530795479297.aiff (67.09MB in 102ms, 657.71MB/s)
+10-21 22:37:56.905 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5583221530795479297.aiff
+10-21 22:37:56.906 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5583221530795479297.aiff
+10-21 22:37:56.906 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:37:56.906 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:37:56.906 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:37:56.906 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:56.906 D/MusicViewModel( 6707): Playback started successfully for Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:56.909 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:37:56.911 D/MusicViewModel( 6707): Preloaded next song: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:37:56.989 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:37:56.992 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:37:56.992 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:37:56.992 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:37:57.133 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:37:57.139 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:37:57.543 D/MusicViewModel( 6707): Found 85 liked files (including subfolders), 83 unique
+10-21 22:37:57.561 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:37:57.572 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:37:57.579 D/MusicViewModel( 6707): Found 0 rejected files
+10-21 22:37:57.586 D/MusicViewModel( 6707): Updated rejected files StateFlow with 0 files
+10-21 22:37:59.832 D/MusicViewModel( 6707): sortCurrentFile: Non Grata (GR) - Strike (Extended Mix).aiff with action DISLIKE
+10-21 22:37:59.833 D/MusicViewModel( 6707): File operation queued: Non Grata (GR) - Strike (Extended Mix).aiff
+10-21 22:37:59.834 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:37:59.842 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:37:59.842 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:37:59.842 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:37:59.842 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:37:59.843 D/AudioManager( 6707): Preloaded player released.
+10-21 22:37:59.843 D/MusicViewModel( 6707): Loading AIFF file: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:37:59.844 D/MusicViewModel( 6707): EMERGENCY: Memory usage at 93%, performing aggressive cleanup
+10-21 22:37:59.858 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5583221530795479297.aiff
+10-21 22:37:59.858 D/AudioManager( 6707): All caches cleared
+10-21 22:38:02.978 D/AudioManager( 6707): Attempting to play file: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:38:02.979 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FFelix%20Raphael%20'Sincerity'%20(Extended%20Mix)%20%5BPIAS%20Electronique%5D.aiff
+10-21 22:38:02.979 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:02.979 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:02.979 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:02.979 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:02.979 D/AudioManager( 6707): AIFF file detected: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:38:02.979 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:38:02.979 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:38:03.256 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5318733301732770485.aiff (68.16MB in 248ms, 274.85MB/s)
+10-21 22:38:03.256 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5318733301732770485.aiff
+10-21 22:38:03.256 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5318733301732770485.aiff
+10-21 22:38:03.257 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:38:03.257 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:38:03.258 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:38:03.258 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:38:03.258 D/MusicViewModel( 6707): Playback started successfully for Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:38:03.261 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:03.264 D/MusicViewModel( 6707): Preloaded next song: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:03.368 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:38:03.368 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:38:03.368 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:38:03.421 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:38:03.480 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:38:03.484 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:38:03.945 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:38:03.962 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:38:03.975 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:38:03.981 D/MusicViewModel( 6707): Found 0 rejected files
+10-21 22:38:03.983 D/MusicViewModel( 6707): Updated rejected files StateFlow with 0 files
+10-21 22:38:09.488 D/MusicViewModel( 6707): sortCurrentFile: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff with action DISLIKE
+10-21 22:38:09.489 D/MusicViewModel( 6707): File operation queued: Felix Raphael 'Sincerity' (Extended Mix) [PIAS Electronique].aiff
+10-21 22:38:09.490 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:09.497 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:38:09.497 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:09.498 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:09.498 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:09.498 D/AudioManager( 6707): Preloaded player released.
+10-21 22:38:09.499 D/MusicViewModel( 6707): Loading AIFF file: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:09.499 D/MusicViewModel( 6707): High memory usage detected: 81%, clearing caches
+10-21 22:38:09.508 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5318733301732770485.aiff
+10-21 22:38:09.508 D/AudioManager( 6707): All caches cleared
+10-21 22:38:09.550 D/AudioManager( 6707): Attempting to play file: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:09.550 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTIBASKO%20ft.%20Orem%20'Crystalise'%20(Original%20Mix)%20%5BPIAS%20Electronique%5D.aiff
+10-21 22:38:09.550 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:09.550 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:09.550 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:09.550 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:09.550 D/AudioManager( 6707): AIFF file detected: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:09.550 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:38:09.550 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:38:09.644 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7670898271739882247.aiff (44.45MB in 67ms, 663.41MB/s)
+10-21 22:38:09.644 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7670898271739882247.aiff
+10-21 22:38:09.644 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7670898271739882247.aiff
+10-21 22:38:09.644 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:38:09.644 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:38:09.645 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:38:09.645 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:09.645 D/MusicViewModel( 6707): Playback started successfully for TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:09.647 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:09.648 D/MusicViewModel( 6707): Preloaded next song: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:38:09.692 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:38:09.693 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:38:09.709 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:38:09.712 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:38:09.869 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:38:09.875 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:38:10.347 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:38:10.348 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:38:10.361 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:38:10.846 D/MusicViewModel( 6707): Found 564 rejected files
+10-21 22:38:10.847 D/MusicViewModel( 6707): Updated rejected files StateFlow with 564 files
+10-21 22:38:15.735 D/MusicViewModel( 6707): sortCurrentFile: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff with action DISLIKE
+10-21 22:38:15.737 D/MusicViewModel( 6707): File operation queued: TIBASKO ft. Orem 'Crystalise' (Original Mix) [PIAS Electronique].aiff
+10-21 22:38:15.738 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:15.746 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:38:15.746 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:15.747 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:15.747 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:15.747 D/AudioManager( 6707): Preloaded player released.
+10-21 22:38:15.748 D/MusicViewModel( 6707): Loading AIFF file: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:38:15.748 D/MusicViewModel( 6707): High memory usage detected: 77%, clearing caches
+10-21 22:38:15.755 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7670898271739882247.aiff
+10-21 22:38:15.755 D/AudioManager( 6707): All caches cleared
+10-21 22:38:15.800 D/AudioManager( 6707): Attempting to play file: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:38:15.800 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMariah%20Carey%20-%20Fantasy%20-%20(Stuart%20Ojelay%20Bootleg).aiff
+10-21 22:38:15.800 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:15.800 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:15.800 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:15.800 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:15.800 D/AudioManager( 6707): AIFF file detected: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:38:15.800 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:38:15.801 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:38:15.920 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6000900063649326408.aiff (59.35MB in 90ms, 659.45MB/s)
+10-21 22:38:15.920 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6000900063649326408.aiff
+10-21 22:38:15.920 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6000900063649326408.aiff
+10-21 22:38:15.921 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:38:15.921 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:38:15.921 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:38:15.921 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:38:15.921 D/MusicViewModel( 6707): Playback started successfully for Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:38:15.923 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:15.924 D/MusicViewModel( 6707): Preloaded next song: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:38:15.967 E/FFmpegMediaPlayer( 6707): Error (-38,0)
+10-21 22:38:15.968 D/AudioManager( 6707): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:38:16.026 D/AudioManager( 6707): FFmpegMediaPlayer playback completed
+10-21 22:38:16.026 D/MusicViewModel( 6707): Track completed, playing next.
+10-21 22:38:16.103 E/FFmpegMediaPlayer( 6707): Error (-38,0)
+10-21 22:38:16.103 D/AudioManager( 6707): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:38:16.104 D/AudioManager( 6707): FFmpegMediaPlayer playback completed
+10-21 22:38:16.104 D/MusicViewModel( 6707): Track completed, playing next.
+10-21 22:38:16.134 D/MusicViewModel( 6707): Loading AIFF file: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:38:16.134 D/AudioManager( 6707): Attempting to play file: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:38:16.134 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMary%20J%20Blige%20-%20Be%20Without%20You%20-%20(Stuart%20Ojelay%20Edit).aiff
+10-21 22:38:16.134 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:16.134 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:16.135 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:16.135 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:16.135 D/AudioManager( 6707): AIFF file detected: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:38:16.135 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:38:16.135 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:38:16.204 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3717416436847212114.aiff (51.33MB in 49ms, 1047.54MB/s)
+10-21 22:38:16.205 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3717416436847212114.aiff
+10-21 22:38:16.205 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3717416436847212114.aiff
+10-21 22:38:16.205 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:38:16.205 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:38:16.205 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:38:16.205 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:38:16.206 D/MusicViewModel( 6707): Playback started successfully for Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:38:16.212 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:16.216 D/MusicViewModel( 6707): Preloaded next song: 4A - Daydream (JØRD V.I.P Edit).wav
+10-21 22:38:16.217 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:16.299 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:38:16.300 D/MusicViewModel( 6707): Moderate memory usage: 65%, suggesting GC
+10-21 22:38:16.302 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:38:16.336 D/AudioManager( 6707): Attempting to play file: 4A - Daydream (JØRD V.I.P Edit).wav
+10-21 22:38:16.336 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F4A%20-%20Daydream%20(J%C3%98RD%20V.I.P%20Edit).wav
+10-21 22:38:16.336 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:38:16.345 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:38:16.345 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:38:16.346 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:38:16.346 D/AudioManager( 6707): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F4A%20-%20Daydream%20(J%C3%98RD%20V.I.P%20Edit).wav
+10-21 22:38:16.348 D/AudioManager( 6707): ExoPlayer started successfully
+10-21 22:38:16.348 D/AudioManager( 6707): ExoPlayer playback successful for: 4A - Daydream (JØRD V.I.P Edit).wav
+10-21 22:38:16.348 D/MusicViewModel( 6707): Playback started successfully for 4A - Daydream (JØRD V.I.P Edit).wav
+10-21 22:38:16.350 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:16.351 D/MusicViewModel( 6707): Preloaded next song: Betical_&_Bog_feat_Tailor_Safe_Eros_Guzmán_Remix_Extended_MASTER.wav
+10-21 22:38:16.352 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:38:17.017 D/MusicViewModel( 6707): Found 96 liked files (including subfolders), 83 unique
+10-21 22:38:17.020 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:38:17.030 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:38:17.037 D/MusicViewModel( 6707): Found 0 rejected files
+10-21 22:38:17.038 D/MusicViewModel( 6707): Updated rejected files StateFlow with 0 files
+10-21 22:39:10.754 D/MusicViewModel( 6707): sortCurrentFile: 4A - Daydream (JØRD V.I.P Edit).wav with action DISLIKE
+10-21 22:39:10.756 D/MusicViewModel( 6707): File operation queued: 4A - Daydream (JØRD V.I.P Edit).wav
+10-21 22:39:10.757 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:10.757 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:10.758 D/AudioManager( 6707): ExoPlayer stopped
+10-21 22:39:10.758 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:10.758 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:10.759 D/AudioManager( 6707): Preloaded player released.
+10-21 22:39:10.759 D/AudioManager( 6707): Attempting to play file: Betical_&_Bog_feat_Tailor_Safe_Eros_Guzmán_Remix_Extended_MASTER.wav
+10-21 22:39:10.759 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBetical_%26_Bog_feat_Tailor_Safe_Eros_Guzma%CC%81n_Remix_Extended_MASTER.wav
+10-21 22:39:10.759 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:10.759 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:10.759 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:10.759 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:10.759 D/AudioManager( 6707): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBetical_%26_Bog_feat_Tailor_Safe_Eros_Guzma%CC%81n_Remix_Extended_MASTER.wav
+10-21 22:39:10.760 D/AudioManager( 6707): ExoPlayer started successfully
+10-21 22:39:10.760 D/AudioManager( 6707): ExoPlayer playback successful for: Betical_&_Bog_feat_Tailor_Safe_Eros_Guzmán_Remix_Extended_MASTER.wav
+10-21 22:39:10.761 D/MusicViewModel( 6707): Playback started successfully for Betical_&_Bog_feat_Tailor_Safe_Eros_Guzmán_Remix_Extended_MASTER.wav
+10-21 22:39:10.763 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:10.765 D/MusicViewModel( 6707): Preloaded next song: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:10.987 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:39:10.990 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:39:11.411 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:39:11.430 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:39:11.440 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:39:11.935 D/MusicViewModel( 6707): Found 566 rejected files
+10-21 22:39:11.937 D/MusicViewModel( 6707): Updated rejected files StateFlow with 566 files
+10-21 22:39:15.942 D/MusicViewModel( 6707): sortCurrentFile: Betical_&_Bog_feat_Tailor_Safe_Eros_Guzmán_Remix_Extended_MASTER.wav with action DISLIKE
+10-21 22:39:15.945 D/MusicViewModel( 6707): File operation queued: Betical_&_Bog_feat_Tailor_Safe_Eros_Guzmán_Remix_Extended_MASTER.wav
+10-21 22:39:15.946 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:15.946 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:15.947 D/AudioManager( 6707): ExoPlayer stopped
+10-21 22:39:15.948 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:15.948 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:15.948 D/AudioManager( 6707): Preloaded player released.
+10-21 22:39:15.949 D/MusicViewModel( 6707): Loading AIFF file: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:15.949 D/AudioManager( 6707): Attempting to play file: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:15.949 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMichael%20Jackson%20-%20Billy%20Jean%20(Keith%20Mac%202025%20Re%20Edit).aiff
+10-21 22:39:15.949 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:15.949 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:15.949 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:15.949 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:15.949 D/AudioManager( 6707): AIFF file detected: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:15.949 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:39:15.949 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:39:16.089 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1907904506694480606.aiff (73.94MB in 96ms, 770.16MB/s)
+10-21 22:39:16.090 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1907904506694480606.aiff
+10-21 22:39:16.090 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1907904506694480606.aiff
+10-21 22:39:16.090 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:39:16.090 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:39:16.091 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:39:16.091 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:16.091 D/MusicViewModel( 6707): Playback started successfully for Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:16.093 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:16.096 D/MusicViewModel( 6707): Preloaded next song: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:16.176 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:39:16.229 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:39:16.229 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:39:16.229 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:39:16.323 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:39:16.328 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:39:16.807 D/MusicViewModel( 6707): Found 96 liked files (including subfolders), 83 unique
+10-21 22:39:16.809 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:39:16.820 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:39:16.825 D/MusicViewModel( 6707): Found 0 rejected files
+10-21 22:39:16.827 D/MusicViewModel( 6707): Updated rejected files StateFlow with 0 files
+10-21 22:39:25.803 D/MusicViewModel( 6707): sortCurrentFile: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff with action DISLIKE
+10-21 22:39:25.805 D/MusicViewModel( 6707): File operation queued: Michael Jackson - Billy Jean (Keith Mac 2025 Re Edit).aiff
+10-21 22:39:25.806 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:25.819 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:39:25.819 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:25.819 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:25.819 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:25.820 D/AudioManager( 6707): Preloaded player released.
+10-21 22:39:25.820 D/MusicViewModel( 6707): Loading AIFF file: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:25.820 D/MusicViewModel( 6707): High memory usage detected: 84%, clearing caches
+10-21 22:39:25.830 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6000900063649326408.aiff
+10-21 22:39:25.835 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3717416436847212114.aiff
+10-21 22:39:25.840 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1907904506694480606.aiff
+10-21 22:39:25.840 D/AudioManager( 6707): All caches cleared
+10-21 22:39:25.882 D/AudioManager( 6707): Attempting to play file: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:25.882 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FRobin%20Schulz%20x%20Sigala%20feat.%20Zoe%20Wees%20-%20AM%20to%20PM%20(Extended%20Mix)%20%5BWarner%20Music%20Central%20Europe%5D.aiff
+10-21 22:39:25.882 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:25.882 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:25.882 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:25.882 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:25.882 D/AudioManager( 6707): AIFF file detected: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:25.882 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:39:25.882 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:39:25.997 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_526472255490672017.aiff (37.07MB in 73ms, 507.81MB/s)
+10-21 22:39:25.997 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_526472255490672017.aiff
+10-21 22:39:25.997 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_526472255490672017.aiff
+10-21 22:39:25.997 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:39:25.998 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:39:25.998 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:39:25.998 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:25.998 D/MusicViewModel( 6707): Playback started successfully for Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:26.000 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:26.001 D/MusicViewModel( 6707): Preloaded next song: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:39:26.041 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:39:26.043 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:39:26.043 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:39:26.043 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:39:26.207 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:39:26.210 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:39:26.754 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:39:26.755 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:39:26.769 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:39:27.207 D/MusicViewModel( 6707): Found 568 rejected files
+10-21 22:39:27.210 D/MusicViewModel( 6707): Updated rejected files StateFlow with 568 files
+10-21 22:39:29.193 D/MusicViewModel( 6707): sortCurrentFile: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff with action DISLIKE
+10-21 22:39:29.196 D/MusicViewModel( 6707): File operation queued: Robin Schulz x Sigala feat. Zoe Wees - AM to PM (Extended Mix) [Warner Music Central Europe].aiff
+10-21 22:39:29.197 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:29.210 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:39:29.210 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:29.211 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:29.211 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:29.212 D/AudioManager( 6707): Preloaded player released.
+10-21 22:39:29.212 D/MusicViewModel( 6707): Loading AIFF file: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:39:29.212 D/MusicViewModel( 6707): High memory usage detected: 74%, clearing caches
+10-21 22:39:29.218 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_526472255490672017.aiff
+10-21 22:39:29.218 D/AudioManager( 6707): All caches cleared
+10-21 22:39:29.263 D/AudioManager( 6707): Attempting to play file: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:39:29.263 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSavage%20-%20Dancing%20In%20The%20Dark%20(Pas%20Remix).aiff
+10-21 22:39:29.263 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:29.263 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:29.263 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:29.263 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:29.263 D/AudioManager( 6707): AIFF file detected: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:39:29.264 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:39:29.264 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:39:29.347 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1739063384843847143.aiff (35.35MB in 51ms, 693.15MB/s)
+10-21 22:39:29.347 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1739063384843847143.aiff
+10-21 22:39:29.347 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1739063384843847143.aiff
+10-21 22:39:29.347 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:39:29.347 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:39:29.347 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:39:29.348 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:39:29.348 D/MusicViewModel( 6707): Playback started successfully for Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:39:29.349 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:29.351 D/MusicViewModel( 6707): Preloaded next song: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:39:29.379 E/FFmpegMediaPlayer( 6707): Error (-38,0)
+10-21 22:39:29.379 D/AudioManager( 6707): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:39:29.453 D/AudioManager( 6707): FFmpegMediaPlayer playback completed
+10-21 22:39:29.453 D/MusicViewModel( 6707): Track completed, playing next.
+10-21 22:39:29.512 E/FFmpegMediaPlayer( 6707): Error (-38,0)
+10-21 22:39:29.512 D/AudioManager( 6707): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:39:29.512 D/AudioManager( 6707): FFmpegMediaPlayer playback completed
+10-21 22:39:29.512 D/MusicViewModel( 6707): Track completed, playing next.
+10-21 22:39:29.526 D/MusicViewModel( 6707): Loading AIFF file: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:39:29.526 D/AudioManager( 6707): Attempting to play file: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:39:29.526 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FShaggy%2C%20Limitlezz%20-%20Boombastic%20(Extended%20Mix)%20%5BMilk%20%26%20Honey%20Records%5D.aiff
+10-21 22:39:29.526 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:29.527 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:29.527 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:29.527 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:29.527 D/AudioManager( 6707): AIFF file detected: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:39:29.527 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:39:29.527 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:39:29.604 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6706242239156190950.aiff (24.39MB in 36ms, 677.48MB/s)
+10-21 22:39:29.604 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6706242239156190950.aiff
+10-21 22:39:29.604 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6706242239156190950.aiff
+10-21 22:39:29.604 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:39:29.604 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:39:29.605 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:39:29.605 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:39:29.605 D/MusicViewModel( 6707): Playback started successfully for Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:39:29.606 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:29.609 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:29.609 D/MusicViewModel( 6707): Preloaded next song: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:39:29.682 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:39:29.682 D/MusicViewModel( 6707): Loading AIFF file: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:39:29.682 D/AudioManager( 6707): Attempting to play file: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:39:29.682 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FAlex%20Ross%20-%20Papi%20(Extended%20Edit)%20%5BPerfect%20Havoc%5D.aiff
+10-21 22:39:29.682 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:39:29.684 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:39:29.706 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:39:29.706 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:39:29.706 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:39:29.706 D/AudioManager( 6707): AIFF file detected: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:39:29.706 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:39:29.706 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:39:29.789 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7036999914270309703.aiff (39.53MB in 56ms, 705.91MB/s)
+10-21 22:39:29.789 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7036999914270309703.aiff
+10-21 22:39:29.789 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7036999914270309703.aiff
+10-21 22:39:29.789 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:39:29.789 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:39:29.790 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:39:29.790 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:39:29.790 D/MusicViewModel( 6707): Playback started successfully for Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:39:29.791 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:29.793 D/MusicViewModel( 6707): Preloaded next song: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:39:29.794 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:39:29.860 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:39:29.917 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:39:29.917 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:39:29.918 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:39:30.211 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:39:30.224 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:39:30.235 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:39:30.693 D/MusicViewModel( 6707): Found 568 rejected files
+10-21 22:39:30.703 D/MusicViewModel( 6707): Updated rejected files StateFlow with 568 files
+10-21 22:40:04.459 D/MusicViewModel( 6707): sortCurrentFile: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff with action LIKE
+10-21 22:40:04.461 D/MusicViewModel( 6707): File operation queued: Alex Ross - Papi (Extended Edit) [Perfect Havoc].aiff
+10-21 22:40:04.461 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:04.476 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:40:04.476 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:04.476 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:04.477 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:04.477 D/AudioManager( 6707): Preloaded player released.
+10-21 22:40:04.478 D/MusicViewModel( 6707): Loading AIFF file: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:40:04.478 D/AudioManager( 6707): Attempting to play file: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:40:04.478 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FBoris%20Dlugosch%20pres.%20Booom%20-%20Hold%20Your%20Head%20Up%20High%20-%20(Stuart%20Ojelay%20Bootleg).aiff
+10-21 22:40:04.478 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:04.479 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:04.479 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:04.479 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:04.479 D/AudioManager( 6707): AIFF file detected: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:40:04.479 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:40:04.479 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:40:04.591 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7164447311562773696.aiff (51.33MB in 73ms, 703.14MB/s)
+10-21 22:40:04.592 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7164447311562773696.aiff
+10-21 22:40:04.592 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7164447311562773696.aiff
+10-21 22:40:04.592 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:40:04.592 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:40:04.592 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:40:04.592 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:40:04.593 D/MusicViewModel( 6707): Playback started successfully for Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:40:04.594 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:40:04.596 D/MusicViewModel( 6707): Preloaded next song: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:04.648 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:40:04.648 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:40:04.648 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:40:04.650 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:40:04.802 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:40:04.806 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:40:05.236 D/MusicViewModel( 6707): Found 97 liked files (including subfolders), 83 unique
+10-21 22:40:05.252 D/MusicViewModel( 6707): Updated liked files StateFlow with 83 files
+10-21 22:40:05.265 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:40:05.728 D/MusicViewModel( 6707): Found 570 rejected files
+10-21 22:40:05.737 D/MusicViewModel( 6707): Updated rejected files StateFlow with 570 files
+10-21 22:40:11.175 D/MusicViewModel( 6707): sortCurrentFile: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff with action DISLIKE
+10-21 22:40:11.178 D/MusicViewModel( 6707): File operation queued: Boris Dlugosch pres. Booom - Hold Your Head Up High - (Stuart Ojelay Bootleg).aiff
+10-21 22:40:11.179 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:11.186 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:40:11.186 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:11.187 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:11.187 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:11.187 D/AudioManager( 6707): Preloaded player released.
+10-21 22:40:11.188 D/MusicViewModel( 6707): Loading AIFF file: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:11.188 D/MusicViewModel( 6707): Moderate memory usage: 65%, suggesting GC
+10-21 22:40:11.234 D/AudioManager( 6707): Attempting to play file: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:11.234 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FDOS%20x%20Fiscaro%20x%20Manolo%20x%20Delluxe%20-%20Come%20Inside%20(DOS%20Remix)%20%5BBeat%20Drop%20Records%5D.aiff
+10-21 22:40:11.234 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:11.234 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:11.234 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:11.234 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:11.234 D/AudioManager( 6707): AIFF file detected: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:11.234 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:40:11.234 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:40:11.322 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8794077292581502493.aiff (31.52MB in 53ms, 594.71MB/s)
+10-21 22:40:11.323 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8794077292581502493.aiff
+10-21 22:40:11.323 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8794077292581502493.aiff
+10-21 22:40:11.323 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:40:11.323 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:40:11.324 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:40:11.324 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:11.324 D/MusicViewModel( 6707): Playback started successfully for DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:11.325 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:40:11.326 D/MusicViewModel( 6707): Preloaded next song: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:11.353 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:40:11.354 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:40:11.354 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:40:11.356 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:40:11.527 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:40:11.530 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:40:12.002 D/MusicViewModel( 6707): Found 98 liked files (including subfolders), 84 unique
+10-21 22:40:12.003 D/MusicViewModel( 6707): Updated liked files StateFlow with 84 files
+10-21 22:40:12.015 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:40:12.464 D/MusicViewModel( 6707): Found 570 rejected files
+10-21 22:40:12.475 D/MusicViewModel( 6707): Updated rejected files StateFlow with 570 files
+10-21 22:40:15.260 D/MusicViewModel( 6707): sortCurrentFile: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff with action DISLIKE
+10-21 22:40:15.262 D/MusicViewModel( 6707): File operation queued: DOS x Fiscaro x Manolo x Delluxe - Come Inside (DOS Remix) [Beat Drop Records].aiff
+10-21 22:40:15.264 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:15.278 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:40:15.278 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:15.278 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:15.278 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:15.279 D/AudioManager( 6707): Preloaded player released.
+10-21 22:40:15.280 D/MusicViewModel( 6707): Loading AIFF file: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:15.280 D/AudioManager( 6707): Attempting to play file: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:15.280 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMike%20Ferullo%20x%20Fiscaro%20x%20Manolo%20x%20Delluxe%20-%20Come%20Inside%20(Extended%20Mix)%20%5BBeat%20Drop%20Records%5D.aiff
+10-21 22:40:15.280 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:15.280 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:15.280 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:15.280 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:15.280 D/AudioManager( 6707): AIFF file detected: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:15.281 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:40:15.281 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:40:15.415 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2183857734096990576.aiff (49.55MB in 70ms, 707.88MB/s)
+10-21 22:40:15.420 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1739063384843847143.aiff
+10-21 22:40:15.420 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2183857734096990576.aiff
+10-21 22:40:15.420 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2183857734096990576.aiff
+10-21 22:40:15.421 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:40:15.421 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:40:15.421 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:40:15.421 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:15.421 D/MusicViewModel( 6707): Playback started successfully for Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:15.423 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:40:15.427 D/MusicViewModel( 6707): Preloaded next song: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:15.491 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:40:15.491 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:40:15.491 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:40:15.493 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:40:15.642 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:40:15.648 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:40:16.077 D/MusicViewModel( 6707): Found 98 liked files (including subfolders), 84 unique
+10-21 22:40:16.078 D/MusicViewModel( 6707): Updated liked files StateFlow with 84 files
+10-21 22:40:16.092 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:40:16.557 D/MusicViewModel( 6707): Found 571 rejected files
+10-21 22:40:16.560 D/MusicViewModel( 6707): Updated rejected files StateFlow with 571 files
+10-21 22:40:17.658 D/MusicViewModel( 6707): sortCurrentFile: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff with action DISLIKE
+10-21 22:40:17.661 D/MusicViewModel( 6707): File operation queued: Mike Ferullo x Fiscaro x Manolo x Delluxe - Come Inside (Extended Mix) [Beat Drop Records].aiff
+10-21 22:40:17.662 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:17.672 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:40:17.673 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:17.673 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:17.673 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:17.674 D/AudioManager( 6707): Preloaded player released.
+10-21 22:40:17.674 D/MusicViewModel( 6707): Loading AIFF file: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:17.674 D/MusicViewModel( 6707): Moderate memory usage: 64%, suggesting GC
+10-21 22:40:17.723 D/AudioManager( 6707): Attempting to play file: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:17.723 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMssingno%20-%20Think%20Of%20Me%20(Original%20Mix)%20%5BMssingno001%5D.aiff
+10-21 22:40:17.723 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:17.723 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:17.723 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:17.723 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:17.723 D/AudioManager( 6707): AIFF file detected: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:17.723 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:40:17.723 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:40:18.111 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5454540544018988729.aiff (31.37MB in 356ms, 88.11MB/s)
+10-21 22:40:18.135 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6706242239156190950.aiff
+10-21 22:40:18.136 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5454540544018988729.aiff
+10-21 22:40:18.136 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5454540544018988729.aiff
+10-21 22:40:18.137 D/AudioManager( 6707): FFmpegMediaPlayer setDataSource successful
+10-21 22:40:18.137 D/AudioManager( 6707): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:40:18.138 D/AudioManager( 6707): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:40:18.138 D/AudioManager( 6707): FFmpegMediaPlayer playback successful for AIFF: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:18.138 D/MusicViewModel( 6707): Playback started successfully for Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:18.143 D/MusicViewModel( 6707): MusicService started successfully.
+10-21 22:40:18.146 D/MusicViewModel( 6707): Preloaded next song: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:40:18.262 I/FFmpegMediaPlayer( 6707): Info (802,0)
+10-21 22:40:18.262 D/AudioManager( 6707): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:40:18.262 D/AudioManager( 6707): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:40:18.316 D/AudioManager( 6707): ✅ Playback started automatically after async prepare
+10-21 22:40:18.366 D/MusicViewModel( 6707): Refreshed all playlists
+10-21 22:40:18.372 D/MusicViewModel( 6707): Loading liked files from destination folder: Results
+10-21 22:40:18.825 D/MusicViewModel( 6707): Found 98 liked files (including subfolders), 84 unique
+10-21 22:40:18.826 D/MusicViewModel( 6707): Updated liked files StateFlow with 84 files
+10-21 22:40:18.842 D/MusicViewModel( 6707): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:40:19.323 D/MusicViewModel( 6707): Found 572 rejected files
+10-21 22:40:19.326 D/MusicViewModel( 6707): Updated rejected files StateFlow with 572 files
+10-21 22:40:24.859 D/MusicViewModel( 6707): sortCurrentFile: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff with action DISLIKE
+10-21 22:40:24.871 D/MusicViewModel( 6707): File operation queued: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:40:24.872 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:24.876 D/AudioManager( 6707): FFmpegMediaPlayer stopped
+10-21 22:40:24.877 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:24.877 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:24.877 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:24.877 D/AudioManager( 6707): Preloaded player released.
+10-21 22:40:24.877 D/MusicViewModel( 6707): Loading AIFF file: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:40:24.877 D/AudioManager( 6707): Attempting to play file: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:40:24.878 D/AudioManager( 6707): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTinlicker%20'I%20Want%20My%20Freedom'%20(Original%20Mix)%20%5BPIAS%20Electronique%5D.aiff
+10-21 22:40:24.878 D/AudioManager( 6707): Stopping all playback before starting new file
+10-21 22:40:24.878 D/AudioManager( 6707): FFmpegMediaPlayer reset
+10-21 22:40:24.878 D/AudioManager( 6707): ExoPlayer cleared
+10-21 22:40:24.878 D/AudioManager( 6707): All playback stopped successfully
+10-21 22:40:24.878 D/AudioManager( 6707): AIFF file detected: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:40:24.878 D/AudioManager( 6707): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:40:24.878 D/AudioManager( 6707): FFmpegMediaPlayer is available, attempting playback
+10-21 22:40:25.007 D/AudioManager( 6707): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1041414433557866001.aiff (52.27MB in 82ms, 637.43MB/s)
+10-21 22:40:25.011 D/AudioManager( 6707): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7036999914270309703.aiff
+10-21 22:40:25.012 D/AudioManager( 6707): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1041414433557866001.aiff
+10-21 22:40:25.012 D/AudioManager( 6707): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1041414433557866001.aiff
+10-21 22:40:28.924 D/MusicViewModel( 7849): === APP STARTED ===
+10-21 22:40:28.924 D/MusicViewModel( 7849): Session counters reset
+10-21 22:40:28.925 D/AudioManager( 7849): Broadcast receiver registered successfully
+10-21 22:40:28.926 D/AudioManager( 7849): Attempting to create FFmpegMediaPlayer...
+10-21 22:40:28.951 D/AudioManager( 7849): FFmpegMediaPlayer created successfully
+10-21 22:40:28.951 D/AudioManager( 7849): FFmpegMediaPlayer listeners set successfully
+10-21 22:40:29.018 D/AudioManager( 7849): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-21 22:40:29.019 D/MusicViewModel( 7849): File operation worker started
+10-21 22:40:29.023 D/MusicViewModel( 7849): Loading liked files from destination folder: null
+10-21 22:40:29.024 D/MusicViewModel( 7849): No destination folder found
+10-21 22:40:29.028 D/MusicViewModel( 7849): Loaded subfolder history: 1 items
+10-21 22:40:29.030 D/MusicViewModel( 7849): MusicService started successfully.
+10-21 22:40:29.055 D/MusicViewModel( 7849): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-21 22:40:29.055 D/MusicViewModel( 7849): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-21 22:40:29.055 D/MusicViewModel( 7849): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:40:29.055 D/MusicViewModel( 7849): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:40:29.061 D/MusicViewModel( 7849): Source folder restored (use Rescan to load files)
+10-21 22:40:29.061 D/MusicViewModel( 7849): Initialized successfully
+10-21 22:40:29.426 D/MusicViewModel( 7849): Updated liked files StateFlow with 0 files
+10-21 22:40:29.427 D/MusicViewModel( 7849): Notification receiver registered successfully
+10-21 22:40:29.437 D/MusicViewModel( 7849): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:40:29.811 D/MusicViewModel( 7849): Found 573 rejected files
+10-21 22:40:29.813 D/MusicViewModel( 7849): Updated rejected files StateFlow with 573 files
+10-21 22:40:30.434 D/MusicViewModel( 7849): MusicService started successfully.
+10-21 22:40:36.267 D/MusicViewModel( 7849): Rescanning source folder: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:40:36.268 D/AudioManager( 7849): Stopping all playback before starting new file
+10-21 22:40:36.268 D/AudioManager( 7849): FFmpegMediaPlayer reset
+10-21 22:40:36.268 D/AudioManager( 7849): ExoPlayer cleared
+10-21 22:40:36.269 D/AudioManager( 7849): All playback stopped successfully
+10-21 22:40:36.271 D/AudioManager( 7849): Preloaded player released.
+10-21 22:40:36.272 D/AudioManager( 7849): Stopping all playback before starting new file
+10-21 22:40:36.272 D/AudioManager( 7849): FFmpegMediaPlayer reset
+10-21 22:40:36.272 D/AudioManager( 7849): ExoPlayer cleared
+10-21 22:40:36.272 D/AudioManager( 7849): All playback stopped successfully
+10-21 22:40:36.273 D/AudioManager( 7849): Preloaded player released.
+10-21 22:40:36.273 D/MusicViewModel( 7849): Starting folder selection: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:40:36.283 D/MusicViewModel( 7849): FileManager.setSelectedFolder completed
+10-21 22:40:36.283 D/MusicViewModel( 7849): Saved source folder URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:40:37.101 D/MusicViewModel( 7849): FileManager.loadMusicFiles completed with 431 files
+10-21 22:40:37.104 D/MusicViewModel( 7849): Updated musicFiles state
+10-21 22:40:37.105 D/AudioManager( 7849): Attempting to play file: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:40:37.105 D/AudioManager( 7849): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMeduza%20-%20No%20Sleep%20(Extended%20Mix).mp3
+10-21 22:40:37.105 D/AudioManager( 7849): Stopping all playback before starting new file
+10-21 22:40:37.106 D/AudioManager( 7849): FFmpegMediaPlayer reset
+10-21 22:40:37.106 D/AudioManager( 7849): ExoPlayer cleared
+10-21 22:40:37.106 D/AudioManager( 7849): All playback stopped successfully
+10-21 22:40:37.106 D/AudioManager( 7849): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMeduza%20-%20No%20Sleep%20(Extended%20Mix).mp3
+10-21 22:40:37.109 D/MusicViewModel( 7849): Loading liked files from destination folder: Results
+10-21 22:40:37.116 D/AudioManager( 7849): ExoPlayer started successfully
+10-21 22:40:37.116 D/AudioManager( 7849): ExoPlayer playback successful for: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:40:37.117 D/MusicViewModel( 7849): Playback started successfully for Meduza - No Sleep (Extended Mix).mp3
+10-21 22:40:37.124 D/MusicViewModel( 7849): MusicService started successfully.
+10-21 22:40:37.126 D/MusicViewModel( 7849): selectFolder completed successfully
+10-21 22:40:37.127 D/MusicViewModel( 7849): Preloaded next song: Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:40:37.616 D/MusicViewModel( 7849): Found 98 liked files (including subfolders), 84 unique
+10-21 22:40:37.653 D/MusicViewModel( 7849): Loaded 2 subfolders.
+10-21 22:40:37.653 D/MusicViewModel( 7849): Updated liked files StateFlow with 84 files
+10-21 22:40:37.668 D/MusicViewModel( 7849): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:40:38.105 D/MusicViewModel( 7849): Found 573 rejected files
+10-21 22:40:38.116 D/MusicViewModel( 7849): Updated rejected files StateFlow with 573 files
+10-21 22:42:43.048 D/MusicViewModel( 7849): MusicService started successfully.
+--------- beginning of system
+10-21 22:42:45.926 I/AudioManager(31460): dispatching onAudioFocusChange(-3) to android.media.AudioManager@8a7961aorg.chromium.content.browser.AudioFocusDelegate@ba6c125
+10-21 22:42:46.485 I/AudioManager(31460): dispatching onAudioFocusChange(1) to android.media.AudioManager@8a7961aorg.chromium.content.browser.AudioFocusDelegate@ba6c125
+10-21 22:44:11.831 D/MusicViewModel( 9024): === APP STARTED ===
+10-21 22:44:11.832 D/MusicViewModel( 9024): Session counters reset
+10-21 22:44:11.833 D/AudioManager( 9024): Broadcast receiver registered successfully
+10-21 22:44:11.834 D/AudioManager( 9024): Attempting to create FFmpegMediaPlayer...
+10-21 22:44:11.857 D/AudioManager( 9024): FFmpegMediaPlayer created successfully
+10-21 22:44:11.858 D/AudioManager( 9024): FFmpegMediaPlayer listeners set successfully
+10-21 22:44:11.912 D/AudioManager( 9024): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-21 22:44:11.913 D/MusicViewModel( 9024): File operation worker started
+10-21 22:44:11.914 D/MusicViewModel( 9024): Loading liked files from destination folder: null
+10-21 22:44:11.915 D/MusicViewModel( 9024): No destination folder found
+10-21 22:44:11.920 D/MusicViewModel( 9024): Loaded subfolder history: 1 items
+10-21 22:44:11.923 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:44:11.945 D/MusicViewModel( 9024): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-21 22:44:11.945 D/MusicViewModel( 9024): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-21 22:44:11.945 D/MusicViewModel( 9024): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:44:11.945 D/MusicViewModel( 9024): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:44:11.949 D/MusicViewModel( 9024): Source folder restored (use Rescan to load files)
+10-21 22:44:11.950 D/MusicViewModel( 9024): Initialized successfully
+10-21 22:44:12.254 D/AudioManager( 9072): Broadcast receiver registered successfully
+10-21 22:44:12.255 D/AudioManager( 9072): Attempting to create FFmpegMediaPlayer...
+10-21 22:44:12.288 D/AudioManager( 9072): FFmpegMediaPlayer created successfully
+10-21 22:44:12.288 D/AudioManager( 9072): FFmpegMediaPlayer listeners set successfully
+10-21 22:44:12.305 D/MusicViewModel( 9024): Updated liked files StateFlow with 0 files
+10-21 22:44:12.306 D/MusicViewModel( 9024): Notification receiver registered successfully
+10-21 22:44:12.324 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:44:12.381 D/AudioManager( 9072): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-21 22:44:12.748 D/MusicViewModel( 9024): Found 573 rejected files
+10-21 22:44:12.754 D/MusicViewModel( 9024): Updated rejected files StateFlow with 573 files
+10-21 22:44:13.315 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:44:31.916 D/MusicViewModel( 9024): Rescanning source folder: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:44:31.918 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:31.919 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:31.919 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:31.919 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:31.923 D/AudioManager( 9024): Preloaded player released.
+10-21 22:44:31.924 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:31.924 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:31.924 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:31.924 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:31.924 D/AudioManager( 9024): Preloaded player released.
+10-21 22:44:31.925 D/MusicViewModel( 9024): Starting folder selection: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:44:31.940 D/MusicViewModel( 9024): FileManager.setSelectedFolder completed
+10-21 22:44:31.940 D/MusicViewModel( 9024): Saved source folder URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:44:32.789 D/MusicViewModel( 9024): FileManager.loadMusicFiles completed with 431 files
+10-21 22:44:32.791 D/MusicViewModel( 9024): Updated musicFiles state
+10-21 22:44:32.792 D/AudioManager( 9024): Attempting to play file: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:44:32.792 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMeduza%20-%20No%20Sleep%20(Extended%20Mix).mp3
+10-21 22:44:32.793 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:32.793 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:32.793 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:32.793 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:32.793 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMeduza%20-%20No%20Sleep%20(Extended%20Mix).mp3
+10-21 22:44:32.795 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:44:32.804 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:44:32.804 D/AudioManager( 9024): ExoPlayer playback successful for: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:44:32.804 D/MusicViewModel( 9024): Playback started successfully for Meduza - No Sleep (Extended Mix).mp3
+10-21 22:44:32.811 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:44:32.813 D/MusicViewModel( 9024): selectFolder completed successfully
+10-21 22:44:32.814 D/MusicViewModel( 9024): Preloaded next song: Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:44:33.264 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:44:33.304 D/MusicViewModel( 9024): Loaded 2 subfolders.
+10-21 22:44:33.342 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:44:33.366 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:44:33.820 D/MusicViewModel( 9024): Found 573 rejected files
+10-21 22:44:33.829 D/MusicViewModel( 9024): Updated rejected files StateFlow with 573 files
+10-21 22:44:36.308 D/MusicViewModel( 9024): Loading AIFF file: Savage - Dancing In The Dark (Lifelike Remix).aiff
+10-21 22:44:36.309 D/AudioManager( 9024): Attempting to play file: Savage - Dancing In The Dark (Lifelike Remix).aiff
+10-21 22:44:36.309 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSavage%20-%20Dancing%20In%20The%20Dark%20(Lifelike%20Remix).aiff
+10-21 22:44:36.309 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:36.309 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:36.310 D/AudioManager( 9024): ExoPlayer stopped
+10-21 22:44:36.311 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:36.311 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:36.312 D/AudioManager( 9024): AIFF file detected: Savage - Dancing In The Dark (Lifelike Remix).aiff
+10-21 22:44:36.312 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:44:36.312 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:44:36.420 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7845291247720155034.aiff (46.62MB in 74ms, 630.01MB/s)
+10-21 22:44:36.420 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7845291247720155034.aiff
+10-21 22:44:36.420 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7845291247720155034.aiff
+10-21 22:44:36.421 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:44:36.421 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:44:36.422 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:44:36.422 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Savage - Dancing In The Dark (Lifelike Remix).aiff
+10-21 22:44:36.422 D/MusicViewModel( 9024): Playback started successfully for Savage - Dancing In The Dark (Lifelike Remix).aiff
+10-21 22:44:36.424 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:44:36.426 D/MusicViewModel( 9024): Preloaded next song: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:36.566 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:44:36.619 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:44:36.619 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:44:36.619 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:44:43.432 D/MusicViewModel( 9024): sortCurrentFile: Savage - Dancing In The Dark (Lifelike Remix).aiff with action DISLIKE
+10-21 22:44:43.436 D/MusicViewModel( 9024): File operation queued: Savage - Dancing In The Dark (Lifelike Remix).aiff
+10-21 22:44:43.437 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:43.443 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:44:43.443 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:43.443 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:43.444 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:43.444 D/AudioManager( 9024): Preloaded player released.
+10-21 22:44:43.445 D/MusicViewModel( 9024): Loading AIFF file: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:43.445 D/AudioManager( 9024): Attempting to play file: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:43.445 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSavage%20-%20Dancing%20In%20The%20Dark%20(Original%20Mix).aiff
+10-21 22:44:43.445 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:43.445 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:43.445 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:43.445 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:43.445 D/AudioManager( 9024): AIFF file detected: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:43.446 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:44:43.446 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:44:43.530 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2900337163932524626.aiff (36.00MB in 55ms, 654.52MB/s)
+10-21 22:44:43.530 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2900337163932524626.aiff
+10-21 22:44:43.531 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2900337163932524626.aiff
+10-21 22:44:43.531 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:44:43.531 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:44:43.531 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:44:43.531 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:43.531 D/MusicViewModel( 9024): Playback started successfully for Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:43.533 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:44:43.534 D/MusicViewModel( 9024): Preloaded next song: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:44:43.673 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:44:43.673 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:44:43.673 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:44:43.676 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:44:43.769 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:44:43.786 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:44:44.294 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:44:44.295 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:44:44.308 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:44:44.739 D/MusicViewModel( 9024): Found 573 rejected files
+10-21 22:44:44.748 D/MusicViewModel( 9024): Updated rejected files StateFlow with 573 files
+10-21 22:44:47.032 D/MusicViewModel( 9024): sortCurrentFile: Savage - Dancing In The Dark (Original Mix).aiff with action DISLIKE
+10-21 22:44:47.033 D/MusicViewModel( 9024): File operation queued: Savage - Dancing In The Dark (Original Mix).aiff
+10-21 22:44:47.034 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:47.039 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:44:47.039 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:47.039 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:47.039 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:47.040 D/AudioManager( 9024): Preloaded player released.
+10-21 22:44:47.040 D/MusicViewModel( 9024): Loading AIFF file: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:44:47.040 D/AudioManager( 9024): Attempting to play file: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:44:47.040 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMariah%20Carey%20-%20Fantasy%20-%20(Stuart%20Ojelay%20Bootleg).aiff
+10-21 22:44:47.040 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:44:47.040 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:44:47.040 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:44:47.040 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:44:47.040 D/AudioManager( 9024): AIFF file detected: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:44:47.040 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:44:47.040 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:44:47.163 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3421875574759471320.aiff (59.35MB in 102ms, 581.87MB/s)
+10-21 22:44:47.164 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3421875574759471320.aiff
+10-21 22:44:47.164 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3421875574759471320.aiff
+10-21 22:44:47.164 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:44:47.164 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:44:47.165 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:44:47.165 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:44:47.165 D/MusicViewModel( 9024): Playback started successfully for Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:44:47.167 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:44:47.169 D/MusicViewModel( 9024): Preloaded next song: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:44:47.243 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:44:47.243 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:44:47.243 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:44:47.245 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:44:47.388 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:44:47.393 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:44:47.871 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:44:47.885 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:44:47.897 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:44:48.285 D/MusicViewModel( 9024): Found 574 rejected files
+10-21 22:44:48.287 D/MusicViewModel( 9024): Updated rejected files StateFlow with 574 files
+10-21 22:45:03.550 D/MusicViewModel( 9024): sortCurrentFile: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff with action DISLIKE
+10-21 22:45:03.563 D/MusicViewModel( 9024): File operation queued: Mariah Carey - Fantasy - (Stuart Ojelay Bootleg).aiff
+10-21 22:45:03.564 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:45:03.572 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:45:03.572 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:45:03.572 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:45:03.573 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:45:03.573 D/AudioManager( 9024): Preloaded player released.
+10-21 22:45:03.574 D/MusicViewModel( 9024): Loading AIFF file: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:45:03.574 D/MusicViewModel( 9024): EMERGENCY: Memory usage at 87%, performing aggressive cleanup
+10-21 22:45:03.585 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7845291247720155034.aiff
+10-21 22:45:03.592 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2900337163932524626.aiff
+10-21 22:45:03.601 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3421875574759471320.aiff
+10-21 22:45:03.601 D/AudioManager( 9024): All caches cleared
+10-21 22:45:03.670 D/AudioManager( 9024): Attempting to play file: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:45:03.671 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMary%20J%20Blige%20-%20Be%20Without%20You%20-%20(Stuart%20Ojelay%20Edit).aiff
+10-21 22:45:03.671 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:45:03.671 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:45:03.671 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:45:03.671 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:45:03.671 D/AudioManager( 9024): AIFF file detected: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:45:03.671 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:45:03.671 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:45:03.769 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2199609270319516078.aiff (51.33MB in 74ms, 693.64MB/s)
+10-21 22:45:03.769 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2199609270319516078.aiff
+10-21 22:45:03.769 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2199609270319516078.aiff
+10-21 22:45:03.769 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:45:03.769 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:45:03.769 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:45:03.769 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:45:03.770 D/MusicViewModel( 9024): Playback started successfully for Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:45:03.771 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:45:03.778 D/MusicViewModel( 9024): Preloaded next song: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:03.830 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:45:03.830 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:45:03.830 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:45:03.834 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:45:03.992 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:45:03.994 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:45:04.551 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:45:04.552 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:45:04.573 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:45:05.120 D/MusicViewModel( 9024): Found 575 rejected files
+10-21 22:45:05.121 D/MusicViewModel( 9024): Updated rejected files StateFlow with 575 files
+10-21 22:45:39.801 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:45:42.642 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:45:46.450 D/MusicViewModel( 9024): sortCurrentFile: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff with action DISLIKE
+10-21 22:45:46.452 D/MusicViewModel( 9024): File operation queued: Mary J Blige - Be Without You - (Stuart Ojelay Edit).aiff
+10-21 22:45:46.454 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:45:46.461 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:45:46.461 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:45:46.461 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:45:46.461 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:45:46.462 D/AudioManager( 9024): Preloaded player released.
+10-21 22:45:46.463 D/MusicViewModel( 9024): Loading AIFF file: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:46.463 D/AudioManager( 9024): Attempting to play file: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:46.463 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FSavage%20-%20Dancing%20In%20The%20Dark%20(Pas%20Remix).aiff
+10-21 22:45:46.463 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:45:46.463 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:45:46.463 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:45:46.463 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:45:46.463 D/AudioManager( 9024): AIFF file detected: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:46.464 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:45:46.464 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:45:46.559 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2113603600135437487.aiff (35.35MB in 65ms, 543.85MB/s)
+10-21 22:45:46.559 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2113603600135437487.aiff
+10-21 22:45:46.559 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2113603600135437487.aiff
+10-21 22:45:46.560 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:45:46.560 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:45:46.560 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:45:46.560 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:46.560 D/MusicViewModel( 9024): Playback started successfully for Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:46.562 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:45:46.563 D/MusicViewModel( 9024): Preloaded next song: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:45:46.671 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:45:46.671 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:45:46.672 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:45:46.674 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:45:46.799 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:45:46.806 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:45:47.287 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:45:47.288 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:45:47.299 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:45:47.717 D/MusicViewModel( 9024): Found 576 rejected files
+10-21 22:45:47.737 D/MusicViewModel( 9024): Updated rejected files StateFlow with 576 files
+10-21 22:45:53.912 D/MusicViewModel( 9024): sortCurrentFile: Savage - Dancing In The Dark (Pas Remix).aiff with action DISLIKE
+10-21 22:45:53.914 D/MusicViewModel( 9024): File operation queued: Savage - Dancing In The Dark (Pas Remix).aiff
+10-21 22:45:53.916 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:45:53.928 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:45:53.929 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:45:53.929 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:45:53.929 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:45:53.930 D/AudioManager( 9024): Preloaded player released.
+10-21 22:45:53.931 D/MusicViewModel( 9024): Loading AIFF file: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:45:53.931 D/MusicViewModel( 9024): Moderate memory usage: 61%, suggesting GC
+10-21 22:45:53.972 D/AudioManager( 9024): Attempting to play file: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:45:53.972 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FShaggy%2C%20Limitlezz%20-%20Boombastic%20(Extended%20Mix)%20%5BMilk%20%26%20Honey%20Records%5D.aiff
+10-21 22:45:53.972 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:45:53.972 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:45:53.972 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:45:53.972 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:45:53.972 D/AudioManager( 9024): AIFF file detected: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:45:53.972 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:45:53.972 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:45:54.048 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1667612279034872408.aiff (24.39MB in 51ms, 478.22MB/s)
+10-21 22:45:54.048 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1667612279034872408.aiff
+10-21 22:45:54.049 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1667612279034872408.aiff
+10-21 22:45:54.049 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:45:54.049 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:45:54.050 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:45:54.050 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:45:54.050 D/MusicViewModel( 9024): Playback started successfully for Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:45:54.052 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:45:54.054 D/MusicViewModel( 9024): Preloaded next song: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:45:54.129 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:45:54.129 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:45:54.129 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:45:54.131 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:45:54.260 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:45:54.262 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:45:54.727 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:45:54.738 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:45:54.749 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:45:55.192 D/MusicViewModel( 9024): Found 577 rejected files
+10-21 22:45:55.202 D/MusicViewModel( 9024): Updated rejected files StateFlow with 577 files
+10-21 22:47:29.917 D/MusicViewModel( 9024): sortCurrentFile: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff with action LIKE
+10-21 22:47:29.921 D/MusicViewModel( 9024): File operation queued: Shaggy, Limitlezz - Boombastic (Extended Mix) [Milk & Honey Records].aiff
+10-21 22:47:29.922 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:29.928 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:47:29.929 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:29.929 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:29.929 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:29.930 D/AudioManager( 9024): Preloaded player released.
+10-21 22:47:29.930 D/MusicViewModel( 9024): Loading AIFF file: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:47:29.930 D/AudioManager( 9024): Attempting to play file: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:47:29.930 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMssingno%20-%20Think%20Of%20Me%20(Original%20Mix)%20%5BMssingno001%5D.aiff
+10-21 22:47:29.930 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:29.930 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:29.930 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:29.930 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:29.930 D/AudioManager( 9024): AIFF file detected: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:47:29.930 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:29.930 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:30.039 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2238545855246904523.aiff (31.37MB in 57ms, 550.31MB/s)
+10-21 22:47:30.039 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2238545855246904523.aiff
+10-21 22:47:30.039 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2238545855246904523.aiff
+10-21 22:47:30.039 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:30.040 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:30.040 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:30.040 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:47:30.040 D/MusicViewModel( 9024): Playback started successfully for Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:47:30.042 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:30.044 D/MusicViewModel( 9024): Preloaded next song: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:47:30.121 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:47:30.121 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:47:30.121 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:47:30.123 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:47:30.254 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:47:30.255 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:47:30.699 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 84 unique
+10-21 22:47:30.719 D/MusicViewModel( 9024): Updated liked files StateFlow with 84 files
+10-21 22:47:30.734 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:47:31.217 D/MusicViewModel( 9024): Found 578 rejected files
+10-21 22:47:31.220 D/MusicViewModel( 9024): Updated rejected files StateFlow with 578 files
+10-21 22:47:34.466 D/MusicViewModel( 9024): sortCurrentFile: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff with action DISLIKE
+10-21 22:47:34.467 D/MusicViewModel( 9024): File operation queued: Mssingno - Think Of Me (Original Mix) [Mssingno001].aiff
+10-21 22:47:34.468 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:34.479 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:47:34.480 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:34.480 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:34.480 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:34.481 D/AudioManager( 9024): Preloaded player released.
+10-21 22:47:34.481 D/MusicViewModel( 9024): Loading AIFF file: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:47:34.482 D/AudioManager( 9024): Attempting to play file: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:47:34.482 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTinlicker%20'I%20Want%20My%20Freedom'%20(Original%20Mix)%20%5BPIAS%20Electronique%5D.aiff
+10-21 22:47:34.482 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:34.482 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:34.482 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:34.482 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:34.482 D/AudioManager( 9024): AIFF file detected: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:47:34.482 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:34.483 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:34.587 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1411320093200170616.aiff (52.27MB in 75ms, 696.92MB/s)
+10-21 22:47:34.587 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1411320093200170616.aiff
+10-21 22:47:34.587 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1411320093200170616.aiff
+10-21 22:47:34.587 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:34.587 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:34.588 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:34.588 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:47:34.588 D/MusicViewModel( 9024): Playback started successfully for Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:47:34.590 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:34.591 D/MusicViewModel( 9024): Preloaded next song: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:34.697 E/FFmpegMediaPlayer( 9024): Error (-38,0)
+10-21 22:47:34.698 D/AudioManager( 9024): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:47:34.706 D/AudioManager( 9024): FFmpegMediaPlayer playback completed
+10-21 22:47:34.706 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:34.719 E/FFmpegMediaPlayer( 9024): Error (-38,0)
+10-21 22:47:34.720 D/AudioManager( 9024): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:47:34.720 D/AudioManager( 9024): FFmpegMediaPlayer playback completed
+10-21 22:47:34.720 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:34.772 D/MusicViewModel( 9024): Loading AIFF file: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:34.773 D/AudioManager( 9024): Attempting to play file: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:34.773 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FM%C3%B8sard%20-%20Instagram%20%5BNervous%20Records%5D.aiff
+10-21 22:47:34.773 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:34.773 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:34.773 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:34.773 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:34.773 D/AudioManager( 9024): AIFF file detected: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:34.773 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:34.773 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:34.869 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2838485490668133881.aiff (51.95MB in 70ms, 742.12MB/s)
+10-21 22:47:34.871 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2199609270319516078.aiff
+10-21 22:47:34.871 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2838485490668133881.aiff
+10-21 22:47:34.871 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2838485490668133881.aiff
+10-21 22:47:34.871 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:34.871 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:34.874 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:34.874 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:34.875 D/MusicViewModel( 9024): Playback started successfully for Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:34.876 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:34.878 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:34.881 D/MusicViewModel( 9024): Preloaded next song: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:34.930 D/MusicViewModel( 9024): Loading AIFF file: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:34.930 D/MusicViewModel( 9024): High memory usage detected: 71%, clearing caches
+10-21 22:47:34.934 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2113603600135437487.aiff
+10-21 22:47:34.937 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1667612279034872408.aiff
+10-21 22:47:34.942 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2238545855246904523.aiff
+10-21 22:47:34.948 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1411320093200170616.aiff
+10-21 22:47:34.948 D/AudioManager( 9024): ⚠️ Skipping deletion of in-use temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2838485490668133881.aiff
+10-21 22:47:34.948 D/AudioManager( 9024): All caches cleared
+10-21 22:47:35.009 D/AudioManager( 9024): Attempting to play file: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:35.009 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FKings%20of%20Tomorrow%20-%20Finally%20-%20(Stuart%20Ojelay%20Edit).aiff
+10-21 22:47:35.009 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:35.015 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:35.015 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:35.015 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:35.015 D/AudioManager( 9024): AIFF file detected: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:35.015 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:35.016 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:35.124 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8438739013988267401.aiff (52.86MB in 83ms, 636.89MB/s)
+10-21 22:47:35.124 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8438739013988267401.aiff
+10-21 22:47:35.124 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8438739013988267401.aiff
+10-21 22:47:35.124 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:35.124 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:35.125 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:35.125 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:35.125 D/MusicViewModel( 9024): Playback started successfully for Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:35.126 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.128 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.128 D/MusicViewModel( 9024): Refreshed all playlists
+10-21 22:47:35.129 D/MusicViewModel( 9024): Preloaded next song: Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:35.132 D/MusicViewModel( 9024): Loading liked files from destination folder: Results
+10-21 22:47:35.185 E/FFmpegMediaPlayer( 9024): Error (-38,0)
+10-21 22:47:35.185 D/AudioManager( 9024): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:47:35.226 D/AudioManager( 9024): FFmpegMediaPlayer playback completed
+10-21 22:47:35.226 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:35.282 E/FFmpegMediaPlayer( 9024): Error (-38,0)
+10-21 22:47:35.282 D/AudioManager( 9024): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:47:35.282 D/AudioManager( 9024): FFmpegMediaPlayer playback completed
+10-21 22:47:35.282 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:35.344 D/MusicViewModel( 9024): EMERGENCY: Memory usage at 95%, performing aggressive cleanup
+10-21 22:47:35.350 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2838485490668133881.aiff
+10-21 22:47:35.350 D/AudioManager( 9024): ⚠️ Skipping deletion of in-use temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8438739013988267401.aiff
+10-21 22:47:35.350 D/AudioManager( 9024): All caches cleared
+10-21 22:47:35.436 D/AudioManager( 9024): Attempting to play file: Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:35.436 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FDennis%20Ferrer%20%26%20Rbor%20-%20Hey%20Hey%20Lorris%20D'errico%20%20Dreaming'%20ID%20by%20Rivoli.mp3
+10-21 22:47:35.436 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:35.436 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:35.436 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:35.437 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:35.437 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FDennis%20Ferrer%20%26%20Rbor%20-%20Hey%20Hey%20Lorris%20D'errico%20%20Dreaming'%20ID%20by%20Rivoli.mp3
+10-21 22:47:35.438 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:35.438 D/AudioManager( 9024): ExoPlayer playback successful for: Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:35.438 D/MusicViewModel( 9024): Playback started successfully for Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:35.440 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.442 D/MusicViewModel( 9024): Preloaded next song: Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:35.448 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.465 D/MusicViewModel( 9024): Moderate memory usage: 61%, suggesting GC
+10-21 22:47:35.572 D/AudioManager( 9024): Attempting to play file: Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:35.572 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FPeace%20Control%20-%20U%20AIN'T%20LYIN%20(DJ%20MSTR).wav
+10-21 22:47:35.572 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:35.572 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:35.573 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:35.574 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:35.574 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:35.574 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:35.575 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FPeace%20Control%20-%20U%20AIN'T%20LYIN%20(DJ%20MSTR).wav
+10-21 22:47:35.576 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:35.577 D/AudioManager( 9024): ExoPlayer playback successful for: Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:35.577 D/MusicViewModel( 9024): Playback started successfully for Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:35.579 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.580 D/MusicViewModel( 9024): Preloaded next song: NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:35.581 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.674 D/AudioManager( 9024): Attempting to play file: NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:35.674 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNUEVAYoL%20(Matt%20Sawyer%2C%20Chris%20Leon%20Remix).wav
+10-21 22:47:35.674 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:35.674 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:35.675 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:35.675 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:35.676 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:35.676 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:35.676 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNUEVAYoL%20(Matt%20Sawyer%2C%20Chris%20Leon%20Remix).wav
+10-21 22:47:35.678 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:35.678 D/AudioManager( 9024): ExoPlayer playback successful for: NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:35.678 D/MusicViewModel( 9024): Playback started successfully for NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:35.683 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.684 D/MusicViewModel( 9024): Preloaded next song: Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:35.686 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.781 D/MusicViewModel( 9024): Moderate memory usage: 65%, suggesting GC
+10-21 22:47:35.820 D/AudioManager( 9024): Attempting to play file: Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:35.821 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FFatima%20Yamaha%20-%20What's%20a%20girl%20to%20do%20(Layton%20Giordani%20Rmx).wav
+10-21 22:47:35.821 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:35.821 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:35.822 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:35.822 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:35.822 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:35.822 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:35.822 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FFatima%20Yamaha%20-%20What's%20a%20girl%20to%20do%20(Layton%20Giordani%20Rmx).wav
+10-21 22:47:35.824 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:35.824 D/AudioManager( 9024): ExoPlayer playback successful for: Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:35.824 D/MusicViewModel( 9024): Playback started successfully for Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:35.825 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.827 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:35.830 D/MusicViewModel( 9024): Preloaded next song: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:35.905 D/MusicViewModel( 9024): Loading AIFF file: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:35.905 D/MusicViewModel( 9024): High memory usage detected: 73%, clearing caches
+10-21 22:47:35.911 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8438739013988267401.aiff
+10-21 22:47:35.911 D/AudioManager( 9024): All caches cleared
+10-21 22:47:35.980 D/AudioManager( 9024): Attempting to play file: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:35.980 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FObsku%CC%88r%2C%20Omar%2B%20-%20Serious%20(Extended%20Mix)%20%5BDisorder%5D.aiff
+10-21 22:47:35.980 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:35.980 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:35.981 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:35.981 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:35.982 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:35.982 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:35.982 D/AudioManager( 9024): AIFF file detected: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:35.982 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:35.982 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:36.076 D/MusicViewModel( 9024): Found 98 liked files (including subfolders), 85 unique
+10-21 22:47:36.104 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1902025051970765109.aiff (49.59MB in 96ms, 516.54MB/s)
+10-21 22:47:36.105 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1902025051970765109.aiff
+10-21 22:47:36.105 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1902025051970765109.aiff
+10-21 22:47:36.106 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:36.106 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:36.106 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:36.107 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:36.107 D/MusicViewModel( 9024): Playback started successfully for Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:36.109 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:36.111 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:36.112 D/MusicViewModel( 9024): Preloaded next song: Illsusionize, Mochakk - Love Someone Else [F.wav
+10-21 22:47:36.168 D/MusicViewModel( 9024): High memory usage detected: 77%, clearing caches
+10-21 22:47:36.168 D/AudioManager( 9024): ⚠️ Skipping deletion of in-use temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1902025051970765109.aiff
+10-21 22:47:36.168 D/AudioManager( 9024): All caches cleared
+10-21 22:47:37.333 D/AudioManager( 9024): Attempting to play file: Illsusionize, Mochakk - Love Someone Else [F.wav
+10-21 22:47:37.334 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FIllsusionize%2C%20Mochakk%20-%20Love%20Someone%20Else%20%5BF.wav
+10-21 22:47:37.334 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:37.336 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:37.337 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:37.337 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:37.337 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FIllsusionize%2C%20Mochakk%20-%20Love%20Someone%20Else%20%5BF.wav
+10-21 22:47:37.338 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:37.338 D/AudioManager( 9024): ExoPlayer playback successful for: Illsusionize, Mochakk - Love Someone Else [F.wav
+10-21 22:47:37.338 D/MusicViewModel( 9024): Playback started successfully for Illsusionize, Mochakk - Love Someone Else [F.wav
+10-21 22:47:37.341 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:37.342 D/MusicViewModel( 9024): Preloaded next song: VOID - LATCH (WE MIX).wav
+10-21 22:47:37.343 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:37.347 D/MusicViewModel( 9024): Updated liked files StateFlow with 85 files
+10-21 22:47:37.377 D/MusicViewModel( 9024): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:47:38.173 D/MusicViewModel( 9024): Found 579 rejected files
+10-21 22:47:38.193 D/MusicViewModel( 9024): Updated rejected files StateFlow with 579 files
+10-21 22:47:40.626 D/MusicViewModel( 9024): Loading AIFF file: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:40.627 D/AudioManager( 9024): Attempting to play file: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:40.627 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FM%C3%B8sard%20-%20Instagram%20%5BNervous%20Records%5D.aiff
+10-21 22:47:40.627 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:40.627 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:40.629 D/AudioManager( 9024): ExoPlayer stopped
+10-21 22:47:40.629 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:40.629 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:40.630 D/AudioManager( 9024): AIFF file detected: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:40.630 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:40.630 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:40.704 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1875654454867445136.aiff (51.95MB in 42ms, 1236.87MB/s)
+10-21 22:47:40.704 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1875654454867445136.aiff
+10-21 22:47:40.704 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1875654454867445136.aiff
+10-21 22:47:40.704 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:40.704 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:40.704 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:40.704 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:40.705 D/MusicViewModel( 9024): Playback started successfully for Møsard - Instagram [Nervous Records].aiff
+10-21 22:47:40.706 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:40.708 D/MusicViewModel( 9024): Preloaded next song: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:40.799 I/FFmpegMediaPlayer( 9024): Info (802,0)
+10-21 22:47:40.799 D/AudioManager( 9024): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:47:40.799 D/AudioManager( 9024): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:47:40.853 D/AudioManager( 9024): ✅ Playback started automatically after async prepare
+10-21 22:47:42.529 D/MusicViewModel( 9024): Loading AIFF file: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:42.529 D/MusicViewModel( 9024): EMERGENCY: Memory usage at 86%, performing aggressive cleanup
+10-21 22:47:42.540 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1902025051970765109.aiff
+10-21 22:47:42.540 D/AudioManager( 9024): ⚠️ Skipping deletion of in-use temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1875654454867445136.aiff
+10-21 22:47:42.541 D/AudioManager( 9024): All caches cleared
+10-21 22:47:43.854 D/AudioManager( 9024): Attempting to play file: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:43.854 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FKings%20of%20Tomorrow%20-%20Finally%20-%20(Stuart%20Ojelay%20Edit).aiff
+10-21 22:47:43.854 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:43.870 D/AudioManager( 9024): FFmpegMediaPlayer stopped
+10-21 22:47:43.871 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:43.871 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:43.871 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:43.871 D/AudioManager( 9024): AIFF file detected: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:43.871 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:43.871 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:43.971 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2564142012824511358.aiff (52.86MB in 56ms, 943.96MB/s)
+10-21 22:47:43.971 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2564142012824511358.aiff
+10-21 22:47:43.971 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2564142012824511358.aiff
+10-21 22:47:43.972 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:43.972 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:43.972 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:43.972 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:43.972 D/MusicViewModel( 9024): Playback started successfully for Kings of Tomorrow - Finally - (Stuart Ojelay Edit).aiff
+10-21 22:47:43.974 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:43.976 D/MusicViewModel( 9024): Preloaded next song: Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:44.009 E/FFmpegMediaPlayer( 9024): Error (-38,0)
+10-21 22:47:44.009 D/AudioManager( 9024): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:47:44.076 D/AudioManager( 9024): FFmpegMediaPlayer playback completed
+10-21 22:47:44.077 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:44.161 E/FFmpegMediaPlayer( 9024): Error (-38,0)
+10-21 22:47:44.161 D/AudioManager( 9024): FFmpegMediaPlayer error: Error code: -38 (what=-38, extra=0)
+10-21 22:47:44.161 D/AudioManager( 9024): FFmpegMediaPlayer playback completed
+10-21 22:47:44.161 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:44.167 D/MusicViewModel( 9024): High memory usage detected: 84%, clearing caches
+10-21 22:47:44.172 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1875654454867445136.aiff
+10-21 22:47:44.173 D/AudioManager( 9024): ⚠️ Skipping deletion of in-use temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2564142012824511358.aiff
+10-21 22:47:44.173 D/AudioManager( 9024): All caches cleared
+10-21 22:47:44.778 D/AudioManager( 9024): Attempting to play file: Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:44.778 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FDennis%20Ferrer%20%26%20Rbor%20-%20Hey%20Hey%20Lorris%20D'errico%20%20Dreaming'%20ID%20by%20Rivoli.mp3
+10-21 22:47:44.778 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:44.779 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:44.779 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:44.779 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:44.779 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FDennis%20Ferrer%20%26%20Rbor%20-%20Hey%20Hey%20Lorris%20D'errico%20%20Dreaming'%20ID%20by%20Rivoli.mp3
+10-21 22:47:44.780 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:44.780 D/AudioManager( 9024): ExoPlayer playback successful for: Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:44.780 D/MusicViewModel( 9024): Playback started successfully for Dennis Ferrer & Rbor - Hey Hey Lorris D'errico  Dreaming' ID by Rivoli.mp3
+10-21 22:47:44.782 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:44.784 D/MusicViewModel( 9024): Preloaded next song: Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:44.786 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:44.836 D/AudioManager( 9024): Attempting to play file: Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:44.836 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FPeace%20Control%20-%20U%20AIN'T%20LYIN%20(DJ%20MSTR).wav
+10-21 22:47:44.836 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:44.836 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:44.837 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:44.837 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:44.837 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:44.838 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:44.838 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FPeace%20Control%20-%20U%20AIN'T%20LYIN%20(DJ%20MSTR).wav
+10-21 22:47:44.839 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:44.839 D/AudioManager( 9024): ExoPlayer playback successful for: Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:44.839 D/MusicViewModel( 9024): Playback started successfully for Peace Control - U AIN'T LYIN (DJ MSTR).wav
+10-21 22:47:44.840 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:44.842 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:44.843 D/MusicViewModel( 9024): Preloaded next song: NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:44.942 D/MusicViewModel( 9024): High memory usage detected: 75%, clearing caches
+10-21 22:47:44.949 D/AudioManager( 9024): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2564142012824511358.aiff
+10-21 22:47:44.949 D/AudioManager( 9024): All caches cleared
+10-21 22:47:45.025 D/AudioManager( 9024): Attempting to play file: NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:45.025 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNUEVAYoL%20(Matt%20Sawyer%2C%20Chris%20Leon%20Remix).wav
+10-21 22:47:45.025 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:45.025 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:45.026 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:45.026 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:45.027 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:45.027 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:45.027 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNUEVAYoL%20(Matt%20Sawyer%2C%20Chris%20Leon%20Remix).wav
+10-21 22:47:45.028 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:45.028 D/AudioManager( 9024): ExoPlayer playback successful for: NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:45.028 D/MusicViewModel( 9024): Playback started successfully for NUEVAYoL (Matt Sawyer, Chris Leon Remix).wav
+10-21 22:47:45.030 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:45.031 D/MusicViewModel( 9024): Preloaded next song: Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:45.031 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:45.140 D/AudioManager( 9024): Attempting to play file: Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:45.140 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FFatima%20Yamaha%20-%20What's%20a%20girl%20to%20do%20(Layton%20Giordani%20Rmx).wav
+10-21 22:47:45.140 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:45.141 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:45.141 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:45.141 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:45.142 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:45.142 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:45.142 D/AudioManager( 9024): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FFatima%20Yamaha%20-%20What's%20a%20girl%20to%20do%20(Layton%20Giordani%20Rmx).wav
+10-21 22:47:45.143 D/AudioManager( 9024): ExoPlayer started successfully
+10-21 22:47:45.143 D/AudioManager( 9024): ExoPlayer playback successful for: Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:45.143 D/MusicViewModel( 9024): Playback started successfully for Fatima Yamaha - What's a girl to do (Layton Giordani Rmx).wav
+10-21 22:47:45.144 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:45.146 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:45.146 D/MusicViewModel( 9024): Preloaded next song: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:45.319 D/MusicViewModel( 9024): Loading AIFF file: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:45.319 D/MusicViewModel( 9024): EMERGENCY: Memory usage at 91%, performing aggressive cleanup
+10-21 22:47:45.319 D/AudioManager( 9024): All caches cleared
+10-21 22:47:45.430 D/AudioManager( 9024): Attempting to play file: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:45.430 D/AudioManager( 9024): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FObsku%CC%88r%2C%20Omar%2B%20-%20Serious%20(Extended%20Mix)%20%5BDisorder%5D.aiff
+10-21 22:47:45.430 D/AudioManager( 9024): Stopping all playback before starting new file
+10-21 22:47:45.430 D/AudioManager( 9024): FFmpegMediaPlayer reset
+10-21 22:47:45.431 D/AudioManager( 9024): ExoPlayer playback completed
+10-21 22:47:45.431 D/MusicViewModel( 9024): Track completed, playing next.
+10-21 22:47:45.432 D/AudioManager( 9024): ExoPlayer cleared
+10-21 22:47:45.432 D/AudioManager( 9024): All playback stopped successfully
+10-21 22:47:45.432 D/AudioManager( 9024): AIFF file detected: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:45.432 D/AudioManager( 9024): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:47:45.432 D/AudioManager( 9024): FFmpegMediaPlayer is available, attempting playback
+10-21 22:47:45.503 D/AudioManager( 9024): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8491386686467456816.aiff (49.59MB in 48ms, 1033.07MB/s)
+10-21 22:47:45.504 D/AudioManager( 9024): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8491386686467456816.aiff
+10-21 22:47:45.504 D/AudioManager( 9024): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8491386686467456816.aiff
+10-21 22:47:45.505 D/AudioManager( 9024): FFmpegMediaPlayer setDataSource successful
+10-21 22:47:45.505 D/AudioManager( 9024): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:47:45.505 D/AudioManager( 9024): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:47:45.505 D/AudioManager( 9024): FFmpegMediaPlayer playback successful for AIFF: Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:45.505 D/MusicViewModel( 9024): Playback started successfully for Obskür, Omar+ - Serious (Extended Mix) [Disorder].aiff
+10-21 22:47:45.507 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:45.510 D/MusicViewModel( 9024): MusicService started successfully.
+10-21 22:47:45.511 D/MusicViewModel( 9024): Preloaded next song: Illsusionize, Mochakk - Love Someone Else [F.wav
+10-21 22:47:45.578 D/MusicViewModel( 9024): High memory usage detected: 85%, clearing caches
+10-21 22:47:45.578 D/AudioManager( 9024): ⚠️ Skipping deletion of in-use temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8491386686467456816.aiff
+10-21 22:47:45.578 D/AudioManager( 9024): All caches cleared
+10-21 22:50:45.505 D/MusicViewModel(12226): === APP STARTED ===
+10-21 22:50:45.506 D/MusicViewModel(12226): Session counters reset
+10-21 22:50:45.507 D/AudioManager(12226): Broadcast receiver registered successfully
+10-21 22:50:45.507 D/AudioManager(12226): Attempting to create FFmpegMediaPlayer...
+10-21 22:50:45.532 D/AudioManager(12226): FFmpegMediaPlayer created successfully
+10-21 22:50:45.532 D/AudioManager(12226): FFmpegMediaPlayer listeners set successfully
+10-21 22:50:45.587 D/AudioManager(12226): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-21 22:50:45.589 D/MusicViewModel(12226): File operation worker started
+10-21 22:50:45.590 D/MusicViewModel(12226): Loading liked files from destination folder: null
+10-21 22:50:45.590 D/MusicViewModel(12226): No destination folder found
+10-21 22:50:45.595 D/MusicViewModel(12226): Loaded subfolder history: 1 items
+10-21 22:50:45.597 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:50:45.627 D/MusicViewModel(12226): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-21 22:50:45.627 D/MusicViewModel(12226): Restored destination folder: /tree/primary:Results/document/primary:Results
+10-21 22:50:45.627 D/MusicViewModel(12226): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:50:45.628 D/MusicViewModel(12226): Source folder available: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:50:45.634 D/MusicViewModel(12226): Source folder restored (use Rescan to load files)
+10-21 22:50:45.634 D/MusicViewModel(12226): Initialized successfully
+10-21 22:50:45.943 D/AudioManager(12323): Broadcast receiver registered successfully
+10-21 22:50:45.944 D/AudioManager(12323): Attempting to create FFmpegMediaPlayer...
+10-21 22:50:45.977 D/AudioManager(12323): FFmpegMediaPlayer created successfully
+10-21 22:50:45.977 D/AudioManager(12323): FFmpegMediaPlayer listeners set successfully
+10-21 22:50:45.992 D/MusicViewModel(12226): Updated liked files StateFlow with 0 files
+10-21 22:50:45.994 D/MusicViewModel(12226): Notification receiver registered successfully
+10-21 22:50:46.012 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:50:46.067 D/AudioManager(12323): AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback
+10-21 22:50:46.428 D/MusicViewModel(12226): Found 579 rejected files
+10-21 22:50:46.438 D/MusicViewModel(12226): Updated rejected files StateFlow with 579 files
+10-21 22:50:46.963 D/MusicViewModel(12226): Rescanning source folder: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:50:46.964 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:50:46.964 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:50:46.964 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:50:46.964 D/AudioManager(12226): All playback stopped successfully
+10-21 22:50:46.966 D/AudioManager(12226): Preloaded player released.
+10-21 22:50:46.967 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:50:46.967 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:50:46.967 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:50:46.968 D/AudioManager(12226): All playback stopped successfully
+10-21 22:50:46.968 D/AudioManager(12226): Preloaded player released.
+10-21 22:50:46.968 D/MusicViewModel(12226): Starting folder selection: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:50:46.974 D/MusicViewModel(12226): FileManager.setSelectedFolder completed
+10-21 22:50:46.975 D/MusicViewModel(12226): Saved source folder URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents
+10-21 22:50:46.996 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:50:47.709 D/MusicViewModel(12226): FileManager.loadMusicFiles completed with 425 files
+10-21 22:50:47.711 D/MusicViewModel(12226): Updated musicFiles state
+10-21 22:50:47.712 D/MusicViewModel(12226): Loading AIFF file: Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff
+10-21 22:50:47.712 D/AudioManager(12226): Attempting to play file: Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff
+10-21 22:50:47.713 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMario%20Reyes%2C%20AMEME%20-%20Power%20(Monkey%20Safari%20Remix)%20%5BOne%20Tribe%20Records%5D.aiff
+10-21 22:50:47.713 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:50:47.713 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:50:47.713 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:50:47.714 D/AudioManager(12226): All playback stopped successfully
+10-21 22:50:47.714 D/AudioManager(12226): AIFF file detected: Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff
+10-21 22:50:47.714 D/AudioManager(12226): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:50:47.714 D/AudioManager(12226): FFmpegMediaPlayer is available, attempting playback
+10-21 22:50:47.716 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:50:47.829 D/AudioManager(12226): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_9130758492395947468.aiff (53.30MB in 61ms, 873.82MB/s)
+10-21 22:50:47.830 D/AudioManager(12226): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_9130758492395947468.aiff
+10-21 22:50:47.830 D/AudioManager(12226): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_9130758492395947468.aiff
+10-21 22:50:47.830 D/AudioManager(12226): FFmpegMediaPlayer setDataSource successful
+10-21 22:50:47.830 D/AudioManager(12226): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:50:47.831 D/AudioManager(12226): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:50:47.831 D/AudioManager(12226): FFmpegMediaPlayer playback successful for AIFF: Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff
+10-21 22:50:47.831 D/MusicViewModel(12226): Playback started successfully for Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff
+10-21 22:50:47.835 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:50:47.837 D/MusicViewModel(12226): selectFolder completed successfully
+10-21 22:50:47.837 D/MusicViewModel(12226): Preloaded next song: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:50:48.157 I/FFmpegMediaPlayer(12226): Info (802,0)
+10-21 22:50:48.158 D/AudioManager(12226): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:50:48.158 D/AudioManager(12226): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:50:48.213 D/AudioManager(12226): ✅ Playback started automatically after async prepare
+10-21 22:50:48.272 D/MusicViewModel(12226): Found 99 liked files (including subfolders), 85 unique
+10-21 22:50:48.366 D/MusicViewModel(12226): Loaded 2 subfolders.
+10-21 22:50:48.370 D/MusicViewModel(12226): Updated liked files StateFlow with 85 files
+10-21 22:50:48.380 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:50:48.816 D/MusicViewModel(12226): Found 579 rejected files
+10-21 22:50:48.823 D/MusicViewModel(12226): Updated rejected files StateFlow with 579 files
+10-21 22:52:51.479 D/MusicViewModel(12226): sortCurrentFile: Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff with action LIKE
+10-21 22:52:51.485 D/MusicViewModel(12226): File operation queued: Mario Reyes, AMEME - Power (Monkey Safari Remix) [One Tribe Records].aiff
+10-21 22:52:51.485 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:52:51.494 D/AudioManager(12226): FFmpegMediaPlayer stopped
+10-21 22:52:51.494 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:52:51.495 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:52:51.495 D/AudioManager(12226): All playback stopped successfully
+10-21 22:52:51.495 D/AudioManager(12226): Preloaded player released.
+10-21 22:52:51.496 D/AudioManager(12226): Attempting to play file: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:52:51.496 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMeduza%20-%20No%20Sleep%20(Extended%20Mix).mp3
+10-21 22:52:51.496 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:52:51.496 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:52:51.497 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:52:51.497 D/AudioManager(12226): All playback stopped successfully
+10-21 22:52:51.497 D/AudioManager(12226): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FMeduza%20-%20No%20Sleep%20(Extended%20Mix).mp3
+10-21 22:52:51.504 D/AudioManager(12226): ExoPlayer started successfully
+10-21 22:52:51.504 D/AudioManager(12226): ExoPlayer playback successful for: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:52:51.504 D/MusicViewModel(12226): Playback started successfully for Meduza - No Sleep (Extended Mix).mp3
+10-21 22:52:51.507 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:52:51.509 D/MusicViewModel(12226): Preloaded next song: Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:52:51.789 D/MusicViewModel(12226): Refreshed all playlists
+10-21 22:52:51.800 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:52:52.565 D/MusicViewModel(12226): Found 99 liked files (including subfolders), 85 unique
+10-21 22:52:52.594 D/MusicViewModel(12226): Updated liked files StateFlow with 85 files
+10-21 22:52:52.606 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:52:52.990 D/MusicViewModel(12226): Found 579 rejected files
+10-21 22:52:53.001 D/MusicViewModel(12226): Updated rejected files StateFlow with 579 files
+10-21 22:52:54.159 D/MusicViewModel(12226): sortCurrentFile: Meduza - No Sleep (Extended Mix).mp3 with action DISLIKE
+10-21 22:52:54.161 D/MusicViewModel(12226): File operation queued: Meduza - No Sleep (Extended Mix).mp3
+10-21 22:52:54.161 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:52:54.161 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:52:54.162 D/AudioManager(12226): ExoPlayer stopped
+10-21 22:52:54.163 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:52:54.163 D/AudioManager(12226): All playback stopped successfully
+10-21 22:52:54.163 D/AudioManager(12226): Preloaded player released.
+10-21 22:52:54.164 D/AudioManager(12226): Attempting to play file: Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:52:54.164 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNoir%20%26%20Haze%20-%20Around%20(Cyava%20Edit).mp3
+10-21 22:52:54.164 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:52:54.164 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:52:54.164 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:52:54.164 D/AudioManager(12226): All playback stopped successfully
+10-21 22:52:54.164 D/AudioManager(12226): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FNoir%20%26%20Haze%20-%20Around%20(Cyava%20Edit).mp3
+10-21 22:52:54.166 D/AudioManager(12226): ExoPlayer started successfully
+10-21 22:52:54.166 D/AudioManager(12226): ExoPlayer playback successful for: Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:52:54.166 D/MusicViewModel(12226): Playback started successfully for Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:52:54.168 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:52:54.172 D/MusicViewModel(12226): Preloaded next song: RITA x RENVTØ - Drum Bun (Arthy & Dj Raul Vlad Afroboot).mp3
+10-21 22:52:54.393 D/MusicViewModel(12226): Refreshed all playlists
+10-21 22:52:54.397 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:52:54.866 D/MusicViewModel(12226): Found 100 liked files (including subfolders), 86 unique
+10-21 22:52:54.876 D/MusicViewModel(12226): Updated liked files StateFlow with 86 files
+10-21 22:52:54.888 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:52:55.340 D/MusicViewModel(12226): Found 579 rejected files
+10-21 22:52:55.350 D/MusicViewModel(12226): Updated rejected files StateFlow with 579 files
+10-21 22:52:56.853 D/MusicViewModel(12226): sortCurrentFile: Noir & Haze - Around (Cyava Edit).mp3 with action DISLIKE
+10-21 22:52:56.855 D/MusicViewModel(12226): File operation queued: Noir & Haze - Around (Cyava Edit).mp3
+10-21 22:52:56.856 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:52:56.857 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:52:56.857 D/AudioManager(12226): ExoPlayer stopped
+10-21 22:52:56.858 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:52:56.858 D/AudioManager(12226): All playback stopped successfully
+10-21 22:52:56.858 D/AudioManager(12226): Preloaded player released.
+10-21 22:52:56.859 D/AudioManager(12226): Attempting to play file: RITA x RENVTØ - Drum Bun (Arthy & Dj Raul Vlad Afroboot).mp3
+10-21 22:52:56.859 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FRITA%20x%20RENVT%C3%98%20-%20Drum%20Bun%20(Arthy%20%26%20Dj%20Raul%20Vlad%20Afroboot).mp3
+10-21 22:52:56.859 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:52:56.859 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:52:56.859 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:52:56.859 D/AudioManager(12226): All playback stopped successfully
+10-21 22:52:56.859 D/AudioManager(12226): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FRITA%20x%20RENVT%C3%98%20-%20Drum%20Bun%20(Arthy%20%26%20Dj%20Raul%20Vlad%20Afroboot).mp3
+10-21 22:52:56.861 D/AudioManager(12226): ExoPlayer started successfully
+10-21 22:52:56.861 D/AudioManager(12226): ExoPlayer playback successful for: RITA x RENVTØ - Drum Bun (Arthy & Dj Raul Vlad Afroboot).mp3
+10-21 22:52:56.861 D/MusicViewModel(12226): Playback started successfully for RITA x RENVTØ - Drum Bun (Arthy & Dj Raul Vlad Afroboot).mp3
+10-21 22:52:56.863 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:52:56.866 D/MusicViewModel(12226): Preloaded next song: WAY I ARE (FLAVIAN EDIT).wav
+10-21 22:52:57.089 D/MusicViewModel(12226): Refreshed all playlists
+10-21 22:52:57.091 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:52:57.570 D/MusicViewModel(12226): Found 100 liked files (including subfolders), 86 unique
+10-21 22:52:57.571 D/MusicViewModel(12226): Updated liked files StateFlow with 86 files
+10-21 22:52:57.587 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:52:58.038 D/MusicViewModel(12226): Found 580 rejected files
+10-21 22:52:58.043 D/MusicViewModel(12226): Updated rejected files StateFlow with 580 files
+10-21 22:53:07.709 D/MusicViewModel(12226): sortCurrentFile: RITA x RENVTØ - Drum Bun (Arthy & Dj Raul Vlad Afroboot).mp3 with action DISLIKE
+10-21 22:53:07.714 D/MusicViewModel(12226): File operation queued: RITA x RENVTØ - Drum Bun (Arthy & Dj Raul Vlad Afroboot).mp3
+10-21 22:53:07.715 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:53:07.715 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:53:07.716 D/AudioManager(12226): ExoPlayer stopped
+10-21 22:53:07.717 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:53:07.717 D/AudioManager(12226): All playback stopped successfully
+10-21 22:53:07.717 D/AudioManager(12226): Preloaded player released.
+10-21 22:53:07.717 D/AudioManager(12226): Attempting to play file: WAY I ARE (FLAVIAN EDIT).wav
+10-21 22:53:07.717 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FWAY%20I%20ARE%20(FLAVIAN%20EDIT).wav
+10-21 22:53:07.717 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:53:07.717 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:53:07.717 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:53:07.717 D/AudioManager(12226): All playback stopped successfully
+10-21 22:53:07.718 D/AudioManager(12226): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FWAY%20I%20ARE%20(FLAVIAN%20EDIT).wav
+10-21 22:53:07.719 D/AudioManager(12226): ExoPlayer started successfully
+10-21 22:53:07.719 D/AudioManager(12226): ExoPlayer playback successful for: WAY I ARE (FLAVIAN EDIT).wav
+10-21 22:53:07.719 D/MusicViewModel(12226): Playback started successfully for WAY I ARE (FLAVIAN EDIT).wav
+10-21 22:53:07.722 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:53:07.725 D/MusicViewModel(12226): Preloaded next song: 01 - DJ Soulstar - Amor Perdido (Extended Mix) [EarthVox].wav
+10-21 22:53:07.962 D/MusicViewModel(12226): Refreshed all playlists
+10-21 22:53:07.963 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:53:08.313 D/MusicViewModel(12226): Found 74 liked files (including subfolders), 74 unique
+10-21 22:53:08.314 D/MusicViewModel(12226): Updated liked files StateFlow with 74 files
+10-21 22:53:08.326 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:53:08.331 D/MusicViewModel(12226): Found 0 rejected files
+10-21 22:53:08.343 D/MusicViewModel(12226): Updated rejected files StateFlow with 0 files
+10-21 22:53:13.717 D/MusicViewModel(12226): sortCurrentFile: WAY I ARE (FLAVIAN EDIT).wav with action DISLIKE
+10-21 22:53:13.726 D/MusicViewModel(12226): File operation queued: WAY I ARE (FLAVIAN EDIT).wav
+10-21 22:53:13.727 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:53:13.727 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:53:13.728 D/AudioManager(12226): ExoPlayer stopped
+10-21 22:53:13.729 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:53:13.729 D/AudioManager(12226): All playback stopped successfully
+10-21 22:53:13.729 D/AudioManager(12226): Preloaded player released.
+10-21 22:53:13.729 D/MusicViewModel(12226): EMERGENCY: Memory usage at 93%, performing aggressive cleanup
+10-21 22:53:13.738 D/AudioManager(12226): Cleaned up temp file during cache clear: /data/user/0/com.example.mobiledigger/cache/aiff_temp_9130758492395947468.aiff
+10-21 22:53:13.738 D/AudioManager(12226): All caches cleared
+10-21 22:53:13.808 D/AudioManager(12226): Attempting to play file: 01 - DJ Soulstar - Amor Perdido (Extended Mix) [EarthVox].wav
+10-21 22:53:13.808 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F01%20-%20DJ%20Soulstar%20-%20Amor%20Perdido%20(Extended%20Mix)%20%5BEarthVox%5D.wav
+10-21 22:53:13.808 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:53:13.808 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:53:13.808 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:53:13.808 D/AudioManager(12226): All playback stopped successfully
+10-21 22:53:13.808 D/AudioManager(12226): ExoPlayer attempting to play URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2F01%20-%20DJ%20Soulstar%20-%20Amor%20Perdido%20(Extended%20Mix)%20%5BEarthVox%5D.wav
+10-21 22:53:13.810 D/AudioManager(12226): ExoPlayer started successfully
+10-21 22:53:13.810 D/AudioManager(12226): ExoPlayer playback successful for: 01 - DJ Soulstar - Amor Perdido (Extended Mix) [EarthVox].wav
+10-21 22:53:13.810 D/MusicViewModel(12226): Playback started successfully for 01 - DJ Soulstar - Amor Perdido (Extended Mix) [EarthVox].wav
+10-21 22:53:13.811 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:53:13.812 D/MusicViewModel(12226): Preloaded next song: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:53:14.032 D/MusicViewModel(12226): Refreshed all playlists
+10-21 22:53:14.035 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:53:14.473 D/MusicViewModel(12226): Found 100 liked files (including subfolders), 86 unique
+10-21 22:53:14.477 D/MusicViewModel(12226): Updated liked files StateFlow with 86 files
+10-21 22:53:14.487 D/MusicViewModel(12226): Loading rejected files from URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FRejected
+10-21 22:53:15.056 D/MusicViewModel(12226): Found 582 rejected files
+10-21 22:53:15.058 D/MusicViewModel(12226): Updated rejected files StateFlow with 582 files
+10-21 22:53:17.151 D/MusicViewModel(12226): sortCurrentFile: 01 - DJ Soulstar - Amor Perdido (Extended Mix) [EarthVox].wav with action DISLIKE
+10-21 22:53:17.160 D/MusicViewModel(12226): File operation queued: 01 - DJ Soulstar - Amor Perdido (Extended Mix) [EarthVox].wav
+10-21 22:53:17.161 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:53:17.161 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:53:17.162 D/AudioManager(12226): ExoPlayer stopped
+10-21 22:53:17.163 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:53:17.163 D/AudioManager(12226): All playback stopped successfully
+10-21 22:53:17.163 D/AudioManager(12226): Preloaded player released.
+10-21 22:53:17.163 D/MusicViewModel(12226): Loading AIFF file: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:53:17.163 D/AudioManager(12226): Attempting to play file: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:53:17.163 D/AudioManager(12226): File URI: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Documents%2FPrivate%2FTinlicker%20'I%20Want%20My%20Freedom'%20(Original%20Mix)%20%5BPIAS%20Electronique%5D.aiff
+10-21 22:53:17.163 D/AudioManager(12226): Stopping all playback before starting new file
+10-21 22:53:17.163 D/AudioManager(12226): FFmpegMediaPlayer reset
+10-21 22:53:17.163 D/AudioManager(12226): ExoPlayer cleared
+10-21 22:53:17.163 D/AudioManager(12226): All playback stopped successfully
+10-21 22:53:17.163 D/AudioManager(12226): AIFF file detected: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:53:17.163 D/AudioManager(12226): Trying FFmpegMediaPlayer for AIFF (ExoPlayer doesn't support AIFF)
+10-21 22:53:17.164 D/AudioManager(12226): FFmpegMediaPlayer is available, attempting playback
+10-21 22:53:17.482 D/AudioManager(12226): Successfully copied URI to temp file: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4336287682561283460.aiff (52.27MB in 273ms, 191.46MB/s)
+10-21 22:53:17.482 D/AudioManager(12226): Created temp file for FFmpeg: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4336287682561283460.aiff
+10-21 22:53:17.482 D/AudioManager(12226): Setting FFmpegMediaPlayer data source: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4336287682561283460.aiff
+10-21 22:53:17.483 D/AudioManager(12226): FFmpegMediaPlayer setDataSource successful
+10-21 22:53:17.483 D/AudioManager(12226): ⚡ Starting NON-BLOCKING prepareAsync() for instant playback
+10-21 22:53:17.484 D/AudioManager(12226): ✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)
+10-21 22:53:17.484 D/AudioManager(12226): FFmpegMediaPlayer playback successful for AIFF: Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:53:17.484 D/MusicViewModel(12226): Playback started successfully for Tinlicker 'I Want My Freedom' (Original Mix) [PIAS Electronique].aiff
+10-21 22:53:17.487 D/MusicViewModel(12226): MusicService started successfully.
+10-21 22:53:17.493 D/MusicViewModel(12226): Preloaded next song: Møsard - Instagram [Nervous Records].aiff
+10-21 22:53:17.576 D/AudioManager(12226): 🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW
+10-21 22:53:17.633 D/AudioManager(12226): ✅ Playback started automatically after async prepare
+10-21 22:53:17.633 I/FFmpegMediaPlayer(12226): Info (802,0)
+10-21 22:53:17.633 D/AudioManager(12226): FFmpegMediaPlayer info: what=802, extra=0
+10-21 22:53:17.718 D/MusicViewModel(12226): Refreshed all playlists
+10-21 22:53:17.725 D/MusicViewModel(12226): Loading liked files from destination folder: Results
+10-21 22:53:18.353 D/MusicViewModel(12226): Found 100 liked files (including subfolders), 86 unique
+10-21 22

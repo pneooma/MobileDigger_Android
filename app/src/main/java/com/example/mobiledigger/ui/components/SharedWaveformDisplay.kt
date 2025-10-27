@@ -28,7 +28,8 @@ fun SharedWaveformDisplay(
     sharedState: SharedWaveformState,
     progress: Float, // 0.0 to 1.0
     onSeek: (Float) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = Color.Gray.copy(alpha = 0.1f) // Allow custom background color
 ) {
     val context = LocalContext.current
     val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
@@ -44,7 +45,7 @@ fun SharedWaveformDisplay(
     Box(
         modifier = modifier
             .background(
-                Color.Gray.copy(alpha = 0.1f),
+                backgroundColor,
                 RoundedCornerShape(8.dp)
             )
             .pointerInput(Unit) {

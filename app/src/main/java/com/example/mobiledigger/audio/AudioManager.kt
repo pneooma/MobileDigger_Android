@@ -74,6 +74,10 @@ class AudioManager(private val context: Context) {
     private var currentFFmpegDataSourcePath: String? = null
     private var currentTempWavPath: String? = null
     
+    // Guard against spurious completion events that fire immediately after starting playback
+    private var trackStartTime = 0L
+    private val minPlaybackDurationMs = 2000L // Track must play for at least 2 seconds to be considered "completed"
+    
     // User preferences for spectrogram quality
     private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
@@ -138,7 +142,7 @@ class AudioManager(private val context: Context) {
     }
     
     // Temp file cache for AIFF files to avoid re-copying with size limit
-    private val maxTempCacheSize = 5 // Reduced cache size for better memory management
+    private val maxTempCacheSize = 3 // CRITICAL: Very small cache to prevent memory buildup
     private val maxTempFileSize = 200 * 1024 * 1024 // 200MB max per temp file (increased for large AIFF files)
     private val tempFileCache = Collections.synchronizedMap(
         object : LinkedHashMap<String, String>(maxTempCacheSize + 1, 0.75f, true) {
@@ -154,6 +158,8 @@ class AudioManager(private val context: Context) {
                     try {
                         File(eldest.value).delete()
                         CrashLogger.log("AudioManager", "Cleaned up temp file during cache clear: ${eldest.value}")
+                        // CRITICAL: Give OS time to release file descriptors after deletion
+                        Thread.sleep(20)
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "Failed to delete temp file: ${eldest.value}", e)
                     }
@@ -188,6 +194,10 @@ class AudioManager(private val context: Context) {
                         mp.setAudioStreamType(AndroidAudioManager.STREAM_MUSIC)
                         mp.setVolume(1.0f, 1.0f)
                         mp.start()
+                        
+                        // Mark the start time for spurious completion event detection
+                        trackStartTime = System.currentTimeMillis()
+                        
                         CrashLogger.log("AudioManager", "✅ Playback started automatically after async prepare")
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "❌ Failed to start playback in onPreparedListener", e)
@@ -212,7 +222,14 @@ class AudioManager(private val context: Context) {
                     false
                 }
                 setOnCompletionListener { mp ->
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer playback completed")
+                    val playbackDuration = System.currentTimeMillis() - trackStartTime
+                    
+                    if (playbackDuration < minPlaybackDurationMs) {
+                        CrashLogger.log("AudioManager", "Spurious completion event ignored (track played for only ${playbackDuration}ms)")
+                        return@setOnCompletionListener
+                    }
+                    
+                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer playback completed (duration: ${playbackDuration}ms)")
                     playbackCompletionListener?.onTrackCompletion()
                 }
                 setOnInfoListener { mp, what, extra ->
@@ -377,6 +394,15 @@ class AudioManager(private val context: Context) {
             
             // CRITICAL: Stop any currently playing audio before starting new playback
             stopAllPlayback()
+            
+            // CRITICAL: Force garbage collection every 5 tracks to prevent memory buildup
+            // This helps prevent crashes after playing many files
+            val trackCount = tempFileCache.size
+            if (trackCount >= 3) {
+                CrashLogger.log("AudioManager", "Running aggressive GC after $trackCount cached files")
+                System.gc()
+                Thread.sleep(30) // Give GC time to complete
+            }
             
             // Check if this is an AIFF file that needs FFmpeg
             val fileName = musicFile.name.lowercase(Locale.getDefault())
@@ -675,6 +701,8 @@ class AudioManager(private val context: Context) {
                     try {
                         File(tempPath).delete()
                         CrashLogger.log("AudioManager", "Cleaned up temp file during cache clear: $tempPath")
+                        // CRITICAL: Give OS time to release file descriptors after deletion
+                        Thread.sleep(20)
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "Failed to delete temp file: $tempPath", e)
                     }
@@ -723,72 +751,68 @@ class AudioManager(private val context: Context) {
     }
     
     private fun copyUriToTempFile(uri: Uri): File? {
+        var tempFile: File? = null
         return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            if (inputStream == null) {
-                CrashLogger.log("AudioManager", "Cannot open input stream for URI: $uri")
-                return null
-            }
+            // Create temp file first
+            tempFile = File.createTempFile("aiff_temp_", ".aiff", context.cacheDir)
             
-            // Check file size first to avoid copying huge files
-            val fileSize = try {
-                context.contentResolver.openFileDescriptor(uri, "r")?.use { fd ->
-                    fd.statSize
-                } ?: -1L
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "Could not determine file size for URI: $uri", e)
-                -1L
-            }
-            
-            if (fileSize > maxTempFileSize) {
-                CrashLogger.log("AudioManager", "File too large (${fileSize / (1024 * 1024)}MB), skipping temp file creation")
-                inputStream.close()
-                return null
-            }
-            
-            // For very large AIFF files, log the attempt
-            if (fileSize > 100 * 1024 * 1024) { // 100MB+
-                CrashLogger.log("AudioManager", "Processing large AIFF file (${fileSize / (1024 * 1024)}MB)")
-            }
-            
-            // Create temp file
-            val tempFile = File.createTempFile("aiff_temp_", ".aiff", context.cacheDir)
-            val outputStream = FileOutputStream(tempFile)
-            
-            // Copy data with larger buffer for better performance
-            val buffer = ByteArray(131072) // 128KB buffer for better performance
-            var bytesRead: Int
+            // Copy data with proper resource management using .use
             var totalBytes = 0L
             val startTime = System.currentTimeMillis()
             
-            try {
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                    totalBytes += bytesRead
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                FileOutputStream(tempFile).use { outputStream ->
+                    // Copy data with larger buffer for better performance
+                    val buffer = ByteArray(131072) // 128KB buffer for better performance
+                    var bytesRead: Int
                     
-                    // Check if we're exceeding our size limit during copy
-                    if (totalBytes > maxTempFileSize) {
-                        CrashLogger.log("AudioManager", "File exceeded size limit during copy, aborting")
-                        inputStream.close()
-                        outputStream.close()
-                        tempFile.delete()
-                        return null
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        totalBytes += bytesRead
+                        
+                        // Check if we're exceeding our size limit during copy
+                        if (totalBytes > maxTempFileSize) {
+                            CrashLogger.log("AudioManager", "File exceeded size limit during copy (${totalBytes / (1024 * 1024)}MB), aborting")
+                            return null // Will trigger cleanup in finally block
+                        }
                     }
+                    // CRITICAL: Explicitly flush and sync to prevent fd corruption
+                    outputStream.flush()
+                    outputStream.fd.sync()
                 }
-            } finally {
-                inputStream.close()
-                outputStream.close()
+            } ?: run {
+                CrashLogger.log("AudioManager", "Cannot open input stream for URI: $uri")
+                return null // Will trigger cleanup in finally block
             }
+            
+            // CRITICAL: Give the OS time to fully close file descriptors before FFmpeg opens the file
+            // This prevents fdsan crashes where fd 0 gets corrupted
+            // Increased delay to 50ms to ensure all file operations complete
+            Thread.sleep(50)
             
             val duration = System.currentTimeMillis() - startTime
             val mbCopied = totalBytes / (1024.0 * 1024.0)
             val speed = if (duration > 0) mbCopied / (duration / 1000.0) else 0.0
             
             CrashLogger.log("AudioManager", "Successfully copied URI to temp file: ${tempFile.absolutePath} (${String.format(Locale.getDefault(), "%.2f", mbCopied)}MB in ${duration}ms, ${String.format(Locale.getDefault(), "%.2f", speed)}MB/s)")
-            tempFile
+            
+            // Success - don't delete the file
+            val result = tempFile
+            tempFile = null // Clear so finally doesn't delete it
+            result
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Error copying URI to temp file", e)
             null
+        } finally {
+            // Clean up temp file if copy failed
+            if (tempFile != null && tempFile.exists()) {
+                try {
+                    tempFile.delete()
+                    CrashLogger.log("AudioManager", "Cleaned up failed temp file: ${tempFile.absolutePath}")
+                } catch (deleteEx: Exception) {
+                    CrashLogger.log("AudioManager", "Failed to delete temp file", deleteEx)
+                }
+            }
         }
     }
     

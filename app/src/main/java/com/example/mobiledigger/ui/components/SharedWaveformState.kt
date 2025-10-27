@@ -12,19 +12,49 @@ import linc.com.amplituda.callback.AmplitudaSuccessListener
 import linc.com.amplituda.Compress
 import java.io.InputStream
 import android.content.Context
+import androidx.compose.ui.graphics.Color
+import kotlin.math.abs
 
 // Extension function for number formatting
 private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
-// Optimized LRU cache for waveform data with size limit (reduced for memory safety)
-private const val MAX_WAVEFORM_CACHE_SIZE = 3 // User preference: keep cache very small
-private val waveformCache = java.util.Collections.synchronizedMap(
-    object : LinkedHashMap<String, IntArray>(MAX_WAVEFORM_CACHE_SIZE + 1, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, IntArray>?): Boolean {
-            return size > MAX_WAVEFORM_CACHE_SIZE
-        }
-    }
-)
+// DISABLED: Waveform caching completely disabled to prevent memory issues and crashes
+// Waveforms will be regenerated each time a file is played
+// This uses more CPU but prevents memory-related crashes
+private val waveformCache = emptyMap<String, IntArray>() // No caching
+
+// Shared preference key for waveform generation toggle
+private const val PREF_WAVEFORM_ENABLED = "waveform_generation_enabled"
+
+// Function to check if waveform generation is enabled
+fun isWaveformGenerationEnabled(context: Context): Boolean {
+    val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    return prefs.getBoolean(PREF_WAVEFORM_ENABLED, false) // Default: disabled for safety
+}
+
+// Function to toggle waveform generation
+fun setWaveformGenerationEnabled(context: Context, enabled: Boolean) {
+    val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    prefs.edit().putBoolean(PREF_WAVEFORM_ENABLED, enabled).apply()
+}
+
+// Generate a consistent pastel color for a song based on its URI
+fun getColorForSong(uri: String): Color {
+    val hash = uri.hashCode()
+    val pastelColors = listOf(
+        Color(0xFFFFDAB9), // Peach
+        Color(0xFFE6E6FA), // Lavender
+        Color(0xFFB0E0E6), // Powder Blue
+        Color(0xFFFFFACD), // Lemon Chiffon
+        Color(0xFFFFE4E1), // Misty Rose
+        Color(0xFFE0FFE0), // Mint
+        Color(0xFFFFF0F5), // Lavender Blush
+        Color(0xFFF0E68C), // Khaki
+        Color(0xFFDDA0DD), // Plum
+        Color(0xFFB0C4DE), // Light Steel Blue
+    )
+    return pastelColors[abs(hash) % pastelColors.size]
+}
 
 // Shared waveform state that can be used by multiple components
 @Composable
@@ -39,7 +69,7 @@ fun rememberSharedWaveformState(
     
     // Generate waveform when file changes
     LaunchedEffect(currentFile?.uri?.toString(), currentFile?.name) {
-        // Cancel any ongoing processing for the previous file
+        // CRITICAL: Cancel any ongoing processing for the previous file
         scope.coroutineContext.cancelChildren()
         
         val uriString = currentFile?.uri?.toString()
@@ -47,27 +77,42 @@ fun rememberSharedWaveformState(
         println("🔄 URI string: $uriString")
         println("🔄 Previous waveform data: ${waveformData?.size ?: "null"}")
         
-        // Always reset state when file changes
+        // CRITICAL: Always reset state when file changes
         waveformData = null
         errorMessage = null
         isLoading = true
         
+        // CRITICAL: Force garbage collection to free memory before processing
+        // This helps prevent crashes when switching between large AIFF files
+        System.gc()
+        Thread.sleep(50) // Give GC time to complete
+        
         if (currentFile != null) {
-            println("🎵 Starting shared waveform generation for: ${currentFile.name}")
-            println("🔗 URI: ${currentFile.uri}")
-            
-            // Create cache key based on URI and file size
-            val cacheKey = "${currentFile.uri}_${currentFile.size}"
-            
-            // Check cache first
-            val cachedWaveform = waveformCache[cacheKey]
-            if (cachedWaveform != null) {
-                println("⚡ Using cached waveform data: ${cachedWaveform.size} samples")
-                waveformData = cachedWaveform
+            // Check if waveform generation is enabled by user
+            if (!isWaveformGenerationEnabled(context)) {
+                println("🔇 Waveform generation disabled by user")
+                waveformData = null
                 isLoading = false
                 return@LaunchedEffect
             }
-
+            
+            println("🎵 Starting shared waveform generation for: ${currentFile.name}")
+            println("🔗 URI: ${currentFile.uri}")
+            
+            // SAFETY: Skip waveform for large AIFF files only (they cause crashes)
+            val fileSizeMB = currentFile.size / (1024.0 * 1024.0)
+            val fileName = currentFile.name.lowercase()
+            val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
+            
+            if (isAiffFile && fileSizeMB > 60) {
+                println("⚠️ AIFF file too large for waveform (${fileSizeMB.format(1)}MB > 60MB), skipping")
+                waveformData = null
+                isLoading = false
+                return@LaunchedEffect
+            }
+            
+            // No caching - always regenerate waveform to prevent memory issues
+            
             try {
                 // Process Amplituda on background thread for higher fidelity on small files
                 scope.launch(Dispatchers.IO) {
@@ -111,8 +156,7 @@ fun rememberSharedWaveformState(
                                                     }
                                                     .toIntArray()
                                                 
-                                                // Cache and update only if we improve upon lightweight
-                                                waveformCache[cacheKey] = samples
+                                                // No caching - directly update UI
                                                 scope.launch(Dispatchers.Main) {
                                                     if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
                                                         waveformData = samples
@@ -157,7 +201,7 @@ fun rememberSharedWaveformState(
                                                                 }
                                                                 .toIntArray()
                                                             
-                                                            waveformCache[cacheKey] = samples
+                                                            // No caching
                                                             scope.launch(Dispatchers.Main) {
                                                                 if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
                                                                     waveformData = samples
@@ -180,7 +224,7 @@ fun rememberSharedWaveformState(
                                                                     )
                                                                     
                                                                     // Cache the fallback waveform data
-                                                                    waveformCache[cacheKey] = fallbackSamples
+                                                                    // No caching
                                                                     
                                                                     // Update UI on main thread
                                                                     scope.launch(Dispatchers.Main) {
@@ -218,7 +262,7 @@ fun rememberSharedWaveformState(
                                                 }
                                                 .toIntArray()
                                             
-                                            waveformCache[cacheKey] = samples
+                                            // No caching
                                             scope.launch(Dispatchers.Main) {
                                                 if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
                                                     waveformData = samples
@@ -240,8 +284,7 @@ fun rememberSharedWaveformState(
                                                         uri = currentFile.uri
                                                     )
                                                     
-                                                    // Cache the fallback waveform data
-                                                    waveformCache[cacheKey] = fallbackSamples
+                                                    // No caching
                                                     
                                                     // Update UI on main thread
                                                     scope.launch(Dispatchers.Main) {
@@ -320,14 +363,10 @@ data class SharedWaveformState(
 
 /**
  * Function to clear the waveform cache for memory management
+ * NOTE: Caching is now disabled, this function does nothing
  */
 fun clearWaveformCache() {
-    try {
-        val oldSize = waveformCache.size
-        waveformCache.clear()
-        println("🧹 Waveform cache cleared: freed $oldSize entries")
-        System.gc()
-    } catch (e: Exception) {
-        println("❌ Error clearing waveform cache: ${e.message}")
-    }
+    // No-op - caching is disabled
+    println("🧹 Waveform cache clearing skipped (caching disabled)")
+    System.gc()
 }

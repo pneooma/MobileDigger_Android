@@ -1,3 +1,113 @@
+9.60
+- 🚫 CRITICAL FIX: Ignore spurious completion events that fire immediately on track start
+- ✅ FFmpegMediaPlayer was firing completion callbacks 0-300ms after starting playback
+- 🎯 Tracks must play for at least 2 seconds to be considered "completed"
+- 📝 Logs spurious events as "track played for only Xms"
+- 🔧 Prevents auto-skip at app startup and during normal playback
+
+9.59
+- 🔧 CRITICAL FIX: Debounce duplicate playback completion callbacks
+- ✅ Prevents FFmpegMediaPlayer from triggering completion twice (16ms apart)
+- 🎯 Stops tracks from being skipped when duplicate callbacks fire
+- ⏱️ 300ms debounce window to filter rapid-fire duplicate events
+- 📝 Logs ignored duplicate callbacks for debugging
+
+9.58
+- 🎯 CRITICAL FIX: Auto-skip to next track when playback fails
+- ✅ No more stuck playback on files that can't load
+- ⏭️ 500ms delay before auto-skip so you can see the error message
+- 📝 Better error logging for failed playback attempts
+
+9.57
+- 🔄 AUTO-RESET: Waveform generation resets to OFF on every app start
+- 🎛️ Toggle button still works - you can enable it if you want (at your own risk!)
+- ⚠️ WARNING: Enabling waveform WILL cause crashes - Amplituda is unstable
+- ✅ Default: App starts stable with waveform disabled
+- 🎨 Pastel background colors when waveform is disabled
+
+9.56
+- 🧹 Reduced temp file cache from 5 to 3 files to prevent memory buildup
+- 🗑️ Aggressive garbage collection every 3 tracks to free memory
+- ⏱️ 30ms GC delay to ensure cleanup completes before next track
+- ✅ Prevents crashes after playing 10-20 tracks (memory exhaustion)
+- ⚠️ NOTE: Waveform generation with Amplituda still causes crashes - keep it disabled!
+
+9.55
+- 🔧 CRITICAL FIX: Increased file descriptor sync delay from 10ms to 50ms after file copy
+- ⏱️ Added 20ms delay after temp file deletion during cache cleanup
+- 💾 Prevents fd corruption when cleanup happens during file operations
+- ✅ More aggressive fd management to prevent fdsan crashes
+
+9.54
+- 🔧 FIX: Prevent auto-skip from triggering on dummy playlist initialization errors
+- ✅ No more false skips when app starts
+- 🎯 Auto-skip now only triggers for real playback errors
+
+9.53
+- 🔧 CRITICAL FIX: Added explicit flush and sync for file descriptors during AIFF temp file copy
+- ⏱️ 10ms delay after file close to prevent fdsan crashes (fd 0 corruption)
+- 💾 Prevents "attempted to close file descriptor 0" fatal errors
+- ✅ More robust file handling before FFmpeg opens files
+
+9.52
+- 🔧 CRITICAL FIX: Prevent ExoPlayer from trying to play empty URIs during auto-playback
+- ✅ Fixed files being skipped when auto-playing next (while manual selection worked)
+- 🎯 MediaSession player now only updates when valid URI is available
+- 📝 Better URI validation prevents FileNotFoundException errors
+
+9.51
+- 🔧 CRITICAL FIX: Auto-skip to next track when ExoPlayer encounters errors
+- ✅ No more stuck playback when files have issues (file not found, corrupted, etc.)
+- ⏭️ App now automatically moves to the next track after 500ms delay on error
+- 📝 Better error logging to diagnose playback issues
+
+9.50
+- 🎛️ NEW: Waveform toggle button in top-left corner of main and mini player
+- ⚠️ Warning dialog when enabling waveform generation (can cause crashes)
+- 🎨 Beautiful pastel background colors when waveform is disabled (different for each song)
+- 🔇 Waveform disabled by default for stability
+- 👆 User can choose to enable/disable waveform at any time
+
+9.49
+- 🚫 DISABLED: Waveform generation completely disabled due to unrecoverable Amplituda crashes
+- ✅ App now stable - music playback works without crashes
+- 🔍 TODO: Find alternative waveform library without native FFmpeg dependencies
+
+9.48
+- 🚫 Disabled waveform caching completely to prevent memory crashes
+- 📏 Size limit only applies to AIFF files (60MB) - other formats have no limit
+- 🧹 Waveforms regenerated each time (uses more CPU but prevents crashes)
+
+9.47
+- 📈 Increased AIFF file waveform limit to 60MB (other formats remain at 30MB)
+- 🧹 Better cleanup allows processing larger AIFF files safely
+
+9.46
+- 🧹 CRITICAL: Added aggressive memory cleanup before waveform processing
+- 🗑️ Reduced waveform cache to 1 entry and force GC when switching files
+- 🛡️ Added 50ms delay after GC to ensure cleanup completes before Amplituda starts
+- ✅ Should prevent memory-related crashes when switching between AIFF files
+
+9.45
+- 🛡️ SAFETY: Skip waveform generation for files larger than 30MB to prevent crashes
+- ✅ Lower limit reduces Amplituda native crash risk significantly
+- 🔧 Waveform works for files under 30MB
+
+9.43
+- 🐛 CRITICAL FIX: Removed problematic file size check that corrupted file descriptor 0
+- 🔧 Simplified temp file copy logic to prevent fd corruption
+- ✅ Added proper cleanup in finally block
+
+9.42
+- 🐛 CRITICAL FIX: Resolved fdsan crash when copying AIFF temp files
+- 🔧 Proper resource management using .use for all file streams
+- ✅ Fixed "attempted to close file descriptor 0" fatal error
+
+9.41
+- 🐛 CRITICAL FIX: Resolved native crash in Amplituda's FFmpeg library (av_freep null pointer)
+- 🔧 Fixed InputStream resource management - let Amplituda handle cleanup internally
+- ✅ Waveform generation now stable without SIGSEGV crashes
+
 9.40
 - 🎵 WORKING VERSION: AIFF playback fully functional with optimized performance
 - ✅ v9.38 fix (prepareAsync for instant UI response) working perfectly

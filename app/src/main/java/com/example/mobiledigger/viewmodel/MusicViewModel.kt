@@ -63,6 +63,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // Mutex to prevent concurrent file loading operations that cause memory pressure
     private val fileLoadingMutex = Mutex()
     
+    // Debounce guard for duplicate playback completion callbacks
+    private var lastCompletionTime = 0L
+    private val completionDebounceMs = 300L // Ignore duplicate completions within 300ms
+    
     // Background file operation queue system - prevents blocking playback
     private sealed class FileOperation {
         data class Move(val file: MusicFile, val action: SortAction) : FileOperation()
@@ -232,6 +236,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Reset session counters on app start
             preferences.resetSessionCounters()
             CrashLogger.log("MusicViewModel", "Session counters reset")
+            
+            // Reset waveform generation to disabled on each app start (safety measure)
+            val prefs = application.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("waveform_generation_enabled", false).apply()
+            CrashLogger.log("MusicViewModel", "Waveform generation reset to disabled (default)")
             
             // Initialize audio manager first
             audioManager.initialize()
@@ -1080,6 +1089,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             } else {
                 _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
                 CrashLogger.log("MusicViewModel", "Playback failed for ${currentFile.name}")
+            }
+            
+            // AUTO-SKIP: Automatically move to next track when playback fails
+            CrashLogger.log("MusicViewModel", "Auto-skipping to next track after playback failure")
+            viewModelScope.launch {
+                delay(500) // Short delay to allow error message to be visible
+                next()
             }
         } else {
             _errorMessage.value = null
@@ -2280,6 +2296,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     override fun onTrackCompletion() {
+        val currentTime = System.currentTimeMillis()
+        val timeSinceLastCompletion = currentTime - lastCompletionTime
+        
+        if (timeSinceLastCompletion < completionDebounceMs) {
+            CrashLogger.log("MusicViewModel", "Duplicate completion callback ignored (${timeSinceLastCompletion}ms since last)")
+            return
+        }
+        
+        lastCompletionTime = currentTime
         CrashLogger.log("MusicViewModel", "Track completed, playing next.")
         next()
     }

@@ -31,6 +31,7 @@ import com.example.mobiledigger.ui.components.ScrollableWaveformView
 import com.example.mobiledigger.ui.components.SharedWaveformState
 import com.example.mobiledigger.ui.components.rememberSharedWaveformState
 import com.example.mobiledigger.ui.components.SharedWaveformDisplay
+import com.example.mobiledigger.ui.components.WaveformWithToggle
 import com.example.mobiledigger.ui.components.VisualSettingsDialog
 import com.example.mobiledigger.utils.HapticFeedback
 import com.example.mobiledigger.utils.WaveformGenerator
@@ -899,7 +900,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-            text = ":: v9.40 ::",
+            text = ":: v9.60 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1728,18 +1729,18 @@ viewModel.updateSearchText("")
         
         Spacer(modifier = Modifier.height(12.dp))
         
-                                        // Shared Waveform (replaces progress bar)
+                                        // Shared Waveform with toggle (replaces progress bar)
                                         val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                        SharedWaveformDisplay(
+                                        WaveformWithToggle(
                                             sharedState = sharedWaveformState,
                                             progress = progressPercent,
                                             onSeek = { seekProgress ->
                                                 val seekPosition = (seekProgress * duration).toLong()
                                                 viewModel.seekTo(seekPosition)
                                             },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(visualSettings.waveformHeight.dp) // Use setting
+                                            songUri = currentFile?.uri.toString(),
+                                            waveformHeight = visualSettings.waveformHeight.toInt(),
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -3343,18 +3344,19 @@ viewModel.updateSearchText("")
                                         }
                                     }
                                     
-                                    // Mini player: shared waveform (replaces progress bar)
+                                    // Mini player: shared waveform with toggle (replaces progress bar)
                                     val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                    SharedWaveformDisplay(
+                                    WaveformWithToggle(
                                         sharedState = sharedWaveformState,
                                         progress = progressPercent,
                                         onSeek = { seekProgress ->
                                             val seekPosition = (seekProgress * duration).toLong()
                                             viewModel.seekTo(seekPosition)
                                         },
+                                        songUri = currentFile?.uri.toString(),
+                                        waveformHeight = visualSettings.miniWaveformHeight.toInt(),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(visualSettings.miniWaveformHeight.dp) // Use setting
                                             .padding(horizontal = 12.dp, vertical = 4.dp)
                                     )
                                 }

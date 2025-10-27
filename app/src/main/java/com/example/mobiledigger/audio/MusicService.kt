@@ -262,6 +262,28 @@ class MusicService : MediaSessionService() {
 
                  override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                     CrashLogger.log("MusicService", "Player (MediaSession) Error: ${error.message}", error)
+                    
+                    // Don't auto-skip for dummy playlist errors (initialization)
+                    val currentMediaItem = player?.currentMediaItem
+                    val isDummyItem = currentMediaItem?.mediaId?.startsWith("dummy") == true
+                    
+                    if (isDummyItem) {
+                        CrashLogger.log("MusicService", "Error on dummy item, ignoring auto-skip")
+                        return
+                    }
+                    
+                    // Auto-skip to next track when ExoPlayer fails (e.g., file not found, unsupported format)
+                    CrashLogger.log("MusicService", "ExoPlayer error detected, attempting to skip to next track")
+                    // Post a delayed skip to allow error state to settle
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        try {
+                            // Send broadcast to trigger next track in ViewModel
+                            sendBroadcast(Intent(ACTION_NEXT))
+                            CrashLogger.log("MusicService", "Auto-skipped to next track after ExoPlayer error")
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicService", "Failed to auto-skip after error", e)
+                        }
+                    }, 500) // 500ms delay to avoid rapid cycling
                 }
                 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -481,32 +503,43 @@ class MusicService : MediaSessionService() {
         this.duration = dur
 
         try {
-            val mediaItemUri = currentFile?.uri ?: Uri.parse("file:///android_asset/placeholder.mp3") // Use a placeholder if no URI
-
-            val metadataBuilder = MediaMetadata.Builder()
-                .setTitle(title)
-                .setArtist("MobileDigger") // Placeholder
-                .setAlbumTitle("Playback")  // Placeholder
-                .setTrackNumber(1)          // Placeholder
-                .setTotalTrackCount(1)      // Placeholder
+            // Only update MediaSession player if we have a valid URI
+            // When AudioManager is handling playback (FFmpegMediaPlayer), we don't need to set the media item
+            val hasValidUri = currentFile?.uri != null && currentFile?.uri != Uri.EMPTY
             
-            val extras = Bundle()
-            if (dur > 0) {
-                extras.putLong(NOTIFICATION_DURATION_KEY, dur) // For MediaStyle to pick up duration
+            if (hasValidUri) {
+                val mediaItemUri = currentFile!!.uri
+
+                val metadataBuilder = MediaMetadata.Builder()
+                    .setTitle(title)
+                    .setArtist("MobileDigger") // Placeholder
+                    .setAlbumTitle("Playback")  // Placeholder
+                    .setTrackNumber(1)          // Placeholder
+                    .setTotalTrackCount(1)      // Placeholder
+                
+                val extras = Bundle()
+                if (dur > 0) {
+                    extras.putLong(NOTIFICATION_DURATION_KEY, dur) // For MediaStyle to pick up duration
+                }
+                metadataBuilder.setExtras(extras)
+
+                val mediaItem = MediaItem.Builder()
+                    .setMediaId(title) // Use title as a unique ID for the item
+                    .setUri(mediaItemUri) // URI for the MediaItem
+                    .setMediaMetadata(metadataBuilder.build())
+                    .build()
+
+                player?.setMediaItem(mediaItem, position) // Set item and start position
+                player?.prepare()
+                player?.playWhenReady = playing // Sync play/pause state
+
+                CrashLogger.log("MusicService", "MediaSession player updated with valid URI - URI: $mediaItemUri, Title: $title")
+            } else {
+                // Just update the playback state without setting a new media item
+                // This prevents ExoPlayer from trying to play empty URIs
+                player?.playWhenReady = playing
+                CrashLogger.log("MusicService", "MediaSession player state updated (no URI available) - Title: $title, Playing: $playing")
             }
-            metadataBuilder.setExtras(extras)
-
-            val mediaItem = MediaItem.Builder()
-                .setMediaId(title) // Use title as a unique ID for the item
-                .setUri(mediaItemUri) // URI for the MediaItem
-                .setMediaMetadata(metadataBuilder.build())
-                .build()
-
-            player?.setMediaItem(mediaItem, position) // Set item and start position
-            player?.prepare()
-            player?.playWhenReady = playing // Sync play/pause state
-
-            CrashLogger.log("MusicService", "MediaSession player updated - URI: $mediaItemUri, Title: $title, Duration in Meta: ${metadataBuilder.build().extras?.getLong(NOTIFICATION_DURATION_KEY)}")
 
         } catch (e: Exception) {
             CrashLogger.log("MusicService", "Error updating MediaSession player in updateNotificationData", e)

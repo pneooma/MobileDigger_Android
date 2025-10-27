@@ -5,18 +5,16 @@ import com.example.mobiledigger.model.MusicFile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.Dispatchers
-import linc.com.amplituda.Amplituda
-import linc.com.amplituda.AmplitudaResult
-import linc.com.amplituda.callback.AmplitudaErrorListener
-import linc.com.amplituda.callback.AmplitudaSuccessListener
-import linc.com.amplituda.Compress
-import java.io.InputStream
+import kotlinx.coroutines.withContext
 import android.content.Context
 import androidx.compose.ui.graphics.Color
 import kotlin.math.abs
+import com.example.mobiledigger.audio.WaveformGenerator
+import com.example.mobiledigger.util.CrashLogger
 
 // Extension function for number formatting
 private fun Double.format(digits: Int) = "%.${digits}f".format(this)
+private fun Float.format(digits: Int) = "%.${digits}f".format(this)
 
 // DISABLED: Waveform caching completely disabled to prevent memory issues and crashes
 // Waveforms will be regenerated each time a file is played
@@ -29,7 +27,7 @@ private const val PREF_WAVEFORM_ENABLED = "waveform_generation_enabled"
 // Function to check if waveform generation is enabled
 fun isWaveformGenerationEnabled(context: Context): Boolean {
     val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-    return prefs.getBoolean(PREF_WAVEFORM_ENABLED, false) // Default: disabled for safety
+    return prefs.getBoolean(PREF_WAVEFORM_ENABLED, true) // Default: enabled (stable now!)
 }
 
 // Function to toggle waveform generation
@@ -73,9 +71,7 @@ fun rememberSharedWaveformState(
         scope.coroutineContext.cancelChildren()
         
         val uriString = currentFile?.uri?.toString()
-        println("🔄 SharedWaveformState: LaunchedEffect triggered for file: ${currentFile?.name}")
-        println("🔄 URI string: $uriString")
-        println("🔄 Previous waveform data: ${waveformData?.size ?: "null"}")
+        CrashLogger.log("WaveformGenerator", "LaunchedEffect triggered for file: ${currentFile?.name}")
         
         // CRITICAL: Always reset state when file changes
         waveformData = null
@@ -90,258 +86,74 @@ fun rememberSharedWaveformState(
         if (currentFile != null) {
             // Check if waveform generation is enabled by user
             if (!isWaveformGenerationEnabled(context)) {
-                println("🔇 Waveform generation disabled by user")
+                CrashLogger.log("WaveformGenerator", "Waveform generation disabled by user")
                 waveformData = null
                 isLoading = false
                 return@LaunchedEffect
             }
             
-            println("🎵 Starting shared waveform generation for: ${currentFile.name}")
-            println("🔗 URI: ${currentFile.uri}")
+            CrashLogger.log("WaveformGenerator", "Starting waveform generation for: ${currentFile.name}")
             
-            // SAFETY: Skip waveform for large AIFF files only (they cause crashes)
+            // Check file size to prevent processing extremely large files
             val fileSizeMB = currentFile.size / (1024.0 * 1024.0)
             val fileName = currentFile.name.lowercase()
             val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
             
             if (isAiffFile && fileSizeMB > 60) {
-                println("⚠️ AIFF file too large for waveform (${fileSizeMB.format(1)}MB > 60MB), skipping")
+                CrashLogger.log("WaveformGenerator", "AIFF file too large for waveform (${fileSizeMB.format(1)}MB > 60MB), skipping")
                 waveformData = null
                 isLoading = false
                 return@LaunchedEffect
             }
             
-            // No caching - always regenerate waveform to prevent memory issues
-            
             try {
-                // Process Amplituda on background thread for higher fidelity on small files
+                // Use custom WaveformGenerator (pure Kotlin, no native crashes)
                 scope.launch(Dispatchers.IO) {
                     try {
-                        // Use Amplituda to process the audio with optimized settings
-                        val amplituda = Amplituda(context)
+                        CrashLogger.log("WaveformGenerator", "Generating waveform for: ${currentFile.name}")
+                        val generator = WaveformGenerator(context)
                         
-                        // Create dynamic compression settings based on file type for optimal performance
-                        val fileSizeMB = currentFile.size / (1024.0 * 1024.0)
-                        val fileName = currentFile.name.lowercase()
-                        val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
+                        // OPTIMIZED: Balance between speed and visual quality
+                        // 512 samples = excellent quality, still fast generation!
+                        val targetSampleCount = 512
                         
-                        // AIFF files are uncompressed, so use ultra-minimal samples for maximum speed
-                        val samplesPerSecond = if (isAiffFile) 1 else 3
-                        val compressSettings = Compress.withParams(Compress.AVERAGE, samplesPerSecond)
+                        CrashLogger.log("WaveformGenerator", "Requesting $targetSampleCount samples for any duration")
                         
-                        println("🎵 File: ${currentFile.name}, Size: ${fileSizeMB.format(1)}MB, Type: ${if (isAiffFile) "AIFF" else "Other"}, Samples/sec: $samplesPerSecond")
+                        // Generate waveform with fixed sample count
+                        val samples = generator.generateWaveform(
+                            uri = currentFile.uri,
+                            targetSampleCount = targetSampleCount,
+                            fileName = currentFile.name
+                        )
                         
-                        // Try using InputStream first (more compatible with content:// URIs)
-                        val inputStream = try {
-                            context.contentResolver.openInputStream(currentFile.uri)
-                        } catch (e: Exception) {
-                            println("❌ Failed to open InputStream from URI: ${e.message}")
-                            null
-                        }
-                        
-                        if (inputStream != null) { // High-fidelity for all files
-                            println("🔗 Using InputStream for Amplituda processing")
-                            
-                            // Process audio using InputStream with optimized settings
-                            amplituda.processAudio(inputStream, compressSettings)
-                                .get(
-                                    object : AmplitudaSuccessListener<InputStream> {
-                                        override fun onSuccess(result: AmplitudaResult<InputStream>) {
-                                            try {
-                                                // Convert result to IntArray for WaveformSeekBar
-                                                val samples = result.amplitudesAsList()
-                                                    .map { amplitude ->
-                                                        // Amplituda returns values in 0-100 range, use directly
-                                                        amplitude.coerceIn(0, 100)
-                                                    }
-                                                    .toIntArray()
-                                                
-                                                // No caching - directly update UI
-                                                scope.launch(Dispatchers.Main) {
-                                                    if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
-                                                        waveformData = samples
-                                                    }
-                                                    isLoading = false
-                                                }
-                                                println("✅ Shared waveform generated from InputStream: ${samples.size} samples")
-                                                println("🎵 First 10 amplitudes: ${samples.take(10).joinToString()}")
-                                                println("🎵 Amplitude range: min=${samples.minOrNull()}, max=${samples.maxOrNull()}")
-                                            } finally {
-                                                // Close the InputStream
-                                                try {
-                                                    inputStream.close()
-                                                } catch (e: Exception) {
-                                                    println("⚠️ Failed to close InputStream: ${e.message}")
-                                                }
-                                            }
-                                        }
-                                    },
-                                    object : AmplitudaErrorListener {
-                                        override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
-                                            println("❌ Amplituda failed with InputStream, trying URI string: ${exception.message}")
-                                            
-                                            // Close the InputStream
-                                            try {
-                                                inputStream.close()
-                                            } catch (e: Exception) {
-                                                println("⚠️ Failed to close InputStream: ${e.message}")
-                                            }
-                                            
-                                            // Try URI string as fallback
-                                            val uriString = currentFile.uri.toString()
-                                            println("🔗 Trying URI string: $uriString")
-                                            
-                                            amplituda.processAudio(uriString, compressSettings)
-                                                .get(
-                                                    object : AmplitudaSuccessListener<String> {
-                                                        override fun onSuccess(result: AmplitudaResult<String>) {
-                                                            val samples = result.amplitudesAsList()
-                                                                .map { amplitude ->
-                                                                    amplitude.coerceIn(0, 100)
-                                                                }
-                                                                .toIntArray()
-                                                            
-                                                            // No caching
-                                                            scope.launch(Dispatchers.Main) {
-                                                                if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
-                                                                    waveformData = samples
-                                                                }
-                                                                isLoading = false
-                                                            }
-                                                            println("✅ Shared waveform generated from URI string: ${samples.size} samples")
-                                                        }
-                                                    },
-                                                    object : AmplitudaErrorListener {
-                                                        override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
-                                                            println("❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
-                                                            
-                                                            // Final fallback to using the existing WaveformGenerator approach
-                                                            scope.launch(Dispatchers.IO) {
-                                                                try {
-                                                                    val fallbackSamples = com.example.mobiledigger.utils.WaveformGenerator.generateFromUri(
-                                                                        context = context,
-                                                                        uri = currentFile.uri
-                                                                    )
-                                                                    
-                                                                    // Cache the fallback waveform data
-                                                                    // No caching
-                                                                    
-                                                                    // Update UI on main thread
-                                                                    scope.launch(Dispatchers.Main) {
-                                                                        waveformData = fallbackSamples
-                                                                        isLoading = false
-                                                                    }
-                                                                    println("✅ Shared fallback waveform generated: ${fallbackSamples.size} samples")
-                                                                    
-                                                                } catch (fallbackException: Exception) {
-                                                                    println("❌ Shared fallback also failed: ${fallbackException.message}")
-                                                                    scope.launch(Dispatchers.Main) {
-                                                                        errorMessage = "All waveform generation methods failed: ${exception.message}"
-                                                                        isLoading = false
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                )
-                                        }
-                                    }
-                                )
+                        if (samples != null) {
+                            CrashLogger.log("WaveformGenerator", "✅ Waveform generated: ${samples.size} samples")
+                            withContext(Dispatchers.Main) {
+                                waveformData = samples
+                                isLoading = false
+                            }
                         } else {
-                            println("🔗 InputStream not available, trying URI string directly")
-                            val uriString = currentFile.uri.toString()
-                            println("🔗 Trying URI string: $uriString")
-                            
-                            amplituda.processAudio(uriString, compressSettings)
-                                .get(
-                                    object : AmplitudaSuccessListener<String> {
-                                        override fun onSuccess(result: AmplitudaResult<String>) {
-                                            val samples = result.amplitudesAsList()
-                                                .map { amplitude ->
-                                                    amplitude.coerceIn(0, 100)
-                                                }
-                                                .toIntArray()
-                                            
-                                            // No caching
-                                            scope.launch(Dispatchers.Main) {
-                                                if (waveformData == null || samples.size > (waveformData?.size ?: 0)) {
-                                                    waveformData = samples
-                                                }
-                                                isLoading = false
-                                            }
-                                            println("✅ Shared waveform generated from URI string: ${samples.size} samples")
-                                        }
-                                    },
-                                    object : AmplitudaErrorListener {
-                                        override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
-                                            println("❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
-                                            
-                                            // Final fallback to using the existing WaveformGenerator approach
-                                            scope.launch(Dispatchers.IO) {
-                                                try {
-                                                    val fallbackSamples = com.example.mobiledigger.utils.WaveformGenerator.generateFromUri(
-                                                        context = context,
-                                                        uri = currentFile.uri
-                                                    )
-                                                    
-                                                    // No caching
-                                                    
-                                                    // Update UI on main thread
-                                                    scope.launch(Dispatchers.Main) {
-                                                        waveformData = fallbackSamples
-                                                        isLoading = false
-                                                    }
-                                                    println("✅ Shared fallback waveform generated: ${fallbackSamples.size} samples")
-                                                    
-                                                } catch (fallbackException: OutOfMemoryError) {
-                                                    println("⚠️ OutOfMemoryError in fallback - file too large: ${fallbackException.message}")
-                                                    scope.launch(Dispatchers.Main) {
-                                                        errorMessage = "File too large for waveform generation. Skipping..."
-                                                        isLoading = false
-                                                    }
-                                                    System.gc()
-                                                } catch (fallbackException: Exception) {
-                                                    println("❌ Shared fallback also failed: ${fallbackException.message}")
-                                                    scope.launch(Dispatchers.Main) {
-                                                        errorMessage = "All waveform generation methods failed: ${exception.message}"
-                                                        isLoading = false
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                )
+                            CrashLogger.log("WaveformGenerator", "❌ Failed to generate waveform")
+                            withContext(Dispatchers.Main) {
+                                errorMessage = "Failed to generate waveform"
+                                isLoading = false
+                            }
                         }
-                        
-                    } catch (e: OutOfMemoryError) {
-                        println("⚠️ OutOfMemoryError during waveform generation - file too large: ${e.message}")
-                        scope.launch(Dispatchers.Main) {
-                            errorMessage = "File too large for waveform generation. Skipping..."
-                            isLoading = false
-                        }
-                        System.gc()
                     } catch (e: Exception) {
-                        println("❌ Exception during shared Amplituda setup: ${e.message}")
-                        e.printStackTrace()
-                        scope.launch(Dispatchers.Main) {
+                        CrashLogger.log("WaveformGenerator", "Exception during waveform generation", e)
+                        withContext(Dispatchers.Main) {
                             errorMessage = e.message ?: "Unknown error occurred"
                             isLoading = false
                         }
                     }
                 }
-            } catch (e: OutOfMemoryError) {
-                println("⚠️ OutOfMemoryError during shared coroutine setup - file too large: ${e.message}")
-                errorMessage = "File too large for waveform generation. Skipping..."
-                isLoading = false
-                System.gc()
             } catch (e: Exception) {
-                println("❌ Exception during shared coroutine setup: ${e.message}")
-                e.printStackTrace()
+                CrashLogger.log("WaveformGenerator", "Exception during coroutine setup", e)
                 errorMessage = e.message ?: "Unknown error occurred"
                 isLoading = false
             }
         } else {
-            println("📭 No current file, clearing shared waveform data")
+            CrashLogger.log("WaveformGenerator", "No current file, clearing waveform data")
             waveformData = null
             errorMessage = null
             isLoading = false
@@ -366,7 +178,6 @@ data class SharedWaveformState(
  * NOTE: Caching is now disabled, this function does nothing
  */
 fun clearWaveformCache() {
-    // No-op - caching is disabled
-    println("🧹 Waveform cache clearing skipped (caching disabled)")
-    System.gc()
+    CrashLogger.log("WaveformGenerator", "clearWaveformCache() called, but caching is disabled")
+    // No caching, so nothing to clear
 }

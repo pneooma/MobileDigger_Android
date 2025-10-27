@@ -237,11 +237,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             preferences.resetSessionCounters()
             CrashLogger.log("MusicViewModel", "Session counters reset")
             
-            // Reset waveform generation to disabled on each app start (safety measure)
-            val prefs = application.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-            prefs.edit().putBoolean("waveform_generation_enabled", false).apply()
-            CrashLogger.log("MusicViewModel", "Waveform generation reset to disabled (default)")
-            
             // Initialize audio manager first
             audioManager.initialize()
             audioManager.setPlaybackCompletionListener(this) // Register listener

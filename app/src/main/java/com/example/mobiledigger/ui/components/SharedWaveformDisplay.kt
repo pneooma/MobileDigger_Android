@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.SeekBarOnProgressChanged
@@ -29,7 +30,9 @@ fun SharedWaveformDisplay(
     progress: Float, // 0.0 to 1.0
     onSeek: (Float) -> Unit = {},
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.Gray.copy(alpha = 0.1f) // Allow custom background color
+    backgroundColor: Color = Color.Gray.copy(alpha = 0.1f), // Allow custom background color
+    currentPosition: Long = 0L, // Current playback position in milliseconds
+    totalDuration: Long = 0L // Total duration in milliseconds
 ) {
     val context = LocalContext.current
     val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
@@ -42,7 +45,15 @@ fun SharedWaveformDisplay(
         localProgress = progress
     }
 
-    Box(
+    // Format time as MM:SS
+    fun formatTime(millis: Long): String {
+        val totalSeconds = millis / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return String.format("%d:%02d", minutes, seconds)
+    }
+    
+    BoxWithConstraints(
         modifier = modifier
             .background(
                 backgroundColor,
@@ -59,18 +70,10 @@ fun SharedWaveformDisplay(
             },
         contentAlignment = Alignment.Center
     ) {
-        // Always-visible green progress line overlay
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val progressX = localProgress * size.width
-            drawLine(
-                color = Color.Green,
-                start = Offset(progressX, 0f),
-                end = Offset(progressX, size.height),
-                strokeWidth = 2.dp.toPx()
-            )
-        }
+        val containerWidth = maxWidth
+        
+        // Content layer
+        Box(modifier = Modifier.fillMaxSize())
         when {
             sharedState.isLoading -> {
                 // Loading indicator
@@ -153,24 +156,76 @@ fun SharedWaveformDisplay(
                         // Update progress when it changes externally
                         waveformSeekBar.progress = localProgress * 100f
                     },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding to waveform
                 )
             }
             
             else -> {
-                // No waveform available - show tap area with progress indicator
+                // No waveform available - always show message (for AIFF files)
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Show progress indicator
+                    // Always show "No waveform for AIFF" message
                     Text(
-                        text = "Tap to seek • ${(localProgress * 100).toInt()}%",
+                        text = "No waveform for AIFF files",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+        }
+        
+        // OVERLAY LAYER: Always-visible green progress line (on top of everything)
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp) // Add padding to waveform
+        ) {
+            val progressX = localProgress * size.width
+            // Draw shadow/outline for better visibility
+            drawLine(
+                color = Color.Black.copy(alpha = 0.5f),
+                start = Offset(progressX - 0.5.dp.toPx(), 0f),
+                end = Offset(progressX - 0.5.dp.toPx(), size.height),
+                strokeWidth = 2.dp.toPx()
+            )
+            drawLine(
+                color = Color.Black.copy(alpha = 0.5f),
+                start = Offset(progressX + 0.5.dp.toPx(), 0f),
+                end = Offset(progressX + 0.5.dp.toPx(), size.height),
+                strokeWidth = 2.dp.toPx()
+            )
+            // Draw main green line (thinner)
+            drawLine(
+                color = Color.Green,
+                start = Offset(progressX, 0f),
+                end = Offset(progressX, size.height),
+                strokeWidth = 1.5.dp.toPx()
+            )
+        }
+        
+        // OVERLAY LAYER: Elapsed time display (at bottom, left of seek line, in red)
+        if (currentPosition > 0L) {
+            val timeWidth = 45.dp // Approximate width of time text
+            val seekLinePosition = containerWidth * localProgress
+            // Position to the left of the seek line, with 4dp gap
+            val timeOffset = (seekLinePosition - timeWidth - 4.dp).coerceAtLeast(4.dp)
+            
+            Text(
+                text = formatTime(currentPosition),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Red, // Changed to red
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .offset(
+                        x = timeOffset,
+                        y = (-4).dp // 4dp from bottom
+                    )
+                    .padding(horizontal = 2.dp, vertical = 1.dp)
+            )
         }
     }
 }

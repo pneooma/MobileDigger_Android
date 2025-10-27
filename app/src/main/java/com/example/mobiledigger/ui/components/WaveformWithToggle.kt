@@ -20,7 +20,9 @@ fun WaveformWithToggle(
     onSeek: (Float) -> Unit,
     songUri: String,
     modifier: Modifier = Modifier,
-    waveformHeight: Int = 100
+    waveformHeight: Int = 100,
+    currentPosition: Long = 0L,
+    totalDuration: Long = 0L
 ) {
     val context = LocalContext.current
     var isWaveformEnabled by remember { mutableStateOf(isWaveformGenerationEnabled(context)) }
@@ -35,6 +37,8 @@ fun WaveformWithToggle(
             sharedState = sharedState,
             progress = progress,
             onSeek = onSeek,
+            currentPosition = currentPosition,
+            totalDuration = totalDuration,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(waveformHeight.dp),

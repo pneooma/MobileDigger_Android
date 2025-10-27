@@ -900,7 +900,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-            text = ":: v9.60 ::",
+            text = ":: v9.74 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1740,6 +1740,8 @@ viewModel.updateSearchText("")
                                             },
                                             songUri = currentFile?.uri.toString(),
                                             waveformHeight = visualSettings.waveformHeight.toInt(),
+                                            currentPosition = currentPosition,
+                                            totalDuration = duration,
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                         Row(
@@ -3355,6 +3357,8 @@ viewModel.updateSearchText("")
                                         },
                                         songUri = currentFile?.uri.toString(),
                                         waveformHeight = visualSettings.miniWaveformHeight.toInt(),
+                                        currentPosition = currentPosition,
+                                        totalDuration = duration,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(horizontal = 12.dp, vertical = 4.dp)

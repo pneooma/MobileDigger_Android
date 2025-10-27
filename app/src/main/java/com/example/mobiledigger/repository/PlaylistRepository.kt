@@ -124,7 +124,9 @@ class PlaylistRepository(application: Application) {
         
         // Add to Liked if not already there
         if (!currentLiked.any { it.uri == file.uri }) {
-            currentLiked.add(file)
+            currentLiked.add(file.copy(dateAdded = System.currentTimeMillis()))
+            // Sort by dateAdded descending (newest first)
+            currentLiked.sortByDescending { it.dateAdded }
         }
         
         _todoFiles.value = currentTodo
@@ -153,7 +155,9 @@ class PlaylistRepository(application: Application) {
         
         // Add to Rejected if not already there
         if (!currentRejected.any { it.uri == file.uri }) {
-            currentRejected.add(file)
+            currentRejected.add(file.copy(dateAdded = System.currentTimeMillis()))
+            // Sort by dateAdded descending (newest first)
+            currentRejected.sortByDescending { it.dateAdded }
         }
         
         _todoFiles.value = currentTodo

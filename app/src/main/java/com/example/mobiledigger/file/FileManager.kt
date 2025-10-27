@@ -342,7 +342,9 @@ class FileManager(private val context: Context) {
     suspend fun sortFile(musicFile: MusicFile, action: SortAction): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                CrashLogger.log("FileManager", "Starting sort operation for: ${musicFile.name} with action: $action")
+                CrashLogger.log("FileManager", "🔍 Starting sort operation for: ${musicFile.name} with action: $action")
+                CrashLogger.log("FileManager", "🔍 File URI: ${musicFile.uri}")
+                CrashLogger.log("FileManager", "🔍 File size: ${musicFile.size} bytes")
                 
                 // Handle temporary files differently
                 val sourceFile = if (musicFile.uri.scheme == "file" && musicFile.uri.path?.contains("temp_audio") == true) {

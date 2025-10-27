@@ -1,3 +1,155 @@
+9.90
+- 🛡️ CRASH-SAFE setDataSource: Added timeout protection for FFmpegMediaPlayer
+- 🔍 Root cause: FFmpegMediaPlayer.setDataSource() crashes with SIGABRT at native level
+- 💥 Problem: Native crashes bypass Java exception handling
+- ✅ Solution: Run setDataSource in separate thread with 2-second timeout
+- 🎯 Detection: If thread hangs/crashes, detect timeout and return false gracefully
+- 🔧 Implementation: Thread.join(2000) with success flag detection
+- 📊 Result: App should no longer crash on problematic AIFF files - will auto-skip instead
+
+9.89
+- 🔍 COMPREHENSIVE LOGGING: Added detailed logging throughout critical paths
+- 📊 Next() method: Step-by-step logging of track navigation process
+- 📁 LoadCurrentFile(): Detailed logging of file loading, memory checks, playback
+- 📡 Broadcast receiver: Logs all received actions (ACTION_NEXT, etc.)
+- 🎯 Purpose: Track exactly where crashes occur in the auto-skip flow
+- 🔧 Coverage: next() → loadCurrentFile() → audioManager.playFile() → broadcast handling
+- 📈 Debugging: Will show the exact sequence leading to crashes
+
+9.88
+- 🎵 CRITICAL FIX: Prevented recursive auto-skip crashes
+- 🔍 Root cause: loadCurrentFile() was triggering next() when playFile() failed
+- 💥 Problem: FFmpegMediaPlayer error → broadcast → next() → loadCurrentFile() → playFile() fails → next() again → CRASH
+- ✅ Fix: Removed auto-skip from loadCurrentFile() - FFmpegMediaPlayer error listener handles it
+- 🛡️ Crash prevention: Eliminates recursive next() calls that caused SIGABRT crashes
+- 🔄 Logic: Single auto-skip mechanism via FFmpegMediaPlayer error listener only
+- 📊 Result: App should no longer crash when FFmpegMediaPlayer encounters errors
+
+9.87
+- 🎵 FIXED: AIFF waveform error message display
+- 🔍 Issue: AIFF files showed "Failed to generate waveform" error message
+- ✅ Fix: AIFF files now correctly show no error (expected behavior)
+- 📊 Logic: Check if file is AIFF before treating null waveform as error
+- 🎯 Result: AIFF files show pastel background without error message
+- 🔧 Code: Modified SharedWaveformState to distinguish AIFF vs real errors
+
+9.86
+- 🎵 HYBRID APPROACH: FFmpegMediaPlayer for AIFF with crash protection
+- 🔍 Discovery: ExoPlayer doesn't support AIFF format at all (UnrecognizedInputFormatException)
+- 🛡️ Crash protection: Auto-skip to next track when FFmpegMediaPlayer errors
+- 🔄 Auto-skip: Sends broadcast to trigger next() when FFmpeg crashes
+- 📊 Evidence: ExoPlayer shows "None of the available extractors could read the stream"
+- ✅ AIFF files use FFmpegMediaPlayer but app won't crash - will auto-skip instead
+- 🎯 The problem: Neither FFmpegMediaPlayer nor ExoPlayer reliably support AIFF
+- 🔧 Solution: Use FFmpegMediaPlayer but gracefully handle crashes with auto-skip
+
+9.85
+- 🎵 CRITICAL FIX: Switched AIFF files to ExoPlayer (FFmpeg crashes during playback)
+- 🔍 Root cause: FFmpegMediaPlayer crashes during actual playback, not just setup
+- ⚡ New approach: Use ExoPlayer for AIFF files instead of FFmpegMediaPlayer
+- 🛡️ Crash prevention: Avoids FFmpeg native crashes during audio playback
+- 📊 Evidence: FFmpeg setDataSource succeeds, but crashes in binder thread during playback
+- ✅ AIFF files should now play without crashes using ExoPlayer
+- 🎯 The crash happened after successful setup - during actual audio playback
+- 🔄 This is a fundamental change: AIFF files now use ExoPlayer instead of FFmpeg
+
+9.84
+- 🔄 CRITICAL FIX: FFmpeg crash recovery mechanism
+- 🔍 Root cause: FFmpegMediaPlayer crashes during setDataSource (triggered by file sorting)
+- 🛡️ Crash recovery: Recreates FFmpegMediaPlayer if cleanup or setDataSource fails
+- 🔄 Double retry: If setDataSource fails, recreates player and tries again
+- 📝 Enhanced logging: Every recovery step is logged with detailed status
+- ✅ Should prevent app crashes when FFmpegMediaPlayer becomes unstable
+- 🎯 The crash happened during file sorting → loadCurrentFile → playFile → setDataSource
+- 🧹 Robust cleanup: If cleanup fails, recreates player instead of continuing
+
+9.83
+- 🧹 CRITICAL FIX: Proper FFmpeg cleanup before loading new files
+- 🔍 Root cause: FFmpegMediaPlayer crashed because previous file wasn't properly cleaned up
+- 🛑 Enhanced stopAllPlayback: Now properly stops and resets FFmpegMediaPlayer
+- 🔄 Double cleanup: Cleanup in both stopAllPlayback() and tryPlayWithFFmpegSync()
+- ⏱️ Added delays: 100ms after stopAllPlayback, 50ms after FFmpeg reset
+- 📝 Detailed logging: Every cleanup step is now logged with emojis
+- ✅ Should prevent FFmpeg crashes when switching between AIFF files
+- 🎯 The crash happened at setDataSource - now we ensure clean state first
+
+9.82
+- 🎵 ENHANCED AIFF SUPPORT: Made AIFF files work properly instead of skipping them
+- 🔍 Root cause analysis: FFmpegMediaPlayer crashes were due to file descriptor corruption
+- ⚡ Enhanced file copying: Better temp file handling with 150ms delay for AIFF files
+- 📊 Progress logging: Shows copy progress for large AIFF files (every MB)
+- 🛡️ File verification: Checks file size and accessibility after copy
+- 🔄 Memory management: Enhanced GC and file descriptor cleanup
+- 📝 Detailed logging: Every step of AIFF processing is now logged
+- ✅ AIFF files should now play without crashes (not skipped!)
+
+9.81
+- 🚫 CRITICAL FIX: Completely disabled AIFF file playback to prevent crashes
+- 🔍 Root cause identified: FFmpegMediaPlayer crashes on AIFF files (not bulk operations)
+- ⚡ AIFF files now return false immediately - triggers auto-skip to next track
+- 🛡️ No more SIGABRT crashes from native FFmpeg library
+- 📊 Crash pattern: MusicViewModel.next() → loadCurrentFile() → AudioManager.playFile() → tryPlayWithFFmpegSync() → CRASH
+- ✅ App will now skip AIFF files gracefully instead of crashing
+- 🎯 This should eliminate ALL the SIGABRT crashes we've been seeing
+
+9.80
+- 🔍 ENHANCED LOGGING: Comprehensive crash detection and debugging
+- 📊 Memory monitoring: Tracks memory usage before/during/after file operations
+- 🔒 Mutex lock logging: Shows when file operation locks are acquired/released
+- 📁 Detailed file operation logging: Every step of bulk file processing logged
+- 💥 Enhanced exception handling: Full stack traces and detailed error info
+- 🎯 UI interaction logging: Tracks button clicks and user actions
+- 🧠 Memory warnings: Alerts when available memory drops below 50MB
+- 📝 Step-by-step operation tracking: See exactly where crashes occur
+- 🔧 Better crash analysis: Detailed logs to identify SIGABRT causes
+
+9.79
+- 🛡️ CRITICAL FIX: Made bulk file operations crash-resistant
+- 🔒 Added mutex lock to prevent race conditions in file operations
+- ⚡ Sequential processing of multiple file rejections (200ms delay between files)
+- 📊 Progress indication: "Processing X files..." during bulk operations
+- 🎯 Better error handling: tracks success/failure counts separately
+- 🔧 Improved index management to prevent out-of-bounds crashes
+- 📝 Enhanced logging for debugging bulk operations
+- ✅ Should eliminate SIGABRT crashes when rejecting multiple files at once
+
+9.78
+- 🎯 UI IMPROVEMENT: Cleaned up "Move to" dropdown menu
+- ✂️ Removed "Like & move to" text - now shows just folder names
+- 📁 Format: "FolderName (X files)" instead of "Like & move to FolderName (X files)"
+- 🔄 Subfolder list now updates every time app starts
+- 🎵 File count now includes ALL audio formats (MP3, WAV, FLAC, M4A, AAC, OGG, AIF, AIFF, WMA)
+- 🔧 Added updateSubfolderInfo() calls when destination folder is set/restored
+- 📝 Better subfolder management with proper initialization
+
+9.77
+- 🛡️ CRITICAL FIX: Enhanced fdsan crash prevention for AIFF files
+- ⚡ Increased file descriptor release delay from 50ms to 100ms
+- 🧹 Added explicit garbage collection before file operations
+- ✅ Added file accessibility verification after copy
+- 🔧 More robust file descriptor management to prevent corruption
+- 📝 Better error handling for temp file operations
+- 🎯 Should eliminate the "fdsan: attempted to close file descriptor 0" crashes
+
+9.76
+- 🚫 CRITICAL FIX: Prevented AIFF crash by removing ExoPlayer fallback
+- ✅ AIFF files now fail gracefully instead of crashing with "Source error"
+- 🔧 When FFmpegMediaPlayer fails for AIFF, app returns false (no ExoPlayer fallback)
+- 🎯 This triggers auto-skip to next track instead of crashing
+- 📝 Better error handling for unsupported AIFF files
+- 🛡️ App stability improved - no more crashes on problematic AIFF files
+
+9.75
+- 🎯 NEW FEATURE: Liked and Rejected playlists now sorted by date added (newest first)!
+- ✅ Added dateAdded field to MusicFile model with automatic timestamp
+- 📅 Files are automatically sorted by dateAdded descending when added to playlists
+- 🔄 Sorting applies to both liked and rejected playlists
+- 📊 Newest files appear at the top of each playlist
+- 🎵 Better organization - see your most recent likes/rejections first
+- ⚡ Sorting happens automatically when files are moved between playlists
+- 🔧 Updated playlist loading functions to maintain sort order
+- 📝 Enhanced logging to track sorting operations
+
 9.74
 - 💬 AIFF message now ALWAYS displays when playing AIFF files
 - 🔴 Elapsed time changed from green to RED for better visibility

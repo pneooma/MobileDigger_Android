@@ -26,13 +26,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import com.example.mobiledigger.R
-import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
-import com.example.mobiledigger.ui.components.ScrollableWaveformView
+import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.ui.components.SharedWaveformState
 import com.example.mobiledigger.ui.components.rememberSharedWaveformState
 import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.ui.components.WaveformWithToggle
 import com.example.mobiledigger.ui.components.VisualSettingsDialog
+import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
+import com.example.mobiledigger.ui.components.ScrollableWaveformView
 import com.example.mobiledigger.utils.HapticFeedback
 import com.example.mobiledigger.utils.WaveformGenerator
 import com.example.mobiledigger.util.rememberOptimizedAnimationSpecs
@@ -900,7 +901,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-            text = ":: v9.74 ::",
+            text = ":: v9.90 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1927,7 +1928,7 @@ viewModel.updateSearchText("")
                                                                 val fileCount = subfolderFileCounts[subfolder] ?: 0
                                                                 DropdownMenuItem(
                                                                     text = { 
-                                                                        Text("Like & move to \"$subfolder\" ($fileCount files)")
+                                                                        Text("$subfolder ($fileCount files)")
                                                                     },
                                                                     onClick = { 
                                                                         showSubfolderDropdown = false
@@ -1941,7 +1942,7 @@ viewModel.updateSearchText("")
                                                             subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
                                                                 DropdownMenuItem(
                                                                     text = { 
-                                                                        Text("Like & move to \"$subfolder\" (0 files)")
+                                                                        Text("$subfolder (0 files)")
                                                                     },
                                                                     onClick = { 
                                                                         showSubfolderDropdown = false
@@ -1978,7 +1979,7 @@ viewModel.updateSearchText("")
                                                                 val fileCount = subfolderFileCounts[subfolder] ?: 0
                                                                 DropdownMenuItem(
                                                                     text = { 
-                                                                        Text("Like & move to \"$subfolder\" ($fileCount files)")
+                                                                        Text("$subfolder ($fileCount files)")
                                                                     },
                                                                     onClick = { 
                                                                         showSubfolderDropdown = false
@@ -1991,7 +1992,7 @@ viewModel.updateSearchText("")
                                                             subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
                                                                 DropdownMenuItem(
                                                                     text = { 
-                                                                        Text("Like & move to \"$subfolder\" (0 files)")
+                                                                        Text("$subfolder (0 files)")
                                                                     },
                                                                     onClick = { 
                                                                         showSubfolderDropdown = false
@@ -2174,13 +2175,20 @@ viewModel.updateSearchText("")
                                         onClick = { 
                                             try {
                                                 hapticFeedback()
+                                                CrashLogger.log("MusicPlayerScreen", "🔍 Main LIKE button clicked")
+                                                CrashLogger.log("MusicPlayerScreen", "🔍 Multi-selection mode: $isMultiSelectionMode")
+                                                CrashLogger.log("MusicPlayerScreen", "🔍 Selected indices: $selectedIndices")
+                                                
                                                 if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                    CrashLogger.log("MusicPlayerScreen", "📁 Calling sortSelectedFiles(LIKE) for ${selectedIndices.size} files")
                                                     viewModel.sortSelectedFiles(SortAction.LIKE)
                                                 } else {
+                                                    CrashLogger.log("MusicPlayerScreen", "📁 Calling sortCurrentFile(LIKE)")
                                                     viewModel.sortCurrentFile(SortAction.LIKE)
                                                 }
                                             } catch (e: Exception) {
                                                 // Handle crash gracefully
+                                                CrashLogger.log("MusicPlayerScreen", "💥 Error in main like button", e)
                                                 println("Error in main like button: ${e.message}")
                                             }
                                         },
@@ -2866,6 +2874,7 @@ viewModel.updateSearchText("")
                                                 )
                                                 IconButton(
                                                     onClick = { 
+                                                        CrashLogger.log("MusicPlayerScreen", "🔍 Playlist LIKE button clicked for ${selectedIndices.size} files")
                                                         viewModel.sortSelectedFiles(SortAction.LIKE)
                                                         showInfoMessage("Moved to Liked", "success")
                                                     },
@@ -2880,6 +2889,7 @@ viewModel.updateSearchText("")
                                                 }
                                                 IconButton(
                                                     onClick = { 
+                                                        CrashLogger.log("MusicPlayerScreen", "🔍 Playlist REJECT button clicked for ${selectedIndices.size} files")
                                                         viewModel.sortSelectedFiles(SortAction.DISLIKE)
                                                         showInfoMessage("Moved to Rejected", "error")
                                                     },

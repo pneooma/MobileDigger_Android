@@ -133,10 +133,23 @@ fun rememberSharedWaveformState(
                                 isLoading = false
                             }
                         } else {
-                            CrashLogger.log("WaveformGenerator", "❌ Failed to generate waveform")
-                            withContext(Dispatchers.Main) {
-                                errorMessage = "Failed to generate waveform"
-                                isLoading = false
+                            // Check if this is an AIFF file - don't treat as error
+                            val fileName = currentFile.name.lowercase()
+                            val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
+                            
+                            if (isAiffFile) {
+                                CrashLogger.log("WaveformGenerator", "✅ AIFF file - no waveform (expected behavior)")
+                                withContext(Dispatchers.Main) {
+                                    waveformData = null
+                                    errorMessage = null // No error for AIFF files
+                                    isLoading = false
+                                }
+                            } else {
+                                CrashLogger.log("WaveformGenerator", "❌ Failed to generate waveform")
+                                withContext(Dispatchers.Main) {
+                                    errorMessage = "Failed to generate waveform"
+                                    isLoading = false
+                                }
                             }
                         }
                     } catch (e: Exception) {

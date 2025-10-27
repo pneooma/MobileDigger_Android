@@ -79,12 +79,28 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // Broadcast receiver for notification actions
     private val notificationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - received action: ${intent?.action}")
             when (intent?.action) {
-                MusicService.ACTION_PLAY_PAUSE -> playPause()
-                MusicService.ACTION_NEXT -> next()
-                MusicService.ACTION_PREVIOUS -> previous()
-                MusicService.ACTION_LIKE -> sortCurrentFile(SortAction.LIKE)
-                MusicService.ACTION_DISLIKE -> sortCurrentFile(SortAction.DISLIKE)
+                MusicService.ACTION_PLAY_PAUSE -> {
+                    CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_PLAY_PAUSE")
+                    playPause()
+                }
+                MusicService.ACTION_NEXT -> {
+                    CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_NEXT")
+                    next()
+                }
+                MusicService.ACTION_PREVIOUS -> {
+                    CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_PREVIOUS")
+                    previous()
+                }
+                MusicService.ACTION_LIKE -> {
+                    CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_LIKE")
+                    sortCurrentFile(SortAction.LIKE)
+                }
+                MusicService.ACTION_DISLIKE -> {
+                    CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_DISLIKE")
+                    sortCurrentFile(SortAction.DISLIKE)
+                }
             }
         }
     }
@@ -293,6 +309,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         CrashLogger.setDestinationFolder(application, uri)
                         CrashLogger.log("MusicViewModel", "Restored destination folder: ${fileManager.getDestinationPath()}")
                         android.util.Log.d("MusicViewModel", "Restored destination folder: ${fileManager.getDestinationPath()}")
+                        
+                        // Update subfolder information when destination is restored
+                        updateSubfolderInfo()
                     } else {
                         // Clear invalid destination folder
                         CrashLogger.log("MusicViewModel", "Destination folder is not accessible, clearing it")
@@ -487,6 +506,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 // Reload playlists when destination is selected
                 loadLikedFiles()
                 loadRejectedFiles()
+                
+                // Update subfolder information when destination is selected
+                updateSubfolderInfo()
 
                 if (fileManager.isDestinationInsideSource()) {
                     _errorMessage.value = "Destination is inside the source folder; this may cause issues. Pick a parent folder as destination."
@@ -594,39 +616,64 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun next() {
+        CrashLogger.log("MusicViewModel", "🔄 NEXT() called - starting next track")
         viewModelScope.launch {
-            val currentFiles = when (_currentPlaylistTab.value) {
-                PlaylistTab.TODO -> _musicFiles.value
-                PlaylistTab.LIKED -> _likedFiles.value
-                PlaylistTab.REJECTED -> _rejectedFiles.value
-            }
-            if (currentFiles.isEmpty()) {
-                _errorMessage.value = "No files in current playlist to navigate"
-                return@launch
-            }
-            
-            // Start smooth transition
-            _isTransitioning.value = true
-            
-            // Quick fade out for smooth transition (120Hz optimized)
-            if (_isPlaying.value) {
-                _isPlaying.value = false
-                try {
-                    audioManager.pause()
-                } catch (e: Exception) {
-                    CrashLogger.log("MusicViewModel", "Error pausing during transition", e)
+            try {
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - getting current files")
+                val currentFiles = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
                 }
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - current files count: ${currentFiles.size}")
+                
+                if (currentFiles.isEmpty()) {
+                    CrashLogger.log("MusicViewModel", "🔄 NEXT() - no files in playlist")
+                    _errorMessage.value = "No files in current playlist to navigate"
+                    return@launch
+                }
+                
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - starting transition")
+                // Start smooth transition
+                _isTransitioning.value = true
+                
+                // Quick fade out for smooth transition (120Hz optimized)
+                if (_isPlaying.value) {
+                    CrashLogger.log("MusicViewModel", "🔄 NEXT() - pausing current playback")
+                    _isPlaying.value = false
+                    try {
+                        audioManager.pause()
+                        CrashLogger.log("MusicViewModel", "🔄 NEXT() - pause successful")
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "🔄 NEXT() - error pausing during transition", e)
+                    }
+                }
+                
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - waiting 50ms for transition")
+                delay(50) // Brief pause for 120Hz smooth animation
+                
+                val currentIndex = _currentIndex.value
+                val nextIndex = (currentIndex + 1) % currentFiles.size
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - moving from index $currentIndex to $nextIndex")
+                _currentIndex.value = nextIndex
+                
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - calling loadCurrentFile()")
+                loadCurrentFile()
+                
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - updating notification")
+                updateNotification()
+                
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - waiting 100ms for file load")
+                delay(100) // Allow new file to load
+                
+                CrashLogger.log("MusicViewModel", "🔄 NEXT() - completing transition")
+                _isTransitioning.value = false
+                CrashLogger.log("MusicViewModel", "✅ NEXT() completed successfully")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "💥 NEXT() - exception occurred", e)
+                _isTransitioning.value = false
+                _errorMessage.value = "Error moving to next track: ${e.message}"
             }
-            
-            delay(50) // Brief pause for 120Hz smooth animation
-            
-            val nextIndex = (_currentIndex.value + 1) % currentFiles.size
-            _currentIndex.value = nextIndex
-            loadCurrentFile()
-            updateNotification()
-            
-            delay(100) // Allow new file to load
-            _isTransitioning.value = false
         }
     }
     
@@ -745,7 +792,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun likeFile(file: MusicFile) {
         val updatedLikedFiles = _likedFiles.value.toMutableList()
         if (!updatedLikedFiles.any { it.uri == file.uri }) {
-            updatedLikedFiles.add(file.copy(sourcePlaylist = PlaylistTab.LIKED))
+            updatedLikedFiles.add(file.copy(
+                sourcePlaylist = PlaylistTab.LIKED,
+                dateAdded = System.currentTimeMillis()
+            ))
+            // Sort by dateAdded descending (newest first)
+            updatedLikedFiles.sortByDescending { it.dateAdded }
             _likedFiles.value = updatedLikedFiles
             // Save to preferences
             val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
@@ -756,7 +808,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun dislikeFile(file: MusicFile) {
         val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
         if (!updatedRejectedFiles.any { it.uri == file.uri }) {
-            updatedRejectedFiles.add(file.copy(sourcePlaylist = PlaylistTab.REJECTED))
+            updatedRejectedFiles.add(file.copy(
+                sourcePlaylist = PlaylistTab.REJECTED,
+                dateAdded = System.currentTimeMillis()
+            ))
+            // Sort by dateAdded descending (newest first)
+            updatedRejectedFiles.sortByDescending { it.dateAdded }
             _rejectedFiles.value = updatedRejectedFiles
             // Save to preferences
             val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
@@ -837,23 +894,38 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     private fun sortMusicFile(file: MusicFile, action: SortAction) {
+        CrashLogger.log("MusicViewModel", "🔍 sortMusicFile called: ${file.name} with action=$action")
+        
         if (!fileManager.isDestinationSelected()) {
             _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting." // More specific message
+            CrashLogger.log("MusicViewModel", "❌ No destination folder selected")
             return
         }
         
-        CrashLogger.log("MusicViewModel", "Sorting file: ${file.name} with action $action, source: ${file.sourcePlaylist}")
+        CrashLogger.log("MusicViewModel", "📁 Sorting file: ${file.name} with action $action, source: ${file.sourcePlaylist}")
         
         viewModelScope.launch {
-            try {
-                val success = fileManager.sortFile(file, action)
-                if (success) {
-                    handleSuccessfulSort(file, action)
-                } else {
-                    _errorMessage.value = "Failed to sort file. Please check folder permissions."
+            // Use mutex to prevent concurrent file operations
+            fileOperationMutex.withLock {
+                CrashLogger.log("MusicViewModel", "🔒 Acquired file operation mutex for single file")
+                try {
+                    CrashLogger.log("MusicViewModel", "🔄 Calling fileManager.sortFile for ${file.name}")
+                    val success = fileManager.sortFile(file, action)
+                    CrashLogger.log("MusicViewModel", "📁 FileManager.sortFile result: success=$success for ${file.name}")
+                    
+                    if (success) {
+                        CrashLogger.log("MusicViewModel", "✅ File sorted successfully, calling handleSuccessfulSort")
+                        handleSuccessfulSort(file, action)
+                    } else {
+                        _errorMessage.value = "Failed to sort file. Please check folder permissions."
+                        CrashLogger.log("MusicViewModel", "❌ File sorting failed: ${file.name}")
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "💥 Exception in sortMusicFile for ${file.name}", e)
+                    handleError("sortMusicFile", e)
+                } finally {
+                    CrashLogger.log("MusicViewModel", "🔓 Releasing file operation mutex for single file")
                 }
-            } catch (e: Exception) {
-                handleError("sortMusicFile", e)
             }
         }
     }
@@ -980,21 +1052,24 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         // Use queue-based sorting for instant response
         viewModelScope.launch(Dispatchers.Main) {
-            try {
-                // Queue the file operation in background (non-blocking)
-                if (fileManager.isDestinationSelected()) {
-                    fileOperationChannel.send(FileOperation.Move(fileToSort, action))
-                    CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
-                } else {
-                    _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
-                    return@launch
+            // Use mutex to prevent concurrent file operations
+            fileOperationMutex.withLock {
+                try {
+                    // Queue the file operation in background (non-blocking)
+                    if (fileManager.isDestinationSelected()) {
+                        fileOperationChannel.send(FileOperation.Move(fileToSort, action))
+                        CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
+                    } else {
+                        _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
+                        return@withLock
+                    }
+                    
+                    // Immediately update UI
+                    handleSuccessfulSort(fileToSort, action)
+                    
+                } catch (e: Exception) {
+                    handleError("sortAtIndex", e)
                 }
-                
-                // Immediately update UI
-                handleSuccessfulSort(fileToSort, action)
-                
-            } catch (e: Exception) {
-                handleError("sortAtIndex", e)
             }
         }
     }
@@ -1036,89 +1111,118 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     
     private fun loadCurrentFile() {
-        val files = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
-        }
-        val index = _currentIndex.value
-        if (files.isEmpty() || index !in files.indices) return
-        val currentFile = files[index]
-        
-        // Store current file for notification
-        this.currentFile = currentFile
-        
-        // Update the actually playing file (independent of playlist navigation)
-        _currentPlayingFile.value = currentFile
-        
-        // Pre-fetch next file for buffering (only if list has more than 1 item)
-        val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
-        if (nextFile != null) {
-            // Removed audioManager.preloadFile(nextFile) // New call to preload next file
-        }
-        
-        // Check if it's an AIFF file and provide specific feedback
-        val isAiffFile = currentFile.name.lowercase().endsWith(".aif") || currentFile.name.lowercase().endsWith(".aiff")
-        if (isAiffFile) {
-            CrashLogger.log("MusicViewModel", "Loading AIFF file: ${currentFile.name}")
-        }
-        
-    // Check memory before loading file and clear caches if needed
-    checkMemoryPressureAndCleanup()
-    
-    // Additional memory check specifically for waveform and file operations
-    val runtime = Runtime.getRuntime()
-    val availableMemoryMB = (runtime.maxMemory() - runtime.totalMemory() + runtime.freeMemory()) / (1024 * 1024)
-    if (availableMemoryMB < 50) {
-        CrashLogger.log("MusicViewModel", "Critical low memory ($availableMemoryMB MB) - stopping file processing")
-        return
-    }
-        
-        // Call playFile directly (no longer a suspend function)
-        val started = audioManager.playFile(currentFile)
-        _isPlaying.value = started
-        if (!started) {
-            if (isAiffFile) {
-                _errorMessage.value = "Cannot play AIFF file. This format might not be supported by your device's audio codec."
-                CrashLogger.log("MusicViewModel", "AIFF playback failed for ${currentFile.name}")
-            } else {
-                _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
-                CrashLogger.log("MusicViewModel", "Playback failed for ${currentFile.name}")
+        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() called")
+        try {
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - getting files for playlist: ${_currentPlaylistTab.value}")
+            val files = when (_currentPlaylistTab.value) {
+                PlaylistTab.TODO -> _musicFiles.value
+                PlaylistTab.LIKED -> _likedFiles.value
+                PlaylistTab.REJECTED -> _rejectedFiles.value
+            }
+            val index = _currentIndex.value
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - files count: ${files.size}, current index: $index")
+            
+            if (files.isEmpty() || index !in files.indices) {
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - invalid state: empty files or invalid index")
+                return
             }
             
-            // AUTO-SKIP: Automatically move to next track when playback fails
-            CrashLogger.log("MusicViewModel", "Auto-skipping to next track after playback failure")
-            viewModelScope.launch {
-                delay(500) // Short delay to allow error message to be visible
-                next()
-            }
-        } else {
-            _errorMessage.value = null
-            CrashLogger.log("MusicViewModel", "Playback started successfully for ${currentFile.name}")
-            // increment listened stat
-            try { preferences.incrementListened() } catch (_: Exception) {}
-        }
+            val currentFile = files[index]
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - loading file: ${currentFile.name}")
         
-        // Extract and update duration if not available
-        if (currentFile.duration == 0L) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val actualDuration = extractDuration(currentFile)
-                if (actualDuration > 0) {
-                    withContext(Dispatchers.Main) {
-                        _duration.value = actualDuration
-                        updateFileDuration(currentFile, actualDuration)
+            // Store current file for notification
+            this.currentFile = currentFile
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - stored current file")
+            
+            // Update the actually playing file (independent of playlist navigation)
+            _currentPlayingFile.value = currentFile
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updated current playing file")
+            
+            // Pre-fetch next file for buffering (only if list has more than 1 item)
+            val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
+            if (nextFile != null) {
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - preloaded next file: ${nextFile.name}")
+                // Removed audioManager.preloadFile(nextFile) // New call to preload next file
+            }
+            
+            // Check if it's an AIFF file and provide specific feedback
+            val isAiffFile = currentFile.name.lowercase().endsWith(".aif") || currentFile.name.lowercase().endsWith(".aiff")
+            if (isAiffFile) {
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - AIFF file detected: ${currentFile.name}")
+            }
+        
+            // Check memory before loading file and clear caches if needed
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - checking memory pressure")
+            checkMemoryPressureAndCleanup()
+            
+            // Additional memory check specifically for waveform and file operations
+            val runtime = Runtime.getRuntime()
+            val availableMemoryMB = (runtime.maxMemory() - runtime.totalMemory() + runtime.freeMemory()) / (1024 * 1024)
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - available memory: ${availableMemoryMB}MB")
+            if (availableMemoryMB < 50) {
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - critical low memory ($availableMemoryMB MB) - stopping file processing")
+                return
+            }
+            
+            // Call playFile directly (no longer a suspend function)
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()")
+            val started = audioManager.playFile(currentFile)
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playFile result: $started")
+            _isPlaying.value = started
+            if (!started) {
+                if (isAiffFile) {
+                    _errorMessage.value = "Cannot play AIFF file. This format might not be supported by your device's audio codec."
+                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - AIFF playback failed for ${currentFile.name}")
+                } else {
+                    _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
+                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed for ${currentFile.name}")
+                }
+                
+                // CRITICAL FIX: Don't auto-skip here to prevent recursive crashes
+                // The FFmpegMediaPlayer error listener already handles auto-skip
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed - FFmpegMediaPlayer error listener will handle auto-skip")
+            } else {
+                _errorMessage.value = null
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
+                // increment listened stat
+                try { preferences.incrementListened() } catch (_: Exception) {}
+            }
+        
+            // Extract and update duration if not available
+            if (currentFile.duration == 0L) {
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - extracting duration for ${currentFile.name}")
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val actualDuration = extractDuration(currentFile)
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - extracted duration: ${actualDuration}ms")
+                        if (actualDuration > 0) {
+                            withContext(Dispatchers.Main) {
+                                _duration.value = actualDuration
+                                updateFileDuration(currentFile, actualDuration)
+                                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - duration updated")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - error extracting duration", e)
                     }
                 }
+            } else {
+                _duration.value = currentFile.duration
+                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - using existing duration: ${currentFile.duration}ms")
             }
-        } else {
-            _duration.value = currentFile.duration
+            
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updating notification")
+            updateNotification()
+            
+            // Start preloading next song for smooth transitions
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - starting preload next song")
+            preloadNextSong()
+            
+            CrashLogger.log("MusicViewModel", "✅ LOAD_CURRENT_FILE() completed successfully")
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "💥 LOAD_CURRENT_FILE() - exception occurred", e)
+            _errorMessage.value = "Error loading current file: ${e.message}"
         }
-        
-        
-        updateNotification()
-        
-        // Start preloading next song for smooth transitions
-        preloadNextSong()
     }
     
     private fun preloadNextSong() {
@@ -1924,100 +2028,195 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
+    // Mutex for file operations to prevent race conditions
+    private val fileOperationMutex = Mutex()
+    
+    // Memory monitoring for crash detection
+    private fun logMemoryStatus(context: String) {
+        val runtime = Runtime.getRuntime()
+        val maxMemory = runtime.maxMemory()
+        val totalMemory = runtime.totalMemory()
+        val freeMemory = runtime.freeMemory()
+        val usedMemory = totalMemory - freeMemory
+        val availableMemory = maxMemory - usedMemory
+        
+        val maxMB = maxMemory / (1024 * 1024)
+        val usedMB = usedMemory / (1024 * 1024)
+        val availableMB = availableMemory / (1024 * 1024)
+        
+        CrashLogger.log("MusicViewModel", "🧠 Memory [$context]: Used=${usedMB}MB, Available=${availableMB}MB, Max=${maxMB}MB")
+        
+        // Warn if memory is getting low
+        if (availableMB < 50) {
+            CrashLogger.log("MusicViewModel", "⚠️ LOW MEMORY WARNING [$context]: Only ${availableMB}MB available!")
+        }
+    }
+    
     fun sortSelectedFiles(action: SortAction) {
         val selected = _selectedIndices.value
+        CrashLogger.log("MusicViewModel", "🔍 sortSelectedFiles called with action=$action, selectedCount=${selected.size}")
+        CrashLogger.log("MusicViewModel", "🔍 Selected indices: $selected")
+        
         if (selected.isEmpty()) {
             _errorMessage.value = "No files selected"
+            CrashLogger.log("MusicViewModel", "❌ No files selected for sorting")
             return
         }
         
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Reduced delays to prevent animation hanging
-                val currentIndex = _currentIndex.value
-                val musicFiles = _musicFiles.value
-                
-                if (currentIndex < musicFiles.size - 1) {
-                    // Move to next song first with minimal delay
+            // Use mutex to prevent concurrent file operations
+            fileOperationMutex.withLock {
+                CrashLogger.log("MusicViewModel", "🔒 Acquired file operation mutex for bulk operation")
+                logMemoryStatus("BulkOperationStart")
+                try {
+                    _isLoading.value = true
+                    _errorMessage.value = "Processing ${selected.size} files..."
+                    CrashLogger.log("MusicViewModel", "📊 Starting bulk operation: ${selected.size} files")
+                    
+                    val currentIndex = _currentIndex.value
+                    val musicFiles = _musicFiles.value
+                    CrashLogger.log("MusicViewModel", "🔍 Current state: index=$currentIndex, totalFiles=${musicFiles.size}")
+                    
+                    // Get current playlist based on current tab
+                    val currentFiles = when (_currentPlaylistTab.value) {
+                        PlaylistTab.TODO -> _musicFiles.value
+                        PlaylistTab.LIKED -> _likedFiles.value
+                        PlaylistTab.REJECTED -> _rejectedFiles.value
+                    }
+                    CrashLogger.log("MusicViewModel", "🔍 Current playlist: ${_currentPlaylistTab.value}, files=${currentFiles.size}")
+                    
+                    // Sort indices in descending order to avoid index shifting issues
+                    val sortedIndices = selected.sortedDescending()
+                    CrashLogger.log("MusicViewModel", "🔍 Sorted indices (desc): $sortedIndices")
+                    val successfullySortedFiles = mutableListOf<MusicFile>()
+                    val failedFiles = mutableListOf<MusicFile>()
+                    
+                    // Process files one by one with proper error handling
+                    for ((i, index) in sortedIndices.withIndex()) {
+                        CrashLogger.log("MusicViewModel", "🔄 Processing file $i/${sortedIndices.size}: index=$index")
+                        
+                        if (index in currentFiles.indices) {
+                            val file = currentFiles[index]
+                            CrashLogger.log("MusicViewModel", "📁 Processing file: ${file.name} (${file.uri})")
+                            try {
+                                // Add small delay between operations to prevent file system conflicts
+                                delay(200)
+                                CrashLogger.log("MusicViewModel", "⏱️ Delay completed, starting file operation")
+                                
+                                val success = fileManager.sortFile(file, action)
+                                CrashLogger.log("MusicViewModel", "📁 File operation result: success=$success for ${file.name}")
+                                
+                                if (success) {
+                                    successfullySortedFiles.add(file)
+                                    CrashLogger.log("MusicViewModel", "✅ Successfully sorted: ${file.name}")
+                                } else {
+                                    failedFiles.add(file)
+                                    CrashLogger.log("MusicViewModel", "❌ Failed to sort: ${file.name}")
+                                }
+                                
+                                // Monitor memory after each file operation
+                                logMemoryStatus("AfterFile${i + 1}")
+                            } catch (e: Exception) {
+                                failedFiles.add(file)
+                                CrashLogger.log("MusicViewModel", "💥 Exception sorting ${file.name}", e)
+                            }
+                        } else {
+                            CrashLogger.log("MusicViewModel", "⚠️ Index $index out of bounds (max: ${currentFiles.size - 1})")
+                        }
+                    }
+                    
+                    CrashLogger.log("MusicViewModel", "📊 Bulk operation completed: success=${successfullySortedFiles.size}, failed=${failedFiles.size}")
+                    logMemoryStatus("BulkOperationEnd")
+                    
+                    // Update UI on main thread
                     withContext(Dispatchers.Main) {
-                        _currentIndex.value = currentIndex + 1
-                        loadCurrentFile()
-                    }
-                    
-                    // Reduced wait time to prevent animation hanging
-                    delay(1000) // Reduced from 3000ms
-                    
-                    // Quick check for playback stability
-                    var retryCount = 0
-                    while (retryCount < 3 && !isPlaying.value) { // Reduced from 5
-                        delay(300) // Reduced from 500ms
-                        retryCount++
-                    }
-                } else {
-                    // Minimal delay for current playback
-                    delay(500) // Reduced from 2000ms
-                }
-                
-                val sortedIndices = selected.sortedDescending()
-                val successfullySortedIndices = mutableListOf<Int>()
-                
-                // Get current playlist based on current tab
-                val currentFiles = when (_currentPlaylistTab.value) {
-                    PlaylistTab.TODO -> _musicFiles.value
-                    PlaylistTab.LIKED -> _likedFiles.value
-                    PlaylistTab.REJECTED -> _rejectedFiles.value
-                }
-                
-                // Sort files with reduced delays
-                for (index in sortedIndices) {
-                    if (index in currentFiles.indices) {
-                        val file = currentFiles[index]
-                        if (fileManager.sortFile(file, action)) {
-                            successfullySortedIndices.add(index)
+                        CrashLogger.log("MusicViewModel", "🔄 Updating UI on main thread")
+                        val successCount = successfullySortedFiles.size
+                        val failCount = failedFiles.size
+                        
+                        if (successCount > 0) {
+                            _errorMessage.value = "Successfully sorted $successCount files to ${if (action == SortAction.LIKE) "Liked" else "Rejected"}"
+                            CrashLogger.log("MusicViewModel", "✅ UI update: $successCount files sorted successfully")
+                            
+                            // Remove successfully sorted files from current playlist
+                            val updatedFiles = currentFiles.toMutableList()
+                            val indicesToRemove = sortedIndices.filter { index ->
+                                index in currentFiles.indices && 
+                                successfullySortedFiles.any { it.uri == currentFiles[index].uri }
+                            }.sortedDescending()
+                            
+                            CrashLogger.log("MusicViewModel", "🔍 Indices to remove: $indicesToRemove")
+                            
+                            indicesToRemove.forEach { index ->
+                                if (index < updatedFiles.size) {
+                                    val removedFile = updatedFiles.removeAt(index)
+                                    CrashLogger.log("MusicViewModel", "🗑️ Removed file at index $index: ${removedFile.name}")
+                                }
+                            }
+                            
+                            CrashLogger.log("MusicViewModel", "📊 Updated files count: ${updatedFiles.size} (was ${currentFiles.size})")
+                            
+                            // Update the correct playlist
+                            when (_currentPlaylistTab.value) {
+                                PlaylistTab.TODO -> {
+                                    _musicFiles.value = updatedFiles
+                                    CrashLogger.log("MusicViewModel", "📝 Updated TODO playlist: ${updatedFiles.size} files")
+                                }
+                                PlaylistTab.LIKED -> {
+                                    _likedFiles.value = updatedFiles
+                                    CrashLogger.log("MusicViewModel", "📝 Updated LIKED playlist: ${updatedFiles.size} files")
+                                }
+                                PlaylistTab.REJECTED -> {
+                                    _rejectedFiles.value = updatedFiles
+                                    CrashLogger.log("MusicViewModel", "📝 Updated REJECTED playlist: ${updatedFiles.size} files")
+                                }
+                            }
+                            
+                            // Adjust current index if needed
+                            if (_currentIndex.value >= updatedFiles.size && updatedFiles.isNotEmpty()) {
+                                _currentIndex.value = updatedFiles.size - 1
+                                CrashLogger.log("MusicViewModel", "🔧 Adjusted current index to: ${_currentIndex.value}")
+                                loadCurrentFile()
+                            } else if (updatedFiles.isEmpty()) {
+                                _currentIndex.value = 0
+                                stopPlayback()
+                                _errorMessage.value = "All files sorted! Select another folder to continue."
+                                CrashLogger.log("MusicViewModel", "🏁 All files sorted, showing delete prompt")
+                                showDeleteRejectedPrompt()
+                            }
                         }
-                        // Reduced delay to prevent animation hanging
-                        delay(100) // Reduced from 200ms
-                    }
-                }
-                
-                withContext(Dispatchers.Main) {
-                    val successCount = successfullySortedIndices.size
-                    _errorMessage.value = "Sorted $successCount files to ${if (action == SortAction.LIKE) "Liked" else "Rejected"}"
-                    _selectedIndices.value = emptySet()
-                    _isMultiSelectionMode.value = false
-                    
-                    // Refresh the appropriate playlist by removing successfully sorted files
-                    val updatedFiles = currentFiles.toMutableList()
-                    
-                    // Remove successfully sorted files in reverse order to maintain indices
-                    successfullySortedIndices.sortedDescending().forEach { index ->
-                        if (index < updatedFiles.size) {
-                            updatedFiles.removeAt(index)
+                        
+                        if (failCount > 0) {
+                            _errorMessage.value = "Sorted $successCount files, failed $failCount files. Check folder permissions."
+                            CrashLogger.log("MusicViewModel", "⚠️ Some files failed: $failCount failures")
                         }
+                        
+                        // Clear selection
+                        _selectedIndices.value = emptySet()
+                        _isMultiSelectionMode.value = false
+                        _isLoading.value = false
+                        CrashLogger.log("MusicViewModel", "🧹 Cleared selection and loading state")
                     }
                     
-                    // Update the correct playlist based on current tab
-                    when (_currentPlaylistTab.value) {
-                        PlaylistTab.TODO -> _musicFiles.value = updatedFiles
-                        PlaylistTab.LIKED -> _likedFiles.value = updatedFiles
-                        PlaylistTab.REJECTED -> _rejectedFiles.value = updatedFiles
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        _errorMessage.value = "Error sorting selected files: ${e.message}"
+                        _isLoading.value = false
+                        CrashLogger.log("MusicViewModel", "💥 CRITICAL ERROR in sortSelectedFiles", e)
+                        
+                        // Log detailed exception information
+                        CrashLogger.log("MusicViewModel", "💥 Exception type: ${e.javaClass.simpleName}")
+                        CrashLogger.log("MusicViewModel", "💥 Exception message: ${e.message}")
+                        CrashLogger.log("MusicViewModel", "💥 Exception cause: ${e.cause}")
+                        e.stackTrace.forEach { stackElement ->
+                            CrashLogger.log("MusicViewModel", "💥 Stack: ${stackElement.className}.${stackElement.methodName}:${stackElement.lineNumber}")
+                        }
+                        
+                        logMemoryStatus("ExceptionCaught")
                     }
-                    
-                    // Adjust current index if needed
-                    if (_currentIndex.value >= updatedFiles.size && updatedFiles.isNotEmpty()) {
-                        _currentIndex.value = updatedFiles.size - 1
-                        loadCurrentFile()
-                    } else if (updatedFiles.isEmpty()) {
-                        _currentIndex.value = 0
-                        stopPlayback()
-                        _errorMessage.value = "All files sorted! Select another folder to continue."
-                        // Show prompt to delete rejected files
-                        showDeleteRejectedPrompt()
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _errorMessage.value = "Error sorting selected files: ${e.message}"
+                } finally {
+                    CrashLogger.log("MusicViewModel", "🔓 Releasing file operation mutex")
+                    logMemoryStatus("FinallyBlock")
                 }
             }
         }
@@ -2114,8 +2313,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     emptyList()
                 }
                     withContext(Dispatchers.Main) {
-                        _likedFiles.value = likedFiles.map { it.copy(sourcePlaylist = PlaylistTab.LIKED) }
-                        CrashLogger.log("MusicViewModel", "Updated liked files StateFlow with ${likedFiles.size} files")
+                        val sortedLikedFiles = likedFiles.map { it.copy(sourcePlaylist = PlaylistTab.LIKED) }
+                            .sortedByDescending { it.dateAdded }
+                        _likedFiles.value = sortedLikedFiles
+                        CrashLogger.log("MusicViewModel", "Updated liked files StateFlow with ${sortedLikedFiles.size} files (sorted by dateAdded)")
                     }
                 } catch (e: Exception) {
                     CrashLogger.log("MusicViewModel", "Error loading liked files", e)
@@ -2140,8 +2341,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     emptyList()
                 }
                     withContext(Dispatchers.Main) {
-                        _rejectedFiles.value = rejectedFiles.map { it.copy(sourcePlaylist = PlaylistTab.REJECTED) }
-                        CrashLogger.log("MusicViewModel", "Updated rejected files StateFlow with ${rejectedFiles.size} files")
+                        val sortedRejectedFiles = rejectedFiles.map { it.copy(sourcePlaylist = PlaylistTab.REJECTED) }
+                            .sortedByDescending { it.dateAdded }
+                        _rejectedFiles.value = sortedRejectedFiles
+                        CrashLogger.log("MusicViewModel", "Updated rejected files StateFlow with ${sortedRejectedFiles.size} files (sorted by dateAdded)")
                     }
                 } catch (e: Exception) {
                     CrashLogger.log("MusicViewModel", "Error loading rejected files", e)
@@ -2310,6 +2513,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     // ==================== SUBFOLDER MANAGEMENT ====================
     
+    private fun isMusicFile(fileName: String?): Boolean {
+        if (fileName == null) return false
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        return extension in listOf("mp3", "wav", "flac", "m4a", "aac", "ogg", "aif", "aiff", "wma")
+    }
+    
     private fun loadSubfolderHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -2361,7 +2570,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     
                                     // Count music files in this subfolder
                                     val musicFiles = file.listFiles()?.filter { 
-                                        it.isFile && (it.name?.endsWith(".mp3", ignoreCase = true) == true)
+                                        it.isFile && isMusicFile(it.name)
                                     } ?: emptyList()
                                     fileCounts[folderName] = musicFiles.size
                                 }
@@ -2725,7 +2934,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 }
                 val unique = collected.distinctBy { it.uri }
                 withContext(Dispatchers.Main) {
-                    _likedFiles.value = unique
+                    val sortedUnique = unique.sortedByDescending { it.dateAdded }
+                    _likedFiles.value = sortedUnique
                     // Preserve current playback; do not auto play first track
                     if (currentUri != null) {
                         val idx = unique.indexOfFirst { it.uri == currentUri }

@@ -1,3 +1,36 @@
+9.95
+- 🌤️ SKY THEME FIX: Made Sky theme distinct from Ocean theme
+- 🔄 Sky Theme: Changed to cyan/sky blue colors instead of regular blue
+- 🎨 Ocean Theme: Keeps the original blue tones
+- 🌈 Sky Colors: Sky blue (#87CEEB), Powder blue (#B0E0E6), Light cyan (#E0F6FF)
+- 🌊 Ocean Colors: Soft blue (#81C7F4), Light blue (#9ED5F0), Very light blue (#B8E0F2)
+- 🌙 Dark Mode: Sky dark uses cyan tones, Ocean dark uses blue tones
+- ✅ Result: Sky and Ocean themes are now visually distinct
+
+9.94
+- 🌙 DARK MODE FIX: Added proper dark mode variants for all pastel themes
+- 🔧 ThemeColors: Added dark mode color properties (darkPrimary, darkBackground, etc.)
+- 🌈 Dark variants: Each theme now has beautiful dark mode colors
+- 🎨 Ocean Dark: Deep blues with light blue text
+- 🌸 Midnight Dark: Rich purples with light purple text
+- ⚫ Monochrome Dark: Classic dark grays
+- 🔆 High Contrast Dark: Pure white on black
+- 🌿 MobileDigger Dark: Deep greens with light green text
+- 💜 Lavender Dark: Rich purples with light purple text
+- 🍑 Peach Dark: Deep pinks with light pink text
+- 🌱 Mint Dark: Deep teals with light teal text
+- ☁️ Sky Dark: Deep blues with light blue text
+- ✅ Result: Dark mode toggle now works perfectly with all themes
+
+9.93
+- 🎨 PASTEL THEMES: Added Android 16 style pastel themes
+- 🌈 New themes: Lavender, Peach, Mint, Sky (pastel colors)
+- 🔄 Updated existing: MobileDigger, Ocean, Midnight, Monochrome, HighContrast
+- ✨ Android 16 style: Light backgrounds, soft colors, better contrast
+- 🗑️ Removed: Sunset, Forest, Purple, Coral, Earthy, Vibrant, Retro themes
+- 📱 Modern design: Pastel color palette with improved readability
+- 🎯 Total themes: 9 beautiful pastel themes in Android 16 style
+
 9.90
 - 🛡️ CRASH-SAFE setDataSource: Added timeout protection for FFmpegMediaPlayer
 - 🔍 Root cause: FFmpegMediaPlayer.setDataSource() crashes with SIGABRT at native level

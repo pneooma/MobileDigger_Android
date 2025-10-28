@@ -1,3 +1,11 @@
+10.14
+- 🧠 SMART MINIPLAYER: Miniplayer now only shows when current playing track is not visible in viewport
+- 📱 INTELLIGENT VISIBILITY: Automatically hides when scrolling back to current track, shows when scrolling away
+- 🎯 VIEWPORT DETECTION: Calculates visible range and checks if current track index is within viewport
+- ⚡ PERFORMANCE OPTIMIZED: Uses remember with proper dependencies to avoid unnecessary recalculations
+- 🎵 WAVEFORM RESTORED: Miniplayer includes full waveform functionality for seeking and visual feedback
+- ✅ Result: Smart miniplayer that only appears when needed, providing better UX
+
 10.13
 - 🎵 PLAYLIST PLAY/PAUSE: Added play/pause button below dislike button in active playlist rows
 - 🎛️ ENHANCED CONTROLS: Active rows now have vertical button layout on the left side

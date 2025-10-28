@@ -910,7 +910,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.13 ::",
+                            text = ":: v10.14 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3313,10 +3313,19 @@ viewModel.updateSearchText("")
                     }
                     
                     // Enhanced Sticky minimized player when scrolled - positioned correctly in BoxScope
-                    // DISABLED: Miniplayer removed by user request
-                    /*
+                    // Smart visibility: only show when current playing track is not visible in viewport
+                    val currentTrackIndex = currentPlaylistFiles.indexOfFirst { it.uri == currentPlayingFile?.uri }
+                    val isCurrentTrackVisible = remember(listState.firstVisibleItemIndex, listState.layoutInfo.visibleItemsInfo.size, currentTrackIndex) {
+                        if (currentTrackIndex == -1) false
+                        else {
+                            val firstVisible = listState.firstVisibleItemIndex
+                            val lastVisible = firstVisible + listState.layoutInfo.visibleItemsInfo.size - 1
+                            currentTrackIndex in firstVisible..lastVisible
+                        }
+                    }
+                    
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = isScrolled,
+                        visible = isScrolled && !isCurrentTrackVisible && currentPlayingFile != null,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                         modifier = Modifier
@@ -3694,12 +3703,27 @@ viewModel.updateSearchText("")
                                         }
                                     }
                                     
-                                    // Mini player waveform removed by request
+                                    // Mini player waveform
+                                    WaveformWithToggle(
+                                        sharedState = sharedWaveformState,
+                                        progress = if (duration > 0) currentPosition.toFloat() / duration else 0f,
+                                        onSeek = { seekProgress ->
+                                            val seekPosition = (seekProgress * duration).toLong()
+                                            viewModel.seekTo(seekPosition)
+                                        },
+                                        songUri = file.uri.toString(),
+                                        waveformHeight = 60, // Mini waveform height
+                                        currentPosition = currentPosition,
+                                        totalDuration = duration,
+                                        fileName = file.name,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
                                 }
                             }
                         }
                     }
-                    */
 
                 }
             }

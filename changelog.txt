@@ -1,3 +1,31 @@
+9.99
+- 🎯 VLC SEEKING FIX: Fixed VLC seek functionality - no more restarting from 0
+- 📍 Position Tracking: Added proper VLC getCurrentPosition() and getDuration()
+- 🔄 Seek Implementation: VLC-aware seekTo() with correct state management
+- 📁 URI Handling: Fixed VLC content URI handling by copying to temp files
+- 🐛 Debug Logging: Added seek calculation debugging for troubleshooting
+- 🎵 Stable Playback: VLC now provides complete AIFF playback with working seek
+- ✅ Result: VLC integration fully functional with proper seeking capabilities
+
+9.98
+- 🎵 VLC INTEGRATION: Added libVLC backend for robust AIFF playback
+- 🔧 VlcAudioBackend: New audio backend using libVLC 3.6.0
+- 🛡️ Crash Prevention: VLC handles AIFF files more reliably than FFmpegMediaPlayer
+- 🔄 Fallback Chain: VLC → FFmpegMediaPlayer → ExoPlayer for AIFF files
+- ⚙️ Feature Flags: USE_VLC_FOR_AIFF enabled, USE_VLC_FOR_ALL disabled
+- 🎛️ Audio Options: Optimized VLC settings for audio-only playback
+- 📊 Event Handling: Complete VLC event listener integration
+- ✅ Result: More stable AIFF playback with VLC as primary backend
+
+9.97
+- 🛡️ CRASH PREVENTION: Added AIFF file validation before FFmpeg playback
+- 🔍 File Validation: Checks file size, accessibility, and AIFF header signature
+- 📏 Size Limit: Skips AIFF files larger than 200MB to prevent memory crashes
+- 🎵 Header Check: Validates AIFF file format (FORM....AIFF signature)
+- 🚫 Corrupted Files: Prevents playback of corrupted or invalid AIFF files
+- 📊 Better Logging: Detailed validation steps with emoji indicators
+- ✅ Result: Should prevent SIGABRT crashes from problematic AIFF files
+
 9.96
 - 📝 UNIFIED LOGGING: All logs now written to single DEBUG file in results folder
 - 🔧 UnifiedLogger: New centralized logging system for all app components

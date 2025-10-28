@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-    versionCode = 996
-    versionName = "9.96"
+        versionCode = 999
+        versionName = "9.99"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -76,6 +76,9 @@ dependencies {
     // Audio processing - FFmpegMediaPlayer for AIFF support
     implementation("com.github.wseemann:FFmpegMediaPlayer-core:1.0.5")
     implementation("com.github.wseemann:FFmpegMediaPlayer-native:1.0.5")
+    
+    // libVLC for robust audio playback (including AIFF)
+    implementation("org.videolan.android:libvlc-all:3.6.0")
     
     // Media3 for modern media playback
     implementation("androidx.media3:media3-exoplayer:1.3.1")

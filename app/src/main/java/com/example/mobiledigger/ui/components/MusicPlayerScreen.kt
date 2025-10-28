@@ -900,8 +900,8 @@ fun MusicPlayerScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-        Text(
-            text = ":: v9.96 ::",
+                        Text(
+                            text = ":: v9.99 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1737,6 +1737,7 @@ viewModel.updateSearchText("")
                                             progress = progressPercent,
                                             onSeek = { seekProgress ->
                                                 val seekPosition = (seekProgress * duration).toLong()
+                                                println("🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
                                                 viewModel.seekTo(seekPosition)
                                             },
                                             songUri = currentFile?.uri.toString(),
@@ -3363,6 +3364,7 @@ viewModel.updateSearchText("")
                                         progress = progressPercent,
                                         onSeek = { seekProgress ->
                                             val seekPosition = (seekProgress * duration).toLong()
+                                            println("🎯 Mini seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
                                             viewModel.seekTo(seekPosition)
                                         },
                                         songUri = currentFile?.uri.toString(),

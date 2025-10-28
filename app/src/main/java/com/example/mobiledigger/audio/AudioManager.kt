@@ -54,7 +54,7 @@ class AudioManager(private val context: Context) {
     // Feature flag for VLC backend
     companion object {
         private const val USE_VLC_FOR_AIFF = true // Enable VLC for AIFF files
-        private const val USE_VLC_FOR_ALL = false // Enable VLC for all files (experimental)
+        private const val USE_VLC_FOR_ALL = true // Enable VLC for all files (enabled)
     }
     private val analyzer = AudioAnalyzer()
     
@@ -543,10 +543,26 @@ class AudioManager(private val context: Context) {
                 }
             }
             
-            // Use ExoPlayer for all other files and as fallback
+            // If VLC-for-all is enabled, prefer VLC for all filetypes
+            if (USE_VLC_FOR_ALL && vlcBackend != null) {
+                try {
+                    val vlcSuccessAll = tryPlayWithVlcSync(uri)
+                    if (vlcSuccessAll) {
+                        isUsingVlc = true
+                        isUsingFFmpeg = false
+                        CrashLogger.log("AudioManager", "✅ VLC playback successful for: ${musicFile.name}")
+                        return true
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("AudioManager", "💥 VLC playback failed for non-AIFF, falling back", e)
+                }
+            }
+
+            // Use ExoPlayer as fallback (kept for non-AIFF and edge cases)
             val exoSuccess = tryPlayWithExoPlayerSync(uri)
             if (exoSuccess) {
                 isUsingFFmpeg = false
+                isUsingVlc = false
                 CrashLogger.log("AudioManager", "ExoPlayer playback successful for: ${musicFile.name}")
                 return true
             }
@@ -754,7 +770,9 @@ class AudioManager(private val context: Context) {
     
     fun pause() {
         try {
-            if (isUsingFFmpeg) {
+            if (isUsingVlc) {
+                vlcBackend?.pause()
+            } else if (isUsingFFmpeg) {
                 ffmpegPlayer?.pause()
             } else {
                 exoPlayerFallback?.pause()
@@ -836,19 +854,12 @@ class AudioManager(private val context: Context) {
     
     fun resume() {
         try {
-            if (isUsingFFmpeg) {
+            if (isUsingVlc) {
+                vlcBackend?.start()
+            } else if (isUsingFFmpeg) {
                 ffmpegPlayer?.start()
             } else {
-                // Check if VLC is playing
-                vlcBackend?.let { vlc ->
-                    if (vlc.isPlaying()) {
-                        vlc.start()
-            } else {
                 exoPlayerFallback?.play()
-                    }
-                } ?: run {
-                    exoPlayerFallback?.play()
-                }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Resume error", e)

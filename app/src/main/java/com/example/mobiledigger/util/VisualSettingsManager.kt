@@ -11,10 +11,10 @@ class VisualSettingsManager {
     private val _animationSpeed = MutableStateFlow(1.0f)
     val animationSpeed: StateFlow<Float> = _animationSpeed.asStateFlow()
     
-    private val _waveformHeight = MutableStateFlow(80)
+    private val _waveformHeight = MutableStateFlow(96) // Increased by 20% (80 * 1.2)
     val waveformHeight: StateFlow<Int> = _waveformHeight.asStateFlow()
     
-    private val _miniWaveformHeight = MutableStateFlow(60)
+    private val _miniWaveformHeight = MutableStateFlow(72) // Increased by 20% (60 * 1.2)
     val miniWaveformHeight: StateFlow<Int> = _miniWaveformHeight.asStateFlow()
     
     fun setEnableAnimations(enabled: Boolean) {

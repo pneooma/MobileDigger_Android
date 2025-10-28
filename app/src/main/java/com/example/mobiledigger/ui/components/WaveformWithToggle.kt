@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +23,8 @@ fun WaveformWithToggle(
     modifier: Modifier = Modifier,
     waveformHeight: Int = 100,
     currentPosition: Long = 0L,
-    totalDuration: Long = 0L
+    totalDuration: Long = 0L,
+    fileName: String = "" // File name to display above the waveform when available
 ) {
     val context = LocalContext.current
     var isWaveformEnabled by remember { mutableStateOf(isWaveformGenerationEnabled(context)) }
@@ -39,6 +41,7 @@ fun WaveformWithToggle(
             onSeek = onSeek,
             currentPosition = currentPosition,
             totalDuration = totalDuration,
+            fileName = fileName,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(waveformHeight.dp),

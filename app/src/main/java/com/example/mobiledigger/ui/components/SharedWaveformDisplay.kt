@@ -19,6 +19,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.SeekBarOnProgressChanged
@@ -32,7 +35,8 @@ fun SharedWaveformDisplay(
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Gray.copy(alpha = 0.1f), // Allow custom background color
     currentPosition: Long = 0L, // Current playback position in milliseconds
-    totalDuration: Long = 0L // Total duration in milliseconds
+    totalDuration: Long = 0L, // Total duration in milliseconds
+    fileName: String = ""
 ) {
     val context = LocalContext.current
     val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
@@ -127,55 +131,70 @@ fun SharedWaveformDisplay(
                 val playedColor = MaterialTheme.colorScheme.primary.toArgb()
                 val unplayedColor = MaterialTheme.colorScheme.outline.toArgb()
                 
-                AndroidView(
-                    factory = { ctx ->
-                        WaveformSeekBar(ctx).apply {
-                            // Configure WaveformSeekBar appearance
-                            waveBackgroundColor = unplayedColor
-                            waveProgressColor = playedColor
-                            waveWidth = 1f
-                            waveGap = 0f
-                            waveCornerRadius = 2f
-                            wavePaddingTop = 1
-                            wavePaddingBottom = 1
-                            
-                            // Set the waveform data
-                            sample = sharedState.waveformData!!
-                            
-                            // Set initial progress
-                            this.progress = localProgress * 100f
-                            
-                            // Disable built-in gesture handling - make it purely visual
-                            onProgressChanged = null
-                            
-                            // Disable touch events on the WaveformSeekBar
-                            isEnabled = false
-                        }
-                    },
-                    update = { waveformSeekBar ->
-                        // Update progress when it changes externally
-                        waveformSeekBar.progress = localProgress * 100f
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding to waveform
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AndroidView(
+                        factory = { ctx ->
+                            WaveformSeekBar(ctx).apply {
+                                // Configure WaveformSeekBar appearance
+                                waveBackgroundColor = unplayedColor
+                                waveProgressColor = playedColor
+                                waveWidth = 1f
+                                waveGap = 0f
+                                waveCornerRadius = 2f
+                                wavePaddingTop = 1
+                                wavePaddingBottom = 1
+                                
+                                // Set the waveform data
+                                sample = sharedState.waveformData!!
+                                
+                                // Set initial progress
+                                this.progress = localProgress * 100f
+                                
+                                // Disable built-in gesture handling - make it purely visual
+                                onProgressChanged = null
+                                
+                                // Disable touch events on the WaveformSeekBar
+                                isEnabled = false
+                            }
+                        },
+                        update = { waveformSeekBar ->
+                            // Update progress when it changes externally
+                            waveformSeekBar.progress = localProgress * 100f
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding to waveform
+                    )
+                }
             }
             
             else -> {
-                // No waveform available - always show message (for AIFF files)
+                // No waveform available - keep container empty (no message)
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Always show "No waveform for AIFF" message
-                    Text(
-                        text = "No waveform for AIFF files",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // Intentionally empty
                 }
             }
+        }
+        
+        // OVERLAY LAYER: Filename centered vertically in waveform container
+        if (fileName.isNotEmpty()) {
+            Text(
+                text = fileName,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 0.9f // 10% smaller
+                ),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            )
         }
         
         // OVERLAY LAYER: Always-visible green progress line (on top of everything)

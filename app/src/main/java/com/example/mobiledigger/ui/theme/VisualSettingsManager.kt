@@ -14,8 +14,8 @@ enum class HapticFeedbackType { // New enum
 
 data class VisualSettings(
     // Waveform Settings
-    val waveformHeight: Float = 80f,
-    val miniWaveformHeight: Float = 60f,
+    val waveformHeight: Float = 96f, // Increased by 20% (80 * 1.2)
+    val miniWaveformHeight: Float = 72f, // Increased by 20% (60 * 1.2)
     // Animation Settings
     val enableAnimations: Boolean = true,
     val animationSpeed: Float = 1.0f, // 0.5x to 2.0x speed
@@ -46,8 +46,8 @@ class VisualSettingsManager(context: Context) {
     private fun loadSettings(): VisualSettings {
         return VisualSettings(
             // Waveform
-            waveformHeight = prefs.getFloat(KEY_WAVEFORM_HEIGHT, 80f),
-            miniWaveformHeight = prefs.getFloat(KEY_MINI_WAVEFORM_HEIGHT, 60f),
+            waveformHeight = prefs.getFloat(KEY_WAVEFORM_HEIGHT, 96f), // Increased by 20%
+            miniWaveformHeight = prefs.getFloat(KEY_MINI_WAVEFORM_HEIGHT, 72f), // Increased by 20%
             
             // Animation
             enableAnimations = prefs.getBoolean(KEY_ENABLE_ANIMATIONS, true),

@@ -1,3 +1,12 @@
+10.0
+- 🎵 VLC FOR ALL: All file types now play through VLC for consistent seeking
+- 🎮 Play/Pause Fix: Play/pause controls now properly work with VLC backend
+- 📝 Filename Display: Filename centered vertically in waveform container
+- 🎨 UI Polish: 10% smaller font size, theme-aware colors for filename
+- 🔧 Waveform Height: Increased by 20% (96dp main, 72dp mini)
+- 🎯 Complete VLC: Universal VLC playback with working seek for all formats
+- ✅ Result: Perfect playback experience across all audio file types
+
 9.99
 - 🎯 VLC SEEKING FIX: Fixed VLC seek functionality - no more restarting from 0
 - 📍 Position Tracking: Added proper VLC getCurrentPosition() and getDuration()

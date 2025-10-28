@@ -901,7 +901,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                         Text(
-                            text = ":: v9.99 ::",
+                            text = ":: v10.0 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1661,27 +1661,7 @@ viewModel.updateSearchText("")
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
                                         
-                                        // Song info with text wrapping
-                                        AnimatedContent(
-                                            targetState = file.name,
-                                            transitionSpec = {
-                                                fadeIn(animationSpec = animationSpecs.songNameTween) + slideInVertically() togetherWith
-                                                fadeOut(animationSpec = animationSpecs.songNameTween) + slideOutVertically()
-                                            },
-                                            label = "Song Name Animation"
-                                        ) { targetName ->
-                                        Text(
-                                                text = targetName.ifEmpty { "Unknown Track" },
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 3,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                        }
+                                        // Song info removed - now displayed in waveform container
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
                                         // Metadata row under title:| Time | Bitrate | Size | BPM | Key |
@@ -1744,6 +1724,7 @@ viewModel.updateSearchText("")
                                             waveformHeight = visualSettings.waveformHeight.toInt(),
                                             currentPosition = currentPosition,
                                             totalDuration = duration,
+                                            fileName = file.name, // Pass filename to display in waveform
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                         Row(
@@ -3359,19 +3340,20 @@ viewModel.updateSearchText("")
                                     
                                     // Mini player: shared waveform with toggle (replaces progress bar)
                                     val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                    WaveformWithToggle(
-                                        sharedState = sharedWaveformState,
-                                        progress = progressPercent,
-                                        onSeek = { seekProgress ->
-                                            val seekPosition = (seekProgress * duration).toLong()
-                                            println("🎯 Mini seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
-                                            viewModel.seekTo(seekPosition)
-                                        },
-                                        songUri = currentFile?.uri.toString(),
-                                        waveformHeight = visualSettings.miniWaveformHeight.toInt(),
-                                        currentPosition = currentPosition,
-                                        totalDuration = duration,
-                                        modifier = Modifier
+                                        WaveformWithToggle(
+                                            sharedState = sharedWaveformState,
+                                            progress = progressPercent,
+                                            onSeek = { seekProgress ->
+                                                val seekPosition = (seekProgress * duration).toLong()
+                                                println("🎯 Mini seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
+                                                viewModel.seekTo(seekPosition)
+                                            },
+                                            songUri = currentFile?.uri.toString(),
+                                            waveformHeight = visualSettings.miniWaveformHeight.toInt(),
+                                            currentPosition = currentPosition,
+                                            totalDuration = duration,
+                                            fileName = file.name, // Pass filename to display in mini waveform
+                                            modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(horizontal = 12.dp, vertical = 4.dp)
                                     )

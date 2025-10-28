@@ -99,6 +99,7 @@ import com.example.mobiledigger.viewmodel.MusicViewModel
 import com.example.mobiledigger.viewmodel.PlaylistTab
 
 import kotlin.math.abs
+import kotlin.math.ceil
 import java.util.Locale
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.platform.LocalDensity
@@ -182,6 +183,10 @@ fun MusicPlayerScreen(
     
     // Waveform visibility state (main player)
     var isWaveformVisible by remember { mutableStateOf(true) }
+    
+    // Main player and playlists visibility states (start hidden)
+    var isMainPlayerVisible by remember { mutableStateOf(false) }
+    var isPlaylistsVisible by remember { mutableStateOf(false) }
     
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -905,7 +910,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.11 ::",
+                            text = ":: v10.12 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1586,6 +1591,13 @@ viewModel.updateSearchText("")
                                 val played = viewModel.preferences.getListened()
                                 val yes = viewModel.preferences.getLiked()
                                 val no = viewModel.preferences.getRefused()
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
                                 Text(
                                     text = "Played: $played  |  Liked: $yes  |  Rejected: $no",
                                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -1593,9 +1605,29 @@ viewModel.updateSearchText("")
                                         fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.8f
                                     ),
                                     color = GroovyBlue,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                                )
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    OutlinedButton(
+                                        onClick = { isMainPlayerVisible = !isMainPlayerVisible },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                        modifier = Modifier.height(22.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isMainPlayerVisible) "Hide Controls" else "Show Controls",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                    OutlinedButton(
+                                        onClick = { isPlaylistsVisible = !isPlaylistsVisible },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                        modifier = Modifier.height(22.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isPlaylistsVisible) "Hide Playlists" else "Show Playlists",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
                                 
                                 // Clear previous analysis on track change; do not auto-analyze
                                 LaunchedEffect(file.uri) {
@@ -1605,12 +1637,13 @@ viewModel.updateSearchText("")
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
+                                        .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
+                                        .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
                                         .graphicsLayer {
                                             translationX = animatedOffset
                                             scaleX = 1f + abs(animatedOffset) / 2000f // Slight scale effect
                                             scaleY = 1f + abs(animatedOffset) / 2000f
-                                            alpha = transitionAlpha // Smooth fade during song transitions
+                                            alpha = if (isMainPlayerVisible) transitionAlpha else 0f // Hide completely when toggled off
                                         }
                                         .then(
                                             if (swipeDirection != 0) {
@@ -1725,8 +1758,8 @@ viewModel.updateSearchText("")
         
         Spacer(modifier = Modifier.height(12.dp))
         
-                                        // Shared Waveform with toggle (replaces progress bar) - only if visible
-                                        if (isWaveformVisible) {
+                                        // Shared Waveform with toggle (replaces progress bar) - only if visible and controls visible
+                                        if (isWaveformVisible && isMainPlayerVisible) {
                                         val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
                                             WaveformWithToggle(
                                             sharedState = sharedWaveformState,
@@ -1744,7 +1777,7 @@ viewModel.updateSearchText("")
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
-                                        Row(
+                                        if (isMainPlayerVisible) Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
@@ -2242,8 +2275,8 @@ viewModel.updateSearchText("")
                         
                         // Removed Like/Undo/Dislike compact row (moved inline with playlist waveform)
                         
-                        // Tabbed Playlist Header
-                        item {
+                        // Tabbed Playlist Header (hideable)
+                        if (isPlaylistsVisible) item {
                             Column {
                                 // Custom Pill-Shaped Tabs
                                 Row(
@@ -2814,6 +2847,53 @@ viewModel.updateSearchText("")
                             val isCompactScreen = remember(screenWidth, screenHeight) { 
                                 screenWidth < 600.dp || screenHeight < 800.dp 
                             }
+                            
+                            // Calculate adaptive height based on actual text measurement (only for inactive rows)
+                            val adaptiveHeight = remember(item.name, isCurrent) {
+                                if (isCurrent) {
+                                    88.dp // Active rows stay at fixed 88dp
+                                } else {
+                                    // Use a more accurate estimation based on typical screen width and font size
+                                    val screenWidthDp = screenWidth.value
+                                    val fontSize = 14.sp // MaterialTheme.typography.bodyMedium.fontSize * 0.85f
+                                    val charsPerLine = (screenWidthDp * 0.6f / (fontSize.value * 0.6f)).toInt() // Account for 60% width and character width
+                                    
+                                    val estimatedLines = ceil(item.name.length.toFloat() / charsPerLine).toInt().coerceAtLeast(1)
+                                    
+                                    // Calculate height based on actual lines needed
+                                    val lineHeight = 16.dp // Slightly larger for better readability
+                                    val padding = 12.dp
+                                    val calculatedHeight = (estimatedLines * lineHeight.value) + padding.value
+                                    
+                                    // Debug logging
+                                    println("DEBUG: Filename: '${item.name}' (${item.name.length} chars), screenWidth: ${screenWidthDp}dp, charsPerLine: $charsPerLine, estimatedLines: $estimatedLines, height: ${calculatedHeight}dp")
+                                    
+                                    calculatedHeight.dp
+                                }
+                            }
+                            
+                            // Calculate adaptive button size based on row height (only for inactive rows)
+                            val adaptiveButtonSize = remember(adaptiveHeight, isCurrent) {
+                                if (isCurrent) {
+                                    36.dp // Active rows stay at fixed 36dp
+                                } else {
+                                    when {
+                                        adaptiveHeight.value <= 25 -> 20.dp // 1 line rows
+                                        adaptiveHeight.value <= 40 -> 24.dp // 2 line rows
+                                        adaptiveHeight.value <= 55 -> 28.dp // 3 line rows
+                                        else -> 32.dp // 4 line rows
+                                    }
+                                }
+                            }
+                            
+                            // Calculate adaptive icon size based on button size (only for inactive rows)
+                            val adaptiveIconSize = remember(adaptiveButtonSize, isCurrent) {
+                                if (isCurrent) {
+                                    20.dp // Active rows stay at fixed 20dp
+                                } else {
+                                    (adaptiveButtonSize.value * 0.55f).dp
+                                }
+                            }
                             // Per-row swipe state
                             var rowSwipeOffset by remember(item.uri) { mutableStateOf(0f) }
                             var rowSwipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
@@ -3002,7 +3082,7 @@ viewModel.updateSearchText("")
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(if (isCurrent) 80.dp else 30.dp), // Active row 80dp (buttons now to the right)
+                                            .height(adaptiveHeight), // Adaptive height based on filename length
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
@@ -3011,7 +3091,7 @@ viewModel.updateSearchText("")
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                         // Dislike button (left)
-                                        if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
                                             IconButton(
                                                 onClick = { 
                                                     try {
@@ -3020,13 +3100,13 @@ viewModel.updateSearchText("")
                                                         println("Error in dislike button: ${e.message}")
                                                     }
                                                 },
-                                                modifier = Modifier.size(if (isCurrent) 36.dp else 28.dp) // 30% smaller for non-current
+                                                modifier = Modifier.size(adaptiveButtonSize) // Adaptive button size
                                             ) {
                                                 Icon(
                                                     Icons.Default.ThumbDown, 
                                                     contentDescription = "Dislike", 
                                                     tint = NoButton,
-                                                    modifier = Modifier.size(if (isCurrent) 20.dp else 16.dp)
+                                                    modifier = Modifier.size(adaptiveIconSize) // Adaptive icon size
                                                 )
                                             }
                                         }
@@ -3038,7 +3118,7 @@ viewModel.updateSearchText("")
                                             Box(
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .height(80.dp), // Waveform height
+                                                    .height(88.dp), // Waveform height (10% increase from 80dp)
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 WaveformWithToggle(
@@ -3059,13 +3139,13 @@ viewModel.updateSearchText("")
                                             
                                             // 2x2 control pack to the right of waveform (Like, Move, Spectrogram, Share)
                                             Column(
-                                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(3.dp),
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
                                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                     // Like (top-left)
-                                                    IconButton(
-                                                        onClick = {
+                                            IconButton(
+                                                onClick = { 
                                                             try { viewModel.sortAtIndex(index, SortAction.LIKE) } catch (e: Exception) { println("Error in like button: ${e.message}") }
                                                         },
                                                         modifier = Modifier.size(32.dp)
@@ -3081,21 +3161,21 @@ viewModel.updateSearchText("")
                                                     IconButton(
                                                         onClick = {
                                                             // Set current file for move action
-                                                            val currentFiles = when (currentPlaylistTab) {
-                                                                PlaylistTab.TODO -> musicFiles
-                                                                PlaylistTab.LIKED -> likedFiles
-                                                                PlaylistTab.REJECTED -> rejectedFiles
-                                                            }
-                                                            if (index < currentFiles.size) {
-                                                                viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                            }
-                                                            showSubfolderSelectionDialog = true
-                                                        },
+                                                    val currentFiles = when (currentPlaylistTab) {
+                                                        PlaylistTab.TODO -> musicFiles
+                                                        PlaylistTab.LIKED -> likedFiles
+                                                        PlaylistTab.REJECTED -> rejectedFiles
+                                                    }
+                                                    if (index < currentFiles.size) {
+                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                    }
+                                                    showSubfolderSelectionDialog = true
+                                                },
                                                         modifier = Modifier.size(32.dp)
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.Folder,
-                                                            contentDescription = "Move to Subfolder",
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Folder,
+                                                    contentDescription = "Move to Subfolder",
                                                             tint = Color(0xFF4CAF50),
                                                             modifier = Modifier.size(18.dp)
                                                         )
@@ -3161,14 +3241,16 @@ viewModel.updateSearchText("")
                                             Box(
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .height(30.dp), // Match non-active row height
+                                                    .height(adaptiveHeight), // Match adaptive row height
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
                                                     text = item.name,
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    maxLines = 2,
-                                                    overflow = TextOverflow.Ellipsis,
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
+                                                    ),
+                                                    maxLines = 4,
+                                                    overflow = TextOverflow.Visible,
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
@@ -3183,6 +3265,8 @@ viewModel.updateSearchText("")
                     }
                     
                     // Enhanced Sticky minimized player when scrolled - positioned correctly in BoxScope
+                    // DISABLED: Miniplayer removed by user request
+                    /*
                     androidx.compose.animation.AnimatedVisibility(
                         visible = isScrolled,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
@@ -3567,6 +3651,7 @@ viewModel.updateSearchText("")
                             }
                         }
                     }
+                    */
 
                 }
             }

@@ -1,3 +1,11 @@
+10.12
+- 📏 ADAPTIVE ROW HEIGHTS: Inactive playlist rows now dynamically adjust height based on filename length
+- 🎯 SMART TEXT MEASUREMENT: Uses screen width and font size to calculate exact lines needed
+- 📱 SCREEN-AWARE SIZING: Adapts to different screen sizes automatically
+- 🎨 PROPORTIONAL BUTTONS: Button and icon sizes scale with row height for inactive rows
+- 🔧 IMPROVED CALCULATION: More accurate character-per-line estimation (60% width usage)
+- ✅ Result: Inactive rows display full filenames without truncation, exactly as tall as needed
+
 10.11
 - 🎛️ PLAYLIST CONTROLS: Added 2x2 control pack to the right of waveform
   - Top-left: Like

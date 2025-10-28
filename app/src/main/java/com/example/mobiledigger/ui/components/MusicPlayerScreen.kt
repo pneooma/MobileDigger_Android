@@ -18,6 +18,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.shape.CircleShape
@@ -178,6 +179,9 @@ fun MusicPlayerScreen(
     
     // State to trigger spectrogram after delay
     var triggerSpectrogramAfterDelay by remember { mutableStateOf(false) }
+    
+    // Waveform visibility state (main player)
+    var isWaveformVisible by remember { mutableStateOf(true) }
     
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -900,8 +904,8 @@ fun MusicPlayerScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                        Text(
-                            text = ":: v10.0 ::",
+        Text(
+                            text = ":: v10.10 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1517,7 +1521,7 @@ viewModel.updateSearchText("")
                             .heightIn(max = playlistMaxHeight),
                         // Performance optimizations
                         contentPadding = PaddingValues(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp),
                         // Add performance hints for large lists
                         userScrollEnabled = true,
                         reverseLayout = false
@@ -1706,27 +1710,40 @@ viewModel.updateSearchText("")
                                                     )
                                                 }
                                             }
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            OutlinedButton(
+                                                onClick = { isWaveformVisible = !isWaveformVisible },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                modifier = Modifier.height(22.dp)
+                                            ) {
+                                                Text(
+                                                    text = if (isWaveformVisible) "Hide Wave" else "Show Wave",
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
                                         }
         
         Spacer(modifier = Modifier.height(12.dp))
         
-                                        // Shared Waveform with toggle (replaces progress bar)
+                                        // Shared Waveform with toggle (replaces progress bar) - only if visible
+                                        if (isWaveformVisible) {
                                         val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                        WaveformWithToggle(
+                                            WaveformWithToggle(
                                             sharedState = sharedWaveformState,
                                             progress = progressPercent,
                                             onSeek = { seekProgress ->
                                                 val seekPosition = (seekProgress * duration).toLong()
-                                                println("🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
+                                                    println("🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
                                                 viewModel.seekTo(seekPosition)
                                             },
-                                            songUri = currentFile?.uri.toString(),
-                                            waveformHeight = visualSettings.waveformHeight.toInt(),
-                                            currentPosition = currentPosition,
-                                            totalDuration = duration,
-                                            fileName = file.name, // Pass filename to display in waveform
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
+                                                songUri = currentFile?.uri.toString(),
+                                                waveformHeight = visualSettings.waveformHeight.toInt(),
+                                                currentPosition = currentPosition,
+                                                totalDuration = duration,
+                                                fileName = file.name, // Pass filename to display in waveform
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1745,7 +1762,7 @@ viewModel.updateSearchText("")
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.fillMaxWidth()
     ) {
-                                            // Left side: Music controls with modern Android 16 style
+                                            // Group 1: Playback controls
                                             Row(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically
@@ -1818,25 +1835,139 @@ viewModel.updateSearchText("")
                                                 }
                                             }
                                             
-                                            // Center: Spacer for alignment
-                                            Spacer(modifier = Modifier.weight(1f))
-                                            
-                                            // Right side: Share and SpEK
+                                            // Group 2: Like/Undo/Dislike controls
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Dislike
+                                                Card(
+                                                    onClick = {
+                                                        if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                            viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                        } else {
+                                                            viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = NoButton
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.ThumbDown,
+                                                            contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                // Undo
+                                                Card(
+                                                    onClick = { viewModel.undoLastAction() },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = MaterialTheme.colorScheme.secondary
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.AutoMirrored.Filled.Undo,
+                                                            contentDescription = "Undo",
+                                                            tint = MaterialTheme.colorScheme.onSecondary,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                // Like
+                                                Card(
+                                                    onClick = {
+                                                        if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                            viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                        } else {
+                                                            viewModel.sortCurrentFile(SortAction.LIKE)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = YesButton
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Favorite,
+                                                            contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Like All Selected" else "Like",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Spacer between groups
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            
+                                            // Group 3: Share/Spectrogram/Move controls
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                             // Share to WhatsApp Button
-                                                IconButton(onClick = { viewModel.shareToWhatsApp() }, modifier = Modifier.size(36.dp)) {
-                                                    Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color(0xFF25D366), modifier = Modifier.size(18.dp))
+                                                Card(
+                                                    onClick = { viewModel.shareToWhatsApp() },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color(0xFF25D366)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Share,
+                                                            contentDescription = "Share to WhatsApp",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
                                             }
                                             
                                                 // Spectrogram Button with Text
-                                            IconButton(
+                                                Card(
                                                 onClick = { 
                                                     showSpectrogram = true
                                                 }, 
-                                                    modifier = Modifier.size(44.dp)
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color(0xFFFFB6C1)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
                                                 ) {
                                                     Column(
                                                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1845,17 +1976,19 @@ viewModel.updateSearchText("")
                                                         Text(
                                                             text = "Sp",
                                                             style = MaterialTheme.typography.labelSmall.copy(
-                                                                fontWeight = FontWeight.Bold
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    fontSize = 8.sp
                                                             ),
-                                                            color = Color(0xFFFFB6C1), // Light Pink
+                                                                color = Color.White,
                                                             textAlign = TextAlign.Center
                                                         )
                                                         Text(
                                                             text = "eK",
                                                             style = MaterialTheme.typography.labelSmall.copy(
-                                                                fontWeight = FontWeight.Bold
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    fontSize = 8.sp
                                                             ),
-                                                            color = Color(0xFFFFB6C1), // Light Pink
+                                                                color = Color.White,
                                                             textAlign = TextAlign.Center
                                                         )
                                                     }
@@ -1863,18 +1996,31 @@ viewModel.updateSearchText("")
                                             }
                                             
                                             // Subfolder dropdown button (available in all playlists)
-                                            Box {
-                                                IconButton(
+                                                Card(
                                                     onClick = { showSubfolderDropdown = true },
-                                                    modifier = Modifier.size(36.dp)
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color(0xFF4CAF50)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
                                             ) {
                                                 Icon(
                                                         Icons.Default.Folder,
                                                         contentDescription = "Move to Subfolder",
-                                                        tint = Color(0xFF4CAF50), // Green color
-                                                        modifier = Modifier.size(18.dp)
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
                                                     )
+                                                    }
                                                 }
+                                                }
+                                            
+                                            // Subfolder dropdown menu
+                                            Box {
                                                 
                                                 // Subfolder dropdown menu
                                                 DropdownMenu(
@@ -2094,103 +2240,7 @@ viewModel.updateSearchText("")
                         
                         // Genre controls removed
                         
-                        // Like/Dislike Buttons (compact)
-                        item {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
-                                )
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp)
-                                ) {
-                                    ElevatedButton(
-                                        onClick = { 
-                                            try {
-                                                hapticFeedback()
-                                                if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                    viewModel.sortSelectedFiles(SortAction.DISLIKE)
-                                                } else {
-                                                    viewModel.sortCurrentFile(SortAction.DISLIKE)
-                                                }
-                                            } catch (e: Exception) {
-                                                // Handle crash gracefully
-                                                println("Error in main dislike button: ${e.message}")
-                                            }
-                                        },
-                                        colors = ButtonDefaults.elevatedButtonColors(
-                                            containerColor = NoButton,
-                                            contentColor = Color.White
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        // Animated content for icon and text
-                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && lastSortedAction == SortAction.DISLIKE) 0.5f else 1f, animationSpec = animationSpecs.buttonPressTween)
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.graphicsLayer(alpha = alpha)) {
-                                        Icon(Icons.Default.ThumbDown, contentDescription = null)
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "REJECT ALL" else "NO")
-                                        }
-                                    }
-                                    
-                                    ElevatedButton(
-                                        onClick = { viewModel.undoLastAction() },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.elevatedButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.secondary,
-                                            contentColor = MaterialTheme.colorScheme.onSecondary
-                                        )
-                                    ) {
-                                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = null)
-                                        Spacer(Modifier.width(8.dp))
-                                        Text("Undo")
-                                    }
-                                    
-                                    ElevatedButton(
-                                        onClick = { 
-                                            try {
-                                                hapticFeedback()
-                                                CrashLogger.log("MusicPlayerScreen", "🔍 Main LIKE button clicked")
-                                                CrashLogger.log("MusicPlayerScreen", "🔍 Multi-selection mode: $isMultiSelectionMode")
-                                                CrashLogger.log("MusicPlayerScreen", "🔍 Selected indices: $selectedIndices")
-                                                
-                                                if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                    CrashLogger.log("MusicPlayerScreen", "📁 Calling sortSelectedFiles(LIKE) for ${selectedIndices.size} files")
-                                                    viewModel.sortSelectedFiles(SortAction.LIKE)
-                                                } else {
-                                                    CrashLogger.log("MusicPlayerScreen", "📁 Calling sortCurrentFile(LIKE)")
-                                                    viewModel.sortCurrentFile(SortAction.LIKE)
-                                                }
-                                            } catch (e: Exception) {
-                                                // Handle crash gracefully
-                                                CrashLogger.log("MusicPlayerScreen", "💥 Error in main like button", e)
-                                                println("Error in main like button: ${e.message}")
-                                            }
-                                        },
-                                        colors = ButtonDefaults.elevatedButtonColors(
-                                            containerColor = YesButton,
-                                            contentColor = Color.White
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        // Animated content for icon and text
-                                        val alpha by animateFloatAsState(targetValue = if (visualSettings.enableAnimations && lastSortedAction == SortAction.LIKE) 0.5f else 1f, animationSpec = animationSpecs.buttonPressTween)
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.graphicsLayer(alpha = alpha)) {
-                                        Icon(Icons.Default.Favorite, contentDescription = null)
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "LIKE ALL" else "YES")
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        // Removed Like/Undo/Dislike compact row (moved inline with playlist waveform)
                         
                         // Tabbed Playlist Header
                         item {
@@ -2764,13 +2814,95 @@ viewModel.updateSearchText("")
                             val isCompactScreen = remember(screenWidth, screenHeight) { 
                                 screenWidth < 600.dp || screenHeight < 800.dp 
                             }
+                            // Per-row swipe state
+                            var rowSwipeOffset by remember(item.uri) { mutableStateOf(0f) }
+                            var rowSwipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
+
+                            // Thresholds for clearer, less sensitive swipe
+                            val swipeIndicatorThreshold = 60f
+                            val swipeTriggerThreshold = 120f
+                            val swipeMaxOffset = 220f
+                            val swipeResistance = 0.5f
+                            
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                // Swipe indicators behind the card
+                                if (rowSwipeOffset != 0f && !isMultiSelectionMode) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = if (isCompactScreen) 6.dp else 10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (rowSwipeOffset > 0) {
+                                            // Right swipe - Like
+                                            Icon(
+                                                Icons.Default.Favorite,
+                                                contentDescription = "Like",
+                                                tint = YesButton,
+                                                modifier = Modifier.size(if (isCompactScreen) 24.dp else 32.dp)
+                                            )
+                                        } else {
+                                            Spacer(modifier = Modifier.width(if (isCompactScreen) 24.dp else 32.dp))
+                                        }
+                                        
+                                        if (rowSwipeOffset < 0) {
+                                            // Left swipe - Dislike
+                                            Icon(
+                                                Icons.Default.ThumbDown,
+                                                contentDescription = "Dislike",
+                                                tint = NoButton,
+                                                modifier = Modifier.size(if (isCompactScreen) 24.dp else 32.dp)
+                                            )
+                                        } else {
+                                            Spacer(modifier = Modifier.width(if (isCompactScreen) 24.dp else 32.dp))
+                                        }
+                                    }
+                                }
+                                
+                                // Swipe like main player: use drag gestures and act on this row index
+                                var dragOffset by remember(item.uri) { mutableStateOf(0f) }
+                                var swipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
-                                        vertical = if (isCompactScreen) 1.dp else 2.dp
+                                        vertical = 0.dp
                                     )
+                                        .offset(x = dragOffset.dp)
+                                        .pointerInput(Unit) {
+                                            detectHorizontalDragGestures(
+                                                onDragStart = { _ ->
+                                                    // no-op
+                                                },
+                                                onDragEnd = {
+                                                    if (!isMultiSelectionMode) {
+                                                        if (abs(dragOffset) > 120f) {
+                                                            try {
+                                                                when {
+                                                                    dragOffset > 0 -> viewModel.sortAtIndex(index, SortAction.LIKE)
+                                                                    dragOffset < 0 -> viewModel.sortAtIndex(index, SortAction.DISLIKE)
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                println("Error in swipe gesture: ${e.message}")
+                                                            }
+                                                        }
+                                                        // reset
+                                                        dragOffset = 0f
+                                                        swipeDirection = 0
+                                                    }
+                                                }
+                                            ) { change, dragAmount ->
+                                                dragOffset += dragAmount
+                                                dragOffset = dragOffset.coerceIn(-220f, 220f)
+                                                swipeDirection = when {
+                                                    dragOffset > 60f -> 1
+                                                    dragOffset < -60f -> -1
+                                                    else -> 0
+                                                }
+                                            }
+                                        }
                                     .clickable {
                                         if (isMultiSelectionMode) {
                                             viewModel.toggleSelection(index)
@@ -2793,16 +2925,20 @@ viewModel.updateSearchText("")
                                     }
                                 )
                             ) {
-                                Row(
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(
                                             horizontal = if (isCompactScreen) 8.dp else 10.dp, 
                                             vertical = if (isCompactScreen) 6.dp else 8.dp
                                         ),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    contentAlignment = Alignment.Center
                                 ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
                                     // Checkbox for multi-selection
                                     if (isMultiSelectionMode) {
                                         Checkbox(
@@ -2812,36 +2948,7 @@ viewModel.updateSearchText("")
                                         )
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
-                                        // Filename
-                                        Text(
-                                            text = item.name,
-                                            style = if (isCurrent) {
-                                                // For current song, use larger font but allow multiple lines
-                                                MaterialTheme.typography.bodyLarge.copy(
-                                                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
-                                                )
-                                            } else {
-                                                // For other songs, use smaller font to fit more text
-                                                MaterialTheme.typography.bodySmall.copy(
-                                                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 0.9f
-                                                )
-                                            },
-                                            color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                        
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                        // Removed time display in playlist row for performance
-
-                                            
-                                            // Rating display removed
-                                        }
+                                        // Filename above waveform removed; shown inside waveform
                                     }
                                     Row(horizontalArrangement = Arrangement.spacedBy(if (isCompactScreen) 2.dp else 4.dp)) {
                                         if (isMultiSelectionMode) {
@@ -2886,49 +2993,111 @@ viewModel.updateSearchText("")
                                                 }
                                             }
                                         } else {
-                                            // Normal mode: individual file actions
-                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.REJECTED) {
-                                            IconButton(
-                                                onClick = { 
-                                                    try {
-                                                        viewModel.sortAtIndex(index, SortAction.LIKE) 
-                                                    } catch (e: Exception) {
-                                                        // Handle crash gracefully
-                                                        println("Error in like button: ${e.message}")
-                                                    }
-                                                },
-                                                modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Favorite, 
-                                                    contentDescription = "Yes", 
-                                                    tint = YesButton,
-                                                    modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
-                                                )
-                                            }
-                                            }
-                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                            // Normal mode: individual file actions (moved inline with waveform)
+                                        }
+                                    }
+                                }
+                                
+                                // Controls row for all items - centered in playlist row
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(if (isCurrent) 80.dp else 30.dp), // Active row 80dp
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                        // Dislike button (left)
+                                        if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
                                             IconButton(
                                                 onClick = { 
                                                     try {
                                                         viewModel.sortAtIndex(index, SortAction.DISLIKE) 
                                                     } catch (e: Exception) {
-                                                        // Handle crash gracefully
                                                         println("Error in dislike button: ${e.message}")
                                                     }
                                                 },
-                                                modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
+                                                modifier = Modifier.size(if (isCurrent) 36.dp else 28.dp) // 30% smaller for non-current
                                             ) {
                                                 Icon(
                                                     Icons.Default.ThumbDown, 
-                                                    contentDescription = "No", 
+                                                    contentDescription = "Dislike", 
                                                     tint = NoButton,
-                                                    modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
+                                                    modifier = Modifier.size(if (isCurrent) 20.dp else 16.dp)
                                                 )
                                             }
                                         }
-                                            
-                                            // Move to folder button (available in all playlists)
+                                        
+                                        // Center content: waveform for current, filename for others
+                                        if (isCurrent) {
+                                            // Waveform for current playing item with filename overlay
+                                            val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(80.dp), // Match active row height
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                WaveformWithToggle(
+                                                    sharedState = sharedWaveformState,
+                                                    progress = progressPercent,
+                                                    onSeek = { seekProgress ->
+                                                        val seekPosition = (seekProgress * duration).toLong()
+                                                        viewModel.seekTo(seekPosition)
+                                                    },
+                                                    songUri = item.uri.toString(),
+                                                    waveformHeight = 80, // Match row height
+                                                    currentPosition = currentPosition,
+                                                    totalDuration = duration,
+                                                    fileName = item.name, // Show filename in waveform
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        } else {
+                                            // Filename for non-current items (centered vertically)
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(30.dp), // Match non-active row height
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = item.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        }
+                                        
+                                        // Like button (right)
+                                        if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.REJECTED) {
+                                            IconButton(
+                                                onClick = { 
+                                                    try {
+                                                        viewModel.sortAtIndex(index, SortAction.LIKE) 
+                                                    } catch (e: Exception) {
+                                                        println("Error in like button: ${e.message}")
+                                                    }
+                                                },
+                                                modifier = Modifier.size(if (isCurrent) 36.dp else 28.dp) // 30% smaller for non-current
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Favorite, 
+                                                    contentDescription = "Like", 
+                                                    tint = YesButton,
+                                                    modifier = Modifier.size(if (isCurrent) 20.dp else 16.dp)
+                                                )
+                                            }
+                                        }
+
+                                        // Move to subfolder (inline, right side with spacing)
+                                        Spacer(modifier = Modifier.width(8.dp))
                                             IconButton(
                                                 onClick = { 
                                                     // Set the current file to this item without playing it
@@ -2942,18 +3111,19 @@ viewModel.updateSearchText("")
                                                     }
                                                     showSubfolderSelectionDialog = true
                                                 },
-                                                modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
+                                            modifier = Modifier.size(if (isCurrent) 36.dp else 28.dp) // 30% smaller for non-current
                                             ) {
                                                 Icon(
                                                     Icons.Default.Folder,
                                                     contentDescription = "Move to Subfolder",
-                                                    tint = Color(0xFF4CAF50), // Green color
-                                                    modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
+                                                tint = Color(0xFF4CAF50),
+                                                modifier = Modifier.size(if (isCurrent) 20.dp else 16.dp)
                                                 )
-                                            }
+                                        }
                                         }
                                     }
                                 }
+                            }
                             }
                         }
                     }
@@ -3338,25 +3508,7 @@ viewModel.updateSearchText("")
                                         }
                                     }
                                     
-                                    // Mini player: shared waveform with toggle (replaces progress bar)
-                                    val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                        WaveformWithToggle(
-                                            sharedState = sharedWaveformState,
-                                            progress = progressPercent,
-                                            onSeek = { seekProgress ->
-                                                val seekPosition = (seekProgress * duration).toLong()
-                                                println("🎯 Mini seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
-                                                viewModel.seekTo(seekPosition)
-                                            },
-                                            songUri = currentFile?.uri.toString(),
-                                            waveformHeight = visualSettings.miniWaveformHeight.toInt(),
-                                            currentPosition = currentPosition,
-                                            totalDuration = duration,
-                                            fileName = file.name, // Pass filename to display in mini waveform
-                                            modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    )
+                                    // Mini player waveform removed by request
                                 }
                             }
                         }

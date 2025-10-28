@@ -1,11 +1,16 @@
-10.0
-- 🎵 VLC FOR ALL: All file types now play through VLC for consistent seeking
-- 🎮 Play/Pause Fix: Play/pause controls now properly work with VLC backend
-- 📝 Filename Display: Filename centered vertically in waveform container
-- 🎨 UI Polish: 10% smaller font size, theme-aware colors for filename
-- 🔧 Waveform Height: Increased by 20% (96dp main, 72dp mini)
-- 🎯 Complete VLC: Universal VLC playback with working seek for all formats
-- ✅ Result: Perfect playback experience across all audio file types
+10.10
+- 📏 ACTIVE ROW HEIGHT: Increased active playlist row height to 80dp (non-active: 30dp)
+- 📝 FILENAME SIZE: Reduced filename text size in waveform container by 10%
+- 📐 ROW SPACING: Further reduced vertical spacing between playlist rows (0dp Card padding)
+- 🎯 COMPACT LAYOUT: More efficient use of screen space with tighter row spacing
+- ✅ Result: Better visual hierarchy and more compact playlist display
+
+10.7
+- 🎛️ WAVEFORM TOGGLE REPOSITIONED: Moved next to Analyze button with matching OutlinedButton style
+- 📱 COMPACT DESIGN: "Hide Wave"/"Show Wave" button matches Analyze button styling
+- 🔔 RESTORED NOTIFICATIONS: Re-enabled important info messages (moved to liked/rejected)
+- 🚫 SELECTIVE FILTERING: Only removed red messages from swipe gestures, kept important notifications
+- ✅ Result: Better button placement and restored essential user feedback
 
 9.99
 - 🎯 VLC SEEKING FIX: Fixed VLC seek functionality - no more restarting from 0

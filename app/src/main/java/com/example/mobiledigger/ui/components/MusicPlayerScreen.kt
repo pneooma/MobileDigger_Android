@@ -905,7 +905,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.10 ::",
+                            text = ":: v10.11 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2936,9 +2936,9 @@ viewModel.updateSearchText("")
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
                                     // Checkbox for multi-selection
                                     if (isMultiSelectionMode) {
                                         Checkbox(
@@ -3002,7 +3002,7 @@ viewModel.updateSearchText("")
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(if (isCurrent) 80.dp else 30.dp), // Active row 80dp
+                                            .height(if (isCurrent) 80.dp else 30.dp), // Active row 80dp (buttons now to the right)
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
@@ -3038,7 +3038,7 @@ viewModel.updateSearchText("")
                                             Box(
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .height(80.dp), // Match active row height
+                                                    .height(80.dp), // Waveform height
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 WaveformWithToggle(
@@ -3049,12 +3049,112 @@ viewModel.updateSearchText("")
                                                         viewModel.seekTo(seekPosition)
                                                     },
                                                     songUri = item.uri.toString(),
-                                                    waveformHeight = 80, // Match row height
+                                                    waveformHeight = 80, // Waveform height
                                                     currentPosition = currentPosition,
                                                     totalDuration = duration,
                                                     fileName = item.name, // Show filename in waveform
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
+                                            }
+                                            
+                                            // 2x2 control pack to the right of waveform (Like, Move, Spectrogram, Share)
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    // Like (top-left)
+                                                    IconButton(
+                                                        onClick = {
+                                                            try { viewModel.sortAtIndex(index, SortAction.LIKE) } catch (e: Exception) { println("Error in like button: ${e.message}") }
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Favorite,
+                                                            contentDescription = "Like",
+                                                            tint = YesButton,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                    // Move to (top-right)
+                                                    IconButton(
+                                                        onClick = {
+                                                            // Set current file for move action
+                                                            val currentFiles = when (currentPlaylistTab) {
+                                                                PlaylistTab.TODO -> musicFiles
+                                                                PlaylistTab.LIKED -> likedFiles
+                                                                PlaylistTab.REJECTED -> rejectedFiles
+                                                            }
+                                                            if (index < currentFiles.size) {
+                                                                viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                            }
+                                                            showSubfolderSelectionDialog = true
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Folder,
+                                                            contentDescription = "Move to Subfolder",
+                                                            tint = Color(0xFF4CAF50),
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    // Spectrogram (bottom-left)
+                                                    IconButton(
+                                                        onClick = {
+                                                            try {
+                                                                val currentFiles = when (currentPlaylistTab) {
+                                                                    PlaylistTab.TODO -> musicFiles
+                                                                    PlaylistTab.LIKED -> likedFiles
+                                                                    PlaylistTab.REJECTED -> rejectedFiles
+                                                                }
+                                                                if (index < currentFiles.size) {
+                                                                    viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                                    showSpectrogram = true
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                println("Error in spectrogram button: ${e.message}")
+                                                            }
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Analytics,
+                                                            contentDescription = "Generate Spectrogram",
+                                                            tint = Color(0xFF9C27B0),
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                    // Share (bottom-right)
+                                                    IconButton(
+                                                        onClick = {
+                                                            try {
+                                                                val currentFiles = when (currentPlaylistTab) {
+                                                                    PlaylistTab.TODO -> musicFiles
+                                                                    PlaylistTab.LIKED -> likedFiles
+                                                                    PlaylistTab.REJECTED -> rejectedFiles
+                                                                }
+                                                                if (index < currentFiles.size) {
+                                                                    viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                                    viewModel.shareToWhatsApp()
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                println("Error in share button: ${e.message}")
+                                                            }
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Share,
+                                                            contentDescription = "Share File",
+                                                            tint = Color(0xFF2196F3),
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
                                             }
                                         } else {
                                             // Filename for non-current items (centered vertically)
@@ -3073,52 +3173,6 @@ viewModel.updateSearchText("")
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
                                             }
-                                        }
-                                        
-                                        // Like button (right)
-                                        if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.REJECTED) {
-                                            IconButton(
-                                                onClick = { 
-                                                    try {
-                                                        viewModel.sortAtIndex(index, SortAction.LIKE) 
-                                                    } catch (e: Exception) {
-                                                        println("Error in like button: ${e.message}")
-                                                    }
-                                                },
-                                                modifier = Modifier.size(if (isCurrent) 36.dp else 28.dp) // 30% smaller for non-current
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Favorite, 
-                                                    contentDescription = "Like", 
-                                                    tint = YesButton,
-                                                    modifier = Modifier.size(if (isCurrent) 20.dp else 16.dp)
-                                                )
-                                            }
-                                        }
-
-                                        // Move to subfolder (inline, right side with spacing)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                            IconButton(
-                                                onClick = { 
-                                                    // Set the current file to this item without playing it
-                                                    val currentFiles = when (currentPlaylistTab) {
-                                                        PlaylistTab.TODO -> musicFiles
-                                                        PlaylistTab.LIKED -> likedFiles
-                                                        PlaylistTab.REJECTED -> rejectedFiles
-                                                    }
-                                                    if (index < currentFiles.size) {
-                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                    }
-                                                    showSubfolderSelectionDialog = true
-                                                },
-                                            modifier = Modifier.size(if (isCurrent) 36.dp else 28.dp) // 30% smaller for non-current
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Folder,
-                                                    contentDescription = "Move to Subfolder",
-                                                tint = Color(0xFF4CAF50),
-                                                modifier = Modifier.size(if (isCurrent) 20.dp else 16.dp)
-                                                )
                                         }
                                         }
                                     }

@@ -1,3 +1,13 @@
+10.11
+- 🎛️ PLAYLIST CONTROLS: Added 2x2 control pack to the right of waveform
+  - Top-left: Like
+  - Top-right: Move to folder
+  - Bottom-left: Generate Spectrogram
+  - Bottom-right: Share
+- 🧹 CLEANUP: Removed duplicate like/move buttons from the right edge
+- 📐 LAYOUT: Kept waveform at 80dp height and active row at 80dp
+- ✅ Result: Compact, consistent action layout per row
+
 10.10
 - 📏 ACTIVE ROW HEIGHT: Increased active playlist row height to 80dp (non-active: 30dp)
 - 📝 FILENAME SIZE: Reduced filename text size in waveform container by 10%

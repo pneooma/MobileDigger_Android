@@ -1,3 +1,11 @@
+10.13
+- 🎵 PLAYLIST PLAY/PAUSE: Added play/pause button below dislike button in active playlist rows
+- 🎛️ ENHANCED CONTROLS: Active rows now have vertical button layout on the left side
+- 🎯 SMART LAYOUT: Only active rows show play/pause button; inactive rows keep original single dislike button
+- 🎨 CONSISTENT STYLING: New button matches existing button style (32dp size, 18dp icon)
+- 🔧 PROPER FUNCTIONALITY: Connected to viewModel.playPause() with error handling
+- ✅ Result: Direct play/pause control from playlist without switching to main player
+
 10.12
 - 📏 ADAPTIVE ROW HEIGHTS: Inactive playlist rows now dynamically adjust height based on filename length
 - 🎯 SMART TEXT MEASUREMENT: Uses screen width and font size to calculate exact lines needed

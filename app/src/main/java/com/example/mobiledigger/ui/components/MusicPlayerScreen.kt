@@ -910,7 +910,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.12 ::",
+                            text = ":: v10.13 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3090,24 +3090,72 @@ viewModel.updateSearchText("")
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                        // Dislike button (left)
-                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
-                                            IconButton(
-                                                onClick = { 
-                                                    try {
-                                                        viewModel.sortAtIndex(index, SortAction.DISLIKE) 
-                                                    } catch (e: Exception) {
-                                                        println("Error in dislike button: ${e.message}")
-                                                    }
-                                                },
-                                                modifier = Modifier.size(adaptiveButtonSize) // Adaptive button size
+                                        // Left side buttons: Dislike and Play/Pause (only for active rows)
+                                        if (isCurrent) {
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(3.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
-                                                Icon(
-                                                    Icons.Default.ThumbDown, 
-                                                    contentDescription = "Dislike", 
-                                                    tint = NoButton,
-                                                    modifier = Modifier.size(adaptiveIconSize) // Adaptive icon size
-                                                )
+                                                // Dislike button
+                                                if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                                    IconButton(
+                                                        onClick = { 
+                                                            try {
+                                                                viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                            } catch (e: Exception) {
+                                                                println("Error in dislike button: ${e.message}")
+                                                            }
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.ThumbDown, 
+                                                            contentDescription = "Dislike", 
+                                                            tint = NoButton,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
+                                                
+                                                // Play/Pause button
+                                                IconButton(
+                                                    onClick = { 
+                                                        try {
+                                                            viewModel.playPause()
+                                                        } catch (e: Exception) {
+                                                            println("Error in play/pause button: ${e.message}")
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                        contentDescription = if (isPlaying) "Pause" else "Play",
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            // Dislike button for inactive rows (original behavior)
+                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                                IconButton(
+                                                    onClick = { 
+                                                        try {
+                                                            viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                        } catch (e: Exception) {
+                                                            println("Error in dislike button: ${e.message}")
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(adaptiveButtonSize) // Adaptive button size
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ThumbDown, 
+                                                        contentDescription = "Dislike", 
+                                                        tint = NoButton,
+                                                        modifier = Modifier.size(adaptiveIconSize) // Adaptive icon size
+                                                    )
+                                                }
                                             }
                                         }
                                         

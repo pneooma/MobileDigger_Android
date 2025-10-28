@@ -1,3 +1,12 @@
+10.17
+- 🔧 SWIPE GESTURE FIX: Fixed race condition where swiping first track would move wrong file
+- 🎯 DIRECT FILE REFERENCE: Swipe gestures now capture file object directly instead of relying on index
+- 🛡️ RACE CONDITION PREVENTION: Eliminated playlist modification conflicts during swipe operations
+- 📊 ROW WAVEFORM HEIGHT: Added configurable row waveform height setting in visual settings
+- 🎨 PLAYLIST WAVEFORM OPACITY: Set playlist row waveform opacity to 70% for better visual distinction
+- 🔍 ENHANCED DEBUG LOGGING: Added comprehensive logging for swipe gesture troubleshooting
+- ✅ Result: Reliable swipe gestures that always affect the correct file, improved visual customization
+
 10.16
 - 🎨 WAVEFORM OPACITY: Set waveform opacity to 80% for more subtle visual appearance
 - 📊 TOTAL TRACKS COUNTER: Added total tracks counter before played/liked/rejected counters

@@ -100,6 +100,13 @@ fun VisualSettingsDialog(
                             onValueChange = { currentSettings = currentSettings.copy(miniWaveformHeight = it) },
                             onReset = { currentSettings = currentSettings.copy(miniWaveformHeight = settings.miniWaveformHeight) }
                         )
+                        SliderSettingItem(
+                            label = "Row Waveform Height",
+                            value = currentSettings.rowWaveformHeight,
+                            range = 30f..130f,
+                            onValueChange = { currentSettings = currentSettings.copy(rowWaveformHeight = it) },
+                            onReset = { currentSettings = currentSettings.copy(rowWaveformHeight = settings.rowWaveformHeight) }
+                        )
                         // Removed Bar Width
                         // Removed Bar Gap
                         // Removed Waveform Opacity

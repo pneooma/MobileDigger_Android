@@ -24,7 +24,8 @@ fun WaveformWithToggle(
     waveformHeight: Int = 100,
     currentPosition: Long = 0L,
     totalDuration: Long = 0L,
-    fileName: String = "" // File name to display above the waveform when available
+    fileName: String = "", // File name to display above the waveform when available
+    opacity: Float = 0.8f // Waveform opacity (default 80%)
 ) {
     val context = LocalContext.current
     var isWaveformEnabled by remember { mutableStateOf(isWaveformGenerationEnabled(context)) }
@@ -42,6 +43,7 @@ fun WaveformWithToggle(
             currentPosition = currentPosition,
             totalDuration = totalDuration,
             fileName = fileName,
+            opacity = opacity,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(waveformHeight.dp),

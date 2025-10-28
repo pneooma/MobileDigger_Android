@@ -917,7 +917,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.16 ::",
+                            text = ":: v10.17 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2972,15 +2972,21 @@ viewModel.updateSearchText("")
                                                     if (!isMultiSelectionMode && isSwipeActive) {
                                                         if (abs(swipeOffset) > swipeTriggerThreshold) {
                                                             try {
+                                                                // Debug logging
+                                                                CrashLogger.log("MusicPlayerScreen", "🔍 Swipe gesture: index=$index, file='${item.name}', swipeOffset=$swipeOffset, action=${if (swipeOffset > 0) "LIKE" else "DISLIKE"}")
+                                                                
+                                                                // Capture the file reference at the time of swipe to avoid race conditions
+                                                                val fileToSort = item
+                                                                
                                                                 when {
                                                                     swipeOffset > 0 -> {
                                                                         hapticFeedback()
-                                                                        viewModel.sortAtIndex(index, SortAction.LIKE)
+                                                                        viewModel.sortMusicFile(fileToSort, SortAction.LIKE)
                                                                         showInfoMessage("Moved to Liked", "success")
                                                                     }
                                                                     swipeOffset < 0 -> {
                                                                         hapticFeedback()
-                                                                        viewModel.sortAtIndex(index, SortAction.DISLIKE)
+                                                                        viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
                                                                         showInfoMessage("Moved to Rejected", "error")
                                                                     }
                                                                 }
@@ -3209,10 +3215,11 @@ viewModel.updateSearchText("")
                                                         viewModel.seekTo(seekPosition)
                                                     },
                                                     songUri = item.uri.toString(),
-                                                    waveformHeight = 80, // Waveform height
+                                                    waveformHeight = visualSettings.rowWaveformHeight.toInt(), // Row waveform height from settings
                                                     currentPosition = currentPosition,
                                                     totalDuration = duration,
                                                     fileName = item.name, // Show filename in waveform
+                                                    opacity = 0.7f, // 70% opacity for playlist rows
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
                                             }

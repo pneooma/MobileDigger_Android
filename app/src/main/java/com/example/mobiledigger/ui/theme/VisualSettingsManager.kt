@@ -16,6 +16,7 @@ data class VisualSettings(
     // Waveform Settings
     val waveformHeight: Float = 96f, // Increased by 20% (80 * 1.2)
     val miniWaveformHeight: Float = 72f, // Increased by 20% (60 * 1.2)
+    val rowWaveformHeight: Float = 80f, // Row waveform height (same as main player)
     // Animation Settings
     val enableAnimations: Boolean = true,
     val animationSpeed: Float = 1.0f, // 0.5x to 2.0x speed
@@ -31,6 +32,7 @@ class VisualSettingsManager(context: Context) {
         // Waveform keys
         private const val KEY_WAVEFORM_HEIGHT = "waveform_height"
         private const val KEY_MINI_WAVEFORM_HEIGHT = "mini_waveform_height"
+        private const val KEY_ROW_WAVEFORM_HEIGHT = "row_waveform_height"
         
         // Animation keys
         private const val KEY_ENABLE_ANIMATIONS = "enable_animations"
@@ -48,6 +50,7 @@ class VisualSettingsManager(context: Context) {
             // Waveform
             waveformHeight = prefs.getFloat(KEY_WAVEFORM_HEIGHT, 96f), // Increased by 20%
             miniWaveformHeight = prefs.getFloat(KEY_MINI_WAVEFORM_HEIGHT, 72f), // Increased by 20%
+            rowWaveformHeight = prefs.getFloat(KEY_ROW_WAVEFORM_HEIGHT, 80f), // Row waveform height
             
             // Animation
             enableAnimations = prefs.getBoolean(KEY_ENABLE_ANIMATIONS, true),
@@ -68,6 +71,7 @@ class VisualSettingsManager(context: Context) {
             // Waveform
             putFloat(KEY_WAVEFORM_HEIGHT, settings.waveformHeight)
             putFloat(KEY_MINI_WAVEFORM_HEIGHT, settings.miniWaveformHeight)
+            putFloat(KEY_ROW_WAVEFORM_HEIGHT, settings.rowWaveformHeight)
             
             // Animation
             putBoolean(KEY_ENABLE_ANIMATIONS, settings.enableAnimations)

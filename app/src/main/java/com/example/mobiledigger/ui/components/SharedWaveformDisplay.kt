@@ -37,7 +37,8 @@ fun SharedWaveformDisplay(
     backgroundColor: Color = Color.Gray.copy(alpha = 0.1f), // Allow custom background color
     currentPosition: Long = 0L, // Current playback position in milliseconds
     totalDuration: Long = 0L, // Total duration in milliseconds
-    fileName: String = ""
+    fileName: String = "",
+    opacity: Float = 0.8f // Waveform opacity (default 80%)
 ) {
     val context = LocalContext.current
     val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
@@ -165,7 +166,7 @@ fun SharedWaveformDisplay(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding to waveform
-                            .graphicsLayer { alpha = 0.8f } // Set waveform opacity to 80%
+                            .graphicsLayer { alpha = opacity } // Set waveform opacity from parameter
                     )
                 }
             }

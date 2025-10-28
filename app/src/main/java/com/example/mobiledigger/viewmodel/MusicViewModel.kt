@@ -893,7 +893,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         sortMusicFile(fileToSort, action) // Delegate to the new function
     }
 
-    private fun sortMusicFile(file: MusicFile, action: SortAction) {
+    fun sortMusicFile(file: MusicFile, action: SortAction) {
         CrashLogger.log("MusicViewModel", "🔍 sortMusicFile called: ${file.name} with action=$action")
         
         if (!fileManager.isDestinationSelected()) {
@@ -1049,6 +1049,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
         
         val fileToSort = files[index]
+        
+        // Debug logging
+        CrashLogger.log("MusicViewModel", "🔍 sortAtIndex: index=$index, file='${fileToSort.name}', action=$action, playlistSize=${files.size}")
         
         // Use queue-based sorting for instant response
         viewModelScope.launch(Dispatchers.Main) {

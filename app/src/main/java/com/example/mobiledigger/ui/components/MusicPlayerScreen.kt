@@ -917,7 +917,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.15 ::",
+                            text = ":: v10.16 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1594,10 +1594,15 @@ viewModel.updateSearchText("")
                                     else -> Color.Transparent
                                 }
                                 
-                                // Progress counts: played, liked, rejected (moved above main player container)
+                                // Progress counts: total, played, liked, rejected (moved above main player container)
                                 val played = viewModel.preferences.getListened()
                                 val yes = viewModel.preferences.getLiked()
                                 val no = viewModel.preferences.getRefused()
+                                val totalTracks = when (currentPlaylistTab) {
+                                    PlaylistTab.TODO -> musicFiles.size
+                                    PlaylistTab.LIKED -> likedFiles.size
+                                    PlaylistTab.REJECTED -> rejectedFiles.size
+                                }
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1606,7 +1611,7 @@ viewModel.updateSearchText("")
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                 Text(
-                                    text = "Played: $played  |  Liked: $yes  |  Rejected: $no",
+                                    text = "Total: $totalTracks  |  Played: $played  |  Liked: $yes  |  Rejected: $no",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.8f

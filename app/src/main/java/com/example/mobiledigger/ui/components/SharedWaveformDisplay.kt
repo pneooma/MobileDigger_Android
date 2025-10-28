@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
@@ -164,6 +165,7 @@ fun SharedWaveformDisplay(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding to waveform
+                            .graphicsLayer { alpha = 0.8f } // Set waveform opacity to 80%
                     )
                 }
             }
@@ -185,7 +187,8 @@ fun SharedWaveformDisplay(
                 text = fileName,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 0.9f // 10% smaller
+                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 0.9f, // 10% smaller
+                    lineHeight = MaterialTheme.typography.titleMedium.lineHeight * 0.65f // 65% line height (50% + 15%)
                 ),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
                 textAlign = TextAlign.Center,

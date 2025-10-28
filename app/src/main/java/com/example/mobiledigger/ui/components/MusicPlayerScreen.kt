@@ -87,6 +87,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.ui.theme.DislikeRed
 import com.example.mobiledigger.ui.theme.GreenAccent
@@ -218,9 +219,15 @@ fun MusicPlayerScreen(
     var infoMessageType by remember { mutableStateOf("info") } // "info", "success", "error"
     var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
     
-    // Helper function to show info messages with delay after waveform appearance
+    // Job for managing notification display
+    var notificationJob by remember { mutableStateOf<Job?>(null) }
+    
+    // Helper function to show info messages with proper replacement
     fun showInfoMessage(message: String, type: String = "info") {
-        scope.launch {
+        // Cancel any existing notification job
+        notificationJob?.cancel()
+        
+        notificationJob = scope.launch {
             // Wait for waveform to appear first (delay after file operations)
             delay(1500) // 1.5 second delay after waveform appearance
             
@@ -910,7 +917,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.14 ::",
+                            text = ":: v10.15 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2851,7 +2858,7 @@ viewModel.updateSearchText("")
                             // Calculate adaptive height based on actual text measurement (only for inactive rows)
                             val adaptiveHeight = remember(item.name, isCurrent) {
                                 if (isCurrent) {
-                                    88.dp // Active rows stay at fixed 88dp
+                                    101.dp // Active rows increased by 15% (88 * 1.15 = 101.2)
                                 } else {
                                     // Use a more accurate estimation based on typical screen width and font size
                                     val screenWidthDp = screenWidth.value
@@ -2875,7 +2882,7 @@ viewModel.updateSearchText("")
                             // Calculate adaptive button size based on row height (only for inactive rows)
                             val adaptiveButtonSize = remember(adaptiveHeight, isCurrent) {
                                 if (isCurrent) {
-                                    36.dp // Active rows stay at fixed 36dp
+                                    41.dp // Active rows increased by 15% (36 * 1.15 = 41.4)
                                 } else {
                                     when {
                                         adaptiveHeight.value <= 25 -> 20.dp // 1 line rows
@@ -2889,24 +2896,25 @@ viewModel.updateSearchText("")
                             // Calculate adaptive icon size based on button size (only for inactive rows)
                             val adaptiveIconSize = remember(adaptiveButtonSize, isCurrent) {
                                 if (isCurrent) {
-                                    20.dp // Active rows stay at fixed 20dp
+                                    23.dp // Active rows increased by 15% (20 * 1.15 = 23)
                                 } else {
                                     (adaptiveButtonSize.value * 0.55f).dp
                                 }
                             }
-                            // Per-row swipe state
-                            var rowSwipeOffset by remember(item.uri) { mutableStateOf(0f) }
-                            var rowSwipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
+                            // Consolidated swipe state - single source of truth
+                            var swipeOffset by remember(item.uri) { mutableStateOf(0f) }
+                            var swipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
+                            var isSwipeActive by remember(item.uri) { mutableStateOf(false) }
 
-                            // Thresholds for clearer, less sensitive swipe
-                            val swipeIndicatorThreshold = 60f
-                            val swipeTriggerThreshold = 120f
-                            val swipeMaxOffset = 220f
-                            val swipeResistance = 0.5f
+                            // Optimized thresholds for reliable swiping
+                            val swipeIndicatorThreshold = 50f  // Show indicator threshold
+                            val swipeTriggerThreshold = 100f  // Medium swipes trigger action
+                            val swipeMaxOffset = 200f         // Maximum drag distance
+                            val swipeResistance = 0.7f        // More resistance for better control
                             
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 // Swipe indicators behind the card
-                                if (rowSwipeOffset != 0f && !isMultiSelectionMode) {
+                                if (swipeOffset != 0f && !isMultiSelectionMode && isSwipeActive) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -2914,7 +2922,7 @@ viewModel.updateSearchText("")
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        if (rowSwipeOffset > 0) {
+                                        if (swipeOffset > 0) {
                                             // Right swipe - Like
                                             Icon(
                                                 Icons.Default.Favorite,
@@ -2926,7 +2934,7 @@ viewModel.updateSearchText("")
                                             Spacer(modifier = Modifier.width(if (isCompactScreen) 24.dp else 32.dp))
                                         }
                                         
-                                        if (rowSwipeOffset < 0) {
+                                        if (swipeOffset < 0) {
                                             // Left swipe - Dislike
                                             Icon(
                                                 Icons.Default.ThumbDown,
@@ -2940,9 +2948,7 @@ viewModel.updateSearchText("")
                                     }
                                 }
                                 
-                                // Swipe like main player: use drag gestures and act on this row index
-                                var dragOffset by remember(item.uri) { mutableStateOf(0f) }
-                                var swipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
+                                // Consolidated swipe gesture implementation
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -2950,36 +2956,57 @@ viewModel.updateSearchText("")
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = 0.dp
                                     )
-                                        .offset(x = dragOffset.dp)
+                                        .offset(x = swipeOffset.dp)
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->
-                                                    // no-op
+                                                    isSwipeActive = true
+                                                    hapticFeedback()
                                                 },
                                                 onDragEnd = {
-                                                    if (!isMultiSelectionMode) {
-                                                        if (abs(dragOffset) > 120f) {
+                                                    if (!isMultiSelectionMode && isSwipeActive) {
+                                                        if (abs(swipeOffset) > swipeTriggerThreshold) {
                                                             try {
                                                                 when {
-                                                                    dragOffset > 0 -> viewModel.sortAtIndex(index, SortAction.LIKE)
-                                                                    dragOffset < 0 -> viewModel.sortAtIndex(index, SortAction.DISLIKE)
+                                                                    swipeOffset > 0 -> {
+                                                                        hapticFeedback()
+                                                                        viewModel.sortAtIndex(index, SortAction.LIKE)
+                                                                        showInfoMessage("Moved to Liked", "success")
+                                                                    }
+                                                                    swipeOffset < 0 -> {
+                                                                        hapticFeedback()
+                                                                        viewModel.sortAtIndex(index, SortAction.DISLIKE)
+                                                                        showInfoMessage("Moved to Rejected", "error")
+                                                                    }
                                                                 }
                                                             } catch (e: Exception) {
-                                                                println("Error in swipe gesture: ${e.message}")
+                                                                CrashLogger.log("MusicPlayerScreen", "❌ Swipe gesture error: ${e.message}")
                                                             }
                                                         }
-                                                        // reset
-                                                        dragOffset = 0f
+                                                        // Reset swipe state
+                                                        swipeOffset = 0f
                                                         swipeDirection = 0
+                                                        isSwipeActive = false
                                                     }
                                                 }
                                             ) { change, dragAmount ->
-                                                dragOffset += dragAmount
-                                                dragOffset = dragOffset.coerceIn(-220f, 220f)
-                                                swipeDirection = when {
-                                                    dragOffset > 60f -> 1
-                                                    dragOffset < -60f -> -1
-                                                    else -> 0
+                                                if (!isMultiSelectionMode) {
+                                                    val previousOffset = swipeOffset
+                                                    swipeOffset += dragAmount * swipeResistance
+                                                    swipeOffset = swipeOffset.coerceIn(-swipeMaxOffset, swipeMaxOffset)
+                                                    
+                                                    val newDirection = when {
+                                                        swipeOffset > swipeIndicatorThreshold -> 1
+                                                        swipeOffset < -swipeIndicatorThreshold -> -1
+                                                        else -> 0
+                                                    }
+                                                    
+                                                    // Haptic feedback when crossing threshold
+                                                    if (swipeDirection != newDirection && newDirection != 0) {
+                                                        hapticFeedback()
+                                                    }
+                                                    
+                                                    swipeDirection = newDirection
                                                 }
                                             }
                                         }
@@ -3249,12 +3276,29 @@ viewModel.updateSearchText("")
                                                         },
                                                         modifier = Modifier.size(32.dp)
                                                     ) {
-                                                        Icon(
-                                                            Icons.Default.Analytics,
-                                                            contentDescription = "Generate Spectrogram",
-                                                            tint = Color(0xFF9C27B0),
-                                                            modifier = Modifier.size(18.dp)
-                                                        )
+                                                        Column(
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            verticalArrangement = Arrangement.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Sp",
+                                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    fontSize = 8.sp
+                                                                ),
+                                                                color = Color(0xFFFFB6C1), // Light Pink to match main player and miniplayer
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                            Text(
+                                                                text = "eK",
+                                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    fontSize = 8.sp
+                                                                ),
+                                                                color = Color(0xFFFFB6C1), // Light Pink to match main player and miniplayer
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                        }
                                                     }
                                                     // Share (bottom-right)
                                                     IconButton(

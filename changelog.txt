@@ -1,3 +1,12 @@
+10.15
+- 🎯 SWIPE GESTURE OPTIMIZATION: Consolidated and improved playlist row swipe gestures for better reliability
+- 📏 ACTIVE ROW HEIGHT: Increased active playlist row height by 15% (88dp → 101dp) for better touch targets
+- 🎨 ICON CONSISTENCY: Fixed spectrogram button icons to match across main player, miniplayer, and playlist rows
+- 🔧 THRESHOLD TUNING: Optimized swipe thresholds (indicator: 50f, trigger: 100f) for medium swipes to trigger actions
+- 📱 NOTIFICATION FIX: Fixed notification overlap - new messages now properly replace old ones
+- 🎨 COLOR UNITY: Spectrogram buttons now use consistent light pink color (#FFB6C1) throughout the app
+- ✅ Result: More reliable swipe gestures, better visual consistency, and improved user experience
+
 10.14
 - 🧠 SMART MINIPLAYER: Miniplayer now only shows when current playing track is not visible in viewport
 - 📱 INTELLIGENT VISIBILITY: Automatically hides when scrolling back to current track, shows when scrolling away

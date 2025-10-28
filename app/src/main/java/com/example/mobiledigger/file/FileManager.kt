@@ -6,6 +6,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.util.UnifiedLogger
 import com.example.mobiledigger.util.ResourceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -87,6 +88,8 @@ class FileManager(private val context: Context) {
                 CrashLogger.log("FileManager", "WARNING: No write permission to destination folder: $uri")
             } else {
                 CrashLogger.log("FileManager", "Destination folder set successfully: $uri")
+                // Set this as the results folder for unified logging
+                UnifiedLogger.setResultsFolder(uri)
             }
         }
     }

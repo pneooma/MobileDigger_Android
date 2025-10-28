@@ -1,3 +1,13 @@
+9.96
+- 📝 UNIFIED LOGGING: All logs now written to single DEBUG file in results folder
+- 🔧 UnifiedLogger: New centralized logging system for all app components
+- 📁 Results Folder: DEBUG file created in destination folder when set
+- 🔄 CrashLogger: Now delegates to UnifiedLogger while maintaining backward compatibility
+- ⏱️ Performance: Background thread writes logs every 2 seconds
+- 📊 File Management: 10MB file size limit with automatic rotation
+- 🎯 Features: Thread-safe logging, timing helpers, error handling
+- ✅ Result: All app logs consolidated in one DEBUG file for easy debugging
+
 9.95
 - 🌤️ SKY THEME FIX: Made Sky theme distinct from Ocean theme
 - 🔄 Sky Theme: Changed to cyan/sky blue colors instead of regular blue

@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import com.example.mobiledigger.audio.MusicService
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.util.UnifiedLogger
 
 class MobileDiggerApplication : Application() {
     
@@ -13,6 +14,8 @@ class MobileDiggerApplication : Application() {
         super.onCreate()
         
         createNotificationChannels()
+        // Initialize unified logging system
+        UnifiedLogger.initialize(this)
         // Initialize crash logging immediately with no destination yet (internal + Downloads)
         CrashLogger.setDestinationFolder(this, null)
         CrashLogger.log("App", "Application started")

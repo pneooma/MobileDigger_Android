@@ -66,6 +66,10 @@ object CrashLogger {
     }
     
     fun log(tag: String, message: String, throwable: Throwable? = null) {
+        // Delegate to UnifiedLogger
+        UnifiedLogger.log(tag, message, throwable)
+        
+        // Keep existing in-memory logging for backward compatibility
         val timestamp = dateFormat.format(Date())
         val threadName = Thread.currentThread().name
         val threadId = Thread.currentThread().id
@@ -83,9 +87,6 @@ object CrashLogger {
             if (memoryLogs.size > MAX_IN_MEMORY_LINES) memoryLogs.removeFirst()
             pendingLines.addLast(logEntry)
         }
-        
-        // Also log to Android logcat
-        android.util.Log.d(tag, message, throwable)
         
         // Write out periodically, immediately if throwable present
         try {

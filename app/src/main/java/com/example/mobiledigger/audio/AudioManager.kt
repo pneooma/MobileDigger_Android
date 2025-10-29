@@ -551,6 +551,16 @@ class AudioManager(private val context: Context) {
                         isUsingVlc = true
                         isUsingFFmpeg = false
                         CrashLogger.log("AudioManager", "✅ VLC playback successful for: ${musicFile.name}")
+                        try {
+                            val intent = android.content.Intent(MusicService.ACTION_UPDATE_NOTIFICATION)
+                                .putExtra(MusicService.EXTRA_TITLE, musicFile.name)
+                                .putExtra(MusicService.EXTRA_IS_PLAYING, true)
+                                .putExtra(MusicService.EXTRA_CURRENT_POSITION, getCurrentPosition())
+                                .putExtra(MusicService.EXTRA_DURATION, getDuration())
+                                .putExtra(MusicService.EXTRA_URI, uri.toString())
+                            intent.`package` = context.packageName
+                            context.sendBroadcast(intent)
+                        } catch (_: Exception) {}
                         return true
                     }
                 } catch (e: Exception) {
@@ -605,6 +615,17 @@ class AudioManager(private val context: Context) {
             // Prepare and start
             // Prepare and start: use start() which prepares implicitly and plays
             vlc.start()
+            // Inform MusicService about the new now playing item
+            try {
+                val npIntent = android.content.Intent(MusicService.ACTION_UPDATE_NOTIFICATION)
+                    .putExtra(MusicService.EXTRA_TITLE, uri.lastPathSegment ?: "MobileDigger")
+                    .putExtra(MusicService.EXTRA_IS_PLAYING, true)
+                    .putExtra(MusicService.EXTRA_CURRENT_POSITION, 0L)
+                    .putExtra(MusicService.EXTRA_DURATION, getDuration())
+                    .putExtra(MusicService.EXTRA_URI, fileUri.toString())
+                npIntent.`package` = context.packageName
+                context.sendBroadcast(npIntent)
+            } catch (_: Exception) {}
             
             // Wait for preparation (VLC handles this asynchronously)
             // The listeners will handle the actual playback start

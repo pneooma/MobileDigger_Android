@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/black">
+
+    <!-- Header with title and app name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:id="@+id/notification_cover_art"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_pig_headphones"
+            android:scaleType="centerCrop"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/notification_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Song Title"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:scrollHorizontally="true" />
+
+            <TextView
+                android:id="@+id/notification_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="MobileDigger Music Player"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:alpha="0.7" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Progress Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0:00"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:minWidth="40dp" />
+
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="8dp"
+            android:max="1000"
+            android:progress="0"
+            android:thumb="@drawable/ic_seekbar_thumb" />
+
+        <TextView
+            android:id="@+id/total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0:00"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:minWidth="40dp" />
+
+    </LinearLayout>
+
+    <!-- Control Buttons Row 1 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+        <!-- Previous -->
+        <ImageButton
+            android:id="@+id/btn_previous"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Previous" />
+
+        <!-- Play/Pause -->
+        <ImageButton
+            android:id="@+id/btn_play_pause"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@android:drawable/ic_media_play"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:layout_marginHorizontal="16dp"
+            android:contentDescription="Play/Pause" />
+
+        <!-- Next -->
+        <ImageButton
+            android:id="@+id/btn_next"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_media_next"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Next" />
+
+    </LinearLayout>
+
+    <!-- Control Buttons Row 2 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Like -->
+        <ImageButton
+            android:id="@+id/btn_like"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_yes_pill"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Like" />
+
+        <!-- Dislike -->
+        <ImageButton
+            android:id="@+id/btn_dislike"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_no_pill"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:layout_marginHorizontal="16dp"
+            android:contentDescription="Dislike" />
+
+        <!-- Spectrogram -->
+        <ImageButton
+            android:id="@+id/btn_spectrogram"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_pig_headphones"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Spectrogram" />
+
+        <!-- Share -->
+        <ImageButton
+            android:id="@+id/btn_share"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_share"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:layout_marginStart="16dp"
+            android:contentDescription="Share" />
+
+    </LinearLayout>
+
+</LinearLayout>

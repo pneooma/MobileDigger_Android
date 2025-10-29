@@ -723,6 +723,49 @@ fun MusicPlayerScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Behavior settings moved here from Visual Settings
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Auto-play first track after selecting source",
+                            modifier = Modifier.weight(1f),
+                            maxLines = 2,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Switch(
+                            checked = viewModel.visualSettingsManager.settings.value.autoPlayFirstAfterSelect,
+                            onCheckedChange = { checked ->
+                                val cur = viewModel.visualSettingsManager.settings.value
+                                viewModel.visualSettingsManager.updateSettings(cur.copy(autoPlayFirstAfterSelect = checked))
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Auto-scan and load last source on start",
+                            modifier = Modifier.weight(1f),
+                            maxLines = 2,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Switch(
+                            checked = viewModel.visualSettingsManager.settings.value.autoScanLastSourceOnStart,
+                            onCheckedChange = { checked ->
+                                val cur = viewModel.visualSettingsManager.settings.value
+                                viewModel.visualSettingsManager.updateSettings(cur.copy(autoScanLastSourceOnStart = checked))
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Button(
                         onClick = { 
                             hapticFeedback() // Simplified call
@@ -917,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.17 ::",
+                            text = ":: v10.22 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height

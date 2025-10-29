@@ -22,7 +22,10 @@ data class VisualSettings(
     val animationSpeed: Float = 1.0f, // 0.5x to 2.0x speed
     val enableHapticFeedback: Boolean = true,
     val hapticFeedbackType: HapticFeedbackType = HapticFeedbackType.NORMAL, // New
-    val hapticFeedbackIntensity: Float = 1.0f // New
+    val hapticFeedbackIntensity: Float = 1.0f, // New
+    // Behavior Settings
+    val autoPlayFirstAfterSelect: Boolean = false,
+    val autoScanLastSourceOnStart: Boolean = false
 )
 
 class VisualSettingsManager(context: Context) {
@@ -40,6 +43,9 @@ class VisualSettingsManager(context: Context) {
         private const val KEY_ENABLE_HAPTIC_FEEDBACK = "enable_haptic_feedback"
         private const val KEY_HAPTIC_FEEDBACK_TYPE = "haptic_feedback_type" // New
         private const val KEY_HAPTIC_FEEDBACK_INTENSITY = "haptic_feedback_intensity" // New
+        // Behavior keys
+        private const val KEY_AUTO_PLAY_FIRST = "auto_play_first_after_select"
+        private const val KEY_AUTO_SCAN_LAST = "auto_scan_last_source_on_start"
     }
     
     private val _settings = mutableStateOf(loadSettings())
@@ -57,7 +63,10 @@ class VisualSettingsManager(context: Context) {
             animationSpeed = prefs.getFloat(KEY_ANIMATION_SPEED, 1.0f),
             enableHapticFeedback = prefs.getBoolean(KEY_ENABLE_HAPTIC_FEEDBACK, true),
             hapticFeedbackType = HapticFeedbackType.valueOf(prefs.getString(KEY_HAPTIC_FEEDBACK_TYPE, HapticFeedbackType.NORMAL.name) ?: HapticFeedbackType.NORMAL.name), // New
-            hapticFeedbackIntensity = prefs.getFloat(KEY_HAPTIC_FEEDBACK_INTENSITY, 1.0f) // New
+            hapticFeedbackIntensity = prefs.getFloat(KEY_HAPTIC_FEEDBACK_INTENSITY, 1.0f), // New
+            // Behavior
+            autoPlayFirstAfterSelect = prefs.getBoolean(KEY_AUTO_PLAY_FIRST, false),
+            autoScanLastSourceOnStart = prefs.getBoolean(KEY_AUTO_SCAN_LAST, false)
         )
     }
     
@@ -79,6 +88,9 @@ class VisualSettingsManager(context: Context) {
             putBoolean(KEY_ENABLE_HAPTIC_FEEDBACK, settings.enableHapticFeedback)
             putString(KEY_HAPTIC_FEEDBACK_TYPE, settings.hapticFeedbackType.name) // New
             putFloat(KEY_HAPTIC_FEEDBACK_INTENSITY, settings.hapticFeedbackIntensity) // New
+            // Behavior
+            putBoolean(KEY_AUTO_PLAY_FIRST, settings.autoPlayFirstAfterSelect)
+            putBoolean(KEY_AUTO_SCAN_LAST, settings.autoScanLastSourceOnStart)
         }.apply()
     }
     

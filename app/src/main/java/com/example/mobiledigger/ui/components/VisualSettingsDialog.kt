@@ -160,6 +160,8 @@ fun VisualSettingsDialog(
                         }
                     }
                 )
+
+                // Behavior settings moved to main Settings card
                 
                 }
                 
@@ -277,12 +279,16 @@ private fun SwitchSettingItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+            lineHeight = 18.sp,
+            maxLines = 2
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Switch(

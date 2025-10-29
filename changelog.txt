@@ -1,3 +1,39 @@
+v10.22
+- Settings: Moved Auto-play-first and Auto-scan-last toggles to main Settings card
+- Settings: Two-line labels with right-aligned switches for better alignment
+- Behavior: Auto-scan last source on start (optional) and auto-play first track (optional) wired
+
+10.21
+- 🎨 CUSTOM NOTIFICATION LAYOUT: Created custom notification layout with scrolling title
+- 🖼️ COVER ART FIX: Fixed cover art extraction with better error handling and logging
+- 🎮 BUTTON LAYOUT: Reorganized buttons with Like/Dislike in second row for better visibility
+- 📱 SCROLLING TITLE: Added marquee scrolling for long song titles in notification
+- 🔧 REMOTEVIEWS: Used RemoteViews for full control over notification layout and interactions
+- ✅ Result: Custom notification with scrolling title, proper button layout, and cover art
+
+10.20
+- 🖼️ ACTUAL COVER ART: Added cover art extraction from audio files using MediaMetadataRetriever
+- 🎮 BUTTON DEBUGGING: Added logging to debug Like/Dislike button visibility in compact view
+- ⏯️ PLAY BUTTON FIX: Improved play/pause state synchronization to prevent loading state
+- 🔧 MEDIASTYLE CONFIG: Added setHideAppName(false) for better Android 16 compatibility
+- 📊 NOTIFICATION LOGGING: Added detailed logging for notification creation and action mapping
+- ✅ Result: Cover art now shows actual file artwork, improved button functionality
+
+10.19
+- 🎨 NOTIFICATION REDESIGN: Replaced Next/Previous with Like/Dislike buttons in compact view
+- 🖼️ COVER ART: Added cover art background to notification using app icon
+- 📝 FILENAME DISPLAY: Fixed notification to show actual playing filename instead of "dummy player"
+- 🎮 BUTTON MAPPING: Like button moves file to liked folder, Dislike button moves to rejected folder
+- 🔧 DUMMY PLAYLIST REMOVAL: Removed dummy playlist that was overriding actual media metadata
+- ✅ Result: Notification now shows correct filename with proper Like/Dislike functionality
+
+10.18
+- 🎨 MODERN NOTIFICATION UI: Fixed notification to properly connect MediaSession token for Android 16 modern design
+- 🔗 MEDIASESSION INTEGRATION: Notification now uses sessionCompatToken to enable system media controls
+- 📱 COMPACT VIEW OPTIMIZATION: Limited compact view to standard 3 actions (Previous, Play/Pause, Next)
+- 🎛️ NOTIFICATION LAYOUT: Additional actions (Like, Dislike, Spectrogram, Share) shown in expanded view
+- ✅ Result: Modern notification appearance matching VLC-style media player on Android 16
+
 10.17
 - 🔧 SWIPE GESTURE FIX: Fixed race condition where swiping first track would move wrong file
 - 🎯 DIRECT FILE REFERENCE: Swipe gestures now capture file object directly instead of relying on index

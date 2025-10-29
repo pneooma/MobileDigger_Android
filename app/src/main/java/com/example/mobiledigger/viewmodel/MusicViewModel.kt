@@ -322,7 +322,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 }
             }
             
-            // Restore source folder reference (but don't auto-scan)
+            // Restore source folder reference (optionally auto-scan based on setting)
             preferences.getSourceRootUri()?.let { saved ->
                 runCatching {
                     val uri = Uri.parse(saved)
@@ -332,6 +332,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     // Just restore the folder reference without scanning
                     fileManager.setSelectedFolder(uri)
                     android.util.Log.d("MusicViewModel", "Source folder restored (use Rescan to load files)")
+
+                    // Auto-scan last source on start if enabled
+                    if (isAutoScanLastSourceEnabled()) {
+                        rescanSourceFolder()
+                    }
                 }
             }
             CrashLogger.log("MusicViewModel", "Initialized successfully")
@@ -459,14 +464,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     _errorMessage.value = "Warning: destination folder is inside source. Please choose a different destination from the menu."
                 } else if (files.isNotEmpty()) {
                     _currentIndex.value = 0
-                    // Automatically load and start playing the first song
-                    loadCurrentFile()
-                    val destInfo = if (fileManager.getDestinationFolder() != null) {
-                        " Destination: ${fileManager.getDestinationPath()}"
+                    if (isAutoPlayAfterSelectEnabled()) {
+                        // Automatically load and start playing the first song
+                        loadCurrentFile()
+                        val destInfo = if (fileManager.getDestinationFolder() != null) {
+                            " Destination: ${fileManager.getDestinationPath()}"
+                        } else {
+                            " Please select destination folder from menu."
+                        }
+                        _errorMessage.value = "Loaded ${files.size} tracks. Now playing first track.$destInfo"
                     } else {
-                        " Please select destination folder from menu."
+                        _errorMessage.value = "Loaded ${files.size} tracks from source."
                     }
-                    _errorMessage.value = "Loaded ${files.size} tracks. Now playing first track.$destInfo"
                 } else {
                     _errorMessage.value = "No music files found in selected folder."
                 }
@@ -485,6 +494,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _isLoading.value = false
             }
         }
+    }
+
+    private fun isAutoPlayAfterSelectEnabled(): Boolean {
+        return try {
+            val prefs = getApplication<Application>().getSharedPreferences("visual_settings", Context.MODE_PRIVATE)
+            prefs.getBoolean("auto_play_first_after_select", false)
+        } catch (_: Exception) { false }
+    }
+
+    private fun isAutoScanLastSourceEnabled(): Boolean {
+        return try {
+            val prefs = getApplication<Application>().getSharedPreferences("visual_settings", Context.MODE_PRIVATE)
+            prefs.getBoolean("auto_scan_last_source_on_start", false)
+        } catch (_: Exception) { false }
     }
     
 

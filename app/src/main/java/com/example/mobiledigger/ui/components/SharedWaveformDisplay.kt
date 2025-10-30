@@ -137,9 +137,9 @@ fun SharedWaveformDisplay(
                                 // Configure WaveformSeekBar appearance
                                 waveBackgroundColor = unplayedColor
                                 waveProgressColor = playedColor
-                                waveWidth = 1f
-                                waveGap = 0f
-                                waveCornerRadius = 2f
+                                waveWidth = 1f // Thin bars
+                                waveGap = 0f // No gap for continuous look
+                                waveCornerRadius = 3f // Slightly rounded corners
                                 wavePaddingTop = 1
                                 wavePaddingBottom = 1
                                 

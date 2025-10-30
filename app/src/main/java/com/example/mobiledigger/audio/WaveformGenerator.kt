@@ -242,6 +242,10 @@ class WaveformGenerator(private val context: Context) {
             return waveform
         }
         
+        // First pass: collect raw amplitudes
+        val rawAmplitudes = FloatArray(targetSamples)
+        var globalMax = 0f
+        
         for (i in 0 until targetSamples) {
             val startIdx = i * samplesPerBucket
             val endIdx = minOf(startIdx + samplesPerBucket, pcmData.size)
@@ -254,8 +258,19 @@ class WaveformGenerator(private val context: Context) {
                 }
             }
             
-            // Convert to 0-100 scale
-            waveform[i] = (maxAmplitude * 100).toInt().coerceIn(0, 100)
+            rawAmplitudes[i] = maxAmplitude
+            if (maxAmplitude > globalMax) {
+                globalMax = maxAmplitude
+            }
+        }
+        
+        // Second pass: normalize to prevent overflow/clipping
+        // Scale so the max value is 85 instead of 100, leaving headroom
+        val targetMax = 85f
+        val scaleFactor = if (globalMax > 0f) targetMax / globalMax else 1f
+        
+        for (i in 0 until targetSamples) {
+            waveform[i] = (rawAmplitudes[i] * scaleFactor).toInt().coerceIn(0, 100)
         }
         
         return waveform

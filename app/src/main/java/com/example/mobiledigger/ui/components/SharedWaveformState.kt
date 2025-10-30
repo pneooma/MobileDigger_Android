@@ -114,8 +114,8 @@ fun rememberSharedWaveformState(
                         val generator = WaveformGenerator(context)
                         
                         // OPTIMIZED: Balance between speed and visual quality
-                        // 512 samples = excellent quality, still fast generation!
-                        val targetSampleCount = 512
+                        // 32 samples = ultra fast generation, crisp appearance!
+                        val targetSampleCount = 32
                         
                         CrashLogger.log("WaveformGenerator", "Requesting $targetSampleCount samples for any duration")
                         

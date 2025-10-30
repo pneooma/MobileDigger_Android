@@ -3569,3 +3569,77 @@
 10-30 23:09:57.241 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Received waveform: 256 samples
 10-30 23:09:57.241 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Min: 30, Max: 85, Avg: 72
 10-30 23:09:57.241 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - First 10: 63, 62, 76, 71, 57, 70, 71, 58, 71, 72
+10-31 01:34:29.705 23536 23536 D WaveformGenerator: LaunchedEffect triggered for file: Greg Ochman - Uye (Original Mix) [Melodic Therapy].aiff
+10-31 01:34:29.780 23536 23536 D WaveformGenerator: Starting waveform generation for: Greg Ochman - Uye (Original Mix) [Melodic Therapy].aiff
+10-31 01:34:29.781 23536 23536 D WaveformGenerator: File size: 79.9MB
+10-31 01:34:29.781 23536 23602 D WaveformGenerator: Generating waveform for: Greg Ochman - Uye (Original Mix) [Melodic Therapy].aiff
+10-31 01:34:29.782 23536 23602 D WaveformGenerator: Requesting 256 samples for any duration
+10-31 01:34:29.783 23536 23602 D WaveformGenerator: ⏱️ PROFILING: Starting waveform generation for URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FLiked%2FGreg%20Ochman%20-%20Uye%20(Original%20Mix)%20%5BMelodic%20Therapy%5D.aiff
+10-31 01:34:29.783 23536 23602 D WaveformGenerator: ⏱️ PROFILING: Target samples: 256
+10-31 01:34:29.783 23536 23602 D WaveformGenerator: 🎵 AIFF format detected - Using libvlc decoder
+10-31 01:34:29.783 23536 23602 D WaveformGenerator: 🎵 Starting AIFF waveform generation
+10-31 01:34:29.792 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Received waveform: 256 samples
+10-31 01:34:29.792 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Min: 30, Max: 85, Avg: 72
+10-31 01:34:29.792 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - First 10: 63, 62, 76, 71, 57, 70, 71, 58, 71, 72
+10-31 01:34:29.930 23536 23602 D WaveformGenerator: ⏱️ PROFILING: AIFF copy to temp took 146ms
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 📊 Valid AIFF file detected: AIFF
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 📦 Found chunk: COMT, size: 26
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 📦 Found chunk: COMM, size: 18
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 🎵 COMM: channels=2, bits=16
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 📦 Found chunk: SSND, size: 83522520
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 🎵 SSND found at offset 88, size: 83522512 bytes
+10-31 01:34:29.931 23536 23602 D WaveformGenerator: 📊 Sampling AIFF: frameSize=4, ssndSize=83522512
+10-31 01:34:29.939 23536 23602 D WaveformGenerator:    📊 Smoothed and compressed range (original: 94, new: 30-85)
+10-31 01:34:29.939 23536 23602 D WaveformGenerator: ✅ Generated AIFF waveform:
+10-31 01:34:29.939 23536 23602 D WaveformGenerator:    📊 Min: 30, Max: 85, Avg: 72
+10-31 01:34:29.940 23536 23602 D WaveformGenerator:    📊 First 10 samples: 42, 70, 84, 84, 84, 75, 53, 49, 56, 43
+10-31 01:34:29.940 23536 23602 D WaveformGenerator:    📊 Last 10 samples: 70, 84, 84, 84, 84, 73, 53, 45, 51, 71
+10-31 01:34:29.940 23536 23602 D WaveformGenerator:    📊 Standard deviation: 12 (✅ GOOD VARIATION)
+10-31 01:34:29.940 23536 23602 D WaveformGenerator: ⏱️ PROFILING: AIFF parsing and waveform generation took 9ms
+10-31 01:34:29.940 23536 23602 D WaveformGenerator: ⏱️ PROFILING: Total AIFF waveform generation: 157ms
+10-31 01:34:29.950 23536 23602 D WaveformGenerator: ⏱️ PROFILING: ===== TOTAL AIFF GENERATION TIME: 168ms =====
+10-31 01:34:29.951 23536 23602 D WaveformGenerator: ✅ AIFF waveform generated: 256 samples
+10-31 01:34:29.951 23536 23602 D WaveformGenerator: ✅ Waveform generated: 256 samples
+10-31 01:34:29.951 23536 23602 D WaveformGenerator: 📊 UI State - Min: 30, Max: 85, Avg: 72
+10-31 01:34:29.951 23536 23602 D WaveformGenerator: 📊 UI State - First 10: 42, 70, 84, 84, 84, 75, 53, 49, 56, 43
+10-31 01:34:29.968 23536 23536 D WaveformGenerator: 📊 UI State UPDATED - waveformData is now NOT NULL (256 samples)
+10-31 01:34:29.988 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Received waveform: 256 samples
+10-31 01:34:29.988 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Min: 30, Max: 85, Avg: 72
+10-31 01:34:29.988 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - First 10: 42, 70, 84, 84, 84, 75, 53, 49, 56, 43
+10-31 01:34:32.272 23536 23536 D WaveformGenerator: LaunchedEffect triggered for file: Acid Arab - Yaktin Beni (NTO Remix) [All Night Long].aiff
+10-31 01:34:32.347 23536 23536 D WaveformGenerator: Starting waveform generation for: Acid Arab - Yaktin Beni (NTO Remix) [All Night Long].aiff
+10-31 01:34:32.348 23536 23536 D WaveformGenerator: File size: 43.5MB
+10-31 01:34:32.348 23536 23600 D WaveformGenerator: Generating waveform for: Acid Arab - Yaktin Beni (NTO Remix) [All Night Long].aiff
+10-31 01:34:32.349 23536 23600 D WaveformGenerator: Requesting 256 samples for any duration
+10-31 01:34:32.349 23536 23600 D WaveformGenerator: ⏱️ PROFILING: Starting waveform generation for URI: content://com.android.externalstorage.documents/tree/primary%3AResults/document/primary%3AResults%2FLiked%2FAcid%20Arab%20-%20Yaktin%20Beni%20(NTO%20Remix)%20%5BAll%20Night%20Long%5D.aiff
+10-31 01:34:32.349 23536 23600 D WaveformGenerator: ⏱️ PROFILING: Target samples: 256
+10-31 01:34:32.350 23536 23600 D WaveformGenerator: 🎵 AIFF format detected - Using libvlc decoder
+10-31 01:34:32.350 23536 23600 D WaveformGenerator: 🎵 Starting AIFF waveform generation
+10-31 01:34:32.365 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Received waveform: 256 samples
+10-31 01:34:32.366 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Min: 30, Max: 85, Avg: 72
+10-31 01:34:32.366 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - First 10: 42, 70, 84, 84, 84, 75, 53, 49, 56, 43
+10-31 01:34:32.454 23536 23600 D WaveformGenerator: ⏱️ PROFILING: AIFF copy to temp took 103ms
+10-31 01:34:32.454 23536 23600 D WaveformGenerator: 📊 Valid AIFF file detected: AIFF
+10-31 01:34:32.454 23536 23600 D WaveformGenerator: 📦 Found chunk: COMT, size: 26
+10-31 01:34:32.454 23536 23600 D WaveformGenerator: 📦 Found chunk: COMM, size: 18
+10-31 01:34:32.454 23536 23600 D WaveformGenerator: 🎵 COMM: channels=2, bits=16
+10-31 01:34:32.454 23536 23600 D WaveformGenerator: 📦 Found chunk: SSND, size: 45389488
+10-31 01:34:32.455 23536 23600 D WaveformGenerator: 🎵 SSND found at offset 88, size: 45389480 bytes
+10-31 01:34:32.455 23536 23600 D WaveformGenerator: 📊 Sampling AIFF: frameSize=4, ssndSize=45389480
+10-31 01:34:32.461 23536 23600 D WaveformGenerator:    📊 Smoothed and compressed range (original: 94, new: 30-85)
+10-31 01:34:32.461 23536 23600 D WaveformGenerator: ✅ Generated AIFF waveform:
+10-31 01:34:32.462 23536 23600 D WaveformGenerator:    📊 Min: 30, Max: 85, Avg: 72
+10-31 01:34:32.462 23536 23600 D WaveformGenerator:    📊 First 10 samples: 63, 62, 76, 71, 57, 70, 71, 58, 71, 72
+10-31 01:34:32.462 23536 23600 D WaveformGenerator:    📊 Last 10 samples: 61, 49, 49, 59, 43, 41, 53, 41, 30, 30
+10-31 01:34:32.462 23536 23600 D WaveformGenerator:    📊 Standard deviation: 10 (✅ GOOD VARIATION)
+10-31 01:34:32.462 23536 23600 D WaveformGenerator: ⏱️ PROFILING: AIFF parsing and waveform generation took 8ms
+10-31 01:34:32.462 23536 23600 D WaveformGenerator: ⏱️ PROFILING: Total AIFF waveform generation: 112ms
+10-31 01:34:32.468 23536 23600 D WaveformGenerator: ⏱️ PROFILING: ===== TOTAL AIFF GENERATION TIME: 118ms =====
+10-31 01:34:32.468 23536 23600 D WaveformGenerator: ✅ AIFF waveform generated: 256 samples
+10-31 01:34:32.468 23536 23600 D WaveformGenerator: ✅ Waveform generated: 256 samples
+10-31 01:34:32.468 23536 23600 D WaveformGenerator: 📊 UI State - Min: 30, Max: 85, Avg: 72
+10-31 01:34:32.468 23536 23600 D WaveformGenerator: 📊 UI State - First 10: 63, 62, 76, 71, 57, 70, 71, 58, 71, 72
+10-31 01:34:32.471 23536 23536 D WaveformGenerator: 📊 UI State UPDATED - waveformData is now NOT NULL (256 samples)
+10-31 01:34:32.497 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Received waveform: 256 samples
+10-31 01:34:32.497 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - Min: 30, Max: 85, Avg: 72
+10-31 01:34:32.498 23536 23536 D WaveformGenerator: 📺 SharedWaveformDisplay - First 10: 63, 62, 76, 71, 57, 70, 71, 58, 71, 72

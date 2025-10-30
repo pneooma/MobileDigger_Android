@@ -243,6 +243,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _recentSourceUris = MutableStateFlow<List<String>>(emptyList())
     val recentSourceUris: StateFlow<List<String>> = _recentSourceUris.asStateFlow()
     
+    // Tracking played files with no action in current session
+    private val _playedButNotActioned = MutableStateFlow<Set<Uri>>(emptySet())
+    val playedButNotActioned: StateFlow<Set<Uri>> = _playedButNotActioned.asStateFlow()
+    
     init {
         try {
             // Initialize crash logger
@@ -428,6 +432,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 stopPlayback()
                 _currentIndex.value = 0
                 _musicFiles.value = emptyList()
+                _playedButNotActioned.value = emptySet() // Clear tracked files when loading new folder
                 CrashLogger.log("MusicViewModel", "Starting folder selection: $uri")
                 
                 fileManager.setSelectedFolder(uri)
@@ -919,6 +924,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun sortMusicFile(file: MusicFile, action: SortAction) {
         CrashLogger.log("MusicViewModel", "🔍 sortMusicFile called: ${file.name} with action=$action")
         
+        // Remove from played-but-not-actioned when action is taken
+        _playedButNotActioned.value = _playedButNotActioned.value - file.uri
+        
         if (!fileManager.isDestinationSelected()) {
             _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting." // More specific message
             CrashLogger.log("MusicViewModel", "❌ No destination folder selected")
@@ -1099,6 +1107,54 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
         }
     }
+    
+    fun movePlayedButNotActionedToRejected() {
+        CrashLogger.log("MusicViewModel", "🔍 movePlayedButNotActionedToRejected called with ${_playedButNotActioned.value.size} files")
+        
+        val playedUris = _playedButNotActioned.value
+        if (playedUris.isEmpty()) {
+            CrashLogger.log("MusicViewModel", "No played-but-not-actioned files to move")
+            return
+        }
+        
+        // Exclude the currently playing file
+        val currentPlayingUri = _currentPlayingFile.value?.uri
+        val urisToReject = if (currentPlayingUri != null) {
+            playedUris - currentPlayingUri
+        } else {
+            playedUris
+        }
+        
+        CrashLogger.log("MusicViewModel", "After excluding current file: ${urisToReject.size} files to reject")
+        
+        if (urisToReject.isEmpty()) {
+            CrashLogger.log("MusicViewModel", "No files to reject after excluding current file")
+            return
+        }
+        
+        // Get the files from TODO playlist that match the played URIs
+        val filesToReject = _musicFiles.value.filter { it.uri in urisToReject }
+        
+        CrashLogger.log("MusicViewModel", "Found ${filesToReject.size} files to reject from TODO playlist")
+        
+        if (filesToReject.isEmpty()) {
+            CrashLogger.log("MusicViewModel", "No matching files found in TODO playlist")
+            return
+        }
+        
+        // Move each file to rejected using background queue
+        viewModelScope.launch {
+            filesToReject.forEach { file ->
+                CrashLogger.log("MusicViewModel", "Moving file to rejected: ${file.name}")
+                sortMusicFile(file, SortAction.DISLIKE)
+                delay(100) // Small delay to ensure sequential processing
+            }
+            
+            // Clear the rejected URIs from the played-but-not-actioned list
+            _playedButNotActioned.value = _playedButNotActioned.value - urisToReject
+            CrashLogger.log("MusicViewModel", "Completed moving files, remaining tracked: ${_playedButNotActioned.value.size}")
+        }
+    }
 
     fun undoLastAction() {
         val last = _sortResults.value.lastOrNull() ?: return
@@ -1210,6 +1266,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             } else {
                 _errorMessage.value = null
                 CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
+                
+                // Track this file as played but not actioned (only if in TODO playlist)
+                if (_currentPlaylistTab.value == PlaylistTab.TODO) {
+                    _playedButNotActioned.value = _playedButNotActioned.value + currentFile.uri
+                    CrashLogger.log("MusicViewModel", "✅ Added ${currentFile.name} to played-but-not-actioned list. Total tracked: ${_playedButNotActioned.value.size}")
+                } else {
+                    CrashLogger.log("MusicViewModel", "⏭️ Not tracking ${currentFile.name} - not in TODO playlist (current: ${_currentPlaylistTab.value})")
+                }
+                
                 // increment listened stat
                 try { preferences.incrementListened() } catch (_: Exception) {}
             }
@@ -2530,6 +2595,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         lastCompletionTime = currentTime
         CrashLogger.log("MusicViewModel", "Track completed, playing next.")
+        
+        // No need to track here anymore - tracking happens when file starts playing
+        
         next()
     }
 

@@ -29,7 +29,6 @@ fun WaveformWithToggle(
 ) {
     val context = LocalContext.current
     var isWaveformEnabled by remember { mutableStateOf(isWaveformGenerationEnabled(context)) }
-    var showWarningDialog by remember { mutableStateOf(false) }
     
     // Get color for this song
     val songColor = remember(songUri) { getColorForSong(songUri) }
@@ -62,8 +61,9 @@ fun WaveformWithToggle(
                     setWaveformGenerationEnabled(context, false)
                     isWaveformEnabled = false
                 } else {
-                    // Show warning before enabling
-                    showWarningDialog = true
+                    // Enable immediately (no warning needed)
+                    setWaveformGenerationEnabled(context, true)
+                    isWaveformEnabled = true
                 }
             },
             modifier = Modifier
@@ -82,20 +82,6 @@ fun WaveformWithToggle(
                 modifier = Modifier.size(20.dp)
             )
         }
-    }
-    
-    // Warning dialog
-    if (showWarningDialog) {
-        WaveformWarningDialog(
-            onDismiss = {
-                showWarningDialog = false
-            },
-            onConfirm = {
-                setWaveformGenerationEnabled(context, true)
-                isWaveformEnabled = true
-                showWarningDialog = false
-            }
-        )
     }
 }
 

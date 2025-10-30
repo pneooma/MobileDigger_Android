@@ -82,31 +82,8 @@ fun SharedWaveformDisplay(
         Box(modifier = Modifier.fillMaxSize())
         when {
             sharedState.isLoading -> {
-                // Loading indicator
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    val infiniteTransition = rememberInfiniteTransition(label = "loadingDots")
-                    (0..2).forEach { index ->
-                        val animatedAlpha by infiniteTransition.animateFloat(
-                            initialValue = 0.3f,
-                            targetValue = 1f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(durationMillis = AnimationUtils.getOptimizedDuration(600, refreshRate), easing = LinearEasing),
-                                initialStartOffset = StartOffset(offsetMillis = index * 200),
-                                repeatMode = RepeatMode.Reverse
-                            ), label = "dotAlpha$index"
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = animatedAlpha),
-                                    CircleShape
-                                )
-                        )
-                    }
-                }
+                // Loading - show nothing, just empty container
+                Box(modifier = Modifier.fillMaxSize())
             }
             
             sharedState.errorMessage != null -> {
@@ -129,11 +106,31 @@ fun SharedWaveformDisplay(
             }
             
             sharedState.waveformData != null -> {
-                // Waveform display using WaveformSeekBar
+                // Waveform display using WaveformSeekBar with long zoom animation (0% to 100%)
                 val playedColor = MaterialTheme.colorScheme.primary.toArgb()
                 val unplayedColor = MaterialTheme.colorScheme.outline.toArgb()
                 
-                Box(modifier = Modifier.fillMaxSize()) {
+                // Track if waveform just appeared to trigger animation from 0
+                var hasAppeared by remember(sharedState.waveformData) { mutableStateOf(false) }
+                LaunchedEffect(sharedState.waveformData) {
+                    hasAppeared = true
+                }
+                
+                // Zoom animation from 0% to 100% (half faster - 750ms)
+                val animatedScale by animateFloatAsState(
+                    targetValue = if (hasAppeared) 1f else 0f,
+                    animationSpec = tween(durationMillis = 750, easing = FastOutSlowInEasing),
+                    label = "waveformScale"
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = animatedScale
+                            scaleY = animatedScale
+                        }
+                ) {
                     AndroidView(
                         factory = { ctx ->
                             WaveformSeekBar(ctx).apply {

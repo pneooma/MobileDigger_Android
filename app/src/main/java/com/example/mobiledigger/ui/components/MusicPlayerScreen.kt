@@ -255,6 +255,7 @@ fun MusicPlayerScreen(
     
     val currentSearchText by viewModel.searchText.collectAsState() // Moved here
     val searchResults by viewModel.searchResults.collectAsState() // Moved here
+    val playedButNotActioned by viewModel.playedButNotActioned.collectAsState()
     
     // Subfolder management state - Lazy loaded to avoid unnecessary recomposition
     val subfolderHistory by remember { viewModel.subfolderHistory }.collectAsState()
@@ -1118,60 +1119,68 @@ viewModel.updateSearchText("")
             }
         }
         
-        // Animated Info Message Display (positioned absolutely on top, fade in/out only)
-        if (showInfoMessage) {
+        // Pill button to move played-but-not-actioned files to rejected
+        // Show this after files are loaded and there are files in TODO playlist
+        // Exclude the currently playing file from the count
+        val playedButNotActionedCount = remember(playedButNotActioned, currentPlayingFile) {
+            val currentUri = currentPlayingFile?.uri
+            if (currentUri != null) {
+                playedButNotActioned.count { it != currentUri }
+            } else {
+                playedButNotActioned.size
+            }
+        }
+        
+        if (musicFiles.isNotEmpty() && !isLoading && currentPlaylistTab == PlaylistTab.TODO) {
             Popup(
                 alignment = Alignment.TopCenter,
-                offset = IntOffset(0, with(LocalDensity.current) { 86.dp.toPx().toInt() }) // ~under header (moved up by 10dp)
+                offset = IntOffset(0, with(LocalDensity.current) { 66.dp.toPx().toInt() }) // Moved up by 20dp
             ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .shadow(8.dp, RoundedCornerShape(8.dp)),
-                    colors = CardDefaults.cardColors(
-                        containerColor = when (infoMessageType) {
-                            "success" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.95f)
-                            "error" -> MaterialTheme.colorScheme.error.copy(alpha = 0.95f)
-                            "loading" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.95f)
-                            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+                Button(
+                    onClick = { 
+                        if (playedButNotActionedCount > 0) {
+                            CrashLogger.log("MusicPlayerScreen", "Reject played files button clicked, count: $playedButNotActionedCount")
+                            viewModel.movePlayedButNotActionedToRejected()
                         }
+                    },
+                    modifier = Modifier
+                        .shadow(8.dp, RoundedCornerShape(24.dp))
+                        .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(24.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp), // Reduced by 20% (from 8dp to 6.4dp, rounded to 5dp)
+                    enabled = true // Always enabled, but only acts when count > 0
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp), // reduced inner padding
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center // center contents
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            when (infoMessageType) {
-                                "success" -> Icons.Default.CheckCircle
-                                "error" -> Icons.Default.Error
-                                "loading" -> Icons.Default.HourglassEmpty
-                                else -> Icons.Default.Info
-                            },
+                            Icons.Default.Check,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = when (infoMessageType) {
-                                "success" -> MaterialTheme.colorScheme.onTertiary
-                                "error" -> MaterialTheme.colorScheme.onError
-                                "loading" -> MaterialTheme.colorScheme.onPrimary
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.Red
                         )
-                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                        Icon(
+                            Icons.Default.ThumbDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.Red
+                        )
                         Text(
-                            text = infoMessageText,
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            color = when (infoMessageType) {
-                                "success" -> MaterialTheme.colorScheme.onTertiary
-                                "error" -> MaterialTheme.colorScheme.onError
-                                "loading" -> MaterialTheme.colorScheme.onPrimary
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
+                            text = "Reject $playedButNotActionedCount",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -2915,10 +2924,10 @@ viewModel.updateSearchText("")
                                     
                                     val estimatedLines = ceil(item.name.length.toFloat() / charsPerLine).toInt().coerceAtLeast(1)
                                     
-                                    // Calculate height based on actual lines needed
+                                    // Calculate height based on actual lines needed (reduced by 20% for inactive rows)
                                     val lineHeight = 16.dp // Slightly larger for better readability
                                     val padding = 12.dp
-                                    val calculatedHeight = (estimatedLines * lineHeight.value) + padding.value
+                                    val calculatedHeight = ((estimatedLines * lineHeight.value) + padding.value) * 0.8f // 20% reduction
                                     
                                     // Debug logging
                                     println("DEBUG: Filename: '${item.name}' (${item.name.length} chars), screenWidth: ${screenWidthDp}dp, charsPerLine: $charsPerLine, estimatedLines: $estimatedLines, height: ${calculatedHeight}dp")
@@ -2933,10 +2942,10 @@ viewModel.updateSearchText("")
                                     41.dp // Active rows increased by 15% (36 * 1.15 = 41.4)
                                 } else {
                                     when {
-                                        adaptiveHeight.value <= 25 -> 20.dp // 1 line rows
-                                        adaptiveHeight.value <= 40 -> 24.dp // 2 line rows
-                                        adaptiveHeight.value <= 55 -> 28.dp // 3 line rows
-                                        else -> 32.dp // 4 line rows
+                                        adaptiveHeight.value <= 20 -> 18.dp // 1 line rows (adjusted for 20% reduction)
+                                        adaptiveHeight.value <= 32 -> 22.dp // 2 line rows (adjusted for 20% reduction)
+                                        adaptiveHeight.value <= 44 -> 26.dp // 3 line rows (adjusted for 20% reduction)
+                                        else -> 30.dp // 4 line rows (adjusted for 20% reduction)
                                     }
                                 }
                             }
@@ -3025,12 +3034,12 @@ viewModel.updateSearchText("")
                                                                     swipeOffset > 0 -> {
                                                                         hapticFeedback()
                                                                         viewModel.sortMusicFile(fileToSort, SortAction.LIKE)
-                                                                        showInfoMessage("Moved to Liked", "success")
+                                                                        // Notification disabled
                                                                     }
                                                                     swipeOffset < 0 -> {
                                                                         hapticFeedback()
                                                                         viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
-                                                                        showInfoMessage("Moved to Rejected", "error")
+                                                                        // Notification disabled
                                                                     }
                                                                 }
                                                             } catch (e: Exception) {
@@ -3126,7 +3135,7 @@ viewModel.updateSearchText("")
                                                     onClick = { 
                                                         CrashLogger.log("MusicPlayerScreen", "🔍 Playlist LIKE button clicked for ${selectedIndices.size} files")
                                                         viewModel.sortSelectedFiles(SortAction.LIKE)
-                                                        showInfoMessage("Moved to Liked", "success")
+                                                        // Notification disabled
                                                     },
                                                     modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
                                                 ) {
@@ -3141,7 +3150,7 @@ viewModel.updateSearchText("")
                                                     onClick = { 
                                                         CrashLogger.log("MusicPlayerScreen", "🔍 Playlist REJECT button clicked for ${selectedIndices.size} files")
                                                         viewModel.sortSelectedFiles(SortAction.DISLIKE)
-                                                        showInfoMessage("Moved to Rejected", "error")
+                                                        // Notification disabled
                                                     },
                                                     modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
                                                 ) {
@@ -3391,16 +3400,32 @@ viewModel.updateSearchText("")
                                                     .height(adaptiveHeight), // Match adaptive row height
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                Text(
-                                                    text = item.name,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
-                                                    ),
-                                                    maxLines = 4,
-                                                    overflow = TextOverflow.Visible,
-                                                    textAlign = TextAlign.Center,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.Center,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    // Show red checkmark for played-but-not-actioned files (but not the currently playing one)
+                                                    if (item.uri in playedButNotActioned && item.uri != currentPlayingFile?.uri) {
+                                                        Icon(
+                                                            Icons.Default.Check,
+                                                            contentDescription = "Played but not actioned",
+                                                            modifier = Modifier.size(16.dp),
+                                                            tint = Color.Red
+                                                        )
+                                                        Spacer(Modifier.width(4.dp))
+                                                    }
+                                                    Text(
+                                                        text = item.name,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
+                                                        ),
+                                                        maxLines = 4,
+                                                        overflow = TextOverflow.Visible,
+                                                        textAlign = TextAlign.Center,
+                                                        modifier = Modifier.weight(1f, fill = false)
+                                                    )
+                                                }
                                             }
                                         }
                                         }

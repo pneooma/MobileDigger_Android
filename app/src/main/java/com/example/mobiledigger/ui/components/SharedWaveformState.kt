@@ -94,17 +94,9 @@ fun rememberSharedWaveformState(
             
             CrashLogger.log("WaveformGenerator", "Starting waveform generation for: ${currentFile.name}")
             
-            // Check file size to prevent processing extremely large files
+            // Note: AIFF file size check removed - libvlc can handle large AIFF files now
             val fileSizeMB = currentFile.size / (1024.0 * 1024.0)
-            val fileName = currentFile.name.lowercase()
-            val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
-            
-            if (isAiffFile && fileSizeMB > 60) {
-                CrashLogger.log("WaveformGenerator", "AIFF file too large for waveform (${fileSizeMB.format(1)}MB > 60MB), skipping")
-                waveformData = null
-                isLoading = false
-                return@LaunchedEffect
-            }
+            CrashLogger.log("WaveformGenerator", "File size: ${fileSizeMB.format(1)}MB")
             
             try {
                 // Use custom WaveformGenerator (pure Kotlin, no native crashes)
@@ -114,8 +106,8 @@ fun rememberSharedWaveformState(
                         val generator = WaveformGenerator(context)
                         
                         // OPTIMIZED: Balance between speed and visual quality
-                        // 32 samples = ultra fast generation, crisp appearance!
-                        val targetSampleCount = 32
+                        // 256 samples = higher detail, profiling to measure speed impact
+                        val targetSampleCount = 256
                         
                         CrashLogger.log("WaveformGenerator", "Requesting $targetSampleCount samples for any duration")
                         
@@ -128,28 +120,23 @@ fun rememberSharedWaveformState(
                         
                         if (samples != null) {
                             CrashLogger.log("WaveformGenerator", "✅ Waveform generated: ${samples.size} samples")
+                            // Log sample statistics
+                            val min = samples.minOrNull() ?: 0
+                            val max = samples.maxOrNull() ?: 0
+                            val avg = if (samples.isNotEmpty()) samples.average().toInt() else 0
+                            CrashLogger.log("WaveformGenerator", "📊 UI State - Min: $min, Max: $max, Avg: $avg")
+                            CrashLogger.log("WaveformGenerator", "📊 UI State - First 10: ${samples.take(10).joinToString()}")
+                            
                             withContext(Dispatchers.Main) {
                                 waveformData = samples
                                 isLoading = false
+                                CrashLogger.log("WaveformGenerator", "📊 UI State UPDATED - waveformData is now ${if (waveformData != null) "NOT NULL (${waveformData!!.size} samples)" else "NULL"}")
                             }
                         } else {
-                            // Check if this is an AIFF file - don't treat as error
-                            val fileName = currentFile.name.lowercase()
-                            val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
-                            
-                            if (isAiffFile) {
-                                CrashLogger.log("WaveformGenerator", "✅ AIFF file - no waveform (expected behavior)")
-                                withContext(Dispatchers.Main) {
-                                    waveformData = null
-                                    errorMessage = null // No error for AIFF files
-                                    isLoading = false
-                                }
-                            } else {
-                                CrashLogger.log("WaveformGenerator", "❌ Failed to generate waveform")
-                                withContext(Dispatchers.Main) {
-                                    errorMessage = "Failed to generate waveform"
-                                    isLoading = false
-                                }
+                            CrashLogger.log("WaveformGenerator", "❌ Failed to generate waveform")
+                            withContext(Dispatchers.Main) {
+                                errorMessage = "Failed to generate waveform"
+                                isLoading = false
                             }
                         }
                     } catch (e: Exception) {

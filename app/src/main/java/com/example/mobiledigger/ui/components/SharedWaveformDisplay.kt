@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
+import com.example.mobiledigger.util.CrashLogger
 
 @Composable
 fun SharedWaveformDisplay(
@@ -114,12 +115,21 @@ fun SharedWaveformDisplay(
                 var hasAppeared by remember(sharedState.waveformData) { mutableStateOf(false) }
                 LaunchedEffect(sharedState.waveformData) {
                     hasAppeared = true
+                    val data = sharedState.waveformData
+                    if (data != null) {
+                        val min = data.minOrNull() ?: 0
+                        val max = data.maxOrNull() ?: 0
+                        val avg = if (data.isNotEmpty()) data.average().toInt() else 0
+                        CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - Received waveform: ${data.size} samples")
+                        CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - Min: $min, Max: $max, Avg: $avg")
+                        CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - First 10: ${data.take(10).joinToString()}")
+                    }
                 }
                 
-                // Zoom animation from 0% to 100% (half faster - 750ms)
+                // Zoom animation from 0% to 100% (375ms - half of previous 750ms)
                 val animatedScale by animateFloatAsState(
                     targetValue = if (hasAppeared) 1f else 0f,
-                    animationSpec = tween(durationMillis = 750, easing = FastOutSlowInEasing),
+                    animationSpec = tween(durationMillis = 375, easing = FastOutSlowInEasing),
                     label = "waveformScale"
                 )
                 

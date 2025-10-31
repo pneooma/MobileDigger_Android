@@ -147,7 +147,11 @@ private fun toCamelotKey(key: String): String {
 }
 
 
-
+// Sealed class for playlist items (headers and files)
+sealed class PlaylistItem {
+    data class HeaderItem(val subfolder: String) : PlaylistItem()
+    data class FileItem(val file: com.example.mobiledigger.model.MusicFile) : PlaylistItem()
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class) // Combined annotations
 @Composable
@@ -2899,11 +2903,56 @@ viewModel.updateSearchText("")
                         // Conditionally display search results or current playlist files (reverted to original)
                         val displayFiles = currentPlaylistFiles // Search results handled within dropdown
                         
-                        // Playlist Items (dynamic sizing) - Performance optimized
+                        // Group files by subfolder for TODO playlist only
+                        val groupedItems: List<PlaylistItem> = if (currentPlaylistTab == PlaylistTab.TODO) {
+                            // Group by subfolder, handle null subfolders
+                            val grouped = currentPlaylistFiles.groupBy { it.subfolder }
+                            // Create flat list with headers: [Header, File, File, Header, File, ...]
+                            buildList {
+                                // Files without subfolder first
+                                grouped[null]?.let { files ->
+                                    addAll(files.map { PlaylistItem.FileItem(it) })
+                                }
+                                // Then files grouped by subfolder
+                                grouped.entries
+                                    .filter { it.key != null }
+                                    .sortedBy { it.key }
+                                    .forEach { (subfolder, files) ->
+                                        add(PlaylistItem.HeaderItem(subfolder!!))
+                                        addAll(files.map { PlaylistItem.FileItem(it) })
+                                    }
+                            }
+                        } else {
+                            // For other playlists, just wrap files
+                            currentPlaylistFiles.map { PlaylistItem.FileItem(it) }
+                        }
+                        
+                        // Playlist Items (dynamic sizing) - Performance optimized with grouping
                         itemsIndexed(
-                            items = currentPlaylistFiles, 
-                            key = { _, mf -> "${mf.uri}_${mf.subfolder ?: ""}" } // More unique key including subfolder
-                        ) { index, item ->
+                            items = groupedItems, 
+                            key = { idx, item -> 
+                                when (item) {
+                                    is PlaylistItem.HeaderItem -> "header_${item.subfolder}"
+                                    is PlaylistItem.FileItem -> "${item.file.uri}_${item.file.subfolder ?: ""}"
+                                }
+                            }
+                        ) { index, playlistItem ->
+                            when (playlistItem) {
+                                is PlaylistItem.HeaderItem -> {
+                                    // Subfolder header
+                                    Text(
+                                        text = playlistItem.subfolder,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+                                is PlaylistItem.FileItem -> {
+                                    val item = playlistItem.file
                             // Cache expensive calculations
                             val isCurrent = remember(currentPlayingFile?.uri, item.uri) { 
                                 currentPlayingFile?.uri == item.uri 
@@ -2913,7 +2962,7 @@ viewModel.updateSearchText("")
                             }
                             
                             // Calculate adaptive height based on actual text measurement (only for inactive rows)
-                            val adaptiveHeight = remember(item.name, isCurrent) {
+                            val adaptiveHeight = remember(item.name, item.subfolder, isCurrent, currentPlaylistTab) {
                                 if (isCurrent) {
                                     101.dp // Active rows increased by 15% (88 * 1.15 = 101.2)
                                 } else {
@@ -2929,10 +2978,7 @@ viewModel.updateSearchText("")
                                     val padding = 12.dp
                                     val calculatedHeight = ((estimatedLines * lineHeight.value) + padding.value) * 0.8f // 20% reduction
                                     
-                                    // Debug logging
-                                    println("DEBUG: Filename: '${item.name}' (${item.name.length} chars), screenWidth: ${screenWidthDp}dp, charsPerLine: $charsPerLine, estimatedLines: $estimatedLines, height: ${calculatedHeight}dp")
-                                    
-                                    calculatedHeight.dp
+                                    calculatedHeight.dp.coerceAtLeast(40.dp) // Minimum height to ensure visibility
                                 }
                             }
                             
@@ -3075,9 +3121,17 @@ viewModel.updateSearchText("")
                                         }
                                     .clickable {
                                         if (isMultiSelectionMode) {
-                                            viewModel.toggleSelection(index)
+                                            // Find actual file index in original playlist
+                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                            if (actualIndex >= 0) {
+                                                viewModel.toggleSelection(actualIndex)
+                                            }
                                         } else {
-                                            viewModel.jumpTo(index) // Jump to this item in the current playlist
+                                            // Find actual file index in original playlist
+                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                            if (actualIndex >= 0) {
+                                                viewModel.jumpTo(actualIndex) // Jump to this item in the current playlist
+                                            }
                                         }
                                     },
                                 colors = CardDefaults.cardColors(
@@ -3111,9 +3165,14 @@ viewModel.updateSearchText("")
                                 ) {
                                     // Checkbox for multi-selection
                                     if (isMultiSelectionMode) {
+                                        val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
                                         Checkbox(
-                                            checked = selectedIndices.contains(index),
-                                            onCheckedChange = { viewModel.toggleSelection(index) },
+                                            checked = selectedIndices.contains(actualIndex),
+                                            onCheckedChange = { 
+                                                if (actualIndex >= 0) {
+                                                    viewModel.toggleSelection(actualIndex)
+                                                }
+                                            },
                                             modifier = Modifier.padding(end = 8.dp)
                                         )
                                     }
@@ -3416,37 +3475,17 @@ viewModel.updateSearchText("")
                                                         Spacer(Modifier.width(4.dp))
                                                     }
                                                     
-                                                    // Show subfolder and filename
-                                                    Column(
-                                                        modifier = Modifier.weight(1f, fill = false),
-                                                        horizontalAlignment = Alignment.CenterHorizontally
-                                                    ) {
-                                                        // Show subfolder name in bold if available (only in TODO playlist)
-                                                        if (currentPlaylistTab == PlaylistTab.TODO && !item.subfolder.isNullOrEmpty()) {
-                                                            Text(
-                                                                text = item.subfolder!!,
-                                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
-                                                                    fontWeight = FontWeight.Bold
-                                                                ),
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis,
-                                                                textAlign = TextAlign.Center,
-                                                                color = MaterialTheme.colorScheme.primary
-                                                            )
-                                                        }
-                                                        
-                                                        // Filename
-                                                        Text(
-                                                            text = item.name,
-                                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
-                                                            ),
-                                                            maxLines = 4,
-                                                            overflow = TextOverflow.Visible,
-                                                            textAlign = TextAlign.Center
-                                                        )
-                                                    }
+                                                    // Just show filename (subfolder is now in header)
+                                                    Text(
+                                                        text = item.name,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
+                                                        ),
+                                                        maxLines = 4,
+                                                        overflow = TextOverflow.Visible,
+                                                        textAlign = TextAlign.Center,
+                                                        modifier = Modifier.weight(1f, fill = false)
+                                                    )
                                                 }
                                             }
                                         }
@@ -3454,6 +3493,8 @@ viewModel.updateSearchText("")
                                     }
                                 }
                             }
+                            }
+                                }
                             }
                         }
                     }

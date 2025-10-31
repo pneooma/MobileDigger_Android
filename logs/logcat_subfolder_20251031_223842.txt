@@ -148,3 +148,33 @@
 10-31 22:44:16.152 21454 21501 D MusicViewModel:   ✅ File with subfolder: 01. Ela Ranss - Kalbim Duruyor (Original Mix).flac -> Organic
 10-31 22:44:16.334 21454 21501 D MusicViewModel: 📁 Subfolder: Kaine - 1 files
 10-31 22:44:16.334 21454 21501 D MusicViewModel:   ✅ File with subfolder: 01 - Impossible (&ME remix) [Röyksopp feat. Alison Goldfrapp].flac -> Kaine
+10-31 22:47:49.749 21454 21494 D MusicViewModel: 📁 Subfolder: Electronica - 1 files
+10-31 22:47:49.750 21454 21494 D MusicViewModel:   ✅ File with subfolder: Propellerheads - Take California.mp3 -> Electronica
+10-31 22:47:49.814 21454 21494 D MusicViewModel: 📁 Subfolder: DUB - 7 files
+10-31 22:47:49.815 21454 21494 D MusicViewModel:   ✅ File with subfolder: 2LOOP - Heartscape.mp3 -> DUB
+10-31 22:47:49.815 21454 21494 D MusicViewModel:   ✅ File with subfolder: Space Native - FactorZ (Original Mix) [MK837].aiff -> DUB
+10-31 22:47:49.989 21454 21494 D MusicViewModel: 📁 Subfolder: HiFi Write To CD - 17 files
+10-31 22:47:49.990 21454 21494 D MusicViewModel:   ✅ File with subfolder: A Guy Called Gerald - Fever (Black Dog Remix).mp3 -> HiFi Write To CD
+10-31 22:47:49.991 21454 21494 D MusicViewModel:   ✅ File with subfolder: Alphawezen - Electricity Drive.mp3 -> HiFi Write To CD
+10-31 22:47:50.082 21454 21494 D MusicViewModel: 📁 Subfolder: DeepHouse - 2 files
+10-31 22:47:50.082 21454 21494 D MusicViewModel:   ✅ File with subfolder: DeSe - Nice Try.mp3 -> DeepHouse
+10-31 22:47:50.083 21454 21494 D MusicViewModel:   ✅ File with subfolder: Kaya Newton - Y No Te Veo  [Sounds of Khemit].aiff -> DeepHouse
+10-31 22:47:50.480 21454 21494 D MusicViewModel: 📁 Subfolder: Disco - 1 files
+10-31 22:47:50.481 21454 21494 D MusicViewModel:   ✅ File with subfolder: Aretha Franklin - A Deeper Love (DE SOFFER REMIX).mp3 -> Disco
+10-31 22:47:50.522 21454 21494 D MusicViewModel: 📁 Subfolder: BRYZ - 1 files
+10-31 22:47:50.522 21454 21494 D MusicViewModel:   ✅ File with subfolder: Fickry - Deeper & Deeper (Extended Mix) [Delicious Recordings].aiff -> BRYZ
+10-31 22:47:50.620 21454 21494 D MusicViewModel: 📁 Subfolder: AfroTech - 1 files
+10-31 22:47:50.620 21454 21494 D MusicViewModel:   ✅ File with subfolder: Eduardo Vargas, Jocksan Valdez, Daniel Mijares - Frequency (EVELIO ESCOBAR Remix) [Supersonica Music].mp3 -> AfroTech
+10-31 22:47:50.836 21454 21494 D MusicViewModel: 📁 Subfolder: HiFi - 1 files
+10-31 22:47:50.837 21454 21494 D MusicViewModel:   ✅ File with subfolder: Marbert Rocel - Dance Slow.mp3 -> HiFi
+10-31 22:47:50.926 21454 21494 D MusicViewModel: 📁 Subfolder: FourTet - 5 files
+10-31 22:47:50.927 21454 21494 D MusicViewModel:   ✅ File with subfolder: Marbert Rocel - Goya (Juju & Jordash Remix).mp3 -> FourTet
+10-31 22:47:50.927 21454 21494 D MusicViewModel:   ✅ File with subfolder: Errow - Give It To Me (Original Mix) [Retail Records].aiff -> FourTet
+10-31 22:47:50.971 21454 21494 D MusicViewModel: 📁 Subfolder: Events - 0 files
+10-31 22:47:51.030 21454 21494 D MusicViewModel: 📁 Subfolder: Hot Since 82 - 2 files
+10-31 22:47:51.030 21454 21494 D MusicViewModel:   ✅ File with subfolder: 07. Ciava - Wanna Feelings (Original Mix).flac -> Hot Since 82
+10-31 22:47:51.030 21454 21494 D MusicViewModel:   ✅ File with subfolder: Maex, Samiro - What Is Salsa (Cassimm Remix) (Extended).aiff -> Hot Since 82
+10-31 22:47:51.091 21454 21494 D MusicViewModel: 📁 Subfolder: Organic - 1 files
+10-31 22:47:51.092 21454 21494 D MusicViewModel:   ✅ File with subfolder: 01. Ela Ranss - Kalbim Duruyor (Original Mix).flac -> Organic
+10-31 22:47:51.190 21454 21494 D MusicViewModel: 📁 Subfolder: Kaine - 1 files
+10-31 22:47:51.190 21454 21494 D MusicViewModel:   ✅ File with subfolder: 01 - Impossible (&ME remix) [Röyksopp feat. Alison Goldfrapp].flac -> Kaine

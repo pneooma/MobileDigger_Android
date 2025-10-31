@@ -3415,16 +3415,38 @@ viewModel.updateSearchText("")
                                                         )
                                                         Spacer(Modifier.width(4.dp))
                                                     }
-                                                    Text(
-                                                        text = item.name,
-                                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
-                                                        ),
-                                                        maxLines = 4,
-                                                        overflow = TextOverflow.Visible,
-                                                        textAlign = TextAlign.Center,
-                                                        modifier = Modifier.weight(1f, fill = false)
-                                                    )
+                                                    
+                                                    // Show subfolder and filename
+                                                    Column(
+                                                        modifier = Modifier.weight(1f, fill = false),
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        // Show subfolder name in bold if available (only in TODO playlist)
+                                                        if (currentPlaylistTab == PlaylistTab.TODO && !item.subfolder.isNullOrEmpty()) {
+                                                            Text(
+                                                                text = item.subfolder!!,
+                                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
+                                                                    fontWeight = FontWeight.Bold
+                                                                ),
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                textAlign = TextAlign.Center,
+                                                                color = MaterialTheme.colorScheme.primary
+                                                            )
+                                                        }
+                                                        
+                                                        // Filename
+                                                        Text(
+                                                            text = item.name,
+                                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f
+                                                            ),
+                                                            maxLines = 4,
+                                                            overflow = TextOverflow.Visible,
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

@@ -2393,6 +2393,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                 val filesWithSubfolder = subfolderFiles.map { file ->
                                     file.copy(subfolder = subfolder.name)
                                 }
+                                CrashLogger.log("MusicViewModel", "📁 Subfolder: ${subfolder.name} - ${filesWithSubfolder.size} files")
+                                filesWithSubfolder.forEachIndexed { idx, file ->
+                                    if (idx < 2) CrashLogger.log("MusicViewModel", "  ✅ File with subfolder: ${file.name} -> ${file.subfolder}")
+                                }
                                 allFiles.addAll(filesWithSubfolder)
                             }
                         }

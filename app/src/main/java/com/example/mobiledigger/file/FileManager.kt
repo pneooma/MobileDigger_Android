@@ -167,7 +167,8 @@ class FileManager(private val context: Context) {
     
     private suspend fun scanForMusicFiles(
         directoryUri: Uri,
-        isSource: Boolean
+        isSource: Boolean,
+        subfolderPath: String? = null
     ): List<MusicFile> {
         val musicFiles = mutableListOf<MusicFile>()
         Log.d("FileManager", "Starting scanForMusicFiles with extensions: $musicExtensions")
@@ -204,7 +205,13 @@ class FileManager(private val context: Context) {
                         // Recurse into subdirectories with memory limit
                         if (musicFiles.size < 1000) { // Limit total files to prevent memory issues
                             try {
-                                musicFiles.addAll(scanForMusicFiles(childUri, isSource))
+                                // Build subfolder path for nested directories
+                                val newSubfolderPath = if (subfolderPath != null) {
+                                    "$subfolderPath/$displayName"
+                                } else {
+                                    displayName
+                                }
+                                musicFiles.addAll(scanForMusicFiles(childUri, isSource, newSubfolderPath))
                             } catch (e: Exception) {
                                 CrashLogger.log("FileManager", "Failed to scan subfolder $displayName", e)
                             }
@@ -246,9 +253,15 @@ class FileManager(private val context: Context) {
                                 uri = childUri,
                                 name = displayName,
                                 duration = 0L, // Will be extracted when played
-                                size = fileSize
+                                size = fileSize,
+                                subfolder = subfolderPath
                             )
                             musicFiles.add(basicMusicFile)
+                            
+                            // Log files with subfolder for debugging
+                            if (subfolderPath != null && musicFiles.size % 10 == 0) {
+                                CrashLogger.log("FileManager", "📁 SAF: Found file in '$subfolderPath': $displayName")
+                            }
                             
                             // Reduced logging to prevent performance issues
                             if (musicFiles.size % 10 == 0) {
@@ -278,7 +291,7 @@ class FileManager(private val context: Context) {
             CrashLogger.log("FileManager", "Scanning direct directory: ${directory.absolutePath}")
             
             // Recursively scan the directory
-            scanDirectoryRecursive(directory, musicFiles)
+            scanDirectoryRecursive(directory, directory, musicFiles)
             
         } catch (e: Exception) {
             CrashLogger.log("FileManager", "Error scanning direct directory", e)
@@ -287,7 +300,7 @@ class FileManager(private val context: Context) {
         musicFiles
     }
     
-    private fun scanDirectoryRecursive(directory: File, musicFiles: MutableList<MusicFile>) {
+    private fun scanDirectoryRecursive(rootFolder: File, directory: File, musicFiles: MutableList<MusicFile>) {
         try {
             val files = directory.listFiles()
             if (files == null) {
@@ -298,7 +311,7 @@ class FileManager(private val context: Context) {
             for (file in files) {
                 if (file.isDirectory) {
                     // Recursively scan subdirectories
-                    scanDirectoryRecursive(file, musicFiles)
+                    scanDirectoryRecursive(rootFolder, file, musicFiles)
                 } else if (file.isFile && isMusicFile(file.name)) {
                     try {
                         val extension = file.name.substringAfterLast('.', "").lowercase()
@@ -307,13 +320,25 @@ class FileManager(private val context: Context) {
                         // Create file:// URI for direct access
                         val fileUri = Uri.fromFile(file)
                         
+                        // Extract subfolder name (relative to root folder)
+                        val subfolder = if (directory != rootFolder) {
+                            val relativePath = directory.absolutePath.removePrefix(rootFolder.absolutePath).removePrefix("/")
+                            if (relativePath.isNotEmpty()) relativePath else null
+                        } else null
+                        
                         val musicFile = MusicFile(
                             uri = fileUri,
                             name = file.name,
                             duration = 0L, // Will be extracted when played
-                            size = file.length()
+                            size = file.length(),
+                            subfolder = subfolder
                         )
                         musicFiles.add(musicFile)
+                        
+                        // Log files with subfolder
+                        if (subfolder != null) {
+                            CrashLogger.log("FileManager", "📁 Found file in subfolder '$subfolder': ${file.name}")
+                        }
                         
                         // Log AIFF files for debugging
                         if (isAiffFile && musicFiles.size % 10 == 0) {

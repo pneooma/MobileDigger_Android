@@ -818,6 +818,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun likeFile(file: MusicFile) {
+        // Remove from played-but-not-actioned when liked
+        _playedButNotActioned.value = _playedButNotActioned.value - file.uri
+        
         val updatedLikedFiles = _likedFiles.value.toMutableList()
         if (!updatedLikedFiles.any { it.uri == file.uri }) {
             updatedLikedFiles.add(file.copy(
@@ -834,6 +837,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun dislikeFile(file: MusicFile) {
+        // Remove from played-but-not-actioned when disliked
+        _playedButNotActioned.value = _playedButNotActioned.value - file.uri
+        
         val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
         if (!updatedRejectedFiles.any { it.uri == file.uri }) {
             updatedRejectedFiles.add(file.copy(

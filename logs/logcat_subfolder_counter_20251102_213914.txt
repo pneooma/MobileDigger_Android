@@ -1,0 +1,530 @@
+11-02 21:40:34.704 24206 24245 D MusicViewModel: 📁 Subfolder: 123 - 0 files
+11-02 21:40:36.653 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-24': DOTT - Bullets On The Floor [MR007].flac
+11-02 21:40:36.655 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-24': Masupilami - Newskooled.flac
+11-02 21:40:36.657 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-24': Xplauziv - Depth Of Groove (Anas M Remix) [AG007].flac
+11-02 21:40:36.714 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-26': Cos - Future Holds (Raz Remix) [LHR005].flac
+11-02 21:40:36.716 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-26': Martek - Slitt [2M4L001].flac
+11-02 21:40:36.717 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-26': Zenniv - In Your Head [MICR008].flac
+11-02 21:40:36.771 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-28': HearThuG - Alien, All Too Alien [AYAV001].flac
+11-02 21:40:36.773 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-28': Luigi Seija - Girls Girls (Ollie Drummond Mix) [BOMBIS082].flac
+11-02 21:40:36.774 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-28': Tin Man - Wrapped up Acid (ACIDTEST020).flac
+11-02 21:40:36.823 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-30': C.ru.z - Marines Odyssey [OPAL002].flac
+11-02 21:40:36.825 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-30': Hostox and Pennyy - The Famous Plan.flac
+11-02 21:40:36.827 24206 24251 D FileManager: 📁 SAF: Found file in '2024-04-30': Root - Phantom Talks [SRW036].flac
+11-02 21:40:36.932 24206 24251 D MusicViewModel: 📁 Subfolder: 123 - 0 files
+11-02 21:40:38.435 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:40:38.436 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:40:38.436 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 130, current index: 0
+11-02 21:40:38.437 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Thudoor - King Of Cups [uNCLD047].flac
+11-02 21:40:38.437 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:40:38.438 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Thudoor - King Of Cups [uNCLD047].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-22%2FThudoor%20-%20King%20Of%20Cups%20%5BuNCLD047%5D.flac)
+11-02 21:40:38.438 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Aiden Francis - Ultrasonic [BODYHI06].flac
+11-02 21:40:38.439 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:40:38.439 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 242MB
+11-02 21:40:38.439 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:40:38.440 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-22%2FThudoor%20-%20King%20Of%20Cups%20%5BuNCLD047%5D.flac
+11-02 21:40:38.600 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7165258307574478103.aiff
+11-02 21:40:39.096 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:40:39.097 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Thudoor - King Of Cups [uNCLD047].flac
+11-02 21:40:39.108 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Thudoor - King Of Cups [uNCLD047].flac
+11-02 21:40:39.110 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:40:39.118 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:40:39.182 24206 24252 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 578996ms
+11-02 21:40:39.261 24206 24206 D VlcAudioBackend: 📁 Media changed
+11-02 21:40:39.425 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:40:42.824 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:40:42.825 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:40:42.825 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 130, current index: 1
+11-02 21:40:42.825 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Aiden Francis - Ultrasonic [BODYHI06].flac
+11-02 21:40:42.825 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:40:42.825 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Aiden Francis - Ultrasonic [BODYHI06].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FAiden%20Francis%20-%20Ultrasonic%20%5BBODYHI06%5D.flac)
+11-02 21:40:42.826 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Anas M - Affection [RZH003].flac
+11-02 21:40:42.826 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:40:42.826 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 240MB
+11-02 21:40:42.826 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:40:42.826 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FAiden%20Francis%20-%20Ultrasonic%20%5BBODYHI06%5D.flac
+11-02 21:40:43.014 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1523846973036891316.aiff
+11-02 21:40:43.466 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:40:43.466 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Aiden Francis - Ultrasonic [BODYHI06].flac
+11-02 21:40:43.467 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Aiden Francis - Ultrasonic [BODYHI06].flac
+11-02 21:40:43.467 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:40:43.475 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:40:43.522 24206 24252 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 364606ms
+11-02 21:40:43.592 24206 24206 D VlcAudioBackend: 📁 Media changed
+11-02 21:40:43.717 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:40:46.064 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:40:46.065 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:40:46.065 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 130, current index: 2
+11-02 21:40:46.065 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Anas M - Affection [RZH003].flac
+11-02 21:40:46.065 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:40:46.066 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Anas M - Affection [RZH003].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FAnas%20M%20-%20Affection%20%5BRZH003%5D.flac)
+11-02 21:40:46.066 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac
+11-02 21:40:46.066 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:40:46.066 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 241MB
+11-02 21:40:46.067 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:40:46.067 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FAnas%20M%20-%20Affection%20%5BRZH003%5D.flac
+11-02 21:40:46.242 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6789245583504164504.aiff
+11-02 21:40:46.696 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:40:46.697 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Anas M - Affection [RZH003].flac
+11-02 21:40:46.699 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Anas M - Affection [RZH003].flac
+11-02 21:40:46.701 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:40:46.707 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:40:46.779 24206 24340 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 426023ms
+11-02 21:40:46.795 24206 24206 D VlcAudioBackend: 📁 Media changed
+11-02 21:40:46.937 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:40:51.669 24206 24206 D MusicPlayerScreen: 🔍 Swipe gesture: index=4, file='Anas M - Affection [RZH003].flac', swipeOffset=-200.0, action=DISLIKE
+11-02 21:40:51.671 24206 24206 D MusicViewModel: 🔍 sortMusicFile called: Anas M - Affection [RZH003].flac with action=DISLIKE
+11-02 21:40:51.671 24206 24206 D MusicViewModel: 📁 Sorting file: Anas M - Affection [RZH003].flac with action DISLIKE, source: TODO
+11-02 21:40:51.673 24206 24253 D FileManager: 🔍 Starting sort operation for: Anas M - Affection [RZH003].flac with action: DISLIKE
+11-02 21:40:52.137 24206 24206 D MusicViewModel: 📁 FileManager.sortFile result: success=true for Anas M - Affection [RZH003].flac
+11-02 21:40:52.200 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:40:52.200 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:40:52.201 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 129, current index: 2
+11-02 21:40:52.201 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac
+11-02 21:40:52.201 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:40:52.202 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FAtree%20-%20Still%20Positive%20(ne.mos%20funky%20journey%20remix)%20%5BFuN001%5D.flac)
+11-02 21:40:52.203 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:40:52.204 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:40:52.204 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 227MB
+11-02 21:40:52.205 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:40:52.205 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FAtree%20-%20Still%20Positive%20(ne.mos%20funky%20journey%20remix)%20%5BFuN001%5D.flac
+11-02 21:40:52.366 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1049597398065661331.aiff
+11-02 21:40:52.805 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:40:52.805 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac
+11-02 21:40:52.807 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac
+11-02 21:40:52.807 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:40:52.814 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:40:52.892 24206 24253 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 405009ms
+11-02 21:40:52.917 24206 24206 D VlcAudioBackend: 📁 Media changed
+11-02 21:40:53.059 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:40:53.199 24206 24247 D MusicViewModel: 📁 Subfolder: 123 - 0 files
+11-02 21:40:58.634 24206 24206 D MusicViewModel: 📂 moveCurrentFileToSubfolder called - Current file: Benjamin - Floating [LKDNV05].flac, Subfolder: 123
+11-02 21:42:44.123 24206 24206 D MusicViewModel: 🔍 sortMusicFile called: Thudoor - King Of Cups [uNCLD047].flac with action=DISLIKE
+11-02 21:42:44.123 24206 24206 D MusicViewModel: 📁 Sorting file: Thudoor - King Of Cups [uNCLD047].flac with action DISLIKE, source: TODO
+11-02 21:42:44.126 24206 24252 D FileManager: 🔍 Starting sort operation for: Thudoor - King Of Cups [uNCLD047].flac with action: DISLIKE
+11-02 21:42:44.225 24206 24206 D MusicViewModel: 🔍 sortMusicFile called: Aiden Francis - Ultrasonic [BODYHI06].flac with action=DISLIKE
+11-02 21:42:44.225 24206 24206 D MusicViewModel: 📁 Sorting file: Aiden Francis - Ultrasonic [BODYHI06].flac with action DISLIKE, source: TODO
+11-02 21:42:44.327 24206 24206 D MusicViewModel: 🔍 sortMusicFile called: Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac with action=DISLIKE
+11-02 21:42:44.328 24206 24206 D MusicViewModel: 📁 Sorting file: Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac with action DISLIKE, source: TODO
+11-02 21:42:44.600 24206 24206 D MusicViewModel: 📁 FileManager.sortFile result: success=true for Thudoor - King Of Cups [uNCLD047].flac
+11-02 21:42:44.602 24206 24252 D FileManager: 🔍 Starting sort operation for: Aiden Francis - Ultrasonic [BODYHI06].flac with action: DISLIKE
+11-02 21:42:44.891 24206 24247 D MusicViewModel: 📁 Subfolder: 123 - 1 files
+11-02 21:42:44.926 24206 24206 D MusicViewModel: 📁 FileManager.sortFile result: success=true for Aiden Francis - Ultrasonic [BODYHI06].flac
+11-02 21:42:44.934 24206 24252 D FileManager: 🔍 Starting sort operation for: Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac with action: DISLIKE
+11-02 21:42:45.215 24206 24247 D MusicViewModel: 📁 Subfolder: 123 - 1 files
+11-02 21:42:45.296 24206 24206 D MusicViewModel: 📁 FileManager.sortFile result: success=true for Atree - Still Positive (ne.mos funky journey remix) [FuN001].flac
+11-02 21:42:45.381 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:42:45.382 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:42:45.382 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 125, current index: 0
+11-02 21:42:45.382 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:42:45.383 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:42:45.383 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Balaj - Switch (Dragne remix) [FNC009].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBalaj%20-%20Switch%20(Dragne%20remix)%20%5BFNC009%5D.flac)
+11-02 21:42:45.383 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Bok.p - Creator [OTD003].flac
+11-02 21:42:45.384 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:42:45.384 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 245MB
+11-02 21:42:45.385 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:42:45.386 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBalaj%20-%20Switch%20(Dragne%20remix)%20%5BFNC009%5D.flac
+11-02 21:42:45.546 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_753247487076692704.aiff
+11-02 21:42:45.976 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:42:45.977 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:42:45.978 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:42:45.979 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:42:45.988 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:42:46.035 24206 24252 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 381759ms
+11-02 21:42:46.065 24206 24206 D VlcAudioBackend: 📁 Media changed
+11-02 21:42:46.199 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:42:46.352 24206 24249 D MusicViewModel: 📁 Subfolder: 123 - 1 files
+11-02 21:43:11.075 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:43:11.076 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:43:11.076 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 125, current index: 1
+11-02 21:43:11.076 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Bok.p - Creator [OTD003].flac
+11-02 21:43:11.076 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:43:11.077 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Bok.p - Creator [OTD003].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac)
+11-02 21:43:11.077 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: CAlinie and Onikwa - Instant Constant.flac
+11-02 21:43:11.077 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:43:11.077 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 233MB
+11-02 21:43:11.077 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:43:11.077 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac
+11-02 21:43:11.282 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7532241452973816934.aiff
+11-02 21:43:11.737 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:43:11.737 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Bok.p - Creator [OTD003].flac
+11-02 21:43:11.739 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Bok.p - Creator [OTD003].flac
+11-02 21:43:11.741 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:43:11.751 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:43:11.802 24206 24206 D VlcAudioBackend: 📁 Media changed
+11-02 21:43:11.841 24206 24253 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 425025ms
+11-02 21:43:11.945 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:43:56.982 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:43:56.982 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:43:56.982 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 125, current index: 2
+11-02 21:43:56.983 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: CAlinie and Onikwa - Instant Constant.flac
+11-02 21:43:56.983 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:43:56.983 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: CAlinie and Onikwa - Instant Constant.flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FCAlinie%20and%20Onikwa%20-%20Instant%20Constant.flac)
+11-02 21:43:56.983 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:43:56.984 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:43:56.984 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 234MB
+11-02 21:43:56.984 24206 24206 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:43:56.984 24206 24206 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FCAlinie%20and%20Onikwa%20-%20Instant%20Constant.flac
+11-02 21:43:57.157 24206 24206 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7835725354081735889.aiff
+11-02 21:44:02.535 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-24': Jnt - Jazzed up.flac
+11-02 21:44:02.536 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-24': Never Alone In A Dark Room - Outlandish [PVFD024].flac
+11-02 21:44:02.604 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-26': Cos - Future Holds (Raz Remix) [LHR005].flac
+11-02 21:44:02.606 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-26': Martek - Slitt [2M4L001].flac
+11-02 21:44:02.608 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-26': Zenniv - In Your Head [MICR008].flac
+11-02 21:44:02.666 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-28': HearThuG - Alien, All Too Alien [AYAV001].flac
+11-02 21:44:02.668 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-28': Luigi Seija - Girls Girls (Ollie Drummond Mix) [BOMBIS082].flac
+11-02 21:44:02.670 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-28': Tin Man - Wrapped up Acid (ACIDTEST020).flac
+11-02 21:44:02.723 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-30': C.ru.z - Marines Odyssey [OPAL002].flac
+11-02 21:44:02.724 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-30': Hostox and Pennyy - The Famous Plan.flac
+11-02 21:44:02.726 24834 24873 D FileManager: 📁 SAF: Found file in '2024-04-30': Root - Phantom Talks [SRW036].flac
+11-02 21:44:02.815 24834 24873 D MusicViewModel: 📁 Subfolder: 123 - 1 files
+11-02 21:44:04.004 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:44:04.004 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:44:04.005 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 125, current index: 0
+11-02 21:44:04.005 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:44:04.005 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:44:04.006 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Balaj - Switch (Dragne remix) [FNC009].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBalaj%20-%20Switch%20(Dragne%20remix)%20%5BFNC009%5D.flac)
+11-02 21:44:04.006 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Bok.p - Creator [OTD003].flac
+11-02 21:44:04.006 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:44:04.006 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 243MB
+11-02 21:44:04.007 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:44:04.007 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBalaj%20-%20Switch%20(Dragne%20remix)%20%5BFNC009%5D.flac
+11-02 21:44:04.173 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2298291130395489742.aiff
+11-02 21:44:04.617 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:44:04.618 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:44:04.628 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Balaj - Switch (Dragne remix) [FNC009].flac
+11-02 21:44:04.630 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:44:04.638 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:44:04.701 24834 24873 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 381759ms
+11-02 21:44:04.791 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:44:04.954 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:44:08.088 24834 24834 D MusicViewModel: 📂 moveCurrentFileToSubfolder called - Current file: Balaj - Switch (Dragne remix) [FNC009].flac, Subfolder: 123
+11-02 21:44:08.375 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:44:08.375 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:44:08.375 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 124, current index: 0
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Bok.p - Creator [OTD003].flac
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Bok.p - Creator [OTD003].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac)
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: CAlinie and Onikwa - Instant Constant.flac
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 246MB
+11-02 21:44:08.376 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:44:08.376 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac
+11-02 21:44:08.546 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7714734530453507904.aiff
+11-02 21:44:08.949 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:44:08.950 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Bok.p - Creator [OTD003].flac
+11-02 21:44:08.952 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Bok.p - Creator [OTD003].flac
+11-02 21:44:08.953 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:44:08.961 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:44:09.007 24834 24878 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 425025ms
+11-02 21:44:09.050 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:44:09.122 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:44:59.034 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:44:59.035 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:44:59.035 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 124, current index: 0
+11-02 21:44:59.035 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Bok.p - Creator [OTD003].flac
+11-02 21:44:59.035 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:44:59.036 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Bok.p - Creator [OTD003].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac)
+11-02 21:44:59.036 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: CAlinie and Onikwa - Instant Constant.flac
+11-02 21:44:59.036 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:44:59.036 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 240MB
+11-02 21:44:59.036 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:44:59.036 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac
+11-02 21:44:59.261 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1851343831327892578.aiff
+11-02 21:44:59.701 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:44:59.702 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Bok.p - Creator [OTD003].flac
+11-02 21:44:59.705 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - using existing duration: 425025ms
+11-02 21:44:59.705 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:44:59.718 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:44:59.782 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:45:00.795 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:45:00.796 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:45:00.797 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 124, current index: 1
+11-02 21:45:00.797 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: CAlinie and Onikwa - Instant Constant.flac
+11-02 21:45:00.797 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:45:00.798 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: CAlinie and Onikwa - Instant Constant.flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FCAlinie%20and%20Onikwa%20-%20Instant%20Constant.flac)
+11-02 21:45:00.798 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:45:00.798 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:45:00.799 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 243MB
+11-02 21:45:00.799 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:45:00.799 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FCAlinie%20and%20Onikwa%20-%20Instant%20Constant.flac
+11-02 21:45:00.973 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_1785222985996339714.aiff
+11-02 21:45:01.388 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:45:01.388 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for CAlinie and Onikwa - Instant Constant.flac
+11-02 21:45:01.390 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for CAlinie and Onikwa - Instant Constant.flac
+11-02 21:45:01.391 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:45:01.399 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:45:01.473 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:45:01.483 24834 24880 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 441929ms
+11-02 21:45:01.621 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:45:03.258 24834 24834 D MusicPlayerScreen: 🔍 Swipe gesture: index=2, file='CAlinie and Onikwa - Instant Constant.flac', swipeOffset=-200.0, action=DISLIKE
+11-02 21:45:03.260 24834 24834 D MusicViewModel: 🔍 sortMusicFile called: CAlinie and Onikwa - Instant Constant.flac with action=DISLIKE
+11-02 21:45:03.260 24834 24834 D MusicViewModel: 📁 Sorting file: CAlinie and Onikwa - Instant Constant.flac with action DISLIKE, source: TODO
+11-02 21:45:03.262 24834 24876 D FileManager: 🔍 Starting sort operation for: CAlinie and Onikwa - Instant Constant.flac with action: DISLIKE
+11-02 21:45:03.766 24834 24834 D MusicViewModel: 📁 FileManager.sortFile result: success=true for CAlinie and Onikwa - Instant Constant.flac
+11-02 21:45:03.835 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:45:03.835 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:45:03.836 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 123, current index: 1
+11-02 21:45:03.836 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:45:03.837 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:45:03.837 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Chiara Manchia and Paul Quzz - Garlato.flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FChiara%20Manchia%20and%20Paul%20Quzz%20-%20Garlato.flac)
+11-02 21:45:03.838 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac
+11-02 21:45:03.839 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:45:03.839 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 242MB
+11-02 21:45:03.839 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:45:03.841 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FChiara%20Manchia%20and%20Paul%20Quzz%20-%20Garlato.flac
+11-02 21:45:04.004 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4499060007043619357.aiff
+11-02 21:45:04.494 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:45:04.495 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:45:04.497 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:45:04.498 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:45:04.504 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:45:04.585 24834 24876 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 480006ms
+11-02 21:45:04.596 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:45:04.738 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:45:04.910 24834 24880 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:45:12.235 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:45:12.236 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:45:12.236 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 123, current index: 2
+11-02 21:45:12.237 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac
+11-02 21:45:12.237 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:45:12.238 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FClaudio%20Solis%20-%20Right%20Path%20(Bread%20and%20Butter%20Remix)%20%5BNSM002%5D.flac)
+11-02 21:45:12.238 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: DOTT - Bullets On The Floor [MR007].flac
+11-02 21:45:12.239 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:45:12.239 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 241MB
+11-02 21:45:12.239 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:45:12.240 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FClaudio%20Solis%20-%20Right%20Path%20(Bread%20and%20Butter%20Remix)%20%5BNSM002%5D.flac
+11-02 21:45:12.415 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7711600994896123749.aiff
+11-02 21:45:12.937 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:45:12.937 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac
+11-02 21:45:12.939 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac
+11-02 21:45:12.940 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:45:12.946 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:45:13.022 24834 24877 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 491503ms
+11-02 21:45:13.031 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:45:13.163 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:45:16.356 24834 24834 D MusicViewModel: 🔍 sortAtIndex: index=2, file='Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac', action=DISLIKE, playlistSize=123
+11-02 21:45:16.367 24834 24870 D FileOperationWorker: Processing move: Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac -> DISLIKE
+11-02 21:45:16.367 24834 24870 D FileManager: 🔍 Starting sort operation for: Claudio Solis - Right Path (Bread and Butter Remix) [NSM002].flac with action: DISLIKE
+11-02 21:45:16.434 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:45:16.434 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:45:16.434 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 122, current index: 2
+11-02 21:45:16.434 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: DOTT - Bullets On The Floor [MR007].flac
+11-02 21:45:16.435 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:45:16.435 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: DOTT - Bullets On The Floor [MR007].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDOTT%20-%20Bullets%20On%20The%20Floor%20%5BMR007%5D.flac)
+11-02 21:45:16.435 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Daniel Ortiz - Self-Control [DAM30].flac
+11-02 21:45:16.435 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:45:16.435 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 241MB
+11-02 21:45:16.435 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:45:16.435 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDOTT%20-%20Bullets%20On%20The%20Floor%20%5BMR007%5D.flac
+11-02 21:45:16.589 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_2955332030109233953.aiff
+11-02 21:45:16.972 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:45:16.972 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for DOTT - Bullets On The Floor [MR007].flac
+11-02 21:45:16.973 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for DOTT - Bullets On The Floor [MR007].flac
+11-02 21:45:16.973 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:45:16.976 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:45:17.030 24834 24875 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 425025ms
+11-02 21:45:17.046 24834 24834 D VlcAudioBackend: 📁 Media changed
+11-02 21:45:17.176 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:45:17.296 24834 24876 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:47:36.620 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:47:36.621 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:47:36.621 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 122, current index: 3
+11-02 21:47:36.621 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Daniel Ortiz - Self-Control [DAM30].flac
+11-02 21:47:36.621 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:47:36.622 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Daniel Ortiz - Self-Control [DAM30].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDaniel%20Ortiz%20-%20Self-Control%20%5BDAM30%5D.flac)
+11-02 21:47:36.622 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Disset - Abu playin the 909 [A404DIGI001].flac
+11-02 21:47:36.622 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:47:36.622 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 230MB
+11-02 21:47:36.622 24834 24834 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:47:36.623 24834 24834 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDaniel%20Ortiz%20-%20Self-Control%20%5BDAM30%5D.flac
+11-02 21:47:36.792 24834 24834 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3631013940479490766.aiff
+11-02 21:47:57.571 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-24': Loz Goddard - Parallaxing [OATH012].flac
+11-02 21:47:57.573 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-24': Surrender Discipline - Expression [ISRD029].flac
+11-02 21:47:57.624 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-26': Cos - Future Holds (Raz Remix) [LHR005].flac
+11-02 21:47:57.626 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-26': Martek - Slitt [2M4L001].flac
+11-02 21:47:57.628 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-26': Zenniv - In Your Head [MICR008].flac
+11-02 21:47:57.678 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-28': HearThuG - Alien, All Too Alien [AYAV001].flac
+11-02 21:47:57.679 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-28': Luigi Seija - Girls Girls (Ollie Drummond Mix) [BOMBIS082].flac
+11-02 21:47:57.681 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-28': Tin Man - Wrapped up Acid (ACIDTEST020).flac
+11-02 21:47:57.731 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-30': C.ru.z - Marines Odyssey [OPAL002].flac
+11-02 21:47:57.733 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-30': Hostox and Pennyy - The Famous Plan.flac
+11-02 21:47:57.735 25742 25786 D FileManager: 📁 SAF: Found file in '2024-04-30': Root - Phantom Talks [SRW036].flac
+11-02 21:47:57.843 25742 25786 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:48:01.016 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:01.016 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:01.017 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 122, current index: 0
+11-02 21:48:01.017 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Bok.p - Creator [OTD003].flac
+11-02 21:48:01.017 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:01.017 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Bok.p - Creator [OTD003].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac)
+11-02 21:48:01.017 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:48:01.018 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:01.018 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 242MB
+11-02 21:48:01.018 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:01.018 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FBok.p%20-%20Creator%20%5BOTD003%5D.flac
+11-02 21:48:01.181 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_3577488118291218785.aiff
+11-02 21:48:01.619 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:01.620 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Bok.p - Creator [OTD003].flac
+11-02 21:48:01.629 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Bok.p - Creator [OTD003].flac
+11-02 21:48:01.630 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:01.636 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:01.678 25742 25784 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 425025ms
+11-02 21:48:01.790 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:01.966 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:03.133 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:03.134 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:03.134 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 122, current index: 1
+11-02 21:48:03.134 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:48:03.134 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:03.135 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Chiara Manchia and Paul Quzz - Garlato.flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FChiara%20Manchia%20and%20Paul%20Quzz%20-%20Garlato.flac)
+11-02 21:48:03.135 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: DOTT - Bullets On The Floor [MR007].flac
+11-02 21:48:03.135 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:03.135 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 244MB
+11-02 21:48:03.136 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:03.136 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FChiara%20Manchia%20and%20Paul%20Quzz%20-%20Garlato.flac
+11-02 21:48:03.318 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_8461425453809056013.aiff
+11-02 21:48:03.756 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:03.756 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:48:03.756 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:48:03.757 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:03.762 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:03.806 25742 25786 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 480006ms
+11-02 21:48:03.868 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:03.998 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:07.086 25742 25742 D MusicViewModel: 🔍 sortAtIndex: index=0, file='Bok.p - Creator [OTD003].flac', action=DISLIKE, playlistSize=122
+11-02 21:48:07.087 25742 25742 D MusicViewModel: 🔢 Removed Bok.p - Creator [OTD003].flac from playedButNotActioned counter (sortAtIndex)
+11-02 21:48:07.109 25742 25779 D FileOperationWorker: Processing move: Bok.p - Creator [OTD003].flac -> DISLIKE
+11-02 21:48:07.110 25742 25779 D FileManager: 🔍 Starting sort operation for: Bok.p - Creator [OTD003].flac with action: DISLIKE
+11-02 21:48:07.398 25742 25781 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:48:08.244 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:08.245 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:08.245 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 121, current index: 1
+11-02 21:48:08.246 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: DOTT - Bullets On The Floor [MR007].flac
+11-02 21:48:08.246 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:08.246 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: DOTT - Bullets On The Floor [MR007].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDOTT%20-%20Bullets%20On%20The%20Floor%20%5BMR007%5D.flac)
+11-02 21:48:08.246 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Daniel Ortiz - Self-Control [DAM30].flac
+11-02 21:48:08.247 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:08.247 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 231MB
+11-02 21:48:08.247 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:08.247 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDOTT%20-%20Bullets%20On%20The%20Floor%20%5BMR007%5D.flac
+11-02 21:48:08.424 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_221381196697475078.aiff
+11-02 21:48:08.871 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:08.871 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for DOTT - Bullets On The Floor [MR007].flac
+11-02 21:48:08.873 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for DOTT - Bullets On The Floor [MR007].flac
+11-02 21:48:08.873 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:08.883 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:08.962 25742 25779 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 425025ms
+11-02 21:48:08.962 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:09.105 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:11.347 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:11.348 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:11.349 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 121, current index: 2
+11-02 21:48:11.349 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Daniel Ortiz - Self-Control [DAM30].flac
+11-02 21:48:11.350 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:11.350 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Daniel Ortiz - Self-Control [DAM30].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDaniel%20Ortiz%20-%20Self-Control%20%5BDAM30%5D.flac)
+11-02 21:48:11.351 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Disset - Abu playin the 909 [A404DIGI001].flac
+11-02 21:48:11.351 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:11.351 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 241MB
+11-02 21:48:11.352 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:11.352 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDaniel%20Ortiz%20-%20Self-Control%20%5BDAM30%5D.flac
+11-02 21:48:11.532 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_7739532333506789382.aiff
+11-02 21:48:11.909 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:11.909 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Daniel Ortiz - Self-Control [DAM30].flac
+11-02 21:48:11.910 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Daniel Ortiz - Self-Control [DAM30].flac
+11-02 21:48:11.911 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:11.915 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:11.981 25742 25785 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 455025ms
+11-02 21:48:11.982 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:12.119 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:14.808 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:14.809 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:14.809 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 121, current index: 3
+11-02 21:48:14.809 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Disset - Abu playin the 909 [A404DIGI001].flac
+11-02 21:48:14.810 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:14.810 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Disset - Abu playin the 909 [A404DIGI001].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDisset%20-%20Abu%20playin%20the%20909%20%5BA404DIGI001%5D.flac)
+11-02 21:48:14.810 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac
+11-02 21:48:14.810 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:14.810 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 238MB
+11-02 21:48:14.811 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:14.811 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FDisset%20-%20Abu%20playin%20the%20909%20%5BA404DIGI001%5D.flac
+11-02 21:48:14.987 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_4447238572650326046.aiff
+11-02 21:48:15.435 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:15.435 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Disset - Abu playin the 909 [A404DIGI001].flac
+11-02 21:48:15.437 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Disset - Abu playin the 909 [A404DIGI001].flac
+11-02 21:48:15.438 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:15.445 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:15.510 25742 25780 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 380013ms
+11-02 21:48:15.536 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:15.665 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:18.899 25742 25742 D MusicViewModel: 🔍 sortAtIndex: index=3, file='Disset - Abu playin the 909 [A404DIGI001].flac', action=DISLIKE, playlistSize=121
+11-02 21:48:18.900 25742 25742 D MusicViewModel: 🔢 Removed Disset - Abu playin the 909 [A404DIGI001].flac from playedButNotActioned counter (sortAtIndex)
+11-02 21:48:18.910 25742 25781 D FileOperationWorker: Processing move: Disset - Abu playin the 909 [A404DIGI001].flac -> DISLIKE
+11-02 21:48:18.911 25742 25781 D FileManager: 🔍 Starting sort operation for: Disset - Abu playin the 909 [A404DIGI001].flac with action: DISLIKE
+11-02 21:48:18.978 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:18.978 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:18.978 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 120, current index: 3
+11-02 21:48:18.978 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac
+11-02 21:48:18.978 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:18.979 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FGulf%20Breeze%20-%20Something%20Strange%20(Muelsa%20Remix)%20%5BSTFM004%5D.flac)
+11-02 21:48:18.979 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Jnt - Jazzed up.flac
+11-02 21:48:18.979 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:18.979 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 236MB
+11-02 21:48:18.979 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:18.979 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FGulf%20Breeze%20-%20Something%20Strange%20(Muelsa%20Remix)%20%5BSTFM004%5D.flac
+11-02 21:48:19.133 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5453985979282952045.aiff
+11-02 21:48:19.495 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:19.496 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac
+11-02 21:48:19.497 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac
+11-02 21:48:19.497 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:19.501 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:19.562 25742 25781 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 375125ms
+11-02 21:48:19.563 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:19.693 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:19.809 25742 25781 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:48:22.797 25742 25742 D MusicPlayerScreen: 🔍 Swipe gesture: index=4, file='Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac', swipeOffset=-200.0, action=DISLIKE
+11-02 21:48:22.799 25742 25742 D MusicViewModel: 🔍 sortMusicFile called: Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac with action=DISLIKE
+11-02 21:48:22.799 25742 25742 D MusicViewModel: 📁 Sorting file: Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac with action DISLIKE, source: TODO
+11-02 21:48:22.800 25742 25785 D FileManager: 🔍 Starting sort operation for: Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac with action: DISLIKE
+11-02 21:48:23.148 25742 25742 D MusicViewModel: 📁 FileManager.sortFile result: success=true for Gulf Breeze - Something Strange (Muelsa Remix) [STFM004].flac
+11-02 21:48:23.211 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:23.211 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:23.212 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 119, current index: 3
+11-02 21:48:23.212 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Jnt - Jazzed up.flac
+11-02 21:48:23.213 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:23.213 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Jnt - Jazzed up.flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FJnt%20-%20Jazzed%20up.flac)
+11-02 21:48:23.214 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Latent and Retrolog - Super Villain [OTD003].flac
+11-02 21:48:23.214 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:23.215 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 227MB
+11-02 21:48:23.215 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:23.216 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FJnt%20-%20Jazzed%20up.flac
+11-02 21:48:23.373 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_413271019674124950.aiff
+11-02 21:48:23.736 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:23.737 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Jnt - Jazzed up.flac
+11-02 21:48:23.738 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Jnt - Jazzed up.flac
+11-02 21:48:23.739 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:23.748 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:23.821 25742 25785 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 342053ms
+11-02 21:48:23.845 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:23.974 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:48:24.165 25742 26016 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:48:30.373 25742 25742 D MusicViewModel: 📂 moveCurrentFileToSubfolder called - Current file: Jnt - Jazzed up.flac, Subfolder: 234
+11-02 21:48:30.811 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 118, current index: 3
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Latent and Retrolog - Super Villain [OTD003].flac
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Latent and Retrolog - Super Villain [OTD003].flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FLatent%20and%20Retrolog%20-%20Super%20Villain%20%5BOTD003%5D.flac)
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: Leo Lang - New Caffee In The Hood.flac
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 227MB
+11-02 21:48:30.812 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:48:30.812 25742 25742 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FLatent%20and%20Retrolog%20-%20Super%20Villain%20%5BOTD003%5D.flac
+11-02 21:48:30.985 25742 25742 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_6920557384570501754.aiff
+11-02 21:48:31.426 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:48:31.427 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Latent and Retrolog - Super Villain [OTD003].flac
+11-02 21:48:31.429 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Latent and Retrolog - Super Villain [OTD003].flac
+11-02 21:48:31.430 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:48:31.436 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:48:31.504 25742 25785 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 364560ms
+11-02 21:48:31.507 25742 25742 D VlcAudioBackend: 📁 Media changed
+11-02 21:48:31.554 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated

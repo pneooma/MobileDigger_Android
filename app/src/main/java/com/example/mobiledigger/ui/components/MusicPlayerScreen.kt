@@ -965,7 +965,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.22 ::",
+                            text = ":: v10.36 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1135,7 +1135,7 @@ viewModel.updateSearchText("")
             }
         }
         
-        if (musicFiles.isNotEmpty() && !isLoading && currentPlaylistTab == PlaylistTab.TODO) {
+        if (musicFiles.isNotEmpty() && !isLoading && currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) {
             Popup(
                 alignment = Alignment.TopCenter,
                 offset = IntOffset(0, with(LocalDensity.current) { 66.dp.toPx().toInt() }) // Moved up by 20dp
@@ -2962,9 +2962,10 @@ viewModel.updateSearchText("")
                             }
                             
                             // Calculate adaptive height based on actual text measurement (only for inactive rows)
-                            val adaptiveHeight = remember(item.name, item.subfolder, isCurrent, currentPlaylistTab) {
+                            val adaptiveHeight = remember(item.name, item.subfolder, isCurrent, currentPlaylistTab, visualSettings.rowWaveformHeight) {
                                 if (isCurrent) {
-                                    101.dp // Active rows increased by 15% (88 * 1.15 = 101.2)
+                                    // Active row height based on waveform height from visual settings + padding
+                                    (visualSettings.rowWaveformHeight + 21f).dp // Waveform height + padding (6dp top + 6dp bottom + ~9dp for buttons/spacing)
                                 } else {
                                     // Use a more accurate estimation based on typical screen width and font size
                                     val screenWidthDp = screenWidth.value
@@ -2983,9 +2984,10 @@ viewModel.updateSearchText("")
                             }
                             
                             // Calculate adaptive button size based on row height (only for inactive rows)
-                            val adaptiveButtonSize = remember(adaptiveHeight, isCurrent) {
+                            val adaptiveButtonSize = remember(adaptiveHeight, isCurrent, visualSettings.rowWaveformHeight) {
                                 if (isCurrent) {
-                                    41.dp // Active rows increased by 15% (36 * 1.15 = 41.4)
+                                    // Button size proportional to waveform height (roughly 50% of waveform height)
+                                    (visualSettings.rowWaveformHeight * 0.5f).dp.coerceAtLeast(36.dp).coerceAtMost(48.dp)
                                 } else {
                                     when {
                                         adaptiveHeight.value <= 20 -> 18.dp // 1 line rows (adjusted for 20% reduction)
@@ -2997,9 +2999,10 @@ viewModel.updateSearchText("")
                             }
                             
                             // Calculate adaptive icon size based on button size (only for inactive rows)
-                            val adaptiveIconSize = remember(adaptiveButtonSize, isCurrent) {
+                            val adaptiveIconSize = remember(adaptiveButtonSize, isCurrent, visualSettings.rowWaveformHeight) {
                                 if (isCurrent) {
-                                    23.dp // Active rows increased by 15% (20 * 1.15 = 23)
+                                    // Icon size proportional to button size (roughly 55% of button size)
+                                    (adaptiveButtonSize.value * 0.55f).dp.coerceAtLeast(20.dp).coerceAtMost(28.dp)
                                 } else {
                                     (adaptiveButtonSize.value * 0.55f).dp
                                 }
@@ -3250,7 +3253,10 @@ viewModel.updateSearchText("")
                                                     IconButton(
                                                         onClick = { 
                                                             try {
-                                                                viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                if (actualIndex >= 0) {
+                                                                    viewModel.sortAtIndex(actualIndex, SortAction.DISLIKE)
+                                                                }
                                                             } catch (e: Exception) {
                                                                 println("Error in dislike button: ${e.message}")
                                                             }
@@ -3291,7 +3297,10 @@ viewModel.updateSearchText("")
                                                 IconButton(
                                                     onClick = { 
                                                         try {
-                                                            viewModel.sortAtIndex(index, SortAction.DISLIKE) 
+                                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                            if (actualIndex >= 0) {
+                                                                viewModel.sortAtIndex(actualIndex, SortAction.DISLIKE)
+                                                            }
                                                         } catch (e: Exception) {
                                                             println("Error in dislike button: ${e.message}")
                                                         }
@@ -3344,7 +3353,12 @@ viewModel.updateSearchText("")
                                                     // Like (top-left)
                                             IconButton(
                                                 onClick = { 
-                                                            try { viewModel.sortAtIndex(index, SortAction.LIKE) } catch (e: Exception) { println("Error in like button: ${e.message}") }
+                                                            try { 
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                if (actualIndex >= 0) {
+                                                                    viewModel.sortAtIndex(actualIndex, SortAction.LIKE)
+                                                                }
+                                                            } catch (e: Exception) { println("Error in like button: ${e.message}") }
                                                         },
                                                         modifier = Modifier.size(32.dp)
                                                     ) {

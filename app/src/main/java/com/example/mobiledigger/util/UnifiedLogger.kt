@@ -32,21 +32,10 @@ object UnifiedLogger {
     
     fun initialize(ctx: Context) {
         context = ctx
-        // Start background writer thread
-        Thread {
-            while (true) {
-                try {
-                    Thread.sleep(WRITE_INTERVAL_MS)
-                    flushLogs()
-                } catch (_: InterruptedException) {
-                    break
-                } catch (e: Exception) {
-                    android.util.Log.e("UnifiedLogger", "Error in background writer", e)
-                }
-            }
-        }.start()
+        // DISABLED: Background writer thread disabled for better performance
+        // (File logging is disabled)
         
-        log("UnifiedLogger", "Unified logging system initialized")
+        log("UnifiedLogger", "Unified logging system initialized (file logging disabled)")
     }
     
     fun setResultsFolder(uri: Uri?) {
@@ -55,25 +44,10 @@ object UnifiedLogger {
         resultsSubfolder = null
         debugFileUri = null
         
-        // Ensure a dedicated 'results' subfolder to avoid clutter
-        val root = resultsFolder
-        if (root == null) {
-            android.util.Log.w("UnifiedLogger", "Results root is null; cannot set results folder")
-            return
-        }
-        if (!root.exists()) {
-            android.util.Log.w("UnifiedLogger", "Results root doesn't exist")
-            return
-        }
+        // DISABLED: File creation disabled for better performance
+        // (File logging is disabled)
         
-        // Find or create 'results' directory (case-insensitive)
-        val existingDir = root.listFiles().firstOrNull { it.isDirectory && (it.name ?: "").equals("results", ignoreCase = true) }
-        resultsSubfolder = existingDir ?: root.createDirectory("results") ?: root
-        
-        // Initialize (or find) DEBUG file and cache its URI
-        initDebugFileIfNeeded()
-        
-        log("UnifiedLogger", "Results folder set to ${uri?.toString() ?: "null"}; using subfolder '${resultsSubfolder?.name}'")
+        log("UnifiedLogger", "Results folder set to ${uri?.toString() ?: "null"} (file logging disabled)")
     }
     
     fun log(tag: String, message: String, throwable: Throwable? = null) {
@@ -109,21 +83,9 @@ object UnifiedLogger {
     }
     
     private fun flushLogs() {
-        if (isWriting.compareAndSet(false, true)) {
-            try {
-                val now = System.currentTimeMillis()
-                if (now - lastWriteAtMs < WRITE_INTERVAL_MS && logQueue.isEmpty()) return
-                lastWriteAtMs = now
-                
-                val logsToWrite = mutableListOf<String>()
-                while (logQueue.isNotEmpty()) { logQueue.poll()?.let { logsToWrite.add(it) } }
-                if (logsToWrite.isNotEmpty()) {
-                    kotlinx.coroutines.runBlocking { writeToFile(logsToWrite) }
-                }
-            } finally {
-                isWriting.set(false)
-            }
-        }
+        // DISABLED: File flushing disabled for better performance
+        // (File logging is disabled)
+        return
     }
     
     private fun initDebugFileIfNeeded() {
@@ -138,37 +100,8 @@ object UnifiedLogger {
     }
     
     private suspend fun writeToFile(logs: List<String>) = withContext(Dispatchers.IO) {
-        try {
-            if (resultsFolder == null) return@withContext
-            if (resultsSubfolder == null) resultsSubfolder = resultsFolder
-            
-            // Ensure DEBUG file exists and URI is cached
-            initDebugFileIfNeeded()
-            val targetUri = debugFileUri ?: return@withContext
-            val ctx = context ?: return@withContext
-            
-            // Check size for rotation
-            val currentLength = try {
-                DocumentFile.fromSingleUri(ctx, targetUri)?.length() ?: 0
-            } catch (_: Exception) { 0 }
-            if (currentLength > MAX_FILE_BYTES) {
-                // Delete existing and recreate with same name, update cached URI
-                try { DocumentsContract.deleteDocument(ctx.contentResolver, targetUri) } catch (_: Exception) {}
-                val folder = resultsSubfolder ?: resultsFolder ?: return@withContext
-                val recreated = folder.createFile("text/plain", "DEBUG")
-                if (recreated == null) return@withContext
-                debugFileUri = recreated.uri
-            }
-            
-            // Append to the single DEBUG file
-            val content = logs.joinToString("\n") + "\n"
-            ctx.contentResolver.openOutputStream(debugFileUri!!, "wa")?.use { os ->
-                os.write(content.toByteArray())
-                os.flush()
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("UnifiedLogger", "Failed to write logs to file", e)
-        }
+        // DISABLED: File export disabled for better performance
+        return@withContext
     }
     
     fun forceFlush() { flushLogs() }

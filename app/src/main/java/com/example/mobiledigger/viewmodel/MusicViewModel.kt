@@ -887,6 +887,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         CrashLogger.log("MusicViewModel", "sortCurrentFile: ${fileToSort.name} with action $action")
         
+        // Remove from played-but-not-actioned when action is taken
+        _playedButNotActioned.value = _playedButNotActioned.value - fileToSort.uri
+        CrashLogger.log("MusicViewModel", "🔢 Removed ${fileToSort.name} from playedButNotActioned counter (sortCurrentFile)")
+        
         // ⚡ INSTANT PLAYBACK: Process UI and playback immediately, file move happens in background
         viewModelScope.launch(Dispatchers.Main) {
             try {
@@ -1090,6 +1094,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         // Debug logging
         CrashLogger.log("MusicViewModel", "🔍 sortAtIndex: index=$index, file='${fileToSort.name}', action=$action, playlistSize=${files.size}")
         
+        // Remove from played-but-not-actioned when action is taken
+        _playedButNotActioned.value = _playedButNotActioned.value - fileToSort.uri
+        CrashLogger.log("MusicViewModel", "🔢 Removed ${fileToSort.name} from playedButNotActioned counter (sortAtIndex)")
+        
         // Use queue-based sorting for instant response
         viewModelScope.launch(Dispatchers.Main) {
             // Use mutex to prevent concurrent file operations
@@ -1224,7 +1232,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             
             // Update the actually playing file (independent of playlist navigation)
             _currentPlayingFile.value = currentFile
-            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updated current playing file")
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updated current playing file to: ${currentFile.name} (URI: ${currentFile.uri})")
             
             // Pre-fetch next file for buffering (only if list has more than 1 item)
             val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
@@ -2748,9 +2756,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun moveCurrentFileToSubfolder(subfolderName: String) {
-        val currentFile = _currentPlayingFile.value
-        if (currentFile == null) {
+        // Use currentFile property (set immediately in loadCurrentFile) instead of _currentPlayingFile StateFlow
+        val fileToMove = this.currentFile
+        CrashLogger.log("MusicViewModel", "📂 moveCurrentFileToSubfolder called - Current file: ${fileToMove?.name}, Subfolder: $subfolderName")
+        if (fileToMove == null) {
             _errorMessage.value = "No file is currently playing"
+            CrashLogger.log("MusicViewModel", "📂 moveCurrentFileToSubfolder - No current file, aborting")
             return
         }
         
@@ -2786,13 +2797,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 }
                 
                 // Move the file - preserve original filename and MIME type
-                val fileName = fileManager.getFileName(currentFile.uri) ?: "unknown"
-                val originalMimeType = getApplication<Application>().contentResolver.getType(currentFile.uri) ?: "audio/mpeg"
+                val fileName = fileManager.getFileName(fileToMove.uri) ?: "unknown"
+                val originalMimeType = getApplication<Application>().contentResolver.getType(fileToMove.uri) ?: "audio/mpeg"
                 val targetFile = subfolder.createFile(originalMimeType, fileName)
                 
                 if (targetFile != null) {
                     // Copy file content
-                    val inputStream = getApplication<Application>().contentResolver.openInputStream(currentFile.uri)
+                    val inputStream = getApplication<Application>().contentResolver.openInputStream(fileToMove.uri)
                     val outputStream = getApplication<Application>().contentResolver.openOutputStream(targetFile.uri)
                     
                     if (inputStream != null && outputStream != null) {
@@ -2801,7 +2812,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         outputStream.close()
                         
                         // Delete original file
-                        val originalFile = DocumentFile.fromSingleUri(getApplication(), currentFile.uri)
+                        val originalFile = DocumentFile.fromSingleUri(getApplication(), fileToMove.uri)
                         originalFile?.delete()
                         
                         // Update playlists
@@ -2809,12 +2820,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             addToSubfolderHistory(subfolderName)
                             updateSubfolderInfo()
                             
+                            // Remove from played-but-not-actioned counter (this is like liking the file)
+                            _playedButNotActioned.value = _playedButNotActioned.value - fileToMove.uri
+                            
                             // Handle file movement based on current playlist tab
                             when (_currentPlaylistTab.value) {
                                 PlaylistTab.TODO -> {
                                     // Remove from TODO playlist
                                     val updatedTodoFiles = _musicFiles.value.toMutableList()
-                                    val indexToRemove = updatedTodoFiles.indexOfFirst { it.uri == currentFile.uri }
+                                    val indexToRemove = updatedTodoFiles.indexOfFirst { it.uri == fileToMove.uri }
                                     if (indexToRemove != -1) {
                                         updatedTodoFiles.removeAt(indexToRemove)
                                         _musicFiles.value = updatedTodoFiles
@@ -2837,7 +2851,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     }
                                     
                                     // Add to liked files with subfolder info
-                                    val likedFile = currentFile.copy(
+                                    val likedFile = fileToMove.copy(
                                         sourcePlaylist = PlaylistTab.LIKED,
                                         subfolder = subfolderName,
                                         uri = targetFile.uri // Use the new URI
@@ -2852,7 +2866,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                 PlaylistTab.REJECTED -> {
                                     // Remove from REJECTED playlist
                                     val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
-                                    val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == currentFile.uri }
+                                    val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == fileToMove.uri }
                                     if (indexToRemove != -1) {
                                         updatedRejectedFiles.removeAt(indexToRemove)
                                         _rejectedFiles.value = updatedRejectedFiles
@@ -2875,7 +2889,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     }
                                     
                                     // Add to liked files with subfolder info
-                                    val likedFile = currentFile.copy(
+                                    val likedFile = fileToMove.copy(
                                         sourcePlaylist = PlaylistTab.LIKED,
                                         subfolder = subfolderName,
                                         uri = targetFile.uri // Use the new URI

@@ -1,3 +1,44 @@
+v10.38
+- 🔢 COUNTER FIX: Fixed played-but-not-actioned counter to properly decrement on like/dislike/reject actions
+- ✅ sortCurrentFile: Now removes file from counter when using main player buttons
+- ✅ sortAtIndex: Now removes file from counter when using active playlist row buttons
+- 📂 SEND TO SUBFOLDER FIX: Fixed timing issue where wrong file was moved to subfolder
+- 🎯 ROOT CAUSE: Changed from _currentPlayingFile StateFlow (delayed) to currentFile property (immediate)
+- ✅ Result: Counter only counts files that were played with NO action taken, all file operations use correct file
+
+v10.37
+- 🔇 DEBUG FILE LOGGING: Completely disabled UnifiedLogger file export for better performance and memory
+- 🧵 BACKGROUND THREADS: Disabled background writer thread that was creating DEBUG files
+- 📂 FILE LOGGING FIX: Removed automatic DEBUG file creation in results folder
+- 📊 TIMING INVESTIGATION: Added detailed logging to track moveCurrentFileToSubfolder timing issues
+- 🐛 BUG INVESTIGATION: Investigating issue where "send to subfolder" moves previous file instead of current
+- ✅ Result: No more DEBUG files created, better performance, timing issue diagnosis in progress
+
+v10.36
+- 📂 SUBFOLDER GROUPING: Restructured playlist to group files by subfolder with single header per subfolder
+- 📏 DYNAMIC ROW HEIGHT: Adjusted active playlist row height based on waveform height from visual settings
+- 🎯 PLAYLIST CLICK FIX: Fixed clicking grouped playlist rows to play correct file (not offset by headers)
+- 🔘 LIKE BUTTON FIX: Fixed like/dislike buttons in playlist rows to use actual file index
+- 🗑️ REJECT BUTTON VISIBILITY: Hide "Reject X" button when no destination folder is selected
+- 📊 COUNTER FIX: Fixed played-but-not-actioned counter for subfolder moves
+- ✅ Result: Grouped subfolder display with correct file selection and proper counters
+
+v10.35
+- 📂 SUBFOLDER DISPLAY: Show source subfolder name in TODO playlist rows (bold, primary color)
+- 🔍 SUBFOLDER EXTRACTION: Modified FileManager to extract and set subfolder property during scanning
+- 📁 SAF SUPPORT: Subfolder extraction works for both direct file access and SAF (Storage Access Framework)
+- 🎯 TODO PLAYLIST ONLY: Subfolder names shown only in TODO playlist where they're most relevant
+- ✅ Result: Clear visual indication of which subfolder each file came from in TODO playlist
+
+v10.30-10.34
+- 🎵 AIFF WAVEFORM: Implemented AIFF waveform generation using peak detection instead of RMS
+- 🎨 SMOOTHING: Applied 3-point moving average smoothing to all waveform types
+- 📊 DYNAMIC RANGE: Applied dynamic range compression (30-85 range) for better visualization
+- ⏱️ DECODE TIMEOUT: Increased decode timeout to 400ms and made it dynamic (half of file duration)
+- 🚀 SPEED: Reduced waveform animation time by 50% (375ms instead of 750ms)
+- 🎨 CONSISTENCY: Applied same processing (smoothing + compression) to MP3, FLAC, and all file types
+- ✅ Result: Accurate, smooth waveforms for all audio formats with industry-standard parameters
+
 v10.22
 - Settings: Moved Auto-play-first and Auto-scan-last toggles to main Settings card
 - Settings: Two-line labels with right-aligned switches for better alignment

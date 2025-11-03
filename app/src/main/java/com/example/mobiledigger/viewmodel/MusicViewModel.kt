@@ -60,6 +60,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     val visualSettingsManager = settingsRepository.visualSettingsManager
     private val context = application.applicationContext
     
+    // PHASE 3: Centralized error handling
+    private val errorHandler = com.example.mobiledigger.util.ErrorHandler.createHandler("MusicViewModel") { error ->
+        _errorMessage.value = error
+    }
+    private val fileOperationHelper = com.example.mobiledigger.util.FileOperationHelper(fileManager)
+    
     // Mutex to prevent concurrent file loading operations that cause memory pressure
     private val fileLoadingMutex = Mutex()
     
@@ -72,7 +78,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         data class Move(val file: MusicFile, val action: SortAction) : FileOperation()
     }
     
-    private val fileOperationChannel = Channel<FileOperation>(Channel.UNLIMITED)
+    // PHASE 2: Bounded channel to prevent memory leaks (was UNLIMITED)
+    private val fileOperationChannel = Channel<FileOperation>(capacity = 100) // Max 100 pending operations
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val fileOperationDispatcher = Dispatchers.IO.limitedParallelism(1) // Single-threaded queue
     private var fileOperationWorker: Job? = null
     
@@ -1933,6 +1941,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "Receiver was not registered or already unregistered")
             }
             
+            // PHASE 2: Clear StateFlow references to prevent memory leaks
+            _musicFiles.value = emptyList()
+            _likedFiles.value = emptyList()
+            _rejectedFiles.value = emptyList()
+            _currentPlayingFile.value = null
+            _selectedIndices.value = emptySet()
+            _playedButNotActioned.value = emptySet()
+            CrashLogger.log("MusicViewModel", "📊 StateFlows cleared to prevent memory leaks")
+            
             // Release audio manager and clear all caches
             audioManager.clearAllCaches()
             audioManager.release()
@@ -2829,24 +2846,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     // Remove from TODO playlist
                                     val updatedTodoFiles = _musicFiles.value.toMutableList()
                                     val indexToRemove = updatedTodoFiles.indexOfFirst { it.uri == fileToMove.uri }
+                                    val wasPlayingRemovedFile = (indexToRemove == _currentIndex.value)
+                                    
                                     if (indexToRemove != -1) {
                                         updatedTodoFiles.removeAt(indexToRemove)
                                         _musicFiles.value = updatedTodoFiles
                                         
-                                        // Adjust current index if needed
+                                        // PHASE 4: Keep file playing when moved to subfolder
+                                        // Don't interrupt playback - just update the index
                                         if (indexToRemove < _currentIndex.value) {
                                             _currentIndex.value = _currentIndex.value - 1
-                                        } else if (indexToRemove == _currentIndex.value) {
-                                            // If we removed the currently playing file, load the next one
-                                            if (updatedTodoFiles.isNotEmpty()) {
-                                                if (_currentIndex.value >= updatedTodoFiles.size) {
-                                                    _currentIndex.value = updatedTodoFiles.size - 1
-                                                }
-                                                loadCurrentFile()
-                                            } else {
-                                                stopPlayback()
-                                                _errorMessage.value = "Moved '$fileName' to '$subfolderName'. No more files in TODO playlist."
+                                        } else if (wasPlayingRemovedFile) {
+                                            // File was playing - DON'T load next file, keep current one playing
+                                            // Just adjust index to prevent out of bounds
+                                            if (_currentIndex.value >= updatedTodoFiles.size && updatedTodoFiles.isNotEmpty()) {
+                                                _currentIndex.value = updatedTodoFiles.size - 1
                                             }
+                                            CrashLogger.log("MusicViewModel", "📂 File moved to subfolder while playing - keeping playback active")
                                         }
                                     }
                                     
@@ -2867,24 +2883,21 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     // Remove from REJECTED playlist
                                     val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
                                     val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == fileToMove.uri }
+                                    val wasPlayingRemovedFile = (indexToRemove == _currentIndex.value)
+                                    
                                     if (indexToRemove != -1) {
                                         updatedRejectedFiles.removeAt(indexToRemove)
                                         _rejectedFiles.value = updatedRejectedFiles
                                         
-                                        // Adjust current index if needed
+                                        // PHASE 4: Keep file playing when moved to subfolder
                                         if (indexToRemove < _currentIndex.value) {
                                             _currentIndex.value = _currentIndex.value - 1
-                                        } else if (indexToRemove == _currentIndex.value) {
-                                            // If we removed the currently playing file, load the next one
-                                            if (updatedRejectedFiles.isNotEmpty()) {
-                                                if (_currentIndex.value >= updatedRejectedFiles.size) {
-                                                    _currentIndex.value = updatedRejectedFiles.size - 1
-                                                }
-                                                loadCurrentFile()
-                                            } else {
-                                                stopPlayback()
-                                                _errorMessage.value = "Moved '$fileName' to '$subfolderName'. No more files in REJECTED playlist."
+                                        } else if (wasPlayingRemovedFile) {
+                                            // File was playing - DON'T load next file, keep current one playing
+                                            if (_currentIndex.value >= updatedRejectedFiles.size && updatedRejectedFiles.isNotEmpty()) {
+                                                _currentIndex.value = updatedRejectedFiles.size - 1
                                             }
+                                            CrashLogger.log("MusicViewModel", "📂 File moved to subfolder while playing - keeping playback active")
                                         }
                                     }
                                     

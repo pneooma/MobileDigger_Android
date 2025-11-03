@@ -1,4 +1,5 @@
 package com.example.mobiledigger.util
+import com.example.mobiledigger.util.CrashLogger
 
 import android.content.Context
 import android.media.MediaExtractor

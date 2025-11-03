@@ -1,3 +1,42 @@
+v10.42
+- 🚀 PHASE 4 UX IMPROVEMENTS: Better user experience for file operations
+- 🎵 KEEP PLAYING: When moving file to subfolder, playback continues without interruption
+- 📂 SMART MOVE: File is removed from current playlist but audio keeps playing
+- 🔄 INDEX MANAGEMENT: Automatically adjusts playlist indices when file is moved
+- ✅ ALL PLAYLISTS: Works for TODO → subfolder, LIKED → subfolder, REJECTED → subfolder
+- 📝 TODO: Miniplayer and sticky controls deferred (requires MusicPlayerScreen refactoring)
+- ✅ Result: Seamless file organization without disrupting listening experience
+
+v10.41
+- 🚀 PHASE 3 IMPROVEMENTS: Architecture improvements and advanced error handling
+- 🛠️ FILE OPERATION HELPER: Extracted file operations into utility class (reduces God Object pattern)
+- ✅ SAFE FILE MOVES: Comprehensive error handling for SecurityException, IOException, and unexpected errors
+- 📦 BATCH OPERATIONS: Batch file move utility with progress tracking and detailed error reporting
+- 🚨 ERROR HANDLER: Centralized coroutine exception handling with OutOfMemoryError detection
+- 🧹 LOW MEMORY HANDLER: Automatic cache cleanup when system reports memory pressure
+- ⚠️ MEMORY TRIM: Responds to system TRIM_MEMORY requests with aggressive cleanup
+- 🔒 DEFENSIVE CODE: Safe execution wrappers with fallback values (runSafely, runSafelyOrNull)
+- ✅ Result: More robust error handling, automatic memory management, reduced crash risk
+
+v10.40
+- 🚀 PHASE 2 IMPROVEMENTS: Medium-risk refactoring for better memory management
+- 📊 BOUNDED QUEUES: File operation channel limited to 100 items (was unlimited - memory leak risk)
+- 🗑️ CACHE MONITORING: Added cache statistics logging and improved eviction messages
+- 📈 CACHE STATS: AudioManager now tracks spectrogram and temp file cache usage
+- 🔧 DEPRECATED FIXES: Fixed menuAnchor() deprecation warnings (2 locations)
+- ⚙️ OPT-IN ANNOTATIONS: Added @OptIn for ExperimentalCoroutinesApi to suppress warnings
+- 🧹 STATEFLOW CLEANUP: Clear StateFlow references in onCleared() to prevent memory leaks
+- ✅ Result: Better memory management, reduced memory leak risks, cleaner codebase
+
+v10.39
+- 🚀 PHASE 1 IMPROVEMENTS: Safe code quality improvements for better stability
+- 🐛 LOGGING CLEANUP: Replaced all 126 println() statements with proper CrashLogger.log() calls
+- 📊 MEMORY MONITORING: Added MemoryMonitor utility with automatic memory pressure detection
+- ⚠️ MEMORY ALERTS: Logs warnings at 85% memory usage, critical alerts at 95% with auto-GC
+- 🔄 COROUTINE SAFETY: Verified existing Mutex and Semaphore implementations (already present)
+- 📈 DIAGNOSTICS: Memory stats logged every 10 seconds to help identify memory leaks
+- ✅ Result: More consistent logging, proactive memory monitoring, better debugging capabilities
+
 v10.38
 - 🔢 COUNTER FIX: Fixed played-but-not-actioned counter to properly decrement on like/dislike/reject actions
 - ✅ sortCurrentFile: Now removes file from counter when using main player buttons

@@ -22,7 +22,7 @@ object WaveformGenerator {
      */
     fun updateSettings(settings: WaveformSettings) {
         currentSettings = settings
-        println("🎛️ WaveformGenerator: Settings updated - Bars: ${settings.barCount}, Oversample: ${settings.oversampleFactor}, Frame: ${settings.frameDurationMs}ms")
+        CrashLogger.log("Debug", "🎛️ WaveformGenerator: Settings updated - Bars: ${settings.barCount}, Oversample: ${settings.oversampleFactor}, Frame: ${settings.frameDurationMs}ms")
     }
 
     /**
@@ -43,8 +43,8 @@ object WaveformGenerator {
         // Apply render limit for performance (React Native Audio Waveform approach)
         val effectiveBarsCount = minOf(barsCount, currentSettings.maxBarsToRender)
         
-        println("🎵 WaveformGenerator: Starting iOS-inspired generation from URI: $uri")
-        println("📊 Render settings: barsCount=$barsCount, effectiveBarsCount=$effectiveBarsCount, maxBarsToRender=${currentSettings.maxBarsToRender}")
+        CrashLogger.log("Debug", "🎵 WaveformGenerator: Starting iOS-inspired generation from URI: $uri")
+        CrashLogger.log("Debug", "📊 Render settings: barsCount=$barsCount, effectiveBarsCount=$effectiveBarsCount, maxBarsToRender=${currentSettings.maxBarsToRender}")
         val waveform = IntArray(effectiveBarsCount)
         val extractor = MediaExtractor()
         
@@ -54,7 +54,7 @@ object WaveformGenerator {
             
             val trackIndex = findAudioTrack(extractor)
             if (trackIndex == -1) {
-                println("❌ No audio track found for URI: $uri")
+                CrashLogger.log("Debug", "❌ No audio track found for URI: $uri")
                 CrashLogger.log("WaveformGenerator", "No audio track found for URI: $uri")
                 return@withContext waveform
             }
@@ -67,15 +67,15 @@ object WaveformGenerator {
             val channelCount = if (format.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) else 2
             val duration = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION) else 0
             
-            println("🎵 Audio format - MIME: $mime, Sample Rate: $sampleRate, Channels: $channelCount, Duration: $duration")
-            println("🎵 File type detection - URI: $uri")
+            CrashLogger.log("Debug", "🎵 Audio format - MIME: $mime, Sample Rate: $sampleRate, Channels: $channelCount, Duration: $duration")
+            CrashLogger.log("Debug", "🎵 File type detection - URI: $uri")
             val uriString = uri.toString().lowercase()
             when {
-                uriString.contains(".mp3") -> println("🎵 Detected MP3 file")
-                uriString.contains(".wav") -> println("🎵 Detected WAV file")
-                uriString.contains(".aif") -> println("🎵 Detected AIFF file")
-                uriString.contains(".flac") -> println("🎵 Detected FLAC file")
-                else -> println("🎵 Unknown file type")
+                uriString.contains(".mp3") -> CrashLogger.log("Debug", "🎵 Detected MP3 file")
+                uriString.contains(".wav") -> CrashLogger.log("Debug", "🎵 Detected WAV file")
+                uriString.contains(".aif") -> CrashLogger.log("Debug", "🎵 Detected AIFF file")
+                uriString.contains(".flac") -> CrashLogger.log("Debug", "🎵 Detected FLAC file")
+                else -> CrashLogger.log("Debug", "🎵 Unknown file type")
             }
 
             // Try iOS-inspired frame-based processing first
@@ -83,7 +83,7 @@ object WaveformGenerator {
             
             // If no data generated, try fallback chunk-based approach
             if (frameAmplitudes.isEmpty()) {
-                println("⚠️ iOS approach failed, trying fallback chunk-based approach")
+                CrashLogger.log("Debug", "⚠️ iOS approach failed, trying fallback chunk-based approach")
                 frameAmplitudes = generateChunkBasedWaveform(extractor, sampleRate, channelCount, effectiveBarsCount)
             }
             
@@ -97,7 +97,7 @@ object WaveformGenerator {
             val maxRms = frameAmplitudes.maxOrNull() ?: 1f
             val rmsRange = maxRms - minRms
             
-            println("📊 RMS range: min=$minRms, max=$maxRms, range=$rmsRange")
+            CrashLogger.log("Debug", "📊 RMS range: min=$minRms, max=$maxRms, range=$rmsRange")
             
             // Scale RMS values to 0-100 range with proper normalization
             val waveformIntArray = if (rmsRange > 0.001f) {
@@ -115,17 +115,17 @@ object WaveformGenerator {
                 }.toIntArray()
             }
             
-            println("✅ iOS-style waveform generated: ${waveformIntArray.size} bars from ${frameAmplitudes.size} points")
-            println("🎵 Raw RMS values (first 10): ${frameAmplitudes.take(10).joinToString()}")
-            println("🎵 Scaled values (first 10): ${waveformIntArray.take(10).joinToString()}")
-            println("📊 Using iOS approach - samplesPerPoint calculation, no oversampling")
-            println("🎛️ Using settings - Bars: ${currentSettings.barCount}, Buffer: ${currentSettings.bufferSize}, MinAmplitude: ${currentSettings.minAmplitude}")
+            CrashLogger.log("Debug", "✅ iOS-style waveform generated: ${waveformIntArray.size} bars from ${frameAmplitudes.size} points")
+            CrashLogger.log("Debug", "🎵 Raw RMS values (first 10): ${frameAmplitudes.take(10).joinToString()}")
+            CrashLogger.log("Debug", "🎵 Scaled values (first 10): ${waveformIntArray.take(10).joinToString()}")
+            CrashLogger.log("Debug", "📊 Using iOS approach - samplesPerPoint calculation, no oversampling")
+            CrashLogger.log("Debug", "🎛️ Using settings - Bars: ${currentSettings.barCount}, Buffer: ${currentSettings.bufferSize}, MinAmplitude: ${currentSettings.minAmplitude}")
             
             return@withContext waveformIntArray
 
         } catch (e: Exception) {
             CrashLogger.log("WaveformGenerator", "Exception during waveform generation from URI: $uri", e)
-            println("❌ Waveform generation failed for URI: $uri: ${e.message}")
+            CrashLogger.log("Debug", "❌ Waveform generation failed for URI: $uri: ${e.message}")
             return@withContext waveform
         } finally {
             extractor.release()
@@ -149,11 +149,11 @@ object WaveformGenerator {
         val estimatedFrameCount = estimateTotalFrames(extractor, sampleRate, channelCount)
         val samplesPerPoint = maxOf(1, (estimatedFrameCount / targetBars).toInt())
         
-        println("📊 iOS-style calculation: frameCount=$estimatedFrameCount, samplesPerPoint=$samplesPerPoint, targetBars=$targetBars")
+        CrashLogger.log("Debug", "📊 iOS-style calculation: frameCount=$estimatedFrameCount, samplesPerPoint=$samplesPerPoint, targetBars=$targetBars")
         
         // Reset extractor to beginning
         extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
-        println("📊 Extractor reset to beginning")
+        CrashLogger.log("Debug", "📊 Extractor reset to beginning")
         
         val buffer = ByteBuffer.allocateDirect(currentSettings.bufferSize).order(ByteOrder.nativeOrder())
         
@@ -169,7 +169,7 @@ object WaveformGenerator {
             waveformPoints.add(pointAmplitude)
         }
         
-        println("📊 Generated ${waveformPoints.size} waveform points using iOS approach")
+        CrashLogger.log("Debug", "📊 Generated ${waveformPoints.size} waveform points using iOS approach")
         return waveformPoints
     }
     
@@ -182,7 +182,7 @@ object WaveformGenerator {
         channelCount: Int,
         targetBars: Int
     ): List<Float> {
-        println("📊 Using fallback chunk-based approach")
+        CrashLogger.log("Debug", "📊 Using fallback chunk-based approach")
         
         val waveformPoints = mutableListOf<Float>()
         val buffer = ByteBuffer.allocateDirect(currentSettings.bufferSize).order(ByteOrder.nativeOrder())
@@ -191,7 +191,7 @@ object WaveformGenerator {
         try {
             extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
         } catch (e: Exception) {
-            println("⚠️ Cannot seek to beginning: ${e.message}")
+            CrashLogger.log("Debug", "⚠️ Cannot seek to beginning: ${e.message}")
             return emptyList()
         }
         
@@ -200,7 +200,7 @@ object WaveformGenerator {
         var sumOfSquares = 0.0
         val samplesPerBar = (sampleRate * channelCount) / targetBars // More accurate calculation
         
-        println("📊 Fallback: samplesPerBar=$samplesPerBar, sampleRate=$sampleRate, channels=$channelCount")
+        CrashLogger.log("Debug", "📊 Fallback: samplesPerBar=$samplesPerBar, sampleRate=$sampleRate, channels=$channelCount")
         
         var consecutiveFailures = 0
         val maxFailures = 10
@@ -210,12 +210,12 @@ object WaveformGenerator {
             val sampleSize = try {
                 extractor.readSampleData(buffer, 0)
             } catch (e: IllegalArgumentException) {
-                println("⚠️ IllegalArgumentException in fallback approach: ${e.message}")
+                CrashLogger.log("Debug", "⚠️ IllegalArgumentException in fallback approach: ${e.message}")
                 consecutiveFailures++
                 if (!extractor.advance()) break
                 continue
             } catch (e: Exception) {
-                println("⚠️ Other exception in fallback approach: ${e.message}")
+                CrashLogger.log("Debug", "⚠️ Other exception in fallback approach: ${e.message}")
                 consecutiveFailures++
                 break
             }
@@ -231,7 +231,7 @@ object WaveformGenerator {
             val shortBuffer = buffer.asShortBuffer()
             val samplesInBuffer = sampleSize / 2
             
-            println("📊 Read $samplesInBuffer samples from buffer of size $sampleSize")
+            CrashLogger.log("Debug", "📊 Read $samplesInBuffer samples from buffer of size $sampleSize")
             
             // Process samples in this buffer
             for (i in 0 until samplesInBuffer) {
@@ -246,7 +246,7 @@ object WaveformGenerator {
                     val finalRms = if (rms < 0.001f) currentSettings.minAmplitude else rms
                     waveformPoints.add(finalRms)
                     
-                    println("📊 Bar ${waveformPoints.size}: samples=$currentBarSamples, rms=$rms, final=$finalRms")
+                    CrashLogger.log("Debug", "📊 Bar ${waveformPoints.size}: samples=$currentBarSamples, rms=$rms, final=$finalRms")
                     
                     // Reset for next bar
                     sumOfSquares = 0.0
@@ -255,7 +255,7 @@ object WaveformGenerator {
             }
             
             if (!extractor.advance()) {
-                println("📊 Cannot advance extractor, stopping")
+                CrashLogger.log("Debug", "📊 Cannot advance extractor, stopping")
                 break
             }
         }
@@ -265,10 +265,10 @@ object WaveformGenerator {
             val rms = kotlin.math.sqrt(sumOfSquares / currentBarSamples).toFloat()
             val finalRms = if (rms < 0.001f) currentSettings.minAmplitude else rms
             waveformPoints.add(finalRms)
-            println("📊 Final bar: samples=$currentBarSamples, rms=$rms, final=$finalRms")
+            CrashLogger.log("Debug", "📊 Final bar: samples=$currentBarSamples, rms=$rms, final=$finalRms")
         }
         
-        println("📊 Fallback approach generated ${waveformPoints.size} points from $totalSamplesRead samples")
+        CrashLogger.log("Debug", "📊 Fallback approach generated ${waveformPoints.size} points from $totalSamplesRead samples")
         return waveformPoints
     }
     
@@ -303,12 +303,12 @@ object WaveformGenerator {
             val sampleSize = try {
                 extractor.readSampleData(buffer, 0)
             } catch (e: IllegalArgumentException) {
-                println("⚠️ IllegalArgumentException in readSampleData: ${e.message}")
+                CrashLogger.log("Debug", "⚠️ IllegalArgumentException in readSampleData: ${e.message}")
                 consecutiveFailures++
                 if (!extractor.advance()) break
                 continue
             } catch (e: Exception) {
-                println("⚠️ Other exception in readSampleData: ${e.message}")
+                CrashLogger.log("Debug", "⚠️ Other exception in readSampleData: ${e.message}")
                 consecutiveFailures++
                 break
             }
@@ -316,7 +316,7 @@ object WaveformGenerator {
             if (sampleSize <= 0) {
                 consecutiveFailures++
                 if (bufferReads == 0) {
-                    println("⚠️ No sample data read on first attempt")
+                    CrashLogger.log("Debug", "⚠️ No sample data read on first attempt")
                 }
                 if (!extractor.advance()) break
                 continue
@@ -338,7 +338,7 @@ object WaveformGenerator {
             samplesRead += samplesToProcess
             
             if (!extractor.advance()) {
-                println("⚠️ Cannot advance extractor, stopping at buffer read $bufferReads")
+                CrashLogger.log("Debug", "⚠️ Cannot advance extractor, stopping at buffer read $bufferReads")
                 break
             }
         }
@@ -352,7 +352,7 @@ object WaveformGenerator {
         
         // Debug logging for first few points
         if (samplesRead > 0) {
-            println("📊 Point: samplesRead=$samplesRead, bufferReads=$bufferReads, rms=$rms")
+            CrashLogger.log("Debug", "📊 Point: samplesRead=$samplesRead, bufferReads=$bufferReads, rms=$rms")
         }
         
         // Apply minimum amplitude only if RMS is very small (to prevent completely flat waveforms)

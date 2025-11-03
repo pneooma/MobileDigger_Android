@@ -965,7 +965,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.38 ::",
+                            text = ":: v10.42 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1497,7 +1497,7 @@ viewModel.updateSearchText("")
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                             .focusRequester(searchFocusRequester)
             .onPreviewKeyEvent { event ->
                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_UP) {
@@ -1740,7 +1740,7 @@ viewModel.updateSearchText("")
                                                             }
                                                         } catch (e: Exception) {
                                                             // Handle crash gracefully
-                                                            println("Error in swipe gesture: ${e.message}")
+                                                            CrashLogger.log("Debug", "Error in swipe gesture: ${e.message}")
                                                         }
                                                     }
                                                 }
@@ -1834,7 +1834,7 @@ viewModel.updateSearchText("")
                                             progress = progressPercent,
                                             onSeek = { seekProgress ->
                                                 val seekPosition = (seekProgress * duration).toLong()
-                                                    println("🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
+                                                    CrashLogger.log("Debug", "🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
                                                 viewModel.seekTo(seekPosition)
                                             },
                                                 songUri = currentFile?.uri.toString(),
@@ -3258,7 +3258,7 @@ viewModel.updateSearchText("")
                                                                     viewModel.sortAtIndex(actualIndex, SortAction.DISLIKE)
                                                                 }
                                                             } catch (e: Exception) {
-                                                                println("Error in dislike button: ${e.message}")
+                                                                CrashLogger.log("Debug", "Error in dislike button: ${e.message}")
                                                             }
                                                         },
                                                         modifier = Modifier.size(32.dp)
@@ -3278,7 +3278,7 @@ viewModel.updateSearchText("")
                                                         try {
                                                             viewModel.playPause()
                                                         } catch (e: Exception) {
-                                                            println("Error in play/pause button: ${e.message}")
+                                                            CrashLogger.log("Debug", "Error in play/pause button: ${e.message}")
                                                         }
                                                     },
                                                     modifier = Modifier.size(32.dp)
@@ -3302,7 +3302,7 @@ viewModel.updateSearchText("")
                                                                 viewModel.sortAtIndex(actualIndex, SortAction.DISLIKE)
                                                             }
                                                         } catch (e: Exception) {
-                                                            println("Error in dislike button: ${e.message}")
+                                                            CrashLogger.log("Debug", "Error in dislike button: ${e.message}")
                                                         }
                                                     },
                                                     modifier = Modifier.size(adaptiveButtonSize) // Adaptive button size
@@ -3358,7 +3358,7 @@ viewModel.updateSearchText("")
                                                                 if (actualIndex >= 0) {
                                                                     viewModel.sortAtIndex(actualIndex, SortAction.LIKE)
                                                                 }
-                                                            } catch (e: Exception) { println("Error in like button: ${e.message}") }
+                                                            } catch (e: Exception) { CrashLogger.log("Debug", "Error in like button: ${e.message}") }
                                                         },
                                                         modifier = Modifier.size(32.dp)
                                                     ) {
@@ -3408,7 +3408,7 @@ viewModel.updateSearchText("")
                                                                     showSpectrogram = true
                                                                 }
                                                             } catch (e: Exception) {
-                                                                println("Error in spectrogram button: ${e.message}")
+                                                                CrashLogger.log("Debug", "Error in spectrogram button: ${e.message}")
                                                             }
                                                         },
                                                         modifier = Modifier.size(32.dp)
@@ -3451,7 +3451,7 @@ viewModel.updateSearchText("")
                                                                     viewModel.shareToWhatsApp()
                                                                 }
                                                             } catch (e: Exception) {
-                                                                println("Error in share button: ${e.message}")
+                                                                CrashLogger.log("Debug", "Error in share button: ${e.message}")
                                                             }
                                                         },
                                                         modifier = Modifier.size(32.dp)
@@ -3611,7 +3611,7 @@ viewModel.updateSearchText("")
                                                         }
                                                     } catch (e: Exception) {
                                                         // Handle crash gracefully
-                                                        println("Error in miniplayer swipe gesture: ${e.message}")
+                                                        CrashLogger.log("Debug", "Error in miniplayer swipe gesture: ${e.message}")
                                                     }
                                                 }
                                             }

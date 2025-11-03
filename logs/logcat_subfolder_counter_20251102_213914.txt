@@ -528,3 +528,35 @@
 11-02 21:48:31.504 25742 25785 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 364560ms
 11-02 21:48:31.507 25742 25742 D VlcAudioBackend: 📁 Media changed
 11-02 21:48:31.554 25742 25742 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated
+11-02 21:57:29.237 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-24': Mennie - The Lost Tape (HOARD025).flac
+11-02 21:57:29.286 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-26': Cos - Future Holds (Raz Remix) [LHR005].flac
+11-02 21:57:29.287 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-26': Martek - Slitt [2M4L001].flac
+11-02 21:57:29.289 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-26': Zenniv - In Your Head [MICR008].flac
+11-02 21:57:29.334 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-28': HearThuG - Alien, All Too Alien [AYAV001].flac
+11-02 21:57:29.336 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-28': Luigi Seija - Girls Girls (Ollie Drummond Mix) [BOMBIS082].flac
+11-02 21:57:29.337 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-28': Tin Man - Wrapped up Acid (ACIDTEST020).flac
+11-02 21:57:29.387 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-30': C.ru.z - Marines Odyssey [OPAL002].flac
+11-02 21:57:29.388 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-30': Hostox and Pennyy - The Famous Plan.flac
+11-02 21:57:29.390 27612 27653 D FileManager: 📁 SAF: Found file in '2024-04-30': Root - Phantom Talks [SRW036].flac
+11-02 21:57:29.492 27612 27653 D MusicViewModel: 📁 Subfolder: 123 - 2 files
+11-02 21:57:29.524 27612 27653 D MusicViewModel: 📁 Subfolder: 234 - 1 files
+11-02 21:57:31.254 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() called
+11-02 21:57:31.255 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - getting files for playlist: TODO
+11-02 21:57:31.255 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - files count: 118, current index: 0
+11-02 21:57:31.256 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - loading file: Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:57:31.256 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - stored current file
+11-02 21:57:31.256 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updated current playing file to: Chiara Manchia and Paul Quzz - Garlato.flac (URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FChiara%20Manchia%20and%20Paul%20Quzz%20-%20Garlato.flac)
+11-02 21:57:31.257 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - preloaded next file: DOTT - Bullets On The Floor [MR007].flac
+11-02 21:57:31.257 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - checking memory pressure
+11-02 21:57:31.257 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - available memory: 242MB
+11-02 21:57:31.258 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()
+11-02 21:57:31.258 27612 27612 D AudioManager: 📁 File URI: content://com.android.externalstorage.documents/tree/primary%3ATrial%20now%2F04.%20April/document/primary%3ATrial%20now%2F04.%20April%2F2024-04-24%2FChiara%20Manchia%20and%20Paul%20Quzz%20-%20Garlato.flac
+11-02 21:57:31.423 27612 27612 D AudioManager: 📁 Temp file created: /data/user/0/com.example.mobiledigger/cache/aiff_temp_5900167716265243342.aiff
+11-02 21:57:31.877 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playFile result: true
+11-02 21:57:31.878 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - playback started successfully for Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:57:31.887 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracting duration for Chiara Manchia and Paul Quzz - Garlato.flac
+11-02 21:57:31.889 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - updating notification
+11-02 21:57:31.895 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - starting preload next song
+11-02 21:57:31.950 27612 27651 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - extracted duration: 480006ms
+11-02 21:57:32.046 27612 27612 D VlcAudioBackend: 📁 Media changed
+11-02 21:57:32.212 27612 27612 D MusicViewModel: 📁 LOAD_CURRENT_FILE() - duration updated

@@ -72,7 +72,7 @@ fun SharedWaveformDisplay(
                     val tapProgress = (offset.x / size.width).coerceIn(0f, 1f)
                     localProgress = tapProgress
                     onSeek(tapProgress)
-                    println("🎯 Shared waveform tap seek to: ${(tapProgress * 100).toInt()}%")
+                    CrashLogger.log("Debug", "🎯 Shared waveform tap seek to: ${(tapProgress * 100).toInt()}%")
                 }
             },
         contentAlignment = Alignment.Center

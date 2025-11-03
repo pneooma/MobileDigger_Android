@@ -99,12 +99,19 @@ class AudioManager(private val context: Context) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>?): Boolean {
                 val shouldRemove = size > maxCacheSize
                 if (shouldRemove) {
-                    CrashLogger.log("AudioManager", "Removing eldest spectrogram from cache to prevent memory leak")
+                    CrashLogger.log("AudioManager", "📊 Cache eviction: Removing eldest spectrogram (${size}/${maxCacheSize})")
                 }
                 return shouldRemove
             }
         }
     )
+    
+    // PHASE 2: Cache monitoring
+    fun logCacheStats() {
+        val spectrogramCount = spectrogramCache.size
+        val tempFileCount = tempFileCache.size
+        CrashLogger.log("AudioManager", "📊 Cache Stats - Spectrograms: ${spectrogramCount}/${maxCacheSize}, Temp Files: ${tempFileCount}/${maxTempCacheSize}")
+    }
     
     // User control methods
     fun setSpectrogramQuality(quality: SpectrogramQuality) {
@@ -164,8 +171,10 @@ class AudioManager(private val context: Context) {
                     
                     // Clean up the temp file when removing from cache
                     try {
-                        File(eldest.value).delete()
-                        CrashLogger.log("AudioManager", "Cleaned up temp file during cache clear: ${eldest.value}")
+                        val file = File(eldest.value)
+                        val sizeMB = file.length() / (1024 * 1024)
+                        file.delete()
+                        CrashLogger.log("AudioManager", "📊 Cache cleanup: Removed temp file (${sizeMB}MB): ${file.name}")
                         // CRITICAL: Give OS time to release file descriptors after deletion
                         Thread.sleep(20)
                     } catch (e: Exception) {

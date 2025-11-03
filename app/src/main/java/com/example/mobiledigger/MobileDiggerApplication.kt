@@ -7,8 +7,19 @@ import android.os.Build
 import com.example.mobiledigger.audio.MusicService
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.UnifiedLogger
+import com.example.mobiledigger.util.MemoryMonitor
+import com.example.mobiledigger.util.LowMemoryHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 class MobileDiggerApplication : Application() {
+    
+    // Application-level coroutine scope for background tasks
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    
+    // PHASE 3: Low memory handler
+    private lateinit var lowMemoryHandler: LowMemoryHandler
     
     override fun onCreate() {
         super.onCreate()
@@ -19,6 +30,25 @@ class MobileDiggerApplication : Application() {
         // Initialize crash logging immediately with no destination yet (internal + Downloads)
         CrashLogger.setDestinationFolder(this, null)
         CrashLogger.log("App", "Application started")
+        
+        // PHASE 1: Start memory monitoring
+        MemoryMonitor.startMonitoring(applicationScope)
+        MemoryMonitor.logMemoryStats()
+        
+        // PHASE 3: Register low memory handler
+        lowMemoryHandler = LowMemoryHandler(this)
+        lowMemoryHandler.setCallbacks(
+            onLowMemory = {
+                // Emergency cleanup on low memory
+                CrashLogger.log("App", "🚨 Performing emergency cleanup")
+                System.gc()
+            },
+            onTrimMemory = { level ->
+                // Log memory trim requests
+                CrashLogger.log("App", "⚠️ Memory trim requested: level=$level")
+            }
+        )
+        lowMemoryHandler.register()
         // Global uncaught exception handler to capture crashes
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
             try {

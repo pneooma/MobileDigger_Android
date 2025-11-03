@@ -15,31 +15,31 @@ object FilePathExtractor {
      * This mimics iOS direct file access approach.
      */
     fun getFilePath(context: Context, uri: Uri): String? {
-        println("🔍 FilePathExtractor: Attempting to extract path from URI: $uri")
-        println("🔍 URI scheme: ${uri.scheme}")
+        CrashLogger.log("Debug", "🔍 FilePathExtractor: Attempting to extract path from URI: $uri")
+        CrashLogger.log("Debug", "🔍 URI scheme: ${uri.scheme}")
         
         return when (uri.scheme) {
             "file" -> {
                 // Direct file URI - like iOS AVAudioFile(forReading: url)
                 val path = uri.path
-                println("📁 Direct file URI path: $path")
+                CrashLogger.log("Debug", "📁 Direct file URI path: $path")
                 if (isFilePathAccessible(path)) {
-                    println("✅ Direct file path is accessible - using like iOS")
+                    CrashLogger.log("Debug", "✅ Direct file path is accessible - using like iOS")
                     path
                 } else {
-                    println("❌ Direct file path is not accessible")
+                    CrashLogger.log("Debug", "❌ Direct file path is not accessible")
                     null
                 }
             }
             "content" -> {
                 // Try to get file path from content URI
-                println("📄 Content URI detected, attempting extraction...")
+                CrashLogger.log("Debug", "📄 Content URI detected, attempting extraction...")
                 val path = getFilePathFromContentUri(context, uri)
-                println("📄 Content URI extraction result: $path")
+                CrashLogger.log("Debug", "📄 Content URI extraction result: $path")
                 path
             }
             else -> {
-                println("❌ Unsupported URI scheme: ${uri.scheme}")
+                CrashLogger.log("Debug", "❌ Unsupported URI scheme: ${uri.scheme}")
                 CrashLogger.log("FilePathExtractor", "Unsupported URI scheme: ${uri.scheme}")
                 null
             }
@@ -48,7 +48,7 @@ object FilePathExtractor {
     
     private fun getFilePathFromContentUri(context: Context, uri: Uri): String? {
         return try {
-            println("🔍 Attempting to extract file path from content URI: $uri")
+            CrashLogger.log("Debug", "🔍 Attempting to extract file path from content URI: $uri")
             
             // Try MediaStore first
             val projection = arrayOf(MediaStore.MediaColumns.DATA)
@@ -56,12 +56,12 @@ object FilePathExtractor {
                 if (cursor.moveToFirst()) {
                     val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
                     val filePath = cursor.getString(columnIndex)
-                    println("📁 MediaStore file path: $filePath")
+                    CrashLogger.log("Debug", "📁 MediaStore file path: $filePath")
                     if (filePath != null && File(filePath).exists()) {
-                        println("✅ MediaStore path is valid and file exists")
+                        CrashLogger.log("Debug", "✅ MediaStore path is valid and file exists")
                         return filePath
                     } else {
-                        println("❌ MediaStore path is invalid or file doesn't exist")
+                        CrashLogger.log("Debug", "❌ MediaStore path is invalid or file doesn't exist")
                     }
                 }
             }
@@ -72,18 +72,18 @@ object FilePathExtractor {
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (nameIndex >= 0) {
                         val fileName = cursor.getString(nameIndex)
-                        println("📄 File name from OpenableColumns: $fileName")
+                        CrashLogger.log("Debug", "📄 File name from OpenableColumns: $fileName")
                         if (fileName != null) {
                             // Try to construct a path in external storage
                             val externalDir = context.getExternalFilesDir(null)
                             if (externalDir != null) {
                                 val tempPath = File(externalDir, fileName).absolutePath
-                                println("📁 Constructed temp path: $tempPath")
+                                CrashLogger.log("Debug", "📁 Constructed temp path: $tempPath")
                                 if (File(tempPath).exists()) {
-                                    println("✅ Temp path file exists")
+                                    CrashLogger.log("Debug", "✅ Temp path file exists")
                                     return tempPath
                                 } else {
-                                    println("❌ Temp path file doesn't exist")
+                                    CrashLogger.log("Debug", "❌ Temp path file doesn't exist")
                                 }
                             }
                         }
@@ -91,10 +91,10 @@ object FilePathExtractor {
                 }
             }
             
-            println("❌ Could not extract file path from content URI")
+            CrashLogger.log("Debug", "❌ Could not extract file path from content URI")
             null
         } catch (e: Exception) {
-            println("❌ Exception extracting file path: ${e.message}")
+            CrashLogger.log("Debug", "❌ Exception extracting file path: ${e.message}")
             CrashLogger.log("FilePathExtractor", "Error extracting file path from content URI", e)
             null
         }

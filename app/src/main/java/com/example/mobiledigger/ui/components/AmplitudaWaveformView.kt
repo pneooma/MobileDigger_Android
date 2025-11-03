@@ -1,4 +1,5 @@
 package com.example.mobiledigger.ui.components
+import com.example.mobiledigger.util.CrashLogger
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -51,9 +52,9 @@ fun AmplitudaWaveformView(
         scope.coroutineContext.cancelChildren()
         
         val uriString = currentFile?.uri?.toString()
-        println("🔄 AmplitudaWaveformView: LaunchedEffect triggered for file: ${currentFile?.name}")
-        println("🔄 URI string: $uriString")
-        println("🔄 Previous waveform data: ${waveformData?.size ?: "null"}")
+        CrashLogger.log("Debug", "🔄 AmplitudaWaveformView: LaunchedEffect triggered for file: ${currentFile?.name}")
+        CrashLogger.log("Debug", "🔄 URI string: $uriString")
+        CrashLogger.log("Debug", "🔄 Previous waveform data: ${waveformData?.size ?: "null"}")
         
         // Always reset state when file changes
         waveformData = null
@@ -61,8 +62,8 @@ fun AmplitudaWaveformView(
         isLoading = true
         
         if (currentFile != null) {
-            println("🎵 Starting Amplituda waveform generation for: ${currentFile.name}")
-            println("🔗 URI: ${currentFile.uri}")
+            CrashLogger.log("Debug", "🎵 Starting Amplituda waveform generation for: ${currentFile.name}")
+            CrashLogger.log("Debug", "🔗 URI: ${currentFile.uri}")
             
             // Create cache key based on URI and file size
             val cacheKey = "${currentFile.uri}_${currentFile.size}"
@@ -70,7 +71,7 @@ fun AmplitudaWaveformView(
             // Check cache first
             val cachedWaveform = waveformCache[cacheKey]
             if (cachedWaveform != null) {
-                println("⚡ Using cached waveform data: ${cachedWaveform.size} samples")
+                CrashLogger.log("Debug", "⚡ Using cached waveform data: ${cachedWaveform.size} samples")
                 waveformData = cachedWaveform
                 isLoading = false
                 return@LaunchedEffect
@@ -102,12 +103,12 @@ fun AmplitudaWaveformView(
                         val inputStream = try {
                             context.contentResolver.openInputStream(currentFile.uri)
                         } catch (e: Exception) {
-                            println("❌ Failed to open InputStream from URI: ${e.message}")
+                            CrashLogger.log("Debug", "❌ Failed to open InputStream from URI: ${e.message}")
                             null
                         }
                         
                         if (inputStream != null) {
-                            println("🔗 Using InputStream for Amplituda processing")
+                            CrashLogger.log("Debug", "🔗 Using InputStream for Amplituda processing")
                             
                             // Process audio using InputStream with optimized settings
                             amplituda.processAudio(inputStream, compressSettings)
@@ -131,33 +132,33 @@ fun AmplitudaWaveformView(
                                                     waveformData = samples
                                                     isLoading = false
                                                 }
-                                                println("✅ Amplituda waveform generated from InputStream: ${samples.size} samples")
-                                                println("🎵 First 10 amplitudes: ${samples.take(10).joinToString()}")
-                                                println("🎵 Amplitude range: min=${samples.minOrNull()}, max=${samples.maxOrNull()}")
+                                                CrashLogger.log("Debug", "✅ Amplituda waveform generated from InputStream: ${samples.size} samples")
+                                                CrashLogger.log("Debug", "🎵 First 10 amplitudes: ${samples.take(10).joinToString()}")
+                                                CrashLogger.log("Debug", "🎵 Amplitude range: min=${samples.minOrNull()}, max=${samples.maxOrNull()}")
                                             } finally {
                                                 // Close the InputStream
                                                 try {
                                                     inputStream.close()
                                                 } catch (e: Exception) {
-                                                    println("⚠️ Failed to close InputStream: ${e.message}")
+                                                    CrashLogger.log("Debug", "⚠️ Failed to close InputStream: ${e.message}")
                                                 }
                                             }
                                         }
                                     },
                                     object : AmplitudaErrorListener {
                                         override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
-                                            println("❌ Amplituda failed with InputStream, trying URI string: ${exception.message}")
+                                            CrashLogger.log("Debug", "❌ Amplituda failed with InputStream, trying URI string: ${exception.message}")
                                             
                                             // Close the InputStream
                                             try {
                                                 inputStream.close()
                                             } catch (e: Exception) {
-                                                println("⚠️ Failed to close InputStream: ${e.message}")
+                                                CrashLogger.log("Debug", "⚠️ Failed to close InputStream: ${e.message}")
                                             }
                                             
                                             // Try URI string as fallback
                                             val uriString = currentFile.uri.toString()
-                                            println("🔗 Trying URI string: $uriString")
+                                            CrashLogger.log("Debug", "🔗 Trying URI string: $uriString")
                                             
                                             amplituda.processAudio(uriString, compressSettings)
                                                 .get(
@@ -177,12 +178,12 @@ fun AmplitudaWaveformView(
                                                                 waveformData = samples
                                                                 isLoading = false
                                                             }
-                                                            println("✅ Amplituda waveform generated from URI string: ${samples.size} samples")
+                                                            CrashLogger.log("Debug", "✅ Amplituda waveform generated from URI string: ${samples.size} samples")
                                                         }
                                                     },
                                                     object : AmplitudaErrorListener {
                                                         override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
-                                                            println("❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
+                                                            CrashLogger.log("Debug", "❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
                                                             
                                                             // Final fallback to using the existing WaveformGenerator approach
                                                             scope.launch(Dispatchers.IO) {
@@ -200,10 +201,10 @@ fun AmplitudaWaveformView(
                                                                         waveformData = fallbackSamples
                                                                         isLoading = false
                                                                     }
-                                                                    println("✅ Final fallback waveform generated: ${fallbackSamples.size} samples")
+                                                                    CrashLogger.log("Debug", "✅ Final fallback waveform generated: ${fallbackSamples.size} samples")
                                                                     
                                                                 } catch (fallbackException: Exception) {
-                                                                    println("❌ Final fallback also failed: ${fallbackException.message}")
+                                                                    CrashLogger.log("Debug", "❌ Final fallback also failed: ${fallbackException.message}")
                                                                     scope.launch(Dispatchers.Main) {
                                                                         errorMessage = "All waveform generation methods failed: ${exception.message}"
                                                                         isLoading = false
@@ -217,9 +218,9 @@ fun AmplitudaWaveformView(
                                     }
                                 )
                         } else {
-                            println("🔗 InputStream not available, trying URI string directly")
+                            CrashLogger.log("Debug", "🔗 InputStream not available, trying URI string directly")
                             val uriString = currentFile.uri.toString()
-                            println("🔗 Trying URI string: $uriString")
+                            CrashLogger.log("Debug", "🔗 Trying URI string: $uriString")
                             
                             amplituda.processAudio(uriString, compressSettings)
                                 .get(
@@ -239,12 +240,12 @@ fun AmplitudaWaveformView(
                                                 waveformData = samples
                                                 isLoading = false
                                             }
-                                            println("✅ Amplituda waveform generated from URI string: ${samples.size} samples")
+                                            CrashLogger.log("Debug", "✅ Amplituda waveform generated from URI string: ${samples.size} samples")
                                         }
                                     },
                                     object : AmplitudaErrorListener {
                                         override fun onError(exception: linc.com.amplituda.exceptions.AmplitudaException) {
-                                            println("❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
+                                            CrashLogger.log("Debug", "❌ Amplituda failed with URI string, trying final fallback: ${exception.message}")
                                             
                                             // Final fallback to using the existing WaveformGenerator approach
                                             scope.launch(Dispatchers.IO) {
@@ -262,10 +263,10 @@ fun AmplitudaWaveformView(
                                                         waveformData = fallbackSamples
                                                         isLoading = false
                                                     }
-                                                    println("✅ Final fallback waveform generated: ${fallbackSamples.size} samples")
+                                                    CrashLogger.log("Debug", "✅ Final fallback waveform generated: ${fallbackSamples.size} samples")
                                                     
                                                 } catch (fallbackException: Exception) {
-                                                    println("❌ Final fallback also failed: ${fallbackException.message}")
+                                                    CrashLogger.log("Debug", "❌ Final fallback also failed: ${fallbackException.message}")
                                                     scope.launch(Dispatchers.Main) {
                                                         errorMessage = "All waveform generation methods failed: ${exception.message}"
                                                         isLoading = false
@@ -278,7 +279,7 @@ fun AmplitudaWaveformView(
                         }
                         
                     } catch (e: Exception) {
-                        println("❌ Exception during Amplituda setup: ${e.message}")
+                        CrashLogger.log("Debug", "❌ Exception during Amplituda setup: ${e.message}")
                         e.printStackTrace()
                         scope.launch(Dispatchers.Main) {
                             errorMessage = e.message ?: "Unknown error occurred"
@@ -287,13 +288,13 @@ fun AmplitudaWaveformView(
                     }
                 }
             } catch (e: Exception) {
-                println("❌ Exception during coroutine setup: ${e.message}")
+                CrashLogger.log("Debug", "❌ Exception during coroutine setup: ${e.message}")
                 e.printStackTrace()
                 errorMessage = e.message ?: "Unknown error occurred"
                 isLoading = false
             }
         } else {
-            println("📭 No current file, clearing waveform data")
+            CrashLogger.log("Debug", "📭 No current file, clearing waveform data")
             waveformData = null
             errorMessage = null
             isLoading = false

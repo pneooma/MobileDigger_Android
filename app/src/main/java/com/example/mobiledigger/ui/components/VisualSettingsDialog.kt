@@ -335,7 +335,7 @@ private fun DropdownSettingItem(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
             )
             
             ExposedDropdownMenu(

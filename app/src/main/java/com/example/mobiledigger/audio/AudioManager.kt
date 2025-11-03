@@ -20,6 +20,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.util.ResourceManager
+import com.example.mobiledigger.util.PerformanceProfiler
 import wseemann.media.FFmpegMediaPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -463,17 +464,18 @@ class AudioManager(private val context: Context) {
     }
     
     fun playFile(musicFile: MusicFile): Boolean {
-        return try {
-            CrashLogger.log("AudioManager", "🎵 Starting playback for: ${musicFile.name}")
+        return PerformanceProfiler.profile("AudioManager.playFile[${musicFile.name}]") {
+            try {
+                CrashLogger.log("AudioManager", "🎵 Starting playback for: ${musicFile.name}")
             
             currentFile = musicFile
             val uri = musicFile.uri
             
-            // Validate URI before attempting playback
-            if (uri == null || uri.toString().isEmpty() || uri.toString() == "null") {
-                CrashLogger.log("AudioManager", "❌ Invalid or empty URI for file: ${musicFile.name}, URI: $uri")
-                return false
-            }
+                // Validate URI before attempting playback
+                if (uri == null || uri.toString().isEmpty() || uri.toString() == "null") {
+                    CrashLogger.log("AudioManager", "❌ Invalid or empty URI for file: ${musicFile.name}, URI: $uri")
+                    return@profile false
+                }
             
             CrashLogger.log("AudioManager", "📁 File URI: $uri")
             
@@ -512,7 +514,7 @@ class AudioManager(private val context: Context) {
                 // This prevents crashes from corrupted or problematic AIFF files
                 if (!validateAIFFFile(uri, musicFile)) {
                     CrashLogger.log("AudioManager", "❌ AIFF file validation failed, skipping: ${musicFile.name}")
-                    return false
+                    return@profile false
                 }
                 
                 CrashLogger.log("AudioManager", "✅ AIFF file validation passed, trying VLC first")
@@ -525,7 +527,7 @@ class AudioManager(private val context: Context) {
                             isUsingFFmpeg = false
                             isUsingVlc = true
                             CrashLogger.log("AudioManager", "✅ VLC playback successful for AIFF: ${musicFile.name}")
-                            return true
+                            return@profile true
                         } else {
                             CrashLogger.log("AudioManager", "❌ VLC failed for AIFF, trying FFmpegMediaPlayer: ${musicFile.name}")
                         }
@@ -536,19 +538,19 @@ class AudioManager(private val context: Context) {
                 
                 // Fallback to FFmpegMediaPlayer for AIFF files
                 try {
-                val ffmpegSuccess = tryPlayWithFFmpegSync(uri)
-                if (ffmpegSuccess) {
-                    isUsingFFmpeg = true
+                    val ffmpegSuccess = tryPlayWithFFmpegSync(uri)
+                    if (ffmpegSuccess) {
+                        isUsingFFmpeg = true
                         isUsingVlc = false
                         CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer playback successful for AIFF: ${musicFile.name}")
-                    return true
+                        return@profile true
                     } else {
                         CrashLogger.log("AudioManager", "❌ FFmpegMediaPlayer failed for AIFF: ${musicFile.name}")
-                        return false
-                }
+                        return@profile false
+                    }
                 } catch (e: Exception) {
                     CrashLogger.log("AudioManager", "💥 Exception in FFmpegMediaPlayer for AIFF: ${musicFile.name}", e)
-                    return false
+                    return@profile false
                 }
             }
             
@@ -570,7 +572,7 @@ class AudioManager(private val context: Context) {
                             intent.`package` = context.packageName
                             context.sendBroadcast(intent)
                         } catch (_: Exception) {}
-                        return true
+                        return@profile true
                     }
                 } catch (e: Exception) {
                     CrashLogger.log("AudioManager", "💥 VLC playback failed for non-AIFF, falling back", e)
@@ -583,15 +585,16 @@ class AudioManager(private val context: Context) {
                 isUsingFFmpeg = false
                 isUsingVlc = false
                 CrashLogger.log("AudioManager", "ExoPlayer playback successful for: ${musicFile.name}")
-                return true
+                return@profile true
             }
             
-            CrashLogger.log("AudioManager", "All playback methods failed for: ${musicFile.name}")
-            false
-            
+                CrashLogger.log("AudioManager", "All playback methods failed for: ${musicFile.name}")
+                false
+                
             } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Error in playFile", e)
-            false
+                CrashLogger.log("AudioManager", "Error in playFile", e)
+                false
+            }
         }
     }
     
@@ -1426,6 +1429,7 @@ class AudioManager(private val context: Context) {
 
     // Spectrogram generation with proper audio analysis
     suspend fun generateSpectrogram(musicFile: MusicFile): ImageBitmap? {
+        val startTime = android.os.SystemClock.elapsedRealtime()
         return try {
             val cacheKey = "${musicFile.name}_${musicFile.size}"
             spectrogramCache[cacheKey]?.let { cachedSpectrogram ->
@@ -1434,60 +1438,69 @@ class AudioManager(private val context: Context) {
                 return cachedSpectrogram
             }
             
-            CrashLogger.log("AudioManager", "Generating new spectrogram for: ${musicFile.name}")
-            
-            // Check if file is MP3 and convert to WAV first for better spectrogram generation
-            val fileForSpectrogram = if (musicFile.name.lowercase().endsWith(".mp3")) {
-                CrashLogger.log("AudioManager", "MP3 file detected, converting to WAV for spectrogram generation")
-                _isConverting.value = true
-                _conversionProgress.value = 0f
-                try {
-                    convertMp3ToWav(musicFile)
-                } finally {
-                    _isConverting.value = false
-                    _conversionProgress.value = 1f
+            try {
+                
+                CrashLogger.log("AudioManager", "Generating new spectrogram for: ${musicFile.name}")
+                
+                // Check if file is MP3 and convert to WAV first for better spectrogram generation
+                val fileForSpectrogram = if (musicFile.name.lowercase().endsWith(".mp3")) {
+                    CrashLogger.log("AudioManager", "MP3 file detected, converting to WAV for spectrogram generation")
+                    _isConverting.value = true
+                    _conversionProgress.value = 0f
+                    try {
+                        convertMp3ToWav(musicFile)
+                    } finally {
+                        _isConverting.value = false
+                        _conversionProgress.value = 1f
+                    }
+                } else {
+                    musicFile
                 }
-            } else {
-                musicFile
-            }
-            
-            // Generate spectrogram with progress tracking
-            _isGeneratingSpectrogram.value = true
-            _spectrogramProgress.value = 0f
-            
-            val spectrogram = try {
-                withTimeout(30000) { // 30 second timeout
-                    withContext(Dispatchers.IO) {
-                        generateSpectrogramInternal(fileForSpectrogram ?: musicFile)
+                
+                // Generate spectrogram with progress tracking
+                _isGeneratingSpectrogram.value = true
+                _spectrogramProgress.value = 0f
+                
+                val spectrogram = try {
+                    withTimeout(30000) { // 30 second timeout
+                        withContext(Dispatchers.IO) {
+                            generateSpectrogramInternal(fileForSpectrogram ?: musicFile)
+                        }
+                    }
+                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                    CrashLogger.log("AudioManager", "Spectrogram generation timed out after 30 seconds")
+                    null
+                } catch (e: Exception) {
+                    CrashLogger.log("AudioManager", "Error during spectrogram generation", e)
+                    null
+                } finally {
+                    _isGeneratingSpectrogram.value = false
+                    _spectrogramProgress.value = 1f
+                    // Clean up temporary WAV file if it was created
+                    if (fileForSpectrogram != null && fileForSpectrogram != musicFile) {
+                        cleanupTempWavFile(fileForSpectrogram)
                     }
                 }
-            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                CrashLogger.log("AudioManager", "Spectrogram generation timed out after 30 seconds")
-                null
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "Error during spectrogram generation", e)
-                null
-            } finally {
-                _isGeneratingSpectrogram.value = false
-                _spectrogramProgress.value = 1f
-                // Clean up temporary WAV file if it was created
-                if (fileForSpectrogram != null && fileForSpectrogram != musicFile) {
-                    cleanupTempWavFile(fileForSpectrogram)
+                
+                if (spectrogram != null) {
+                    spectrogramCache[cacheKey] = spectrogram
+                    CrashLogger.log("AudioManager", "Spectrogram generated and cached successfully")
+                } else {
+                    CrashLogger.log("AudioManager", "Spectrogram generation returned null")
                 }
+                
+                spectrogram
+            } catch (e: Exception) {
+                CrashLogger.log("AudioManager", "Spectrogram generation failed", e)
+                e.printStackTrace()
+                null
             }
-            
-            if (spectrogram != null) {
-                spectrogramCache[cacheKey] = spectrogram
-                CrashLogger.log("AudioManager", "Spectrogram generated and cached successfully")
-            } else {
-                CrashLogger.log("AudioManager", "Spectrogram generation returned null")
+        } finally {
+            val duration = android.os.SystemClock.elapsedRealtime() - startTime
+            PerformanceProfiler.recordOperation("AudioManager.generateSpectrogram", duration)
+            if (duration > 1000) {
+                CrashLogger.log("AudioManager", "⚠️ SLOW spectrogram generation: ${duration}ms for ${musicFile.name}")
             }
-            
-            spectrogram
-        } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Spectrogram generation failed", e)
-            e.printStackTrace()
-            null
         }
     }
     
@@ -1495,6 +1508,7 @@ class AudioManager(private val context: Context) {
      * Convert MP3 file to WAV format for better spectrogram generation using MediaMetadataRetriever and MediaExtractor/MediaCodec
      */
     private suspend fun convertMp3ToWav(mp3File: MusicFile): MusicFile? {
+        val startTime = android.os.SystemClock.elapsedRealtime()
         return try {
             CrashLogger.log("AudioManager", "Starting MP3 to WAV conversion for: ${mp3File.name}")
             
@@ -1673,6 +1687,12 @@ class AudioManager(private val context: Context) {
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Error converting MP3 to WAV", e)
             null
+        } finally {
+            val duration = android.os.SystemClock.elapsedRealtime() - startTime
+            PerformanceProfiler.recordOperation("AudioManager.convertMp3ToWav", duration)
+            if (duration > 1000) {
+                CrashLogger.log("AudioManager", "⚠️ SLOW MP3 conversion: ${duration}ms for ${mp3File.name}")
+            }
         }
     }
     

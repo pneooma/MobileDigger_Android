@@ -143,9 +143,11 @@ class WaveformGenerator(private val context: Context) {
     /**
      * Extract raw PCM audio data using MediaCodec.
      * Uses SEEK-BASED sampling for MAXIMUM SPEED - seeks to specific timestamps instead of processing all frames.
+     * OPTIMIZED: Pre-allocates array to reduce memory allocations.
      */
     private fun extractPCMData(extractor: MediaExtractor, codec: MediaCodec, targetSamples: Int, decodeTimeoutUs: Long = DECODE_TIMEOUT_US): FloatArray {
-        val pcmSamples = mutableListOf<Float>()
+        // PHASE 5 OPTIMIZATION: Pre-allocate array instead of using mutableList
+        val pcmSamples = FloatArray(targetSamples)
         val bufferInfo = MediaCodec.BufferInfo()
         
         // Get total duration
@@ -179,11 +181,10 @@ class WaveformGenerator(private val context: Context) {
                                 val outputBuffer = codec.getOutputBuffer(outputBufferIndex)
                                 
                                 if (outputBuffer != null && bufferInfo.size > 0) {
-                                    val samples = extractSamplesFromBuffer(outputBuffer, bufferInfo)
-                                    if (samples.isNotEmpty()) {
-                                        pcmSamples.add(samples.maxOrNull() ?: 0f)
-                                        samplesCollected++
-                                    }
+                                    // PHASE 5 OPTIMIZATION: Extract max directly without intermediate list
+                                    val maxSample = extractMaxSampleFromBuffer(outputBuffer, bufferInfo)
+                                    pcmSamples[samplesCollected] = maxSample
+                                    samplesCollected++
                                 }
                                 
                                 codec.releaseOutputBuffer(outputBufferIndex, false)
@@ -201,7 +202,12 @@ class WaveformGenerator(private val context: Context) {
             }
         }
         
-        return pcmSamples.toFloatArray()
+        // Return only the filled portion if we didn't collect all samples
+        return if (samplesCollected < targetSamples) {
+            pcmSamples.copyOf(samplesCollected)
+        } else {
+            pcmSamples
+        }
     }
     
     /**
@@ -284,6 +290,7 @@ class WaveformGenerator(private val context: Context) {
     
     /**
      * Extract PCM data for a specific time segment (used by parallel processing).
+     * OPTIMIZED: Pre-allocates array to reduce memory allocations.
      */
     private fun extractSegmentPCMData(
         extractor: MediaExtractor,
@@ -294,7 +301,8 @@ class WaveformGenerator(private val context: Context) {
         threadIndex: Int,
         decodeTimeoutUs: Long = DECODE_TIMEOUT_US
     ): List<Float> {
-        val pcmSamples = mutableListOf<Float>()
+        // PHASE 5 OPTIMIZATION: Pre-allocate array instead of using mutableList
+        val pcmSamples = FloatArray(targetSamples)
         val bufferInfo = MediaCodec.BufferInfo()
         
         val segmentDurationUs = segmentEndUs - segmentStartUs
@@ -331,11 +339,10 @@ class WaveformGenerator(private val context: Context) {
                                 val outputBuffer = codec.getOutputBuffer(outputBufferIndex)
                                 
                                 if (outputBuffer != null && bufferInfo.size > 0) {
-                                    val samples = extractSamplesFromBuffer(outputBuffer, bufferInfo)
-                                    if (samples.isNotEmpty()) {
-                                        pcmSamples.add(samples.maxOrNull() ?: 0f)
-                                        samplesCollected++
-                                    }
+                                    // PHASE 5 OPTIMIZATION: Extract max directly without intermediate list
+                                    val maxSample = extractMaxSampleFromBuffer(outputBuffer, bufferInfo)
+                                    pcmSamples[samplesCollected] = maxSample
+                                    samplesCollected++
                                 }
                                 
                                 codec.releaseOutputBuffer(outputBufferIndex, false)
@@ -354,8 +361,12 @@ class WaveformGenerator(private val context: Context) {
             }
         }
         
-        
-        return pcmSamples
+        // Return only filled portion as list for parallel processing compatibility
+        return if (samplesCollected < targetSamples) {
+            pcmSamples.take(samplesCollected)
+        } else {
+            pcmSamples.toList()
+        }
     }
     
     /**
@@ -375,6 +386,29 @@ class WaveformGenerator(private val context: Context) {
         }
         
         return samples
+    }
+    
+    /**
+     * Extract maximum amplitude sample from a PCM buffer (OPTIMIZED version).
+     * Assumes 16-bit PCM audio. Returns max directly without intermediate allocations.
+     * PHASE 5 OPTIMIZATION: Reduces memory allocations by avoiding intermediate list.
+     */
+    private fun extractMaxSampleFromBuffer(buffer: ByteBuffer, bufferInfo: MediaCodec.BufferInfo): Float {
+        var maxSample = 0f
+        
+        buffer.position(bufferInfo.offset)
+        buffer.limit(bufferInfo.offset + bufferInfo.size)
+        
+        // Read 16-bit PCM samples and track maximum
+        while (buffer.remaining() >= 2) {
+            val sample = buffer.short.toFloat() / Short.MAX_VALUE // Normalize to -1.0 to 1.0
+            val absSample = abs(sample) // Use absolute value for amplitude
+            if (absSample > maxSample) {
+                maxSample = absSample
+            }
+        }
+        
+        return maxSample
     }
     
     /**
@@ -578,7 +612,8 @@ class WaveformGenerator(private val context: Context) {
     }
     
     /**
-     * Apply smoothing and dynamic range compression to waveform for better visual quality
+     * Apply smoothing and dynamic range compression to waveform for better visual quality.
+     * PHASE 5 OPTIMIZATION: Uses temporary array more efficiently to reduce allocations.
      */
     private fun applySmoothingAndCompression(waveform: IntArray): IntArray {
         if (waveform.isEmpty()) return waveform
@@ -586,20 +621,27 @@ class WaveformGenerator(private val context: Context) {
         val targetSampleCount = waveform.size
         
         // Step 1: Apply smoothing filter (3-point moving average) for better visual quality
+        // PHASE 5 OPTIMIZATION: Reuse same array for smoothing and compression
         val smoothed = IntArray(targetSampleCount)
+        var minVal = Int.MAX_VALUE
+        var maxVal = Int.MIN_VALUE
+        
         for (i in waveform.indices) {
             val prev = if (i > 0) waveform[i - 1] else waveform[i]
             val next = if (i < waveform.size - 1) waveform[i + 1] else waveform[i]
-            smoothed[i] = ((prev + waveform[i] * 2 + next) / 4.0).toInt()
+            val smoothedValue = ((prev + waveform[i] * 2 + next) / 4.0).toInt()
+            smoothed[i] = smoothedValue
+            
+            // Track min/max during smoothing pass to avoid second iteration
+            if (smoothedValue < minVal) minVal = smoothedValue
+            if (smoothedValue > maxVal) maxVal = smoothedValue
         }
         
         // Step 2: Compress dynamic range to reduce extremes (30-85 range for smoother look)
-        val minVal = smoothed.minOrNull() ?: 5
-        val maxVal = smoothed.maxOrNull() ?: 100
         val range = maxVal - minVal
         
         if (range > 5) {
-            // Compress to 30-85 range (55-point range instead of 90)
+            // Compress to 30-85 range (55-point range instead of 90) - IN PLACE
             for (i in smoothed.indices) {
                 val normalized = ((smoothed[i] - minVal).toFloat() / range * 55f) + 30f
                 smoothed[i] = normalized.toInt().coerceIn(30, 85)

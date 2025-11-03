@@ -42,16 +42,19 @@ class WaveformGenerator(private val context: Context) {
      * @return IntArray of amplitude values (0-100), or null if extraction fails
      */
     suspend fun generateWaveform(uri: Uri, targetSampleCount: Int = 100, fileName: String = ""): IntArray? = withContext(Dispatchers.IO) {
-        val extractor = MediaExtractor()
-        var codec: MediaCodec? = null
-        
-        try {
-            // Check if this is an AIFF file
-            val isAiff = fileName.lowercase().let { it.endsWith(".aif") || it.endsWith(".aiff") }
+        // PHASE 5: Profile waveform generation
+        val startTime = android.os.SystemClock.elapsedRealtime()
+        val result = try {
+            val extractor = MediaExtractor()
+            var codec: MediaCodec? = null
             
-            if (isAiff) {
-                return@withContext generateAiffWaveform(uri, targetSampleCount)
-            }
+            try {
+                // Check if this is an AIFF file
+                val isAiff = fileName.lowercase().let { it.endsWith(".aif") || it.endsWith(".aiff") }
+                
+                if (isAiff) {
+                    return@withContext generateAiffWaveform(uri, targetSampleCount)
+                }
             
             // Set data source for supported formats
             extractor.setDataSource(context, uri, null)
@@ -99,18 +102,27 @@ class WaveformGenerator(private val context: Context) {
             val waveform = downsampleToWaveform(pcmData, targetSampleCount)
             applySmoothingAndCompression(waveform)
             
-        } catch (e: Exception) {
-            CrashLogger.log(TAG, "Error generating waveform", e)
-            null
-        } finally {
-            try {
-                codec?.stop()
-                codec?.release()
-                extractor.release()
             } catch (e: Exception) {
-                // Ignore cleanup errors
+                CrashLogger.log(TAG, "Error generating waveform", e)
+                null
+            } finally {
+                try {
+                    codec?.stop()
+                    codec?.release()
+                    extractor.release()
+                } catch (e: Exception) {
+                    // Ignore cleanup errors
+                }
+            }
+        } finally {
+            // PHASE 5: Log generation time
+            val duration = android.os.SystemClock.elapsedRealtime() - startTime
+            com.example.mobiledigger.util.PerformanceProfiler.recordOperation("WaveformGen", duration)
+            if (duration > 1000) {
+                CrashLogger.log(TAG, "⚠️ SLOW waveform generation: ${duration}ms for $fileName")
             }
         }
+        return@withContext result
     }
     
     /**

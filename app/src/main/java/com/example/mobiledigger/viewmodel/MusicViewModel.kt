@@ -66,6 +66,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     private val fileOperationHelper = com.example.mobiledigger.util.FileOperationHelper(fileManager)
     
+    // PHASE 5: Performance profiling - moved to separate init block to avoid nested init
+    private fun startPerformanceStatLogging() {
+        viewModelScope.launch {
+            // Log performance stats every 5 minutes
+            while (isActive) {
+                delay(300_000) // 5 minutes
+                com.example.mobiledigger.util.PerformanceProfiler.logStats()
+            }
+        }
+    }
+    
     // Mutex to prevent concurrent file loading operations that cause memory pressure
     private val fileLoadingMutex = Mutex()
     
@@ -284,6 +295,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             
             // Clear caches periodically to prevent memory buildup
             startPeriodicCacheClearing()
+            
+            // PHASE 5: Start performance stat logging
+            startPerformanceStatLogging()
 
             // Load recent sources from preferences
             loadRecentSources()

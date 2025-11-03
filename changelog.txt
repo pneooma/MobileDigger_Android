@@ -1,3 +1,13 @@
+v10.43
+- 🚀 PHASE 5 POLISH & OPTIMIZATION: Performance profiling and diagnostics
+- ⏱️ PERFORMANCE PROFILER: New utility tracks operation timing and identifies bottlenecks
+- 📊 WAVEFORM PROFILING: Automatically logs slow waveform generation (>1000ms)
+- 📈 OPERATION STATS: Aggregate statistics (count, avg, min, max) for all operations
+- 🎯 AUTOMATIC LOGGING: Performance stats logged every 5 minutes
+- ⚠️ SLOW OPERATION ALERTS: Auto-detection of operations taking >1000ms
+- 🔧 TIMING METRICS: recordOperation() API for tracking custom operations
+- ✅ Result: Better visibility into performance issues, proactive bottleneck detection
+
 v10.42
 - 🚀 PHASE 4 UX IMPROVEMENTS: Better user experience for file operations
 - 🎵 KEEP PLAYING: When moving file to subfolder, playback continues without interruption

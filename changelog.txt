@@ -1,3 +1,11 @@
+v10.46
+- 🚀 PHASE 4 UX IMPROVEMENTS COMPLETE: Miniplayer and sticky player behavior
+- 🐛 CRITICAL FIX: Miniplayer now shows ACTUAL playing file, not next file in playlist
+- 🎵 SMART MINIPLAYER: Automatically appears when playing file is moved to subfolder
+- 📍 STICKY BEHAVIOR: Miniplayer shows when file not in current playlist OR scrolled out of view
+- 🎯 SEAMLESS PLAYBACK: File keeps playing when moved, UI accurately reflects what's playing
+- ✅ Result: No confusion about which file is playing, smooth user experience
+
 v10.45
 - 🚀 PHASE 5 PERFORMANCE OPTIMIZATION: Added performance profiling and reduced memory allocations
 - ⏱️ AUDIOMANAGER PROFILING: Track decode times for playFile(), generateSpectrogram(), convertMp3ToWav()

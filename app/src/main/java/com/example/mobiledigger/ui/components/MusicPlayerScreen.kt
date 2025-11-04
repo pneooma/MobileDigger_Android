@@ -965,7 +965,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.45 ::",
+                            text = ":: v10.46 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3514,8 +3514,9 @@ viewModel.updateSearchText("")
                     }
                     
                     // Enhanced Sticky minimized player when scrolled - positioned correctly in BoxScope
-                    // Smart visibility: only show when current playing track is not visible in viewport
+                    // Smart visibility: show when current playing track is not in current playlist OR not visible in viewport
                     val currentTrackIndex = currentPlaylistFiles.indexOfFirst { it.uri == currentPlayingFile?.uri }
+                    val isFileInCurrentPlaylist = currentTrackIndex != -1
                     val isCurrentTrackVisible = remember(listState.firstVisibleItemIndex, listState.layoutInfo.visibleItemsInfo.size, currentTrackIndex) {
                         if (currentTrackIndex == -1) false
                         else {
@@ -3525,8 +3526,9 @@ viewModel.updateSearchText("")
                         }
                     }
                     
+                    // PHASE 4: Show miniplayer when file not in playlist OR when scrolled and not visible
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = isScrolled && !isCurrentTrackVisible && currentPlayingFile != null,
+                        visible = currentPlayingFile != null && (!isFileInCurrentPlaylist || (isScrolled && !isCurrentTrackVisible)),
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                         modifier = Modifier
@@ -3534,8 +3536,8 @@ viewModel.updateSearchText("")
                             .zIndex(1f),
                         label = "Miniplayer Animated Visibility"
                     ) {
-                        val currentFile = currentPlaylistFiles.getOrNull(currentIndex)
-                        currentFile?.let { file ->
+                        // PHASE 4: Use currentPlayingFile to show actual playing file, not next file
+                        currentPlayingFile?.let { file ->
                             // Animation states for miniplayer swipe feedback
                             var miniDragOffset by remember { mutableStateOf(0f) }
                             var miniIsAnimating by remember { mutableStateOf(false) }

@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.86 ::",
+                            text = ":: v10.87 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1170,8 +1170,8 @@ viewModel.updateSearchText("")
                 val buttonHPad = 8.dp
                 val buttonVPad = 3.dp
                 val labelStyle = MaterialTheme.typography.labelSmall
-                // Left pill: Rename Current File
-                Button(
+                // Left pill: Rename Current File (hidden in Multi-Select)
+                if (!isMultiSelectionMode) Button(
                     onClick = {
                         if (currentPlayingFile != null) {
                             manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: ""))
@@ -1193,7 +1193,6 @@ viewModel.updateSearchText("")
                     Text("Rename\nCurrent file", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
                 }
                 // Bulk Reject
-                Spacer(Modifier.width(30.dp))
                 Button(
                     onClick = { 
                         if (playedButNotActionedCount > 0) {
@@ -1249,8 +1248,8 @@ viewModel.updateSearchText("")
                         }
                     }
                 }
-                // Right pill: Multi-Select Mode
-                Button(
+                // Right pill: Multi-Select (hidden in Multi-Select)
+                if (!isMultiSelectionMode) Button(
                     onClick = { viewModel.toggleMultiSelectionMode() },
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
@@ -1262,7 +1261,7 @@ viewModel.updateSearchText("")
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                 ) {
-                    Text("Multi-Select\nMode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
+                    Text("Multi-Select", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
                 }
                 // Send to Folder (bulk) - only in Multi-Select mode
                 var showBulkSendDialog by remember { mutableStateOf(false) }

@@ -52,6 +52,9 @@ v10.77
 
 v10.78
 - 🧯 Fix freeze entering Multi-Select: removed negative LazyColumn padding; re-enabled header horizontal scroll
+
+v10.79
+- 📐 Multi-Select header: applied visual bottom lift (offset -30dp) while keeping safe padding; keeps buttons closer to content without layout instability
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

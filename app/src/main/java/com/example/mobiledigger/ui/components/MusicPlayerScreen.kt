@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.78 ::",
+                            text = ":: v10.79 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1162,7 +1162,8 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 2.dp)
+                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 0.dp)
+                    .then(if (isMultiSelectionMode) Modifier.offset(y = (-30).dp) else Modifier)
                     .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center

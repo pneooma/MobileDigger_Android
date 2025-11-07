@@ -194,10 +194,10 @@ fun MusicPlayerScreen(
     var triggerSpectrogramAfterDelay by remember { mutableStateOf(false) }
     
     // Waveform visibility state (main player)
-    var isWaveformVisible by remember { mutableStateOf(true) }
+    var isWaveformVisible by remember { mutableStateOf(false) }
     
-    // Main player and playlists visibility states (start with playlists shown, controls hidden)
-    var isMainPlayerVisible by remember { mutableStateOf(false) }
+    // Main player and playlists visibility states (start with controls shown, playlists shown)
+    var isMainPlayerVisible by remember { mutableStateOf(true) }
     var isPlaylistsVisible by remember { mutableStateOf(true) }
     
     val folderLauncher = rememberLauncherForActivityResult(
@@ -1181,7 +1181,8 @@ viewModel.updateSearchText("")
                     enabled = currentPlayingFile != null,
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -1192,6 +1193,7 @@ viewModel.updateSearchText("")
                     Text("Rename\nCurrent file", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
                 }
                 // Bulk Reject
+                Spacer(Modifier.width(30.dp))
                 Button(
                     onClick = { 
                         if (playedButNotActionedCount > 0) {
@@ -1201,7 +1203,8 @@ viewModel.updateSearchText("")
                     },
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -1264,11 +1267,13 @@ viewModel.updateSearchText("")
                 // Send to Folder (bulk) - only in Multi-Select mode
                 var showBulkSendDialog by remember { mutableStateOf(false) }
                 if (isMultiSelectionMode) {
-                    Button(
+                Spacer(Modifier.width(30.dp))
+                Button(
                         onClick = { showBulkSendDialog = true },
                         modifier = Modifier
                             .shadow(4.dp, RoundedCornerShape(20.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
@@ -1295,11 +1300,12 @@ viewModel.updateSearchText("")
                 }
                 // Multi-select inline controls (always visible in MS mode)
                 if (isMultiSelectionMode) {
-                    Button(
+                Button(
                         onClick = { showRenameSelectedDialog = true },
                         modifier = Modifier
                             .shadow(4.dp, RoundedCornerShape(20.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
@@ -1307,11 +1313,12 @@ viewModel.updateSearchText("")
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                     ) { Text("Rename\nSelected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
-                    Button(
+                Button(
                         onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
                         modifier = Modifier
                             .shadow(4.dp, RoundedCornerShape(20.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
@@ -1319,11 +1326,12 @@ viewModel.updateSearchText("")
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                     ) { Text("Like\nSelected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
-                    Button(
+                Button(
                         onClick = { viewModel.toggleMultiSelectionMode() },
                         modifier = Modifier
                             .shadow(4.dp, RoundedCornerShape(20.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface

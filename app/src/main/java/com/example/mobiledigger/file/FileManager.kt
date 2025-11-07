@@ -819,12 +819,22 @@ class FileManager(private val context: Context) {
                     musicFile.copy(uri = Uri.fromFile(target), name = target.name)
                 } else null
             } else {
-                val renamedUri = try {
-                    DocumentsContract.renameDocument(contentResolver, musicFile.uri, newName)
-                } catch (_: Exception) { null }
+                // Try DocumentFile.renameTo first to avoid providers creating copies like (1)
+                val df = DocumentFile.fromSingleUri(context, musicFile.uri)
+                if (df != null && df.exists()) {
+                    val ok = try { df.renameTo(newName) } catch (_: Exception) { false }
+                    if (ok) {
+                        // Some providers keep same Uri after rename
+                        val updated = DocumentFile.fromSingleUri(context, musicFile.uri)
+                        val finalName = updated?.name ?: newName
+                        return@withContext musicFile.copy(uri = musicFile.uri, name = finalName)
+                    }
+                }
+                // Fallback to DocumentsContract.renameDocument
+                val renamedUri = try { DocumentsContract.renameDocument(contentResolver, musicFile.uri, newName) } catch (_: Exception) { null }
                 if (renamedUri != null) {
-                    val df = DocumentFile.fromSingleUri(context, renamedUri)
-                    val finalName = df?.name ?: newName
+                    val updated = DocumentFile.fromSingleUri(context, renamedUri)
+                    val finalName = updated?.name ?: newName
                     musicFile.copy(uri = renamedUri, name = finalName)
                 } else null
             }

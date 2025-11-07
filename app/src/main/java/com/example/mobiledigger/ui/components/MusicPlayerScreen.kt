@@ -1157,94 +1157,117 @@ viewModel.updateSearchText("")
         }
 
         if (musicFiles.isNotEmpty() && !isLoading && ((currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) || isMultiSelectionMode)) {
-            Popup(
-                alignment = Alignment.TopCenter,
-                offset = IntOffset(0, with(LocalDensity.current) { 66.dp.toPx().toInt() }) // Moved up by 20dp
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Bulk Reject
+                Button(
+                    onClick = { 
+                        if (playedButNotActionedCount > 0) {
+                            CrashLogger.log("MusicPlayerScreen", "Reject played files button clicked, count: $playedButNotActionedCount")
+                            viewModel.movePlayedButNotActionedToRejected()
+                        }
+                    },
+                    modifier = Modifier
+                        .shadow(6.dp, RoundedCornerShape(22.dp))
+                        .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    shape = RoundedCornerShape(22.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                 ) {
-                    Button(
-                        onClick = { 
-                            if (playedButNotActionedCount > 0) {
-                                CrashLogger.log("MusicPlayerScreen", "Reject played files button clicked, count: $playedButNotActionedCount")
-                                viewModel.movePlayedButNotActionedToRejected()
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
+                        Text(
+                            text = "Reject $playedButNotActionedCount",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                // Send to Folder (bulk)
+                var showBulkSendDialog by remember { mutableStateOf(false) }
+                Button(
+                    onClick = { showBulkSendDialog = true },
+                    modifier = Modifier
+                        .shadow(6.dp, RoundedCornerShape(22.dp))
+                        .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    shape = RoundedCornerShape(22.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text("Send to Folder")
+                }
+                if (showBulkSendDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showBulkSendDialog = false },
+                        title = { Text("Send Selected Files To") },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = { showBulkSendDialog = false; viewModel.sortSelectedFiles(SortAction.LIKE) }, modifier = Modifier.fillMaxWidth()) { Text("Liked") }
+                                Button(onClick = { showBulkSendDialog = false; viewModel.sortSelectedFiles(SortAction.DISLIKE) }, modifier = Modifier.fillMaxWidth()) { Text("Rejected") }
                             }
                         },
+                        confirmButton = {},
+                        dismissButton = { TextButton(onClick = { showBulkSendDialog = false }) { Text("Close") } }
+                    )
+                }
+                // Multi-select inline controls (always visible in MS mode)
+                if (isMultiSelectionMode) {
+                    Button(
+                        onClick = { showRenameSelectedDialog = true },
                         modifier = Modifier
-                            .shadow(8.dp, RoundedCornerShape(24.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
+                            .shadow(6.dp, RoundedCornerShape(22.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape = RoundedCornerShape(24.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.Red)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface)
-                            Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.Red)
-                            Text(
-                                text = "Reject $playedButNotActionedCount",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                        Button(
-                            onClick = { showRenameSelectedDialog = true },
-                            modifier = Modifier
-                                .shadow(8.dp, RoundedCornerShape(24.dp))
-                                .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            shape = RoundedCornerShape(24.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
-                        ) {
-                            Text("Rename Selected")
-                        }
-                        Button(
-                            onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
-                            modifier = Modifier
-                                .shadow(8.dp, RoundedCornerShape(24.dp))
-                                .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            shape = RoundedCornerShape(24.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
-                        ) {
-                            Text("Like Selected")
-                        }
-                        Button(
-                            onClick = { viewModel.toggleMultiSelectionMode() },
-                            modifier = Modifier
-                                .shadow(8.dp, RoundedCornerShape(24.dp))
-                                .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            shape = RoundedCornerShape(24.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
-                        ) {
-                            Text("Exit MS Mode")
-                        }
-                        Text("| ${selectedIndices.size} Selected |", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                        TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
-                        TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
-                    }
+                        shape = RoundedCornerShape(22.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) { Text("Rename Selected") }
+                    Button(
+                        onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
+                        modifier = Modifier
+                            .shadow(6.dp, RoundedCornerShape(22.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        shape = RoundedCornerShape(22.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) { Text("Like Selected") }
+                    Button(
+                        onClick = { viewModel.toggleMultiSelectionMode() },
+                        modifier = Modifier
+                            .shadow(6.dp, RoundedCornerShape(22.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        shape = RoundedCornerShape(22.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) { Text("Exit MS Mode") }
+                    Text("| ${selectedIndices.size} Selected |", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
+                    TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
                 }
             }
         }
@@ -3303,6 +3326,20 @@ viewModel.updateSearchText("")
                                         vertical = 0.dp
                                     )
                                         .animateItemPlacement(tween(durationMillis = 900))
+                                        .combinedClickable(
+                                            onClick = {
+                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                if (actualIndex >= 0) {
+                                                    if (!isMultiSelectionMode) viewModel.jumpTo(actualIndex) else viewModel.toggleSelection(actualIndex)
+                                                }
+                                            },
+                                            onLongClick = {
+                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                showRenameActionDialog = true
+                                            }
+                                        )
                                         .graphicsLayer {
                                             translationX = rowSwipeOffset.value
                                             translationY = 0f
@@ -3380,22 +3417,7 @@ viewModel.updateSearchText("")
                                                     swipeDirection = newDirection
                                                 }
                                             }
-                                        }
-                                    .clickable {
-                                        if (isMultiSelectionMode) {
-                                            // Find actual file index in original playlist
-                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                            if (actualIndex >= 0) {
-                                                viewModel.toggleSelection(actualIndex)
-                                            }
-                                        } else {
-                                            // Find actual file index in original playlist
-                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                            if (actualIndex >= 0) {
-                                                viewModel.jumpTo(actualIndex) // Jump to this item in the current playlist
-                                            }
-                                        }
-                                    },
+                                        },
                                 colors = CardDefaults.cardColors(
                                     containerColor = when {
                                         isCurrent -> when (currentPlaylistTab) {

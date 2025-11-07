@@ -185,7 +185,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Ensure UI reflow happens first
             delay(50)
             // Soft audio fade-out before switching
-            try { audioManager.fadeOut(1000) } catch (_: Exception) {}
+            try { audioManager.fadeOut(300) } catch (_: Exception) {}
             val files = when (_currentPlaylistTab.value) {
                 PlaylistTab.TODO -> _musicFiles.value
                 PlaylistTab.LIKED -> _likedFiles.value
@@ -203,7 +203,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Start new file at 0 volume then fade in
             audioManager.setVolume(0f)
             audioManager.resume()
-            try { audioManager.fadeIn(1000) } catch (_: Exception) {}
+            try { audioManager.fadeIn(300) } catch (_: Exception) {}
             updateNotification()
         }
     }

@@ -2419,7 +2419,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             RenameCase.LOWER -> base.lowercase()
             RenameCase.TITLE -> base
                 .lowercase()
-                .split(Regex("[\\s_\-]+"))
+                .split(Regex("""[\s_\-]+"""))
                 .filter { it.isNotBlank() }
                 .joinToString(" ") { word -> word.replaceFirstChar { c -> c.titlecase() } }
         }

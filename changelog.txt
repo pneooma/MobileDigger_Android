@@ -12,6 +12,11 @@ v10.70
 - ✍️ Rename selected files with case options: Title / UPPER / lower
 - 📝 Rename current file with manual name + chosen case, via SAF rename
 
+v10.71
+- 🖱️ Restore tap-to-play on filenames; add long-press on filenames for actions
+- ✅ Hide Like/Dislike on inactive rows in Multi-Select mode
+- 🧭 Header banner in Multi-Select: count + Select All / Clear / Exit
+
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -19,6 +19,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.LayoutDirection
@@ -969,7 +970,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.70 ::",
+                            text = ":: v10.71 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -977,6 +978,24 @@ fun MusicPlayerScreen(
             fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
+            }
+            // Multi-Selection banner controls
+            if (isMultiSelectionMode) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val selCount = selectedIndices.size
+                    Text(
+                        text = "Multi-Selection Mode | ${selCount} Selected |",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
+                    TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
+                    TextButton(onClick = { viewModel.toggleMultiSelectionMode() }) { Text("Exit MS Mode") }
+                }
             }
             
             // Calculate responsive spacing based on screen width - reduced to prevent text wrapping
@@ -3460,7 +3479,7 @@ viewModel.updateSearchText("")
                                             }
                                         } else {
                                             // Dislike button for inactive rows (original behavior)
-                                            if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                            if ((currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) && !isMultiSelectionMode) {
                                                 IconButton(
                                                     onClick = { 
                                                         try {
@@ -3491,16 +3510,20 @@ viewModel.updateSearchText("")
                                                     modifier = Modifier
                                                         .weight(1f)
                                                         .height(animatedRowHeight)
-                                                        .pointerInput(item.uri) {
-                                                            androidx.compose.foundation.gestures.detectTapGestures(
-                                                                onLongPress = {
-                                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                    pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
-                                                                    manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
-                                                                    showRenameActionDialog = true
-                                                                }
-                                                            )
-                                                        },
+                                                        .combinedClickable(
+                                                            onClick = {
+                                                                // Tap filename to play
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                if (actualIndex >= 0) viewModel.jumpTo(actualIndex)
+                                                            },
+                                                            onLongClick = {
+                                                                // Long-press filename to rename/multi-select
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                                manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                                showRenameActionDialog = true
+                                                            }
+                                                        ),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Text(
@@ -3668,16 +3691,22 @@ viewModel.updateSearchText("")
                                                 modifier = Modifier
                                                     .weight(1f)
                                                     .height(animatedRowHeight) // Match animated row height
-                                                    .pointerInput(item.uri) {
-                                                        androidx.compose.foundation.gestures.detectTapGestures(
-                                                            onLongPress = {
-                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
-                                                                manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
-                                                                showRenameActionDialog = true
+                                                    .combinedClickable(
+                                                        onClick = {
+                                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                            if (actualIndex >= 0 && !isMultiSelectionMode) {
+                                                                viewModel.jumpTo(actualIndex)
+                                                            } else if (actualIndex >= 0 && isMultiSelectionMode) {
+                                                                viewModel.toggleSelection(actualIndex)
                                                             }
-                                                        )
-                                                    },
+                                                        },
+                                                        onLongClick = {
+                                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                            pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                            manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                            showRenameActionDialog = true
+                                                        }
+                                                    ),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Row(
@@ -3712,7 +3741,7 @@ viewModel.updateSearchText("")
                                         }
 
                                         // Right side Like button for inactive rows
-                                        if (!isCurrent && (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED)) {
+                                        if (!isCurrent && (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) && !isMultiSelectionMode) {
                                             IconButton(
                                                 onClick = {
                                                     try {

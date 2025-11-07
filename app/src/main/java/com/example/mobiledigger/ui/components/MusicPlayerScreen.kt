@@ -196,9 +196,9 @@ fun MusicPlayerScreen(
     // Waveform visibility state (main player)
     var isWaveformVisible by remember { mutableStateOf(false) }
     
-    // Main player and playlists visibility states (start with controls shown, playlists shown)
-    var isMainPlayerVisible by remember { mutableStateOf(true) }
-    var isPlaylistsVisible by remember { mutableStateOf(true) }
+    // Main player and playlists visibility states (start hidden by default)
+    var isMainPlayerVisible by remember { mutableStateOf(false) }
+    var isPlaylistsVisible by remember { mutableStateOf(false) }
     
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.90 ::",
+                            text = ":: v10.91 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height

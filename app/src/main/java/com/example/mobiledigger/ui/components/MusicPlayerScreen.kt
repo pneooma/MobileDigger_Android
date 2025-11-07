@@ -3116,10 +3116,13 @@ viewModel.updateSearchText("")
                                                                 val exit = if (current > 0) 520f else -520f
                                                                 scope.launch {
                                                                     isRowDismissed = true
-                                                                    rowSwipeOffset.animateTo(exit, tween(150))
-                                                                    // Then actions
+                                                                    launch { rowSwipeOffset.animateTo(exit, tween(150)) }
+                                                                    // Wait for fade-out (alpha 300ms), then remove immediately for smooth reflow
+                                                                    delay(300)
+                                                                    viewModel.removeFromCurrentListByUri(item.uri)
+                                                                    // Then background actions
                                                                     if (current < 0 && isActiveNow) {
-                                                                        try { viewModel.next() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ next() error: ${e.message}") }
+                                                                        try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
                                                                     }
                                                                     try {
                                                                         if (current > 0) viewModel.sortMusicFile(fileToSort, SortAction.LIKE) else viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)

@@ -145,6 +145,60 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // UI removal animation support: URIs fading out before actual removal
     private val _removingUris = MutableStateFlow<Set<Uri>>(emptySet())
     val removingUris: StateFlow<Set<Uri>> = _removingUris.asStateFlow()
+
+    // Immediate UI-driven removal (used after swipe fade-out) without touching playback
+    fun removeFromCurrentListByUri(uri: Uri) {
+        when (_currentPlaylistTab.value) {
+            PlaylistTab.TODO -> {
+                val list = _musicFiles.value.toMutableList()
+                val idx = list.indexOfFirst { it.uri == uri }
+                if (idx != -1) {
+                    list.removeAt(idx)
+                    _musicFiles.value = list
+                    if (idx < _currentIndex.value) _currentIndex.value = (_currentIndex.value - 1).coerceAtLeast(0)
+                }
+            }
+            PlaylistTab.LIKED -> {
+                val list = _likedFiles.value.toMutableList()
+                val idx = list.indexOfFirst { it.uri == uri }
+                if (idx != -1) {
+                    list.removeAt(idx)
+                    _likedFiles.value = list
+                    if (_currentPlaylistTab.value == PlaylistTab.LIKED && idx < _currentIndex.value) _currentIndex.value = (_currentIndex.value - 1).coerceAtLeast(0)
+                }
+            }
+            PlaylistTab.REJECTED -> {
+                val list = _rejectedFiles.value.toMutableList()
+                val idx = list.indexOfFirst { it.uri == uri }
+                if (idx != -1) {
+                    list.removeAt(idx)
+                    _rejectedFiles.value = list
+                    if (_currentPlaylistTab.value == PlaylistTab.REJECTED && idx < _currentIndex.value) _currentIndex.value = (_currentIndex.value - 1).coerceAtLeast(0)
+                }
+            }
+        }
+    }
+
+    // Play the next item that shifts into currentIndex after the current one was removed
+    fun playNextAfterRemoval() {
+        viewModelScope.launch {
+            val files = when (_currentPlaylistTab.value) {
+                PlaylistTab.TODO -> _musicFiles.value
+                PlaylistTab.LIKED -> _likedFiles.value
+                PlaylistTab.REJECTED -> _rejectedFiles.value
+            }
+            if (files.isEmpty()) {
+                _isPlaying.value = false
+                updateNotification()
+                return@launch
+            }
+            if (_currentIndex.value >= files.size) {
+                _currentIndex.value = (files.size - 1).coerceAtLeast(0)
+            }
+            loadCurrentFile()
+            updateNotification()
+        }
+    }
     
     private val _volume = MutableStateFlow(1f)
     val volume: StateFlow<Float> = _volume.asStateFlow()

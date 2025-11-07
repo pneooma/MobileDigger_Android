@@ -1024,20 +1024,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 if (indexToRemove != -1) {
                     updatedFiles.removeAt(indexToRemove)
                     _musicFiles.value = updatedFiles
-
-                    // Adjust current index and playback if the sorted file was the current one
-                    if (sortedFile.uri == currentFile?.uri) {
-                        stopPlayback()
-                        // Keep the same index position, but adjust if we're at the end
-                        if (_currentIndex.value >= updatedFiles.size) {
-                            _currentIndex.value = updatedFiles.size - 1 // Go to last file if we're past the end
-                        }
-                        if (updatedFiles.isNotEmpty()) {
-                            loadCurrentFile() // Load the file at the current index
-                        } else {
-                            _errorMessage.value = "Well done! Now select another folder!"
-                        }
-                    } else if (indexToRemove < _currentIndex.value) {
+                    
+                    // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
+                    if (sortedFile.uri != currentFile?.uri && indexToRemove < _currentIndex.value) {
                         _currentIndex.value = _currentIndex.value - 1 // Shift index if file before it was removed
                     }
                 }
@@ -1049,19 +1038,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     updatedLikedFiles.removeAt(indexToRemove)
                     _likedFiles.value = updatedLikedFiles
                     
-                    // Adjust current index if currently playing from this list
-                    if (sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) {
-                        stopPlayback()
-                        // Keep the same index position, but adjust if we're at the end
-                        if (_currentIndex.value >= updatedLikedFiles.size) {
-                            _currentIndex.value = updatedLikedFiles.size - 1 // Go to last file if we're past the end
-                        }
-                        if (updatedLikedFiles.isNotEmpty()) {
-                            loadCurrentFile()
-                        } else {
-                            _errorMessage.value = "No liked files left."
-                        }
-                    } else if (indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.LIKED) {
+                    // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
+                    if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.LIKED) {
                         _currentIndex.value = _currentIndex.value - 1
                     }
                 }
@@ -1073,19 +1051,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     updatedRejectedFiles.removeAt(indexToRemove)
                     _rejectedFiles.value = updatedRejectedFiles
                     
-                    // Adjust current index if currently playing from this list
-                    if (sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
-                        stopPlayback()
-                        // Keep the same index position, but adjust if we're at the end
-                        if (_currentIndex.value >= updatedRejectedFiles.size) {
-                            _currentIndex.value = updatedRejectedFiles.size - 1 // Go to last file if we're past the end
-                        }
-                        if (updatedRejectedFiles.isNotEmpty()) {
-                            loadCurrentFile()
-                        } else {
-                            _errorMessage.value = "No rejected files left."
-                        }
-                    } else if (indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
+                    // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
+                    if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
                         _currentIndex.value = _currentIndex.value - 1
                     }
                 }

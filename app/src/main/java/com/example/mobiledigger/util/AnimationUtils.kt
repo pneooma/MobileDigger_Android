@@ -81,7 +81,7 @@ fun rememberOptimizedAnimationSpecs(): AnimationSpecs {
             refreshRate = refreshRate,
             // Standard animations
             fastTween = AnimationUtils.getOptimizedTween(150, refreshRate),
-            mediumTween = AnimationUtils.getOptimizedTween(300, refreshRate),
+            mediumTween = AnimationUtils.getOptimizedTween(250, refreshRate),
             slowTween = AnimationUtils.getOptimizedTween(600, refreshRate),
             // Spring animations
             bouncySpring = AnimationUtils.getOptimizedSpring(

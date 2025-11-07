@@ -1,3 +1,43 @@
+v10.55
+- 🔁 Removed 20ms buffer; actions now start immediately after return animation completes
+
+v10.54
+- 🎞️ Swipes now fully complete (out + return) before track changes begin
+- ⏱️ Added 20ms buffer after animation completion for reliability
+- 🧭 Applied to main player, active row, and miniplayer
+- 🪄 Waveform reveal kept at 400ms vertical expand
+
+v10.53
+- ⏱️ Added 20ms delay after swipe-out animations before playing next/sorting
+- 🧭 Waveform reveal now expands from center over ~400ms
+
+v10.52
+- 🛠️ Row swipe-left auto-next made robust using live active-row check
+- 📝 Updated spectrogram warning text to 30 seconds (memory considerations)
+
+v10.51
+- ✅ Active row left-swipe now plays next reliably (sequence: animate → next → sort)
+- 🎬 Miniplayer/main swipes animate first, then change track for smoothness
+- 📈 Waveform now appears by expanding vertically from center (~500ms)
+
+v10.50
+- 👎 Swiping left to Dislike now auto-plays the next file (main, row current, and miniplayer)
+- 🌀 Swipe animations made more ample and smooth (larger exit distance, softer spring)
+
+v10.49
+- 📝 Active row now displays the filename when the main waveform is visible (no overlap)
+
+v10.48
+- ✅ Inactive playlist rows now have a Like button on the right
+- 📌 App starts with playlist tabs shown by default (controls hidden)
+- ⛔ No auto-advance after Like/Reject; playback continues; miniplayer shows when file leaves playlist
+- 🧭 Active row waveform disabled and row height minimized when main waveform is visible; restored when hidden
+
+v10.47
+- 🧈 Swipe animations now use Animatable for buttery-smooth motion across main player, playlist rows, and miniplayer
+- 🎯 Drag uses snapTo; release uses spring/tween animateTo with proper thresholds
+- 🛠️ Removed laggy offset/animateFloatAsState patterns for swipes; improved visual feedback and stability
+
 v10.46
 - 🚀 PHASE 4 UX IMPROVEMENTS COMPLETE: Miniplayer and sticky player behavior
 - 🐛 CRITICAL FIX: Miniplayer now shows ACTUAL playing file, not next file in playlist

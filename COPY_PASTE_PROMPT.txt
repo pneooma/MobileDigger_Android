@@ -1,0 +1,57 @@
+I need help building a website for my Android app called MobileDigger.
+
+=== ABOUT THE APP ===
+MobileDigger is a music organization app for DJs and music enthusiasts. It lets users quickly sort large music collections using swipe gestures (swipe right to like, left to dislike) while listening to the music. It's completely offline, collects zero data, and is open source.
+
+=== KEY FEATURES ===
+• Swipe gestures to organize files (like Tinder for music)
+• Real-time waveform display (seekable)
+• FFT spectrograms for audio analysis
+• Supports MP3, FLAC, AIFF, WAV, M4A, AAC, OGG
+• Smart miniplayer that auto-appears
+• Multi-select mode for batch operations
+• 9 customizable themes
+• Handles 10,000+ files smoothly
+• Background playback with notification controls
+• Custom subfolders for organization
+
+=== TARGET USERS ===
+DJs organizing record pools, music producers sorting samples, collectors managing large libraries
+
+=== WEBSITE PAGES NEEDED ===
+1. Home (hero + features overview)
+2. Features (detailed breakdown)
+3. How It Works (step-by-step guide)
+4. Download (Google Play + GitHub)
+5. Privacy (zero data collection policy)
+6. About/Contact
+
+=== DESIGN STYLE ===
+Modern, clean, Material Design inspired. Music-themed (waveforms, vinyl records) but professional, not cheesy. Mobile-first responsive design. Colors: Blue/Teal primary, Green (like), Red (dislike).
+
+=== KEY SELLING POINTS ===
+✓ Privacy-first: Zero data collection, 100% offline
+✓ Professional: Waveforms and spectrograms for audio analysis
+✓ Fast: Sort 100 songs in minutes vs traditional file managers
+✓ Open source: Transparent, auditable code on GitHub
+✓ All formats: Professional AIFF/FLAC support
+
+=== HOMEPAGE HERO ===
+Headline: "Organize Music Like a DJ"
+Subheadline: "Sort thousands of files in minutes. Swipe gestures, waveforms, spectrograms. Privacy-first and offline."
+CTA: "Download on Google Play" + "View on GitHub"
+
+=== TECH INFO ===
+• Android 12+ (API 31+)
+• Version: 10.46
+• GitHub: https://github.com/pneooma/MobileDigger_Android
+• Developer: Alin Florescu
+• Open Source
+
+=== YOUR TASK ===
+Build a modern, professional website (6 pages) that showcases these features beautifully and encourages downloads. Make it mobile-responsive, fast-loading, and SEO optimized.
+
+Tech stack preference: [Tell me what you prefer - React, Vue, or vanilla HTML/CSS]
+
+Should I start with the homepage hero section?
+

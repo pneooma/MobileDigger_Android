@@ -14,15 +14,15 @@ class ThemeManager(context: Context) {
         private const val KEY_SELECTED_THEME = "selected_theme"
     }
     
-    private val _isDarkMode = mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, false))
+    private val _isDarkMode = mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, true))
     val isDarkMode: State<Boolean> = _isDarkMode
     
     private val _useDynamicColor = mutableStateOf(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
     val useDynamicColor: State<Boolean> = _useDynamicColor
     
     private val _selectedTheme = mutableStateOf(
-        AvailableThemes.find { it.name == prefs.getString(KEY_SELECTED_THEME, "MobileDigger") } 
-            ?: MobileDiggerTheme
+        AvailableThemes.find { it.name == prefs.getString(KEY_SELECTED_THEME, "Mint") } 
+            ?: MintTheme
     )
     val selectedTheme: State<ThemeColors> = _selectedTheme
     

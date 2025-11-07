@@ -107,6 +107,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.verticalScroll
 
 private fun formatTime(milliseconds: Long): String {
     val seconds = (milliseconds / 1000).toInt()
@@ -189,9 +191,9 @@ fun MusicPlayerScreen(
     // Waveform visibility state (main player)
     var isWaveformVisible by remember { mutableStateOf(true) }
     
-    // Main player and playlists visibility states (start hidden)
+    // Main player and playlists visibility states (start with playlists shown, controls hidden)
     var isMainPlayerVisible by remember { mutableStateOf(false) }
-    var isPlaylistsVisible by remember { mutableStateOf(false) }
+    var isPlaylistsVisible by remember { mutableStateOf(true) }
     
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -965,7 +967,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.46 ::",
+                            text = ":: v10.55 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1599,9 +1601,9 @@ viewModel.updateSearchText("")
                             val currentFile = currentPlayingFile // Use the actually playing file
             if (currentFile != null) {
                                 val file = currentFile
-                                // Animation states for swipe feedback - Performance optimized for 120Hz
-                                var dragOffset by remember { mutableStateOf(0f) }
-                                var isAnimating by remember { mutableStateOf(false) }
+                                // Animation states for swipe feedback - switched to Animatable for buttery-smooth motion
+                                val scope = rememberCoroutineScope()
+                                val mainSwipeOffset = remember { Animatable(0f) }
                                 var swipeDirection by remember { mutableStateOf(0) } // -1 left, 0 none, 1 right
                                 
                                 // Song transition fade animation for 120Hz displays
@@ -1628,15 +1630,7 @@ viewModel.updateSearchText("")
                                     }
                                 }
                                 
-                                val animatedOffset by animateFloatAsState(
-                                    targetValue = if (isAnimating) dragOffset else 0f,
-                                    animationSpec = animationSpec,
-                                    finishedListener = {
-                                        isAnimating = false
-                                        dragOffset = 0f
-                                        swipeDirection = 0
-                                    }
-                                )
+                                val animatedOffset = mainSwipeOffset.value
                                 
                                 val cardColor = when (swipeDirection) {
                                     1 -> LikeGreen.copy(alpha = 0.3f)
@@ -1668,13 +1662,12 @@ viewModel.updateSearchText("")
                                 ) {
                                 Text(
                                     text = "Total: $totalTracks  |  Played: $played  |  Liked: $yes  |  Rejected: $no",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.8f
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f
                                     ),
-                                    color = GroovyBlue,
-                                        modifier = Modifier.weight(1f)
-                                    )
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 6.dp)
+                                )
                                     OutlinedButton(
                                         onClick = { isMainPlayerVisible = !isMainPlayerVisible },
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
@@ -1727,32 +1720,47 @@ viewModel.updateSearchText("")
                                         .pointerInput(Unit) {
                                             detectDragGestures(
                                                 onDragStart = {
-                                                    isAnimating = false
+                                                    // no-op
                                                 },
                                                 onDragEnd = {
-                                                    isAnimating = true
-                                                    // Execute action if threshold met
-                                                    if (abs(dragOffset) > 150) {
-                                                        try {
-                                                            when {
-                                                                dragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
-                                                                dragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                    val current = mainSwipeOffset.value
+                                                    val threshold = 150f
+                                                    val exit = if (current > 0) 520f else -520f
+                                                    if (abs(current) > threshold) {
+                                                        val prevFile = file
+                                                        scope.launch {
+                                                            // 1) Animate out fully
+                                                            mainSwipeOffset.animateTo(exit, tween(220))
+                                                            // 2) Animate back to rest
+                                                            mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                            // 3) Then perform actions
+                                                            if (current < 0) {
+                                                                try {
+                                                                    viewModel.next()
+                                                                    prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
+                                                                } catch (e: Exception) {
+                                                                    CrashLogger.log("Debug", "Error in swipe (main) next/sort: ${e.message}")
+                                                                }
+                                                            } else if (current > 0) {
+                                                                try { prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (e: Exception) {
+                                                                    CrashLogger.log("Debug", "Error in swipe (main) like: ${e.message}")
+                                                                }
                                                             }
-                                                        } catch (e: Exception) {
-                                                            // Handle crash gracefully
-                                                            CrashLogger.log("Debug", "Error in swipe gesture: ${e.message}")
+                                                        }
+                                                    } else {
+                                                        scope.launch {
+                                                            mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
                                                         }
                                                     }
+                                                    swipeDirection = 0
                                                 }
                                             ) { _, dragAmount ->
                                                 val (x, _) = dragAmount
-                                                dragOffset += x
-                                                dragOffset = dragOffset.coerceIn(-300f, 300f) // Limit drag distance
-                                                
-                                                // Update visual feedback
+                                                val newValue = (mainSwipeOffset.value + x * 0.85f).coerceIn(-300f, 300f)
+                                                scope.launch { mainSwipeOffset.snapTo(newValue) }
                                                 swipeDirection = when {
-                                                    dragOffset > 50 -> 1 // Right swipe (like)
-                                                    dragOffset < -50 -> -1 // Left swipe (dislike)
+                                                    newValue > 80f -> 1
+                                                    newValue < -80f -> -1
                                                     else -> 0
                                                 }
                                             }
@@ -2962,10 +2970,15 @@ viewModel.updateSearchText("")
                             }
                             
                             // Calculate adaptive height based on actual text measurement (only for inactive rows)
-                            val adaptiveHeight = remember(item.name, item.subfolder, isCurrent, currentPlaylistTab, visualSettings.rowWaveformHeight) {
+                            val adaptiveHeight = remember(item.name, item.subfolder, isCurrent, currentPlaylistTab, visualSettings.rowWaveformHeight, isWaveformVisible, isMainPlayerVisible) {
                                 if (isCurrent) {
-                                    // Active row height based on waveform height from visual settings + padding
-                                    (visualSettings.rowWaveformHeight + 21f).dp // Waveform height + padding (6dp top + 6dp bottom + ~9dp for buttons/spacing)
+                                    // If main player waveform is visible, minimize active row height and hide its waveform
+                                    if (isWaveformVisible && isMainPlayerVisible) {
+                                        40.dp // minimal compact height when main waveform shown
+                                    } else {
+                                        // Active row height based on waveform height from visual settings + padding
+                                        (visualSettings.rowWaveformHeight + 21f).dp
+                                    }
                                 } else {
                                     // Use a more accurate estimation based on typical screen width and font size
                                     val screenWidthDp = screenWidth.value
@@ -3007,8 +3020,9 @@ viewModel.updateSearchText("")
                                     (adaptiveButtonSize.value * 0.55f).dp
                                 }
                             }
-                            // Consolidated swipe state - single source of truth
-                            var swipeOffset by remember(item.uri) { mutableStateOf(0f) }
+                            // Consolidated swipe state - Animatable for buttery-smooth motion
+                            val scope = rememberCoroutineScope()
+                            val rowSwipeOffset = remember(item.uri) { Animatable(0f) }
                             var swipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
                             var isSwipeActive by remember(item.uri) { mutableStateOf(false) }
 
@@ -3020,7 +3034,7 @@ viewModel.updateSearchText("")
                             
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 // Swipe indicators behind the card
-                                if (swipeOffset != 0f && !isMultiSelectionMode && isSwipeActive) {
+                                if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -3028,7 +3042,7 @@ viewModel.updateSearchText("")
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        if (swipeOffset > 0) {
+                                        if (rowSwipeOffset.value > 0) {
                                             // Right swipe - Like
                                             Icon(
                                                 Icons.Default.Favorite,
@@ -3040,7 +3054,7 @@ viewModel.updateSearchText("")
                                             Spacer(modifier = Modifier.width(if (isCompactScreen) 24.dp else 32.dp))
                                         }
                                         
-                                        if (swipeOffset < 0) {
+                                        if (rowSwipeOffset.value < 0) {
                                             // Left swipe - Dislike
                                             Icon(
                                                 Icons.Default.ThumbDown,
@@ -3062,7 +3076,7 @@ viewModel.updateSearchText("")
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = 0.dp
                                     )
-                                        .offset(x = swipeOffset.dp)
+                                        .graphicsLayer { translationX = rowSwipeOffset.value }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->
@@ -3071,45 +3085,48 @@ viewModel.updateSearchText("")
                                                 },
                                                 onDragEnd = {
                                                     if (!isMultiSelectionMode && isSwipeActive) {
-                                                        if (abs(swipeOffset) > swipeTriggerThreshold) {
+                                                        val current = rowSwipeOffset.value
+                                                        if (abs(current) > swipeTriggerThreshold) {
                                                             try {
                                                                 // Debug logging
-                                                                CrashLogger.log("MusicPlayerScreen", "🔍 Swipe gesture: index=$index, file='${item.name}', swipeOffset=$swipeOffset, action=${if (swipeOffset > 0) "LIKE" else "DISLIKE"}")
+                                                                CrashLogger.log("MusicPlayerScreen", "🔍 Swipe gesture: index=$index, file='${item.name}', swipeOffset=$current, action=${if (current > 0) "LIKE" else "DISLIKE"}")
                                                                 
                                                                 // Capture the file reference at the time of swipe to avoid race conditions
                                                                 val fileToSort = item
-                                                                
-                                                                when {
-                                                                    swipeOffset > 0 -> {
-                                                                        hapticFeedback()
-                                                                        viewModel.sortMusicFile(fileToSort, SortAction.LIKE)
-                                                                        // Notification disabled
+                                                                val isActiveNow = currentPlayingFile?.uri == item.uri
+                                                                hapticFeedback()
+                                                                // Throw-away animation then sequence actions
+                                                                val exit = if (current > 0) 520f else -520f
+                                                                scope.launch {
+                                                                    // 1) Animate out fully
+                                                                    rowSwipeOffset.animateTo(exit, tween(200))
+                                                                    // 2) Animate back to rest
+                                                                    rowSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                                    // 3) Then actions
+                                                                    if (current < 0 && isActiveNow) {
+                                                                        try { viewModel.next() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ next() error: ${e.message}") }
                                                                     }
-                                                                    swipeOffset < 0 -> {
-                                                                        hapticFeedback()
-                                                                        viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
-                                                                        // Notification disabled
-                                                                    }
+                                                                    try {
+                                                                        if (current > 0) viewModel.sortMusicFile(fileToSort, SortAction.LIKE) else viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
+                                                                    } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
                                                                 }
                                                             } catch (e: Exception) {
                                                                 CrashLogger.log("MusicPlayerScreen", "❌ Swipe gesture error: ${e.message}")
                                                             }
                                                         }
-                                                        // Reset swipe state
-                                                        swipeOffset = 0f
+                                                        // Sequenced above
                                                         swipeDirection = 0
                                                         isSwipeActive = false
                                                     }
                                                 }
                                             ) { change, dragAmount ->
                                                 if (!isMultiSelectionMode) {
-                                                    val previousOffset = swipeOffset
-                                                    swipeOffset += dragAmount * swipeResistance
-                                                    swipeOffset = swipeOffset.coerceIn(-swipeMaxOffset, swipeMaxOffset)
+                                                    val newValue = (rowSwipeOffset.value + dragAmount * swipeResistance).coerceIn(-swipeMaxOffset, swipeMaxOffset)
+                                                    scope.launch { rowSwipeOffset.snapTo(newValue) }
                                                     
                                                     val newDirection = when {
-                                                        swipeOffset > swipeIndicatorThreshold -> 1
-                                                        swipeOffset < -swipeIndicatorThreshold -> -1
+                                                        newValue > swipeIndicatorThreshold -> 1
+                                                        newValue < -swipeIndicatorThreshold -> -1
                                                         else -> 0
                                                     }
                                                     
@@ -3234,7 +3251,7 @@ viewModel.updateSearchText("")
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(adaptiveHeight), // Adaptive height based on filename length
+                                        .height(adaptiveHeight), // Adaptive height based on state
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
@@ -3317,34 +3334,54 @@ viewModel.updateSearchText("")
                                             }
                                         }
                                         
-                                        // Center content: waveform for current, filename for others
+                                        // Center content: show filename when main waveform visible; otherwise show row waveform for active row
                                         if (isCurrent) {
-                                            // Waveform for current playing item with filename overlay
-                                            val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                            Box(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .height(88.dp), // Waveform height (10% increase from 80dp)
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                WaveformWithToggle(
-                                                    sharedState = sharedWaveformState,
-                                                    progress = progressPercent,
-                                                    onSeek = { seekProgress ->
-                                                        val seekPosition = (seekProgress * duration).toLong()
-                                                        viewModel.seekTo(seekPosition)
-                                                    },
-                                                    songUri = item.uri.toString(),
-                                                    waveformHeight = visualSettings.rowWaveformHeight.toInt(), // Row waveform height from settings
-                                                    currentPosition = currentPosition,
-                                                    totalDuration = duration,
-                                                    fileName = item.name, // Show filename in waveform
-                                                    opacity = 0.7f, // 70% opacity for playlist rows
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
+                                            if (isWaveformVisible && isMainPlayerVisible) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .height(adaptiveHeight),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = item.name,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
+                                                            fontWeight = FontWeight.Medium
+                                                        ),
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        textAlign = TextAlign.Center,
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                }
+                                            } else {
+                                                val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .height(88.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    WaveformWithToggle(
+                                                        sharedState = sharedWaveformState,
+                                                        progress = progressPercent,
+                                                        onSeek = { seekProgress ->
+                                                            val seekPosition = (seekProgress * duration).toLong()
+                                                            viewModel.seekTo(seekPosition)
+                                                        },
+                                                        songUri = item.uri.toString(),
+                                                        waveformHeight = visualSettings.rowWaveformHeight.toInt(),
+                                                        currentPosition = currentPosition,
+                                                        totalDuration = duration,
+                                                        fileName = item.name,
+                                                        opacity = 0.7f,
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                }
                                             }
                                             
-                                            // 2x2 control pack to the right of waveform (Like, Move, Spectrogram, Share)
+                                            // 2x2 control pack to the right (Like, Move, Spectrogram, Share)
                                             Column(
                                                 verticalArrangement = Arrangement.spacedBy(3.dp),
                                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -3465,7 +3502,7 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                             }
-                                        } else {
+                                        } else if (!isCurrent) {
                                             // Filename for non-current items (centered vertically)
                                             Box(
                                                 modifier = Modifier
@@ -3503,6 +3540,30 @@ viewModel.updateSearchText("")
                                                 }
                                             }
                                         }
+
+                                        // Right side Like button for inactive rows
+                                        if (!isCurrent && (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED)) {
+                                            IconButton(
+                                                onClick = {
+                                                    try {
+                                                        val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                        if (actualIndex >= 0) {
+                                                            viewModel.sortAtIndex(actualIndex, SortAction.LIKE)
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        CrashLogger.log("Debug", "Error in like button (inactive row): ${e.message}")
+                                                    }
+                                                },
+                                                modifier = Modifier.size(adaptiveButtonSize)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Favorite,
+                                                    contentDescription = "Like",
+                                                    tint = YesButton,
+                                                    modifier = Modifier.size(adaptiveIconSize)
+                                                )
+                                            }
+                                        }
                                         }
                                     }
                                 }
@@ -3538,32 +3599,11 @@ viewModel.updateSearchText("")
                     ) {
                         // PHASE 4: Use currentPlayingFile to show actual playing file, not next file
                         currentPlayingFile?.let { file ->
-                            // Animation states for miniplayer swipe feedback
-                            var miniDragOffset by remember { mutableStateOf(0f) }
-                            var miniIsAnimating by remember { mutableStateOf(false) }
+                            // Animation states for miniplayer swipe feedback - Animatable
+                            val scope = rememberCoroutineScope()
+                            val miniSwipeOffset = remember { Animatable(0f) }
                             var miniSwipeDirection by remember { mutableStateOf(0) } // -1 left, 0 none, 1 right
-                            
-                            val miniAnimatedOffset by animateFloatAsState(
-                                targetValue = if (miniIsAnimating) miniDragOffset else 0f,
-                                animationSpec = if (visualSettings.enableAnimations) {
-                                    val speedFactor = 1f / visualSettings.animationSpeed
-                                    if (speedFactor == 1f) {
-                                        animationSpecs.bouncySpring
-                                    } else {
-                                        spring(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
-                                            stiffness = Spring.StiffnessLow * speedFactor
-                                        )
-                                    }
-                                } else { 
-                                    tween(durationMillis = 0) // Snap immediately if animations are disabled
-                                },
-                                finishedListener = {
-                                    miniIsAnimating = false
-                                    miniDragOffset = 0f
-                                    miniSwipeDirection = 0
-                                }
-                            )
+                            val miniAnimatedOffset = miniSwipeOffset.value
                             
                             val miniCardColor = when (miniSwipeDirection) {
                                 1 -> LikeGreen.copy(alpha = 0.3f)
@@ -3600,32 +3640,45 @@ viewModel.updateSearchText("")
                                     .pointerInput(Unit) {
                                         detectDragGestures(
                                             onDragStart = {
-                                                miniIsAnimating = false
+                                                // no-op
                                             },
                                             onDragEnd = {
-                                                miniIsAnimating = true
-                                                // Execute action if threshold met
-                                                if (abs(miniDragOffset) > 100) { // Slightly lower threshold for miniplayer
-                                                    try {
-                                                        when {
-                                                            miniDragOffset > 0 -> viewModel.sortCurrentFile(SortAction.LIKE)
-                                                            miniDragOffset < 0 -> viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                val current = miniSwipeOffset.value
+                                                val threshold = 100f
+                                                val exit = if (current > 0) 420f else -420f
+                                                if (abs(current) > threshold) {
+                                                    val prevFile = file
+                                                    scope.launch {
+                                                        // 1) Animate out fully
+                                                        miniSwipeOffset.animateTo(exit, tween(220))
+                                                        // 2) Animate back
+                                                        miniSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                        // 3) Then sequence next/sort
+                                                        if (current < 0) {
+                                                            try {
+                                                                viewModel.next()
+                                                                prevFile.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
+                                                            } catch (e: Exception) {
+                                                                CrashLogger.log("Debug", "Error in miniplayer swipe next/sort: ${e.message}")
+                                                            }
+                                                        } else if (current > 0) {
+                                                            try { prevFile.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (e: Exception) {
+                                                                CrashLogger.log("Debug", "Error in miniplayer swipe like: ${e.message}")
+                                                            }
                                                         }
-                                                    } catch (e: Exception) {
-                                                        // Handle crash gracefully
-                                                        CrashLogger.log("Debug", "Error in miniplayer swipe gesture: ${e.message}")
                                                     }
+                                                } else {
+                                                    scope.launch { miniSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) }
                                                 }
+                                                miniSwipeDirection = 0
                                             }
                                         ) { _, dragAmount ->
                                             val (x, _) = dragAmount
-                                            miniDragOffset += x
-                                            miniDragOffset = miniDragOffset.coerceIn(-200f, 200f) // Smaller drag distance for miniplayer
-                                            
-                                            // Update visual feedback
+                                            val newValue = (miniSwipeOffset.value + x).coerceIn(-200f, 200f)
+                                            scope.launch { miniSwipeOffset.snapTo(newValue) }
                                             miniSwipeDirection = when {
-                                                miniDragOffset > 30 -> 1 // Right swipe (like) - lower threshold
-                                                miniDragOffset < -30 -> -1 // Left swipe (dislike) - lower threshold
+                                                newValue > 30 -> 1
+                                                newValue < -30 -> -1
                                                 else -> 0
                                             }
                                         }
@@ -4081,7 +4134,8 @@ viewModel.updateSearchText("")
             },
             text = {
                 var selectedViewSubfolders by remember { mutableStateOf(setOf<String>()) }
-                Column {
+                val scroll = androidx.compose.foundation.rememberScrollState()
+                Column(modifier = Modifier.fillMaxWidth().verticalScroll(scroll)) {
                     Text("Select a subfolder to move the current file:")
                     Spacer(modifier = Modifier.height(8.dp))
                     
@@ -4106,7 +4160,7 @@ viewModel.updateSearchText("")
                         }
                     }
                     
-                    // Available subfolders with file counts (tap to move current file)
+                    // Available subfolders as 2-column pill buttons (tap to move current file)
                     if (availableSubfolders.isNotEmpty()) {
                         Text(
                             "Available subfolders:",
@@ -4114,25 +4168,34 @@ viewModel.updateSearchText("")
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
-                        availableSubfolders.forEach { subfolder ->
-                            val fileCount = subfolderFileCounts[subfolder] ?: 0
-                            TextButton(
-                                onClick = {
-                                    showSubfolderSelectionDialog = false
-                                    viewModel.moveCurrentFileToSubfolder(subfolder)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
+                        val gridItems = availableSubfolders
+                        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                            columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            userScrollEnabled = true
+                        ) {
+                            items(gridItems.size) { idx ->
+                                val subfolder = gridItems[idx]
+                                OutlinedButton(
+                                    onClick = {
+                                        showSubfolderSelectionDialog = false
+                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder
                                 ) {
-                                    Text("$subfolder")
                                     Text(
-                                        "$fileCount files",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary
+                                        text = subfolder,
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }
@@ -4140,7 +4203,7 @@ viewModel.updateSearchText("")
                         Spacer(Modifier.height(12.dp))
                         HorizontalDivider()
                         Spacer(Modifier.height(8.dp))
-                        // Multi-select to VIEW liked subfolders (aggregate)
+                        // Multi-select to VIEW liked subfolders: chips as 2-column pills
                         if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
                             Text(
                                 "Or select multiple subfolders to view in Liked:",
@@ -4148,32 +4211,36 @@ viewModel.updateSearchText("")
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(Modifier.height(6.dp))
-                            availableSubfolders.forEach { name ->
-                                val checked = selectedViewSubfolders.contains(name)
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
+                            val viewList = availableSubfolders
+                            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 240.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                userScrollEnabled = true
+                            ) {
+                                items(viewList.size) { idx ->
+                                    val name = viewList[idx]
+                                    val checked = selectedViewSubfolders.contains(name)
+                                    OutlinedButton(
+                                        onClick = {
                                             selectedViewSubfolders = if (checked) selectedViewSubfolders - name else selectedViewSubfolders + name
-                                        }
-                                        .padding(vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(
-                                            checked = checked,
-                                            onCheckedChange = {
-                                                selectedViewSubfolders = if (checked) selectedViewSubfolders - name else selectedViewSubfolders + name
-                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            containerColor = Color.Transparent,
+                                            contentColor = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        border = ButtonDefaults.outlinedButtonBorder
+                                    ) {
+                                        Text(
+                                            text = name,
+                                            style = MaterialTheme.typography.bodySmall
                                         )
-                                        Text(name, color = MaterialTheme.colorScheme.onSurface)
                                     }
-                                    Text(
-                                        "${subfolderFileCounts[name] ?: 0}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
                                 }
                             }
                             Spacer(Modifier.height(8.dp))
@@ -4203,24 +4270,33 @@ viewModel.updateSearchText("")
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
-                        recentSubfolders.forEach { subfolder ->
-                            TextButton(
-                                onClick = {
-                                    showSubfolderSelectionDialog = false
-                                    viewModel.moveCurrentFileToSubfolder(subfolder)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
+                        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                            columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 200.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            userScrollEnabled = true
+                        ) {
+                            items(recentSubfolders.size) { idx ->
+                                val subfolder = recentSubfolders[idx]
+                                OutlinedButton(
+                                    onClick = {
+                                        showSubfolderSelectionDialog = false
+                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder
                                 ) {
-                                    Text("$subfolder")
                                     Text(
-                                        "0 files",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        text = subfolder,
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }

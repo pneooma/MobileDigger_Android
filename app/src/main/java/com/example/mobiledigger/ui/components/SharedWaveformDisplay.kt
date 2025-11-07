@@ -126,19 +126,19 @@ fun SharedWaveformDisplay(
                     }
                 }
                 
-                // Zoom animation from 0% to 100% (375ms - half of previous 750ms)
-                val animatedScale by animateFloatAsState(
+                // Y-axis expand animation from center (0 → 1 in ~500ms)
+                val animatedScaleY by animateFloatAsState(
                     targetValue = if (hasAppeared) 1f else 0f,
-                    animationSpec = tween(durationMillis = 375, easing = FastOutSlowInEasing),
-                    label = "waveformScale"
+                    animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                    label = "waveformScaleY"
                 )
                 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            scaleX = animatedScale
-                            scaleY = animatedScale
+                            scaleX = 1f
+                            scaleY = animatedScaleY
                         }
                 ) {
                     AndroidView(

@@ -65,6 +65,10 @@ v10.81
 v10.82
 - ⬆️ Extra -5dp (now -27dp) global LazyColumn top offset
 - 🧾 MS header buttons: two-line labels per spec (Send to/Folder, Rename/Selected, Like/Selected, Exit/M.S. Mode); Reject shows icon row then label
+
+v10.83
+- 📱 Miniplayer appears when active playlist row is less than 50% visible (even if waveform shown)
+- ⬆️ Increase global list top offset to -35dp (from -27dp)
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

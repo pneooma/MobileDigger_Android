@@ -804,4 +804,33 @@ class FileManager(private val context: Context) {
             false
         }
     }
+
+    suspend fun renameFile(musicFile: MusicFile, newBaseName: String): MusicFile? = withContext(Dispatchers.IO) {
+        try {
+            val oldName = musicFile.name
+            val dot = oldName.lastIndexOf('.')
+            val ext = if (dot > 0) oldName.substring(dot) else ""
+            val newName = if (ext.isNotEmpty()) "$newBaseName$ext" else newBaseName
+
+            return@withContext if (musicFile.uri.scheme == "file") {
+                val oldFile = java.io.File(musicFile.uri.path ?: return@withContext null)
+                val target = java.io.File(oldFile.parentFile, newName)
+                if (oldFile.renameTo(target)) {
+                    musicFile.copy(uri = Uri.fromFile(target), name = target.name)
+                } else null
+            } else {
+                val renamedUri = try {
+                    DocumentsContract.renameDocument(contentResolver, musicFile.uri, newName)
+                } catch (_: Exception) { null }
+                if (renamedUri != null) {
+                    val df = DocumentFile.fromSingleUri(context, renamedUri)
+                    val finalName = df?.name ?: newName
+                    musicFile.copy(uri = renamedUri, name = finalName)
+                } else null
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error renaming file ${musicFile.name}", e)
+            null
+        }
+    }
 }

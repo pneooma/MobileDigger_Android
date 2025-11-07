@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.69 ::",
+                            text = ":: v10.70 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1139,6 +1139,14 @@ viewModel.updateSearchText("")
             }
         }
         
+        // Rename dialogs state
+        var showRenameActionDialog by remember { mutableStateOf(false) }
+        var showRenameSelectedDialog by remember { mutableStateOf(false) }
+        var showRenameCurrentDialog by remember { mutableStateOf(false) }
+        var manualRenameText by remember { mutableStateOf("") }
+        var pendingIndexForMulti by remember { mutableStateOf<Int?>(null) }
+        var renameCase by remember { mutableStateOf(MusicViewModel.RenameCase.TITLE) }
+
         if (musicFiles.isNotEmpty() && !isLoading && currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) {
             Popup(
                 alignment = Alignment.TopCenter,
@@ -1195,6 +1203,106 @@ viewModel.updateSearchText("")
             }
         }
         
+        // Rename: action chooser dialog
+        if (showRenameActionDialog) {
+            AlertDialog(
+                onDismissRequest = { showRenameActionDialog = false },
+                title = { Text("Choose Action") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = {
+                            showRenameActionDialog = false
+                            pendingIndexForMulti?.let { viewModel.enableMultiSelectionMode(it) } ?: viewModel.toggleMultiSelectionMode()
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Enter Multi-Select Mode") }
+
+                        Button(onClick = {
+                            showRenameActionDialog = false
+                            showRenameSelectedDialog = true
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Rename Selected Files") }
+
+                        Button(onClick = {
+                            showRenameActionDialog = false
+                            manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: ""))
+                            showRenameCurrentDialog = true
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Rename Current Playing File") }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showRenameActionDialog = false }) { Text("Close") }
+                }
+            )
+        }
+
+        // Rename selected files dialog
+        if (showRenameSelectedDialog) {
+            AlertDialog(
+                onDismissRequest = { showRenameSelectedDialog = false },
+                title = { Text("Rename Selected Files") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        listOf(
+                            MusicViewModel.RenameCase.TITLE to "All Words With Capital Letter",
+                            MusicViewModel.RenameCase.UPPER to "ALL LETTERS UP",
+                            MusicViewModel.RenameCase.LOWER to "all letters small"
+                        ).forEach { (case, label) ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = renameCase == case, onClick = { renameCase = case })
+                                Text(label, modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showRenameSelectedDialog = false
+                        viewModel.renameSelectedFiles(renameCase)
+                    }) { Text("Rename") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRenameSelectedDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+
+        // Rename current playing file dialog
+        if (showRenameCurrentDialog) {
+            AlertDialog(
+                onDismissRequest = { showRenameCurrentDialog = false },
+                title = { Text("Rename Current File") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        androidx.compose.material3.OutlinedTextField(
+                            value = manualRenameText,
+                            onValueChange = { manualRenameText = it },
+                            label = { Text("File name (without extension)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        listOf(
+                            MusicViewModel.RenameCase.TITLE to "All Words With Capital Letter",
+                            MusicViewModel.RenameCase.UPPER to "ALL LETTERS UP",
+                            MusicViewModel.RenameCase.LOWER to "all letters small"
+                        ).forEach { (case, label) ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = renameCase == case, onClick = { renameCase = case })
+                                Text(label, modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showRenameCurrentDialog = false
+                        viewModel.renameCurrentPlayingFile(manualRenameText, renameCase)
+                    }) { Text("Rename") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRenameCurrentDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+
         // ZIP progress indicator at top of screen
         if (zipInProgress) {
             Card(
@@ -3382,7 +3490,17 @@ viewModel.updateSearchText("")
                                                 Box(
                                                     modifier = Modifier
                                                         .weight(1f)
-                                                        .height(animatedRowHeight),
+                                                        .height(animatedRowHeight)
+                                                        .pointerInput(item.uri) {
+                                                            androidx.compose.foundation.gestures.detectTapGestures(
+                                                                onLongPress = {
+                                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                    pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                                    manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                                    showRenameActionDialog = true
+                                                                }
+                                                            )
+                                                        },
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Text(
@@ -3549,7 +3667,17 @@ viewModel.updateSearchText("")
                                             Box(
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .height(animatedRowHeight), // Match animated row height
+                                                    .height(animatedRowHeight) // Match animated row height
+                                                    .pointerInput(item.uri) {
+                                                        androidx.compose.foundation.gestures.detectTapGestures(
+                                                            onLongPress = {
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                                manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                                showRenameActionDialog = true
+                                                            }
+                                                        )
+                                                    },
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Row(

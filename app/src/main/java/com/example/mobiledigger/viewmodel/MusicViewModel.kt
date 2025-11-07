@@ -2410,6 +2410,91 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
         }
     }
+
+    enum class RenameCase { TITLE, UPPER, LOWER }
+
+    private fun applyCaseTransform(base: String, mode: RenameCase): String {
+        return when (mode) {
+            RenameCase.UPPER -> base.uppercase()
+            RenameCase.LOWER -> base.lowercase()
+            RenameCase.TITLE -> base
+                .lowercase()
+                .split(Regex("[\\s_\-]+"))
+                .filter { it.isNotBlank() }
+                .joinToString(" ") { word -> word.replaceFirstChar { c -> c.titlecase() } }
+        }
+    }
+
+    fun renameSelectedFiles(mode: RenameCase) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val indices = _selectedIndices.value.toList()
+                if (indices.isEmpty()) {
+                    withContext(Dispatchers.Main) { _errorMessage.value = "No files selected" }
+                    return@launch
+                }
+                val currentFiles = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
+                }
+                var success = 0
+                val updatedFiles = currentFiles.toMutableList()
+                indices.forEach { idx ->
+                    val mf = currentFiles.getOrNull(idx) ?: return@forEach
+                    val base = mf.name.substringBeforeLast('.', mf.name)
+                    val newBase = applyCaseTransform(base, mode)
+                    val renamed = fileManager.renameFile(mf, newBase)
+                    if (renamed != null) {
+                        success++
+                        updatedFiles[idx] = renamed
+                        if (_currentPlayingFile.value?.uri == mf.uri) {
+                            _currentPlayingFile.value = renamed
+                        }
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    when (_currentPlaylistTab.value) {
+                        PlaylistTab.TODO -> _musicFiles.value = updatedFiles
+                        PlaylistTab.LIKED -> _likedFiles.value = updatedFiles
+                        PlaylistTab.REJECTED -> _rejectedFiles.value = updatedFiles
+                    }
+                    _selectedIndices.value = emptySet()
+                    _isMultiSelectionMode.value = false
+                    _errorMessage.value = "Renamed $success files"
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { _errorMessage.value = "Rename failed: ${e.message}" }
+            }
+        }
+    }
+
+    fun renameCurrentPlayingFile(manualBase: String, mode: RenameCase) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val cur = _currentPlayingFile.value ?: return@launch
+            try {
+                val base = if (manualBase.isNotBlank()) manualBase else cur.name.substringBeforeLast('.', cur.name)
+                val finalBase = applyCaseTransform(base, mode)
+                val renamed = fileManager.renameFile(cur, finalBase)
+                if (renamed != null) {
+                    withContext(Dispatchers.Main) {
+                        // Update in current playlist
+                        when (_currentPlaylistTab.value) {
+                            PlaylistTab.TODO -> _musicFiles.value = _musicFiles.value.map { if (it.uri == cur.uri) renamed else it }
+                            PlaylistTab.LIKED -> _likedFiles.value = _likedFiles.value.map { if (it.uri == cur.uri) renamed else it }
+                            PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.map { if (it.uri == cur.uri) renamed else it }
+                        }
+                        _currentPlayingFile.value = renamed
+                        _errorMessage.value = "Renamed current file"
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { _errorMessage.value = "Rename failed" }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { _errorMessage.value = "Rename failed: ${e.message}" }
+            }
+        }
+    }
     
     private fun showDeleteRejectedPrompt() {
         _showDeleteRejectedPrompt.value = true

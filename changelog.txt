@@ -72,6 +72,9 @@ v10.83
 
 v10.84
 - 🔁 Reject button layout adapts: one-line in normal mode; two-line (icons + label) in Multi-Select
+
+v10.85
+- 🧹 Rename: pre-delete conflicting sibling before rename; retry to avoid “(1)” suffix on providers that auto-unique names; parent lookup via DocumentsContract
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

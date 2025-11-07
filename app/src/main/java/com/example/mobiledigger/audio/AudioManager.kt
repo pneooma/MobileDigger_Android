@@ -898,6 +898,49 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Resume error", e)
         }
     }
+
+    fun setVolume(volume: Float) {
+        val v = volume.coerceIn(0f, 1f)
+        try {
+            if (isUsingVlc) {
+                vlcBackend?.setVolume(v)
+            } else if (isUsingFFmpeg) {
+                ffmpegPlayer?.setVolume(v, v)
+            } else {
+                exoPlayerFallback?.volume = v
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "Set volume error", e)
+        }
+    }
+
+    suspend fun fadeOut(durationMs: Long = 1000) {
+        try {
+            val steps = 20
+            val delayPer = (durationMs / steps).coerceAtLeast(10)
+            for (i in steps downTo 0) {
+                val v = i / steps.toFloat()
+                setVolume(v)
+                kotlinx.coroutines.delay(delayPer)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "FadeOut error", e)
+        }
+    }
+
+    suspend fun fadeIn(durationMs: Long = 1000) {
+        try {
+            val steps = 20
+            val delayPer = (durationMs / steps).coerceAtLeast(10)
+            for (i in 0..steps) {
+                val v = i / steps.toFloat()
+                setVolume(v)
+                kotlinx.coroutines.delay(delayPer)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "FadeIn error", e)
+        }
+    }
     
     fun stop() {
         stopAllPlayback()

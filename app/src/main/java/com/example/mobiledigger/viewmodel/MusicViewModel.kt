@@ -182,6 +182,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // Play the next item that shifts into currentIndex after the current one was removed
     fun playNextAfterRemoval() {
         viewModelScope.launch {
+            // Ensure UI reflow happens first
+            delay(50)
+            // Soft audio fade-out before switching
+            try { audioManager.fadeOut(1000) } catch (_: Exception) {}
             val files = when (_currentPlaylistTab.value) {
                 PlaylistTab.TODO -> _musicFiles.value
                 PlaylistTab.LIKED -> _likedFiles.value
@@ -196,6 +200,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _currentIndex.value = (files.size - 1).coerceAtLeast(0)
             }
             loadCurrentFile()
+            // Start new file at 0 volume then fade in
+            audioManager.setVolume(0f)
+            audioManager.resume()
+            try { audioManager.fadeIn(1000) } catch (_: Exception) {}
             updateNotification()
         }
     }

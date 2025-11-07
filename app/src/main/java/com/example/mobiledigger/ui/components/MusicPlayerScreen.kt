@@ -3479,19 +3479,7 @@ viewModel.updateSearchText("")
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    // Checkbox for multi-selection
-                                    if (isMultiSelectionMode) {
-                                        val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                        Checkbox(
-                                            checked = selectedIndices.contains(actualIndex),
-                                            onCheckedChange = { 
-                                                if (actualIndex >= 0) {
-                                                    viewModel.toggleSelection(actualIndex)
-                                                }
-                                            },
-                                            modifier = Modifier.padding(end = 8.dp)
-                                        )
-                                    }
+                                    // (moved checkbox inline with filename to avoid overlay)
                                     Column(modifier = Modifier.weight(1f)) {
                                         // Filename above waveform removed; shown inside waveform
                                     }
@@ -3610,17 +3598,31 @@ viewModel.updateSearchText("")
                                                         ),
                                                     contentAlignment = Alignment.Center
                                                 ) {
-                                                    Text(
-                                                        text = item.name,
-                                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
-                                                            fontWeight = FontWeight.Medium
-                                                        ),
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                        textAlign = TextAlign.Center,
-                                                        modifier = Modifier.fillMaxWidth()
-                                                    )
+                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.Center
+                                                    ) {
+                                                        if (isMultiSelectionMode && actualIndex >= 0) {
+                                                            Checkbox(
+                                                                checked = selectedIndices.contains(actualIndex),
+                                                                onCheckedChange = { viewModel.toggleSelection(actualIndex) },
+                                                                modifier = Modifier.padding(end = 6.dp)
+                                                            )
+                                                        }
+                                                        Text(
+                                                            text = item.name,
+                                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
+                                                                fontWeight = FontWeight.Medium
+                                                            ),
+                                                            maxLines = 2,
+                                                            overflow = TextOverflow.Ellipsis,
+                                                            textAlign = TextAlign.Center,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                    }
                                                 }
                                             } else {
                                             val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
@@ -3797,9 +3799,17 @@ viewModel.updateSearchText("")
                                             ) {
                                                 Row(
                                                     modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.Center,
+                                                    horizontalArrangement = Arrangement.Start,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
+                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                    if (isMultiSelectionMode && actualIndex >= 0) {
+                                                        Checkbox(
+                                                            checked = selectedIndices.contains(actualIndex),
+                                                            onCheckedChange = { viewModel.toggleSelection(actualIndex) },
+                                                            modifier = Modifier.padding(end = 6.dp)
+                                                        )
+                                                    }
                                                     // Show red checkmark for played-but-not-actioned files (but not the currently playing one)
                                                     if (item.uri in playedButNotActioned && item.uri != currentPlayingFile?.uri) {
                                                         Icon(
@@ -3819,7 +3829,7 @@ viewModel.updateSearchText("")
                                                         ),
                                                         maxLines = 4,
                                                         overflow = TextOverflow.Visible,
-                                                        textAlign = TextAlign.Center,
+                                                        textAlign = TextAlign.Start,
                                                         modifier = Modifier.weight(1f, fill = true)
                                                     )
                                                 }

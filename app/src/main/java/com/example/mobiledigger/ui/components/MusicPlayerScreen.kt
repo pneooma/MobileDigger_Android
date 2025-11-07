@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.64 ::",
+                            text = ":: v10.65 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3056,7 +3056,7 @@ viewModel.updateSearchText("")
                             }
                             val activeAlpha by animateFloatAsState(
                                 targetValue = activeTargetAlpha,
-                                animationSpec = tween(400),
+                                animationSpec = tween(1000),
                                 label = "activeAlpha"
                             )
 

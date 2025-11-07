@@ -1,3 +1,6 @@
+v10.65
+- 🌟 Active-row fade-in increased to 1000ms for a smoother reveal
+
 v10.64
 - 🚀 Optional next-item preloading wired to reduce startup buffering
 - 🌟 Active-row fade-in increased to 400ms

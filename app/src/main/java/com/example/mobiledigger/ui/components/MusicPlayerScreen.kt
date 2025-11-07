@@ -1162,15 +1162,13 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 2.dp)
-                    .horizontalScroll(rememberScrollState()),
+                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                val isNarrow = screenWidth < 420.dp
-                val buttonHPad = if (isNarrow) 8.dp else 12.dp
-                val buttonVPad = if (isNarrow) 3.dp else 4.dp
-                val labelStyle = if (isNarrow) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall
+                val buttonHPad = 8.dp
+                val buttonVPad = 3.dp
+                val labelStyle = MaterialTheme.typography.labelSmall
                 // Bulk Reject
                 Button(
                     onClick = { 
@@ -1249,7 +1247,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text(if (isNarrow) "Rename" else "Rename Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                    ) { Text("Rename Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                     Button(
                         onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
                         modifier = Modifier
@@ -1261,7 +1259,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text(if (isNarrow) "Like" else "Like Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                    ) { Text("Like Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                     Button(
                         onClick = { viewModel.toggleMultiSelectionMode() },
                         modifier = Modifier
@@ -1273,7 +1271,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text(if (isNarrow) "Exit" else "Exit MS Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                    ) { Text("Exit MS Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                 }
             }
         }
@@ -1822,7 +1820,7 @@ viewModel.updateSearchText("")
                             .fillMaxSize()
                             .heightIn(max = playlistMaxHeight),
                         // Performance optimizations
-                        contentPadding = PaddingValues(vertical = 4.dp),
+                        contentPadding = PaddingValues(vertical = if (isMultiSelectionMode) (-30).dp else 4.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         // Add performance hints for large lists
                         userScrollEnabled = true,

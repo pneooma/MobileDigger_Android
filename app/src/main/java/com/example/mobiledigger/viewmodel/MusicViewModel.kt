@@ -1091,15 +1091,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             PlaylistTab.TODO -> {
                 viewModelScope.launch {
                     delay(300)
-                    val updatedFiles = _musicFiles.value.toMutableList()
-                    val indexToRemove = updatedFiles.indexOfFirst { it.uri == sortedFile.uri }
-                    if (indexToRemove != -1) {
-                        updatedFiles.removeAt(indexToRemove)
-                        _musicFiles.value = updatedFiles
-                    
+                val updatedFiles = _musicFiles.value.toMutableList()
+                val indexToRemove = updatedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                if (indexToRemove != -1) {
+                    updatedFiles.removeAt(indexToRemove)
+                    _musicFiles.value = updatedFiles
+
                         // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
                         if (sortedFile.uri != currentFile?.uri && indexToRemove < _currentIndex.value) {
-                            _currentIndex.value = _currentIndex.value - 1 // Shift index if file before it was removed
+                        _currentIndex.value = _currentIndex.value - 1 // Shift index if file before it was removed
                         }
                     }
                 }
@@ -1107,15 +1107,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             PlaylistTab.LIKED -> {
                 viewModelScope.launch {
                     delay(300)
-                    val updatedLikedFiles = _likedFiles.value.toMutableList()
-                    val indexToRemove = updatedLikedFiles.indexOfFirst { it.uri == sortedFile.uri }
-                    if (indexToRemove != -1) {
-                        updatedLikedFiles.removeAt(indexToRemove)
-                        _likedFiles.value = updatedLikedFiles
+                val updatedLikedFiles = _likedFiles.value.toMutableList()
+                val indexToRemove = updatedLikedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                if (indexToRemove != -1) {
+                    updatedLikedFiles.removeAt(indexToRemove)
+                    _likedFiles.value = updatedLikedFiles
                     
                         // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
                         if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.LIKED) {
-                            _currentIndex.value = _currentIndex.value - 1
+                        _currentIndex.value = _currentIndex.value - 1
                         }
                     }
                 }
@@ -1123,15 +1123,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             PlaylistTab.REJECTED -> {
                 viewModelScope.launch {
                     delay(300)
-                    val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
-                    val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == sortedFile.uri }
-                    if (indexToRemove != -1) {
-                        updatedRejectedFiles.removeAt(indexToRemove)
-                        _rejectedFiles.value = updatedRejectedFiles
+                val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
+                val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                if (indexToRemove != -1) {
+                    updatedRejectedFiles.removeAt(indexToRemove)
+                    _rejectedFiles.value = updatedRejectedFiles
                     
                         // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
                         if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
-                            _currentIndex.value = _currentIndex.value - 1
+                        _currentIndex.value = _currentIndex.value - 1
                         }
                     }
                 }
@@ -1399,7 +1399,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     private var isPreloadEnabled: Boolean = true
-
+    
     private fun preloadNextSong() {
         audioPreloadJob?.cancel()
         audioPreloadJob = viewModelScope.launch(Dispatchers.IO) {
@@ -3060,8 +3060,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                         viewModelScope.launch {
                                             delay(300)
                                             _removingUris.value = _removingUris.value - fileToMove.uri
-                                            updatedTodoFiles.removeAt(indexToRemove)
-                                            _musicFiles.value = updatedTodoFiles
+                                        updatedTodoFiles.removeAt(indexToRemove)
+                                        _musicFiles.value = updatedTodoFiles
                                         
                                         // PHASE 4: Keep file playing when moved to subfolder
                                         // Don't interrupt playback - just update the index
@@ -3104,8 +3104,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                         viewModelScope.launch {
                                             delay(300)
                                             _removingUris.value = _removingUris.value - fileToMove.uri
-                                            updatedRejectedFiles.removeAt(indexToRemove)
-                                            _rejectedFiles.value = updatedRejectedFiles
+                                        updatedRejectedFiles.removeAt(indexToRemove)
+                                        _rejectedFiles.value = updatedRejectedFiles
                                         
                                         // PHASE 4: Keep file playing when moved to subfolder
                                         if (indexToRemove < _currentIndex.value) {

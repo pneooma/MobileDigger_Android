@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.87 ::",
+                            text = ":: v10.88 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1192,6 +1192,7 @@ viewModel.updateSearchText("")
                 ) {
                     Text("Rename\nCurrent file", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
                 }
+                if (!isMultiSelectionMode) Spacer(Modifier.width(50.dp))
                 // Bulk Reject
                 Button(
                     onClick = { 
@@ -1203,7 +1204,7 @@ viewModel.updateSearchText("")
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
                         .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
+                        .height(33.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -1213,10 +1214,10 @@ viewModel.updateSearchText("")
                 ) {
                     if (isMultiSelectionMode) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
+                    ) {
                                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
                                 Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
@@ -1238,16 +1239,17 @@ viewModel.updateSearchText("")
                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
                             Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
-                            Text(
-                                text = "Reject $playedButNotActionedCount",
+                        Text(
+                            text = "Reject $playedButNotActionedCount",
                                 style = labelStyle,
-                                color = MaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1
-                            )
-                        }
+                        )
                     }
                 }
+            }
+                if (!isMultiSelectionMode) Spacer(Modifier.width(50.dp))
                 // Right pill: Multi-Select (hidden in Multi-Select)
                 if (!isMultiSelectionMode) Button(
                     onClick = { viewModel.toggleMultiSelectionMode() },
@@ -3434,7 +3436,7 @@ viewModel.updateSearchText("")
                                                             try {
                                                             // Debug logging
                                                                 CrashLogger.log("MusicPlayerScreen", "🔍 Swipe gesture: index=$index, file='${item.name}', swipeOffset=$current, action=${if (current > 0) "LIKE" else "DISLIKE"}")
-                                                                
+                                                            
                                                                 // Capture the file reference at the time of swipe to avoid race conditions
                                                                 val fileToSort = item
                                                                 val isActiveNow = currentPlayingFile?.uri == item.uri
@@ -4024,8 +4026,8 @@ viewModel.updateSearchText("")
                                                         } else if (current > 0) {
                                                             try { prevFile.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (e: Exception) {
                                                                 CrashLogger.log("Debug", "Error in miniplayer swipe like: ${e.message}")
-                                                            }
-                                                        }
+                                                    }
+                                                }
                                                     }
                                                 } else {
                                                     scope.launch { miniSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) }
@@ -4574,7 +4576,7 @@ viewModel.updateSearchText("")
                                         Text(
                                         text = subfolder,
                                         style = MaterialTheme.typography.bodySmall
-                                    )
+                                        )
                                 }
                             }
                         }
@@ -4617,7 +4619,7 @@ viewModel.updateSearchText("")
                                                 Text(
                                             text = name,
                                             style = MaterialTheme.typography.bodySmall
-                                        )
+                                            )
                                     }
                                 }
                             }

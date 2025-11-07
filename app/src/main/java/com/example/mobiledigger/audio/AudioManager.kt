@@ -2383,7 +2383,7 @@ class AudioManager(private val context: Context) {
      * Extract audio data from compressed formats using MediaCodec for proper decoding
      */
     private fun extractCompressedAudioData(
-        extractor: android.media.MediaExtractor, 
+        extractor: android.media.MediaExtractor,
         mimeType: String, 
         sampleRate: Int, 
         channels: Int,
@@ -2432,7 +2432,7 @@ class AudioManager(private val context: Context) {
                     val actualData = ByteArray(sampleSize)
                     byteBuffer.rewind()
                     byteBuffer.get(actualData)
-                    
+                            
                     // For compressed data, we'll create representative samples
                     // This gives us the frequency characteristics we need for spectrograms
                     val representativeSamples = generateRepresentativeSamples(actualData, sampleRate, frameCount)
@@ -2463,8 +2463,8 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Compressed audio extraction failed", e)
             null
         }
-    }
-    
+            }
+            
     /**
      * Generate representative audio samples from compressed data frames
      * This creates frequency-rich data suitable for spectrogram analysis
@@ -2827,7 +2827,7 @@ class AudioManager(private val context: Context) {
                     }
                 }
             }
-            
+
             CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, limiting analysis to ${maxAnalysisSeconds}s for memory management")
             
             // Safety check: limit target width to prevent memory issues

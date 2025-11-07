@@ -69,6 +69,9 @@ v10.82
 v10.83
 - 📱 Miniplayer appears when active playlist row is less than 50% visible (even if waveform shown)
 - ⬆️ Increase global list top offset to -35dp (from -27dp)
+
+v10.84
+- 🔁 Reject button layout adapts: one-line in normal mode; two-line (icons + label) in Multi-Select
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

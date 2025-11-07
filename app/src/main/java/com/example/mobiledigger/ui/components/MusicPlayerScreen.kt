@@ -970,7 +970,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.73 ::",
+                            text = ":: v10.74 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1149,7 +1149,7 @@ viewModel.updateSearchText("")
         var manualRenameText by remember { mutableStateOf("") }
         var pendingIndexForMulti by remember { mutableStateOf<Int?>(null) }
         var pendingIndexForSingle by remember { mutableStateOf<Int?>(null) }
-        var renameCase by remember { mutableStateOf(MusicViewModel.RenameCase.TITLE) }
+        var renameCase by remember { mutableStateOf(MusicViewModel.RenameCase.MANUAL) }
 
         // Ensure main player is visible when entering multi-select; disable hide toggle while active
         LaunchedEffect(isMultiSelectionMode) {
@@ -1213,10 +1213,37 @@ viewModel.updateSearchText("")
                         ) {
                             Text("Rename Selected")
                         }
+                        Button(
+                            onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
+                            modifier = Modifier
+                                .shadow(8.dp, RoundedCornerShape(24.dp))
+                                .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
+                        ) {
+                            Text("Like Selected")
+                        }
+                        Button(
+                            onClick = { viewModel.toggleMultiSelectionMode() },
+                            modifier = Modifier
+                                .shadow(8.dp, RoundedCornerShape(24.dp))
+                                .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
+                        ) {
+                            Text("Exit MS Mode")
+                        }
                         Text("| ${selectedIndices.size} Selected |", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                         TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
                         TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
-                        TextButton(onClick = { viewModel.toggleMultiSelectionMode() }) { Text("Exit MS Mode") }
                     }
                 }
             }
@@ -3438,7 +3465,7 @@ viewModel.updateSearchText("")
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
                                                 // Dislike button
-                                                if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                                                if (!isMultiSelectionMode && (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED)) {
                                                     IconButton(
                                                         onClick = { 
                                                             try {

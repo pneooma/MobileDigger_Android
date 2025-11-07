@@ -29,6 +29,13 @@ v10.73
 - 🪟 Multi-select forces main player visible and disables Hide Controls
 - 📝 Wrapped filename text up to 4 lines to avoid overlaps
 
+v10.74
+- 🧷 Preserve special characters during rename (no stripping - ( ) ! : . etc.)
+- 📝 Rename dialogs default to 'Manual Rename'; MANUAL/Title/UPPER/lower options
+- ➕ Added 'Like Selected' and 'Exit MS Mode' buttons next to 'Rename Selected'
+- 🧼 Hide all row-level like/dislike controls in Multi-Select mode
+- 📍 Keep top action row anchored consistently; visible during Multi-Select
+
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

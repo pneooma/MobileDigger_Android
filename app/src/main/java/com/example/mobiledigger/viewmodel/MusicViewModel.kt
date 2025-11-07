@@ -2411,17 +2411,35 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
 
-    enum class RenameCase { TITLE, UPPER, LOWER }
+    enum class RenameCase { MANUAL, TITLE, UPPER, LOWER }
 
     private fun applyCaseTransform(base: String, mode: RenameCase): String {
         return when (mode) {
+            RenameCase.MANUAL -> base
             RenameCase.UPPER -> base.uppercase()
             RenameCase.LOWER -> base.lowercase()
             RenameCase.TITLE -> base
-                .lowercase()
-                .split(Regex("""[\s_\-]+"""))
-                .filter { it.isNotBlank() }
-                .joinToString(" ") { word -> word.replaceFirstChar { c -> c.titlecase() } }
+                .let { input ->
+                    val sb = StringBuilder(input.length)
+                    var newWord = true
+                    input.forEach { ch ->
+                        when {
+                            ch.isLetter() -> {
+                                if (newWord) {
+                                    sb.append(ch.titlecase())
+                                } else {
+                                    sb.append(ch.lowercaseChar())
+                                }
+                                newWord = false
+                            }
+                            else -> {
+                                sb.append(ch)
+                                newWord = ch.isWhitespace() || ch == '_' || ch == '-' || ch == '(' || ch == '[' || ch == '{' || ch == '.' || ch == ':' || ch == '!' || ch == ')' || ch == ']' || ch == '}'
+                            }
+                        }
+                    }
+                    sb.toString()
+                }
         }
     }
 

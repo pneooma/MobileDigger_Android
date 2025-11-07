@@ -1191,9 +1191,9 @@ viewModel.updateSearchText("")
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(if (isNarrow) 14.dp else 16.dp), tint = Color.Red)
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(if (isNarrow) 10.dp else 12.dp), tint = MaterialTheme.colorScheme.onSurface)
-                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(if (isNarrow) 14.dp else 16.dp), tint = Color.Red)
+                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
                         Text(
                             text = "Reject $playedButNotActionedCount",
                             style = labelStyle,
@@ -1217,7 +1217,7 @@ viewModel.updateSearchText("")
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                     ) {
-                        Text(if (isNarrow) "Send" else "Send to Folder", style = labelStyle)
+                        Text("Send to Folder", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
                     }
                 }
                 if (showBulkSendDialog && isMultiSelectionMode) {

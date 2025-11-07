@@ -4,6 +4,9 @@ v10.67
 v10.68
 - 🔗 Tied swipe→activation: hide upcoming row until it becomes active, then fade/slide in; removes brief flash of inactive row during transition.
 
+v10.69
+- 🎯 Remove down→up enter; promotion now animates row height only (inactive→active). Smoother transition without simultaneous swipe+activation visuals.
+
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

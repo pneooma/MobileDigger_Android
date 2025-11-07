@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.68 ::",
+                            text = ":: v10.69 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3006,6 +3006,13 @@ viewModel.updateSearchText("")
                                 }
                             }
                             
+                            // Animate row height on promotion (inactive → active)
+                            val animatedRowHeight by animateDpAsState(
+                                targetValue = adaptiveHeight,
+                                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                                label = "rowHeight"
+                            )
+
                             // Calculate adaptive button size based on row height (only for inactive rows)
                             val adaptiveButtonSize = remember(adaptiveHeight, isCurrent, visualSettings.rowWaveformHeight) {
                                 if (isCurrent) {
@@ -3043,19 +3050,7 @@ viewModel.updateSearchText("")
                                 animationSpec = tween(300),
                                 label = "rowAlpha"
                             )
-                            // Fade/slide when this row becomes active
-                            val density = LocalDensity.current
-                            val appearAnim = remember(item.uri, isCurrent) { Animatable(if (isCurrent) 0f else 1f) }
-                            LaunchedEffect(isCurrent) {
-                                if (isCurrent) {
-                                    appearAnim.snapTo(0f)
-                                    appearAnim.animateTo(1f, tween(1000))
-                                } else {
-                                    appearAnim.snapTo(1f)
-                                }
-                            }
-                            val activeAlpha = appearAnim.value
-                            val activeSlideY = (1f - activeAlpha) * with(density) { 20.dp.toPx() }
+                            // Remove down-to-up/alpha enter; we'll animate only height on promotion
 
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold
@@ -3110,9 +3105,9 @@ viewModel.updateSearchText("")
                                         .animateItemPlacement(tween(durationMillis = 900))
                                         .graphicsLayer {
                                             translationX = rowSwipeOffset.value
-                                            translationY = activeSlideY
+                                            translationY = 0f
                                             val promoHide = if (!isCurrent && promotingNextUri == item.uri) 0f else 1f
-                                            alpha = rowAlpha * activeAlpha * promoHide
+                                            alpha = rowAlpha * 1f * promoHide
                                         }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
@@ -3298,7 +3293,7 @@ viewModel.updateSearchText("")
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                        .height(adaptiveHeight), // Adaptive height based on state
+                                        .height(animatedRowHeight), // Animated adaptive height on promotion
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
@@ -3387,7 +3382,7 @@ viewModel.updateSearchText("")
                                                 Box(
                                                     modifier = Modifier
                                                         .weight(1f)
-                                                        .height(adaptiveHeight),
+                                                        .height(animatedRowHeight),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Text(
@@ -3554,7 +3549,7 @@ viewModel.updateSearchText("")
                                             Box(
                                                 modifier = Modifier
                                                     .weight(1f)
-                                                    .height(adaptiveHeight), // Match adaptive row height
+                                                    .height(animatedRowHeight), // Match animated row height
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Row(

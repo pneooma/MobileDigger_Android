@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.88 ::",
+                            text = ":: v10.89 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1255,7 +1255,8 @@ viewModel.updateSearchText("")
                     onClick = { viewModel.toggleMultiSelectionMode() },
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                        .height(22.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -1263,7 +1264,7 @@ viewModel.updateSearchText("")
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                 ) {
-                    Text("Multi-Select", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
+                    Text("Multi-Select", style = labelStyle, maxLines = 1, textAlign = TextAlign.Center)
                 }
                 // Send to Folder (bulk) - only in Multi-Select mode
                 var showBulkSendDialog by remember { mutableStateOf(false) }

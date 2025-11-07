@@ -1585,6 +1585,7 @@ viewModel.updateSearchText("")
                 }
                 
                 Box(modifier = Modifier.fillMaxSize()) {
+                    var suppressMiniOnLeftSwipe by remember { mutableStateOf(false) }
                     // Main scrollable content
                     LazyColumn(
                         state = listState,
@@ -3116,6 +3117,7 @@ viewModel.updateSearchText("")
                                                                 val exit = if (current > 0) 520f else -520f
                                                                 scope.launch {
                                                                     isRowDismissed = true
+                                                                    if (current < 0 && isActiveNow) suppressMiniOnLeftSwipe = true
                                                                     launch { rowSwipeOffset.animateTo(exit, tween(150)) }
                                                                     // Wait for fade-out (alpha 300ms), then remove immediately for smooth reflow
                                                                     delay(300)
@@ -3607,9 +3609,12 @@ viewModel.updateSearchText("")
                     
                     // PHASE 4: Show miniplayer when file not in playlist OR when scrolled and not visible
                     var isMiniPlayerHidden by remember { mutableStateOf(false) }
-                    LaunchedEffect(currentPlayingFile?.uri) { isMiniPlayerHidden = false }
+                    LaunchedEffect(currentPlayingFile?.uri) { 
+                        isMiniPlayerHidden = false
+                        suppressMiniOnLeftSwipe = false
+                    }
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = currentPlayingFile != null && (!isFileInCurrentPlaylist || (isScrolled && !isCurrentTrackVisible)) && !isMiniPlayerHidden && !(isWaveformVisible && isMainPlayerVisible),
+                        visible = currentPlayingFile != null && (!isFileInCurrentPlaylist || (isScrolled && !isCurrentTrackVisible)) && !isMiniPlayerHidden && !(isWaveformVisible && isMainPlayerVisible) && !suppressMiniOnLeftSwipe,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                         modifier = Modifier

@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.80 ::",
+                            text = ":: v10.81 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1421,7 +1421,7 @@ viewModel.updateSearchText("")
                 }
             )
         }
-
+        
         // ZIP progress indicator at top of screen
         if (zipInProgress) {
             Card(
@@ -1820,7 +1820,7 @@ viewModel.updateSearchText("")
                         modifier = Modifier
                             .fillMaxSize()
                             .heightIn(max = playlistMaxHeight)
-                            .then(if (isMultiSelectionMode) Modifier.offset(y = (-15).dp) else Modifier),
+                            .then(Modifier.offset(y = (-22).dp)),
                         // Performance optimizations
                         contentPadding = PaddingValues(vertical = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -1899,7 +1899,7 @@ viewModel.updateSearchText("")
                                     ),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(top = 6.dp)
-                                )
+                                    )
                                     OutlinedButton(
                                         onClick = { isMainPlayerVisible = !isMainPlayerVisible },
                                         enabled = !isMultiSelectionMode,
@@ -1955,7 +1955,7 @@ viewModel.updateSearchText("")
                                             run {
                                                 val isCurrentInPlaylist = currentPlaylistFiles.any { it.uri == file.uri }
                                                 if (isCurrentInPlaylist) Modifier.pointerInput(Unit) {
-                                                    detectDragGestures(
+                                            detectDragGestures(
                                                 onDragStart = {
                                                     // no-op
                                                 },
@@ -1975,7 +1975,7 @@ viewModel.updateSearchText("")
                                                                 try {
                                                                     viewModel.next()
                                                                     prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
-                                                                } catch (e: Exception) {
+                                                        } catch (e: Exception) {
                                                                     CrashLogger.log("Debug", "Error in swipe (main) next/sort: ${e.message}")
                                                                 }
                                                             } else if (current > 0) {
@@ -3241,7 +3241,7 @@ viewModel.updateSearchText("")
                                 animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
                                 label = "rowHeight"
                             )
-
+                            
                             // Calculate adaptive button size based on row height (only for inactive rows)
                             val adaptiveButtonSize = remember(adaptiveHeight, isCurrent, visualSettings.rowWaveformHeight) {
                                 if (isCurrent) {
@@ -3324,7 +3324,7 @@ viewModel.updateSearchText("")
                                 }
                                 
                                 // Consolidated swipe gesture implementation
-                                Card(
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
@@ -3367,13 +3367,13 @@ viewModel.updateSearchText("")
                                                         val current = rowSwipeOffset.value
                                                         if (abs(current) > swipeTriggerThreshold) {
                                                             try {
-                                                                // Debug logging
+                                                            // Debug logging
                                                                 CrashLogger.log("MusicPlayerScreen", "🔍 Swipe gesture: index=$index, file='${item.name}', swipeOffset=$current, action=${if (current > 0) "LIKE" else "DISLIKE"}")
                                                                 
                                                                 // Capture the file reference at the time of swipe to avoid race conditions
                                                                 val fileToSort = item
                                                                 val isActiveNow = currentPlayingFile?.uri == item.uri
-                                                                hapticFeedback()
+                                                            hapticFeedback()
                                                                 // Fade-out and remove immediately (no bounce back)
                                                                 val exit = if (current > 0) 520f else -520f
                                                                 scope.launch {
@@ -3425,9 +3425,9 @@ viewModel.updateSearchText("")
                                                     }
                                                     
                                                     swipeDirection = newDirection
-                                                }
                                             }
-                                        },
+                                        }
+                                    },
                                 colors = CardDefaults.cardColors(
                                     containerColor = when {
                                         isCurrent -> when (currentPlaylistTab) {
@@ -3474,7 +3474,7 @@ viewModel.updateSearchText("")
                                         // Filename above waveform removed; shown inside waveform
                                     }
                                     Row(horizontalArrangement = Arrangement.spacedBy(if (isCompactScreen) 2.dp else 4.dp)) {
-                                        // Normal mode: individual file actions (moved inline with waveform)
+                                            // Normal mode: individual file actions (moved inline with waveform)
                                     }
                                 }
                                 
@@ -3601,14 +3601,14 @@ viewModel.updateSearchText("")
                                                     )
                                                 }
                                             } else {
-                                                val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                                Box(
-                                                    modifier = Modifier
-                                                        .weight(1f)
+                                            val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
                                                         .height(88.dp)
                                                         ,
-                                                    contentAlignment = Alignment.Center
-                                                ) {
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                     WaveformWithToggle(
                                                         sharedState = sharedWaveformState,
                                                         progress = progressPercent,
@@ -3802,29 +3802,29 @@ viewModel.updateSearchText("")
                                                     )
                                                 }
                                             }
-                                        }
-
+                                                }
+                                                
                                         // Right side Like button for inactive rows
                                         if (!isCurrent && (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) && !isMultiSelectionMode) {
-                                            IconButton(
-                                                onClick = {
-                                                    try {
-                                                        val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                        if (actualIndex >= 0) {
-                                                            viewModel.sortAtIndex(actualIndex, SortAction.LIKE)
-                                                        }
-                                                    } catch (e: Exception) {
+                                                    IconButton(
+                                                        onClick = {
+                                                            try {
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                if (actualIndex >= 0) {
+                                                                    viewModel.sortAtIndex(actualIndex, SortAction.LIKE)
+                                                                }
+                                                            } catch (e: Exception) {
                                                         CrashLogger.log("Debug", "Error in like button (inactive row): ${e.message}")
-                                                    }
-                                                },
-                                                modifier = Modifier.size(adaptiveButtonSize)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Favorite,
-                                                    contentDescription = "Like",
-                                                    tint = YesButton,
-                                                    modifier = Modifier.size(adaptiveIconSize)
-                                                )
+                                                            }
+                                                        },
+                                                        modifier = Modifier.size(adaptiveButtonSize)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Favorite,
+                                                            contentDescription = "Like",
+                                                            tint = YesButton,
+                                                            modifier = Modifier.size(adaptiveIconSize)
+                                                        )
                                             }
                                         }
                                         }
@@ -3908,7 +3908,7 @@ viewModel.updateSearchText("")
                                     )
                                     .then(
                                         if (isFileInCurrentPlaylist) Modifier.pointerInput(Unit) {
-                                            detectDragGestures(
+                                        detectDragGestures(
                                             onDragStart = {
                                                 // no-op
                                             },
@@ -3928,7 +3928,7 @@ viewModel.updateSearchText("")
                                                             try {
                                                                 viewModel.next()
                                                                 prevFile.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
-                                                            } catch (e: Exception) {
+                                                    } catch (e: Exception) {
                                                                 CrashLogger.log("Debug", "Error in miniplayer swipe next/sort: ${e.message}")
                                                             }
                                                         } else if (current > 0) {
@@ -3956,7 +3956,7 @@ viewModel.updateSearchText("")
                                     ),
                                 colors = CardDefaults.cardColors(containerColor = miniCardColor),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                            ) {
+) {
                                 Box(modifier = Modifier.fillMaxWidth()) {
                                     // Floating close (X) button - top-left
                                     IconButton(
@@ -3974,9 +3974,9 @@ viewModel.updateSearchText("")
                                         )
                                     }
 
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
+    Column(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
                                     // Main content - Song name and controls in 2 columns
                                     Row(
                                         modifier = Modifier
@@ -4241,7 +4241,7 @@ viewModel.updateSearchText("")
                                                             color = Color(0xFFFFB6C1), // Light Pink
                                                             textAlign = TextAlign.Center
                                                         )
-                                            }
+                                                    }
                                                 }
                                             }
                                         }
@@ -4480,8 +4480,8 @@ viewModel.updateSearchText("")
                                         contentColor = MaterialTheme.colorScheme.onSurface
                                     ),
                                     border = ButtonDefaults.outlinedButtonBorder
-                                ) {
-                                    Text(
+                                    ) {
+                                        Text(
                                         text = subfolder,
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -4524,7 +4524,7 @@ viewModel.updateSearchText("")
                                         ),
                                         border = ButtonDefaults.outlinedButtonBorder
                                     ) {
-                                        Text(
+                                                Text(
                                             text = name,
                                             style = MaterialTheme.typography.bodySmall
                                         )
@@ -4570,10 +4570,10 @@ viewModel.updateSearchText("")
                             items(recentSubfolders.size) { idx ->
                                 val subfolder = recentSubfolders[idx]
                                 OutlinedButton(
-                                    onClick = {
-                                        showSubfolderSelectionDialog = false
-                                        viewModel.moveCurrentFileToSubfolder(subfolder)
-                                    },
+                                onClick = {
+                                    showSubfolderSelectionDialog = false
+                                    viewModel.moveCurrentFileToSubfolder(subfolder)
+                                },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(20.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(

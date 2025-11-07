@@ -58,6 +58,9 @@ v10.79
 
 v10.80
 - ↩️ Revert header lift; instead apply LazyColumn top offset (-15dp) during Multi-Select to close the gap to Reject row without shifting header
+
+v10.81
+- ⬆️ Pull content closer globally: LazyColumn top offset set to -22dp (applies in both normal and Multi-Select views)
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

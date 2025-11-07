@@ -819,25 +819,18 @@ class FileManager(private val context: Context) {
                     musicFile.copy(uri = Uri.fromFile(target), name = target.name)
                 } else null
             } else {
-                // Try DocumentFile.renameTo first, after clearing any conflicts, to avoid providers creating "(1)"
+                // Try DocumentFile.renameTo first (attempt two-step rename if provider appends (1))
                 val df = DocumentFile.fromSingleUri(context, musicFile.uri)
                 if (df != null && df.exists()) {
-                    // Delete conflicting sibling (exact name) if present
-                    try {
-                        findSiblingWithName(df, newName)?.let { sibling ->
-                            if (sibling.uri != df.uri) sibling.delete()
-                        }
-                    } catch (_: Exception) {}
                     val ok = try { df.renameTo(newName) } catch (_: Exception) { false }
                     if (ok) {
                         val updated = DocumentFile.fromSingleUri(context, musicFile.uri)
                         var finalName = updated?.name ?: newName
-                        // If provider still appended (1), try once more after conflict cleanup
+                        // If provider still appended (1), try two-step rename (temp -> target) to avoid case-insensitive conflicts
                         if (finalName != newName && finalName.startsWith(newBaseName) && finalName.contains("(1)")) {
                             try {
-                                findSiblingWithName(updated ?: df, newName)?.let { sib ->
-                                    if (sib.uri != (updated ?: df).uri) sib.delete()
-                                }
+                                val tempName = "${newBaseName}_temp_${System.currentTimeMillis()}$ext"
+                                (updated ?: df).renameTo(tempName)
                                 (updated ?: df).renameTo(newName)
                                 finalName = (DocumentFile.fromSingleUri(context, musicFile.uri)?.name ?: newName)
                             } catch (_: Exception) {}
@@ -852,8 +845,10 @@ class FileManager(private val context: Context) {
                     var finalName = updated?.name ?: newName
                     if (finalName != newName && finalName.startsWith(newBaseName) && finalName.contains("(1)")) {
                         try {
-                            findSiblingWithName(updated ?: return@withContext musicFile.copy(uri = renamedUri, name = finalName), newName)?.delete()
-                            DocumentsContract.renameDocument(contentResolver, renamedUri, newName)?.let { retryUri ->
+                            // Two-step rename via contract
+                            val tempName = "${newBaseName}_temp_${System.currentTimeMillis()}$ext"
+                            val tempUri = DocumentsContract.renameDocument(contentResolver, renamedUri, tempName) ?: renamedUri
+                            DocumentsContract.renameDocument(contentResolver, tempUri, newName)?.let { retryUri ->
                                 finalName = DocumentFile.fromSingleUri(context, retryUri)?.name ?: newName
                                 return@withContext musicFile.copy(uri = retryUri, name = finalName)
                             }
@@ -866,33 +861,5 @@ class FileManager(private val context: Context) {
             CrashLogger.log("FileManager", "Error renaming file ${musicFile.name}", e)
             null
         }
-    }
-
-    private fun findSiblingWithName(file: DocumentFile, targetName: String): DocumentFile? {
-        return try {
-            val parent = getParentDocumentFile(file.uri) ?: return null
-            parent.listFiles().firstOrNull { it.name.equals(targetName, ignoreCase = false) }
-        } catch (_: Exception) { null }
-    }
-
-    private fun getParentDocumentFile(fileUri: Uri): DocumentFile? {
-        return try {
-            val projection = arrayOf(
-                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                DocumentsContract.Document.COLUMN_PARENT_DOCUMENT_ID
-            )
-            var parentId: String? = null
-            context.contentResolver.query(fileUri, projection, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val parentIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_PARENT_DOCUMENT_ID)
-                    if (parentIndex >= 0) {
-                        parentId = cursor.getString(parentIndex)
-                    }
-                }
-            }
-            val authority = fileUri.authority ?: return null
-            val parentUri = parentId?.let { DocumentsContract.buildDocumentUri(authority, it) } ?: return null
-            DocumentFile.fromSingleUri(context, parentUri)
-        } catch (_: Exception) { null }
     }
 }

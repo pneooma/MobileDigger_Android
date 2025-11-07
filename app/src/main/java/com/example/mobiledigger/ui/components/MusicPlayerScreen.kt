@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.67 ::",
+                            text = ":: v10.68 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1586,6 +1586,7 @@ viewModel.updateSearchText("")
                 
                 Box(modifier = Modifier.fillMaxSize()) {
                     var suppressMiniOnLeftSwipe by remember { mutableStateOf(false) }
+                    var promotingNextUri by remember { mutableStateOf<Uri?>(null) }
                     // Main scrollable content
                     LazyColumn(
                         state = listState,
@@ -3107,7 +3108,12 @@ viewModel.updateSearchText("")
                                         vertical = 0.dp
                                     )
                                         .animateItemPlacement(tween(durationMillis = 900))
-                                        .graphicsLayer { translationX = rowSwipeOffset.value; translationY = activeSlideY; alpha = rowAlpha * activeAlpha }
+                                        .graphicsLayer {
+                                            translationX = rowSwipeOffset.value
+                                            translationY = activeSlideY
+                                            val promoHide = if (!isCurrent && promotingNextUri == item.uri) 0f else 1f
+                                            alpha = rowAlpha * activeAlpha * promoHide
+                                        }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->
@@ -3131,6 +3137,13 @@ viewModel.updateSearchText("")
                                                                 scope.launch {
                                                                     isRowDismissed = true
                                                                     if (current < 0 && isActiveNow) suppressMiniOnLeftSwipe = true
+                                                                    // Determine next uri to promote and hide its placeholder until active
+                                                                    if (current < 0 && isActiveNow) {
+                                                                        val idx = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                        if (idx >= 0 && idx + 1 < currentPlaylistFiles.size) {
+                                                                            promotingNextUri = currentPlaylistFiles[idx + 1].uri
+                                                                        }
+                                                                    }
                                                                     // Immediately start next playback for active-row left swipe
                                                                     if (current < 0 && isActiveNow) {
                                                                         try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
@@ -3626,6 +3639,7 @@ viewModel.updateSearchText("")
                     LaunchedEffect(currentPlayingFile?.uri) { 
                         isMiniPlayerHidden = false
                         suppressMiniOnLeftSwipe = false
+                        if (currentPlayingFile?.uri == promotingNextUri) promotingNextUri = null
                     }
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentPlayingFile != null && (!isFileInCurrentPlaylist || (isScrolled && !isCurrentTrackVisible)) && !isMiniPlayerHidden && !(isWaveformVisible && isMainPlayerVisible) && !suppressMiniOnLeftSwipe,

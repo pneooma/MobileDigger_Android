@@ -1160,7 +1160,8 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -1888,7 +1889,7 @@ viewModel.updateSearchText("")
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 8.dp),
+                                        .padding(top = 4.dp, bottom = 2.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
@@ -3336,7 +3337,11 @@ viewModel.updateSearchText("")
                                             onClick = {
                                                 val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
                                                 if (actualIndex >= 0) {
-                                                    if (!isMultiSelectionMode) viewModel.jumpTo(actualIndex) else viewModel.toggleSelection(actualIndex)
+                                                    if (isCurrent) {
+                                                        if (isMultiSelectionMode) viewModel.toggleSelection(actualIndex)
+                                                    } else {
+                                                        if (!isMultiSelectionMode) viewModel.jumpTo(actualIndex) else viewModel.toggleSelection(actualIndex)
+                                                    }
                                                 }
                                             },
                                             onLongClick = {
@@ -3620,21 +3625,7 @@ viewModel.updateSearchText("")
                                                         opacity = 0.7f,
                                                         modifier = Modifier.fillMaxWidth()
                                                     )
-                                                    // Overlay to capture long press above waveform
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .matchParentSize()
-                                                            .pointerInput(item.uri) {
-                                                                detectTapGestures(
-                                                                    onLongPress = {
-                                                                        val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                        pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
-                                                                        manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
-                                                                        showRenameActionDialog = true
-                                                                    }
-                                                                )
-                                                            }
-                                                    )
+                                                    // No consuming overlay so single-tap seek works
                                                 }
                                             }
                                             

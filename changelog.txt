@@ -8,6 +8,9 @@ v10.87
  
 v10.89
 - 🧩 Multi-Select pill height matches Rename (single-line label)
+
+v10.90
+- 🎯 Centered text horizontally and vertically in Rename and Multi-Select pills
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.89 ::",
+                            text = ":: v10.90 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1190,7 +1190,9 @@ viewModel.updateSearchText("")
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                 ) {
-                    Text("Rename\nCurrent file", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
+                    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        Text("Rename\nCurrent file", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
+                    }
                 }
                 if (!isMultiSelectionMode) Spacer(Modifier.width(50.dp))
                 // Bulk Reject
@@ -1264,7 +1266,9 @@ viewModel.updateSearchText("")
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                 ) {
-                    Text("Multi-Select", style = labelStyle, maxLines = 1, textAlign = TextAlign.Center)
+                    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        Text("Multi-Select", style = labelStyle, maxLines = 1, textAlign = TextAlign.Center)
+                    }
                 }
                 // Send to Folder (bulk) - only in Multi-Select mode
                 var showBulkSendDialog by remember { mutableStateOf(false) }

@@ -75,6 +75,9 @@ v10.84
 
 v10.85
 - 🧹 Rename: pre-delete conflicting sibling before rename; retry to avoid “(1)” suffix on providers that auto-unique names; parent lookup via DocumentsContract
+
+v10.86
+- ➕ Added header pill buttons: “Rename/Current file” (left) and “Multi-Select/Mode” (right) flanking Reject; mirror long-press actions
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

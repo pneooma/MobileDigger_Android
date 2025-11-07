@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.66 ::",
+                            text = ":: v10.67 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3042,41 +3042,19 @@ viewModel.updateSearchText("")
                                 animationSpec = tween(300),
                                 label = "rowAlpha"
                             )
-                            // Fade-in when this row becomes active
-                            var activeTargetAlpha by remember(item.uri) { mutableStateOf(1f) }
-                            LaunchedEffect(isCurrent) {
-                                if (isCurrent) {
-                                    activeTargetAlpha = 0f
-                                    // Small delay to ensure target change is captured for animation
-                                    kotlinx.coroutines.delay(10)
-                                    activeTargetAlpha = 1f
-                                } else {
-                                    activeTargetAlpha = 1f
-                                }
-                            }
-                            val activeAlpha by animateFloatAsState(
-                                targetValue = activeTargetAlpha,
-                                animationSpec = tween(1000),
-                                label = "activeAlpha"
-                            )
-                            // Slide-in from below when becoming active
+                            // Fade/slide when this row becomes active
                             val density = LocalDensity.current
-                            var activeSlideTarget by remember(item.uri) { mutableStateOf(0f) }
+                            val appearAnim = remember(item.uri, isCurrent) { Animatable(if (isCurrent) 0f else 1f) }
                             LaunchedEffect(isCurrent) {
                                 if (isCurrent) {
-                                    activeSlideTarget = with(density) { 20.dp.toPx() }
-                                    // next frame
-                                    kotlinx.coroutines.yield()
-                                    activeSlideTarget = 0f
+                                    appearAnim.snapTo(0f)
+                                    appearAnim.animateTo(1f, tween(1000))
                                 } else {
-                                    activeSlideTarget = 0f
+                                    appearAnim.snapTo(1f)
                                 }
                             }
-                            val activeSlideY by animateFloatAsState(
-                                targetValue = activeSlideTarget,
-                                animationSpec = tween(1000),
-                                label = "activeSlideY"
-                            )
+                            val activeAlpha = appearAnim.value
+                            val activeSlideY = (1f - activeAlpha) * with(density) { 20.dp.toPx() }
 
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold

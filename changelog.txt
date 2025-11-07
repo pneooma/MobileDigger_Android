@@ -1,3 +1,6 @@
+v10.67
+- ✅ Active-row animation fixed to always run on promotion (Animatable 0→1)
+
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

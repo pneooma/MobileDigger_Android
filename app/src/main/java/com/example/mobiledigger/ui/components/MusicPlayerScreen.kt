@@ -1160,10 +1160,14 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.Center
             ) {
+                val isNarrow = screenWidth < 420.dp
+                val buttonHPad = if (isNarrow) 8.dp else 12.dp
+                val buttonVPad = if (isNarrow) 3.dp else 4.dp
+                val labelStyle = if (isNarrow) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall
                 // Bulk Reject
                 Button(
                     onClick = { 
@@ -1173,25 +1177,25 @@ viewModel.updateSearchText("")
                         }
                     },
                     modifier = Modifier
-                        .shadow(6.dp, RoundedCornerShape(22.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                        .shadow(4.dp, RoundedCornerShape(20.dp))
+                        .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
                     ),
-                    shape = RoundedCornerShape(22.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurface)
-                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
+                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(if (isNarrow) 14.dp else 16.dp), tint = Color.Red)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(if (isNarrow) 10.dp else 12.dp), tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(if (isNarrow) 14.dp else 16.dp), tint = Color.Red)
                         Text(
                             text = "Reject $playedButNotActionedCount",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = labelStyle,
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -1203,16 +1207,16 @@ viewModel.updateSearchText("")
                     Button(
                         onClick = { showBulkSendDialog = true },
                         modifier = Modifier
-                            .shadow(6.dp, RoundedCornerShape(22.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                            .shadow(4.dp, RoundedCornerShape(20.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape = RoundedCornerShape(22.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                     ) {
-                        Text("Send to Folder")
+                        Text(if (isNarrow) "Send" else "Send to Folder", style = labelStyle)
                     }
                 }
                 if (showBulkSendDialog && isMultiSelectionMode) {
@@ -1234,42 +1238,42 @@ viewModel.updateSearchText("")
                     Button(
                         onClick = { showRenameSelectedDialog = true },
                         modifier = Modifier
-                            .shadow(6.dp, RoundedCornerShape(22.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                            .shadow(4.dp, RoundedCornerShape(20.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape = RoundedCornerShape(22.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                    ) { Text("Rename Selected") }
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
+                    ) { Text(if (isNarrow) "Rename" else "Rename Selected", style = labelStyle) }
                     Button(
                         onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
                         modifier = Modifier
-                            .shadow(6.dp, RoundedCornerShape(22.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                            .shadow(4.dp, RoundedCornerShape(20.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape = RoundedCornerShape(22.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                    ) { Text("Like Selected") }
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
+                    ) { Text(if (isNarrow) "Like" else "Like Selected", style = labelStyle) }
                     Button(
                         onClick = { viewModel.toggleMultiSelectionMode() },
                         modifier = Modifier
-                            .shadow(6.dp, RoundedCornerShape(22.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                            .shadow(4.dp, RoundedCornerShape(20.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(20.dp)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape = RoundedCornerShape(22.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                    ) { Text("Exit MS Mode") }
-                    Text("| ${selectedIndices.size} Selected |", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                    TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
-                    TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
+                    ) { Text(if (isNarrow) "Exit" else "Exit MS Mode", style = labelStyle) }
+                    Text("| ${selectedIndices.size} Selected |", style = labelStyle, color = MaterialTheme.colorScheme.primary)
+                    TextButton(onClick = { viewModel.selectAll() }) { Text(if (isNarrow) "All" else "Select All", style = labelStyle) }
+                    TextButton(onClick = { viewModel.clearSelection() }) { Text(if (isNarrow) "Clear" else "Clear", style = labelStyle) }
                 }
             }
         }

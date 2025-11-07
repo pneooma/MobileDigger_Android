@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.79 ::",
+                            text = ":: v10.80 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1162,8 +1162,7 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 0.dp)
-                    .then(if (isMultiSelectionMode) Modifier.offset(y = (-30).dp) else Modifier)
+                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 2.dp)
                     .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
@@ -1820,7 +1819,8 @@ viewModel.updateSearchText("")
                         state = listState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .heightIn(max = playlistMaxHeight),
+                            .heightIn(max = playlistMaxHeight)
+                            .then(if (isMultiSelectionMode) Modifier.offset(y = (-15).dp) else Modifier),
                         // Performance optimizations
                         contentPadding = PaddingValues(vertical = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),

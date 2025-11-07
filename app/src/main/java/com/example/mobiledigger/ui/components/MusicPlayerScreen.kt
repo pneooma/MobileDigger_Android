@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalFoundationApi::class)
 package com.example.mobiledigger.ui.components
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
@@ -967,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.55 ::",
+                            text = ":: v10.62 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1700,6 +1702,7 @@ viewModel.updateSearchText("")
                                         .fillMaxWidth()
                                         .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
                                         .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
+                                        .animateItemPlacement(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow))
                                         .graphicsLayer {
                                             translationX = animatedOffset
                                             scaleX = 1f + abs(animatedOffset) / 2000f // Slight scale effect
@@ -1717,8 +1720,11 @@ viewModel.updateSearchText("")
                                                 Modifier
                                             }
                                         )
-                                        .pointerInput(Unit) {
-                                            detectDragGestures(
+                                        .then(
+                                            run {
+                                                val isCurrentInPlaylist = currentPlaylistFiles.any { it.uri == file.uri }
+                                                if (isCurrentInPlaylist) Modifier.pointerInput(Unit) {
+                                                    detectDragGestures(
                                                 onDragStart = {
                                                     // no-op
                                                 },
@@ -1764,7 +1770,9 @@ viewModel.updateSearchText("")
                                                     else -> 0
                                                 }
                                             }
-                                        },
+                                                } else Modifier
+                                            }
+                                        ),
                                     colors = CardDefaults.cardColors(containerColor = cardColor)
 ) {
                                     Column(
@@ -3025,6 +3033,14 @@ viewModel.updateSearchText("")
                             val rowSwipeOffset = remember(item.uri) { Animatable(0f) }
                             var swipeDirection by remember(item.uri) { mutableStateOf(0) } // -1 left, 0 none, 1 right
                             var isSwipeActive by remember(item.uri) { mutableStateOf(false) }
+                            val removingUris by viewModel.removingUris.collectAsState()
+                            val isRemoving = removingUris.contains(item.uri)
+                            var isRowDismissed by remember(item.uri) { mutableStateOf(false) }
+                            val rowAlpha by animateFloatAsState(
+                                targetValue = if (isRemoving || isRowDismissed) 0f else 1f,
+                                animationSpec = tween(300),
+                                label = "rowAlpha"
+                            )
 
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold
@@ -3069,14 +3085,15 @@ viewModel.updateSearchText("")
                                 }
                                 
                                 // Consolidated swipe gesture implementation
-                            Card(
+                                Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = 0.dp
                                     )
-                                        .graphicsLayer { translationX = rowSwipeOffset.value }
+                                        .animateItemPlacement(tween(durationMillis = 900))
+                                        .graphicsLayer { translationX = rowSwipeOffset.value; alpha = rowAlpha }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->
@@ -3095,14 +3112,12 @@ viewModel.updateSearchText("")
                                                                 val fileToSort = item
                                                                 val isActiveNow = currentPlayingFile?.uri == item.uri
                                                                 hapticFeedback()
-                                                                // Throw-away animation then sequence actions
+                                                                // Fade-out and remove immediately (no bounce back)
                                                                 val exit = if (current > 0) 520f else -520f
                                                                 scope.launch {
-                                                                    // 1) Animate out fully
-                                                                    rowSwipeOffset.animateTo(exit, tween(200))
-                                                                    // 2) Animate back to rest
-                                                                    rowSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
-                                                                    // 3) Then actions
+                                                                    isRowDismissed = true
+                                                                    rowSwipeOffset.animateTo(exit, tween(150))
+                                                                    // Then actions
                                                                     if (current < 0 && isActiveNow) {
                                                                         try { viewModel.next() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ next() error: ${e.message}") }
                                                                     }
@@ -3114,7 +3129,7 @@ viewModel.updateSearchText("")
                                                                 CrashLogger.log("MusicPlayerScreen", "❌ Swipe gesture error: ${e.message}")
                                                             }
                                                         }
-                                                        // Sequenced above
+                                                        // No bounce-back
                                                         swipeDirection = 0
                                                         isSwipeActive = false
                                                     }
@@ -3588,8 +3603,10 @@ viewModel.updateSearchText("")
                     }
                     
                     // PHASE 4: Show miniplayer when file not in playlist OR when scrolled and not visible
+                    var isMiniPlayerHidden by remember { mutableStateOf(false) }
+                    LaunchedEffect(currentPlayingFile?.uri) { isMiniPlayerHidden = false }
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = currentPlayingFile != null && (!isFileInCurrentPlaylist || (isScrolled && !isCurrentTrackVisible)),
+                        visible = currentPlayingFile != null && (!isFileInCurrentPlaylist || (isScrolled && !isCurrentTrackVisible)) && !isMiniPlayerHidden && !(isWaveformVisible && isMainPlayerVisible),
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                         modifier = Modifier
@@ -3637,8 +3654,9 @@ viewModel.updateSearchText("")
                                             Modifier
                                         }
                                     )
-                                    .pointerInput(Unit) {
-                                        detectDragGestures(
+                                    .then(
+                                        if (isFileInCurrentPlaylist) Modifier.pointerInput(Unit) {
+                                            detectDragGestures(
                                             onDragStart = {
                                                 // no-op
                                             },
@@ -3682,13 +3700,31 @@ viewModel.updateSearchText("")
                                                 else -> 0
                                             }
                                         }
-                                    },
+                                        } else Modifier
+                                    ),
                                 colors = CardDefaults.cardColors(containerColor = miniCardColor),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-) {
-    Column(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
+                            ) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    // Floating close (X) button - top-left
+                                    IconButton(
+                                        onClick = { isMiniPlayerHidden = true },
+                                        modifier = Modifier
+                                            .align(Alignment.TopStart)
+                                            .padding(4.dp)
+                                            .size(24.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "Hide Miniplayer",
+                                            tint = Color.Red,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
                                     // Main content - Song name and controls in 2 columns
                                     Row(
                                         modifier = Modifier
@@ -3953,7 +3989,7 @@ viewModel.updateSearchText("")
                                                             color = Color(0xFFFFB6C1), // Light Pink
                                                             textAlign = TextAlign.Center
                                                         )
-                                                    }
+                                            }
                                                 }
                                             }
                                         }
@@ -4309,4 +4345,5 @@ viewModel.updateSearchText("")
     }
 
 
+}
 }

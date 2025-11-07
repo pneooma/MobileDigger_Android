@@ -142,6 +142,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private val _duration = MutableStateFlow(0L)
     val duration: StateFlow<Long> = _duration.asStateFlow()
+    // UI removal animation support: URIs fading out before actual removal
+    private val _removingUris = MutableStateFlow<Set<Uri>>(emptySet())
+    val removingUris: StateFlow<Set<Uri>> = _removingUris.asStateFlow()
     
     private val _volume = MutableStateFlow(1f)
     val volume: StateFlow<Float> = _volume.asStateFlow()
@@ -1016,44 +1019,58 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             _lastSortedAction.value = null // Reset after animation
         }
         
-        // Determine which list the file came from and remove it
+        // Determine which list the file came from and remove it with fade-out delay
+        _removingUris.value = _removingUris.value + sortedFile.uri
+        viewModelScope.launch {
+            delay(300)
+            _removingUris.value = _removingUris.value - sortedFile.uri
+        }
         when (sortedFile.sourcePlaylist) {
             PlaylistTab.TODO -> {
-                val updatedFiles = _musicFiles.value.toMutableList()
-                val indexToRemove = updatedFiles.indexOfFirst { it.uri == sortedFile.uri }
-                if (indexToRemove != -1) {
-                    updatedFiles.removeAt(indexToRemove)
-                    _musicFiles.value = updatedFiles
+                viewModelScope.launch {
+                    delay(300)
+                    val updatedFiles = _musicFiles.value.toMutableList()
+                    val indexToRemove = updatedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                    if (indexToRemove != -1) {
+                        updatedFiles.removeAt(indexToRemove)
+                        _musicFiles.value = updatedFiles
                     
-                    // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
-                    if (sortedFile.uri != currentFile?.uri && indexToRemove < _currentIndex.value) {
-                        _currentIndex.value = _currentIndex.value - 1 // Shift index if file before it was removed
+                        // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
+                        if (sortedFile.uri != currentFile?.uri && indexToRemove < _currentIndex.value) {
+                            _currentIndex.value = _currentIndex.value - 1 // Shift index if file before it was removed
+                        }
                     }
                 }
             }
             PlaylistTab.LIKED -> {
-                val updatedLikedFiles = _likedFiles.value.toMutableList()
-                val indexToRemove = updatedLikedFiles.indexOfFirst { it.uri == sortedFile.uri }
-                if (indexToRemove != -1) {
-                    updatedLikedFiles.removeAt(indexToRemove)
-                    _likedFiles.value = updatedLikedFiles
+                viewModelScope.launch {
+                    delay(300)
+                    val updatedLikedFiles = _likedFiles.value.toMutableList()
+                    val indexToRemove = updatedLikedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                    if (indexToRemove != -1) {
+                        updatedLikedFiles.removeAt(indexToRemove)
+                        _likedFiles.value = updatedLikedFiles
                     
-                    // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
-                    if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.LIKED) {
-                        _currentIndex.value = _currentIndex.value - 1
+                        // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
+                        if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.LIKED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.LIKED) {
+                            _currentIndex.value = _currentIndex.value - 1
+                        }
                     }
                 }
             }
             PlaylistTab.REJECTED -> {
-                val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
-                val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == sortedFile.uri }
-                if (indexToRemove != -1) {
-                    updatedRejectedFiles.removeAt(indexToRemove)
-                    _rejectedFiles.value = updatedRejectedFiles
+                viewModelScope.launch {
+                    delay(300)
+                    val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
+                    val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == sortedFile.uri }
+                    if (indexToRemove != -1) {
+                        updatedRejectedFiles.removeAt(indexToRemove)
+                        _rejectedFiles.value = updatedRejectedFiles
                     
-                    // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
-                    if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
-                        _currentIndex.value = _currentIndex.value - 1
+                        // Do NOT auto-advance; keep playback as-is. Only shift index if item before current was removed.
+                        if (!(sortedFile.uri == currentFile?.uri && _currentPlaylistTab.value == PlaylistTab.REJECTED) && indexToRemove < _currentIndex.value && _currentPlaylistTab.value == PlaylistTab.REJECTED) {
+                            _currentIndex.value = _currentIndex.value - 1
+                        }
                     }
                 }
             }
@@ -2830,8 +2847,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     val wasPlayingRemovedFile = (indexToRemove == _currentIndex.value)
                                     
                                     if (indexToRemove != -1) {
-                                        updatedTodoFiles.removeAt(indexToRemove)
-                                        _musicFiles.value = updatedTodoFiles
+                                        // Trigger fade-out animation before removal
+                                        _removingUris.value = _removingUris.value + fileToMove.uri
+                                        viewModelScope.launch {
+                                            delay(300)
+                                            _removingUris.value = _removingUris.value - fileToMove.uri
+                                            updatedTodoFiles.removeAt(indexToRemove)
+                                            _musicFiles.value = updatedTodoFiles
                                         
                                         // PHASE 4: Keep file playing when moved to subfolder
                                         // Don't interrupt playback - just update the index
@@ -2844,6 +2866,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                                 _currentIndex.value = updatedTodoFiles.size - 1
                                             }
                                             CrashLogger.log("MusicViewModel", "📂 File moved to subfolder while playing - keeping playback active")
+                                        }
+                                            // Update current playing file to point to new URI in liked folder
+                                            _currentPlayingFile.value = fileToMove.copy(uri = targetFile.uri, sourcePlaylist = PlaylistTab.LIKED, subfolder = subfolderName)
                                         }
                                     }
                                     
@@ -2867,8 +2892,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                     val wasPlayingRemovedFile = (indexToRemove == _currentIndex.value)
                                     
                                     if (indexToRemove != -1) {
-                                        updatedRejectedFiles.removeAt(indexToRemove)
-                                        _rejectedFiles.value = updatedRejectedFiles
+                                        _removingUris.value = _removingUris.value + fileToMove.uri
+                                        viewModelScope.launch {
+                                            delay(300)
+                                            _removingUris.value = _removingUris.value - fileToMove.uri
+                                            updatedRejectedFiles.removeAt(indexToRemove)
+                                            _rejectedFiles.value = updatedRejectedFiles
                                         
                                         // PHASE 4: Keep file playing when moved to subfolder
                                         if (indexToRemove < _currentIndex.value) {
@@ -2879,6 +2908,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                                 _currentIndex.value = updatedRejectedFiles.size - 1
                                             }
                                             CrashLogger.log("MusicViewModel", "📂 File moved to subfolder while playing - keeping playback active")
+                                        }
+                                            _currentPlayingFile.value = fileToMove.copy(uri = targetFile.uri, sourcePlaylist = PlaylistTab.LIKED, subfolder = subfolderName)
                                         }
                                     }
                                     

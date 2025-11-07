@@ -1,3 +1,34 @@
+v10.62
+- 🫥 Active row swipe: immediate fade-out and removal (no return), action then applied
+- 🐌 Even slower reflow (900ms tween) so remaining rows glide noticeably upward
+
+v10.61
+- 🫥 Active row swipe: fade-out and remove immediately (no bounce-back)
+- 🐢 Slower upward reflow: 700ms tween for visible glide of remaining rows
+
+v10.60
+- 🛑 No auto-activation after move-to-liked; currentPlayingFile now retained (and URI updated)
+- 🌫️ Fade-out on row removal (300ms) before actual list update
+- 🚫 Swipes disabled on main/miniplayer when track not in current playlist
+- 🪩 Slower, low-bouncy reflow kept for visible upward glide
+
+v10.59
+- ✅ Prevent auto-activating next row after moving to liked; show miniplayer instead (unless main waveform visible)
+- 🚫 Disabled swipe gestures when current track is no longer in the current playlist (sorted)
+- 🪩 Reflow now LowBouncy with VeryLow stiffness for a softer, bouncy glide
+
+v10.58
+- 🐢 Slower list reflow: reduced stiffness to VeryLow for smoother upward glide
+- 🎛️ Waveform reveal timing set to 300ms (vertical expand)
+
+v10.57
+- ❌ Added floating red X button on miniplayer (top-left) to hide it
+- 🔄 Miniplayer visibility resets on track change
+
+v10.56
+- 🧊 Smooth playlist reflow: animateItemPlacement on main and row cards for modern list animations
+- 💨 Rows now glide up when items are removed after swipes (no sudden jumps)
+
 v10.55
 - 🔁 Removed 20ms buffer; actions now start immediately after return animation completes
 

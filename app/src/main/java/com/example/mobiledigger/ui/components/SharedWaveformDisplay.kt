@@ -129,7 +129,7 @@ fun SharedWaveformDisplay(
                 // Y-axis expand animation from center (0 → 1 in ~500ms)
                 val animatedScaleY by animateFloatAsState(
                     targetValue = if (hasAppeared) 1f else 0f,
-                    animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
                     label = "waveformScaleY"
                 )
                 

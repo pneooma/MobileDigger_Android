@@ -1,3 +1,11 @@
+v10.64
+- 🚀 Optional next-item preloading wired to reduce startup buffering
+- 🌟 Active-row fade-in increased to 400ms
+
+v10.63
+- ✨ Active-row fade-in: newly active row fades in as it becomes current
+- ⚡ Immediate next activation preserved; fade/remove/reflow continue in background
+
 v10.62
 - 🫥 Active row swipe: immediate fade-out and removal (no return), action then applied
 - 🐌 Even slower reflow (900ms tween) so remaining rows glide noticeably upward

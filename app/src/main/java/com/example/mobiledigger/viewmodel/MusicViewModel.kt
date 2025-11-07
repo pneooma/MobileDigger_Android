@@ -1398,6 +1398,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
+    private var isPreloadEnabled: Boolean = true
+
     private fun preloadNextSong() {
         audioPreloadJob?.cancel()
         audioPreloadJob = viewModelScope.launch(Dispatchers.IO) {
@@ -1410,10 +1412,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 val currentIdx = _currentIndex.value
                 
                 // Preload next song if available
-                if (currentIdx + 1 < currentFiles.size) {
+                if (isPreloadEnabled && currentIdx + 1 < currentFiles.size) {
                     val nextFile = currentFiles[currentIdx + 1]
                     preloadedFile = nextFile
                     CrashLogger.log("MusicViewModel", "Preloaded next song: ${nextFile.name}")
+                    try {
+                        audioManager.preloadFile(nextFile)
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Error calling audioManager.preloadFile", e)
+                    }
                 }
             } catch (e: Exception) {
                 CrashLogger.log("MusicViewModel", "Error preloading next song", e)

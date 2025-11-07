@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.62 ::",
+                            text = ":: v10.64 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3042,6 +3042,23 @@ viewModel.updateSearchText("")
                                 animationSpec = tween(300),
                                 label = "rowAlpha"
                             )
+                            // Fade-in when this row becomes active
+                            var activeTargetAlpha by remember(item.uri) { mutableStateOf(1f) }
+                            LaunchedEffect(isCurrent) {
+                                if (isCurrent) {
+                                    activeTargetAlpha = 0f
+                                    // Small delay to ensure target change is captured for animation
+                                    kotlinx.coroutines.delay(10)
+                                    activeTargetAlpha = 1f
+                                } else {
+                                    activeTargetAlpha = 1f
+                                }
+                            }
+                            val activeAlpha by animateFloatAsState(
+                                targetValue = activeTargetAlpha,
+                                animationSpec = tween(400),
+                                label = "activeAlpha"
+                            )
 
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold
@@ -3094,7 +3111,7 @@ viewModel.updateSearchText("")
                                         vertical = 0.dp
                                     )
                                         .animateItemPlacement(tween(durationMillis = 900))
-                                        .graphicsLayer { translationX = rowSwipeOffset.value; alpha = rowAlpha }
+                                        .graphicsLayer { translationX = rowSwipeOffset.value; alpha = rowAlpha * activeAlpha }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->
@@ -3118,14 +3135,15 @@ viewModel.updateSearchText("")
                                                                 scope.launch {
                                                                     isRowDismissed = true
                                                                     if (current < 0 && isActiveNow) suppressMiniOnLeftSwipe = true
-                                                                    launch { rowSwipeOffset.animateTo(exit, tween(150)) }
-                                                                    // Wait for fade-out (alpha 300ms), then remove immediately for smooth reflow
-                                                                    delay(300)
-                                                                    viewModel.removeFromCurrentListByUri(item.uri)
-                                                                    // Then background actions
+                                                                    // Immediately start next playback for active-row left swipe
                                                                     if (current < 0 && isActiveNow) {
                                                                         try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
                                                                     }
+                                                                    // Run the swipe-out animation and then remove the row for smooth reflow
+                                                                    launch { rowSwipeOffset.animateTo(exit, tween(150)) }
+                                                                    delay(300)
+                                                                    viewModel.removeFromCurrentListByUri(item.uri)
+                                                                    // Background sort action
                                                                     try {
                                                                         if (current > 0) viewModel.sortMusicFile(fileToSort, SortAction.LIKE) else viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
                                                                     } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }

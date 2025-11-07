@@ -2498,6 +2498,39 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
         }
     }
+
+    fun renameFileAtIndex(index: Int, manualBase: String, mode: RenameCase) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val files = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
+                }
+                val mf = files.getOrNull(index) ?: return@launch
+                val base = if (manualBase.isNotBlank()) manualBase else mf.name.substringBeforeLast('.', mf.name)
+                val finalBase = applyCaseTransform(base, mode)
+                val renamed = fileManager.renameFile(mf, finalBase)
+                if (renamed != null) {
+                    withContext(Dispatchers.Main) {
+                        when (_currentPlaylistTab.value) {
+                            PlaylistTab.TODO -> _musicFiles.value = _musicFiles.value.mapIndexed { i, f -> if (i == index) renamed else f }
+                            PlaylistTab.LIKED -> _likedFiles.value = _likedFiles.value.mapIndexed { i, f -> if (i == index) renamed else f }
+                            PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.mapIndexed { i, f -> if (i == index) renamed else f }
+                        }
+                        if (_currentPlayingFile.value?.uri == mf.uri) {
+                            _currentPlayingFile.value = renamed
+                        }
+                        _errorMessage.value = "Renamed file"
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { _errorMessage.value = "Rename failed" }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { _errorMessage.value = "Rename failed: ${e.message}" }
+            }
+        }
+    }
     
     private fun showDeleteRejectedPrompt() {
         _showDeleteRejectedPrompt.value = true

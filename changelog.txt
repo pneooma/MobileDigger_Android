@@ -22,6 +22,13 @@ v10.72
 - 🧾 Inline multi-select controls and count in the same row (no extra banner)
 - 🎛️ Long-press active waveform supported; current file rename resumes at same time
 
+v10.73
+- 🛠️ Fix: Inactive-row rename via long-press (dialog with case + manual)
+- 🎯 Long-press menu: Inactive → Rename This File / Enter Multi-Select; Active → Rename
+- 🧹 Removed per-row selection counters; compacted top action row
+- 🪟 Multi-select forces main player visible and disables Hide Controls
+- 📝 Wrapped filename text up to 4 lines to avoid overlaps
+
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

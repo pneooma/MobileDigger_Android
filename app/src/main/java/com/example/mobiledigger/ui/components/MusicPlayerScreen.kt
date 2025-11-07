@@ -970,7 +970,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.72 ::",
+                            text = ":: v10.73 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1145,11 +1145,18 @@ viewModel.updateSearchText("")
         var showRenameActionDialog by remember { mutableStateOf(false) }
         var showRenameSelectedDialog by remember { mutableStateOf(false) }
         var showRenameCurrentDialog by remember { mutableStateOf(false) }
+        var showRenameOneDialog by remember { mutableStateOf(false) }
         var manualRenameText by remember { mutableStateOf("") }
         var pendingIndexForMulti by remember { mutableStateOf<Int?>(null) }
+        var pendingIndexForSingle by remember { mutableStateOf<Int?>(null) }
         var renameCase by remember { mutableStateOf(MusicViewModel.RenameCase.TITLE) }
 
-        if (musicFiles.isNotEmpty() && !isLoading && currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) {
+        // Ensure main player is visible when entering multi-select; disable hide toggle while active
+        LaunchedEffect(isMultiSelectionMode) {
+            if (isMultiSelectionMode) isMainPlayerVisible = true
+        }
+
+        if (musicFiles.isNotEmpty() && !isLoading && ((currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) || isMultiSelectionMode)) {
             Popup(
                 alignment = Alignment.TopCenter,
                 offset = IntOffset(0, with(LocalDensity.current) { 66.dp.toPx().toInt() }) // Moved up by 20dp
@@ -1217,21 +1224,33 @@ viewModel.updateSearchText("")
         
         // Rename: action chooser dialog
         if (showRenameActionDialog) {
+            val pendingIdx = pendingIndexForMulti
+            val isPendingCurrent = pendingIdx != null && pendingIdx >= 0 && pendingIdx < currentPlaylistFiles.size && currentPlaylistFiles[pendingIdx].uri == currentPlayingFile?.uri
             AlertDialog(
                 onDismissRequest = { showRenameActionDialog = false },
                 title = { Text("Choose Action") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = {
-                            showRenameActionDialog = false
-                            pendingIndexForMulti?.let { viewModel.enableMultiSelectionMode(it) } ?: viewModel.toggleMultiSelectionMode()
-                        }, modifier = Modifier.fillMaxWidth()) { Text("Enter Multi-Select Mode") }
+                        if (isPendingCurrent) {
+                            Button(onClick = {
+                                showRenameActionDialog = false
+                                manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: ""))
+                                showRenameCurrentDialog = true
+                            }, modifier = Modifier.fillMaxWidth()) { Text("Rename") }
+                        } else {
+                            Button(onClick = {
+                                showRenameActionDialog = false
+                                pendingIndexForSingle = pendingIdx
+                                val f = pendingIdx?.let { idx -> currentPlaylistFiles.getOrNull(idx) }
+                                manualRenameText = (f?.name ?: "").substringBeforeLast('.', (f?.name ?: ""))
+                                showRenameOneDialog = true
+                            }, modifier = Modifier.fillMaxWidth()) { Text("Rename This File") }
 
-                        Button(onClick = {
-                            showRenameActionDialog = false
-                            manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: ""))
-                            showRenameCurrentDialog = true
-                        }, modifier = Modifier.fillMaxWidth()) { Text("Rename Current Playing File") }
+                            Button(onClick = {
+                                showRenameActionDialog = false
+                                pendingIndexForMulti?.let { viewModel.enableMultiSelectionMode(it) } ?: viewModel.toggleMultiSelectionMode()
+                            }, modifier = Modifier.fillMaxWidth()) { Text("Enter Multi-Select Mode") }
+                        }
                     }
                 },
                 confirmButton = {},
@@ -1268,6 +1287,44 @@ viewModel.updateSearchText("")
                 },
                 dismissButton = {
                     TextButton(onClick = { showRenameSelectedDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+
+        // Rename one inactive file dialog
+        if (showRenameOneDialog) {
+            AlertDialog(
+                onDismissRequest = { showRenameOneDialog = false },
+                title = { Text("Rename File") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        androidx.compose.material3.OutlinedTextField(
+                            value = manualRenameText,
+                            onValueChange = { manualRenameText = it },
+                            label = { Text("File name (without extension)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        listOf(
+                            MusicViewModel.RenameCase.TITLE to "All Words With Capital Letter",
+                            MusicViewModel.RenameCase.UPPER to "ALL LETTERS UP",
+                            MusicViewModel.RenameCase.LOWER to "all letters small"
+                        ).forEach { (case, label) ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = renameCase == case, onClick = { renameCase = case })
+                                Text(label, modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showRenameOneDialog = false
+                        pendingIndexForSingle?.let { idx -> viewModel.renameFileAtIndex(idx, manualRenameText, renameCase) }
+                    }) { Text("Rename") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRenameOneDialog = false }) { Text("Cancel") }
                 }
             )
         }
@@ -1789,6 +1846,7 @@ viewModel.updateSearchText("")
                                 )
                                     OutlinedButton(
                                         onClick = { isMainPlayerVisible = !isMainPlayerVisible },
+                                        enabled = !isMultiSelectionMode,
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                         modifier = Modifier.height(22.dp)
                                     ) {
@@ -3357,50 +3415,7 @@ viewModel.updateSearchText("")
                                         // Filename above waveform removed; shown inside waveform
                                     }
                                     Row(horizontalArrangement = Arrangement.spacedBy(if (isCompactScreen) 2.dp else 4.dp)) {
-                                        if (isMultiSelectionMode) {
-                                            // Multi-selection mode: show selected count and bulk action buttons
-                                            if (selectedIndices.isNotEmpty()) {
-                                                Text(
-                                                    text = "${selectedIndices.size} selected",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                                )
-                                                IconButton(
-                                                    onClick = { 
-                                                        CrashLogger.log("MusicPlayerScreen", "🔍 Playlist LIKE button clicked for ${selectedIndices.size} files")
-                                                        viewModel.sortSelectedFiles(SortAction.LIKE)
-                                                        // Notification disabled
-                                                    },
-                                                    modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.Favorite,
-                                                        contentDescription = "Like Selected",
-                                                        tint = YesButton,
-                                                        modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
-                                                    )
-                                                }
-                                                IconButton(
-                                                    onClick = { 
-                                                        CrashLogger.log("MusicPlayerScreen", "🔍 Playlist REJECT button clicked for ${selectedIndices.size} files")
-                                                        viewModel.sortSelectedFiles(SortAction.DISLIKE)
-                                                        // Notification disabled
-                                                    },
-                                                    modifier = Modifier.size(if (isCompactScreen) 36.dp else 48.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.ThumbDown,
-                                                        contentDescription = "Reject Selected",
-                                                        tint = NoButton,
-                                                        modifier = Modifier.size(if (isCompactScreen) 18.dp else 24.dp)
-                                                    )
-                                                }
-                                            }
-                                        } else {
-                                            // Normal mode: individual file actions (moved inline with waveform)
-                                        }
+                                        // Normal mode: individual file actions (moved inline with waveform)
                                     }
                                 }
                                 
@@ -3731,7 +3746,7 @@ viewModel.updateSearchText("")
                                                         maxLines = 4,
                                                         overflow = TextOverflow.Visible,
                                                         textAlign = TextAlign.Center,
-                                                        modifier = Modifier.weight(1f, fill = false)
+                                                        modifier = Modifier.weight(1f, fill = true)
                                                     )
                                                 }
                                             }

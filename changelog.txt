@@ -61,6 +61,10 @@ v10.80
 
 v10.81
 - ⬆️ Pull content closer globally: LazyColumn top offset set to -22dp (applies in both normal and Multi-Select views)
+
+v10.82
+- ⬆️ Extra -5dp (now -27dp) global LazyColumn top offset
+- 🧾 MS header buttons: two-line labels per spec (Send to/Folder, Rename/Selected, Like/Selected, Exit/M.S. Mode); Reject shows icon row then label
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

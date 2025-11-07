@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.81 ::",
+                            text = ":: v10.82 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1188,18 +1188,22 @@ viewModel.updateSearchText("")
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                 ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
-                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
+                            Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
+                        }
                         Text(
                             text = "Reject $playedButNotActionedCount",
                             style = labelStyle,
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -1218,7 +1222,7 @@ viewModel.updateSearchText("")
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                     ) {
-                        Text("Send to Folder", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
+                        Text("Send to\nFolder", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
                     }
                 }
                 if (showBulkSendDialog && isMultiSelectionMode) {
@@ -1248,7 +1252,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text("Rename Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                    ) { Text("Rename\nSelected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                     Button(
                         onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
                         modifier = Modifier
@@ -1260,7 +1264,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text("Like Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                    ) { Text("Like\nSelected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                     Button(
                         onClick = { viewModel.toggleMultiSelectionMode() },
                         modifier = Modifier
@@ -1272,7 +1276,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text("Exit MS Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                    ) { Text("Exit\nM.S. Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                 }
             }
         }
@@ -1820,7 +1824,7 @@ viewModel.updateSearchText("")
                         modifier = Modifier
                             .fillMaxSize()
                             .heightIn(max = playlistMaxHeight)
-                            .then(Modifier.offset(y = (-22).dp)),
+                            .then(Modifier.offset(y = (-27).dp)),
                         // Performance optimizations
                         contentPadding = PaddingValues(vertical = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),

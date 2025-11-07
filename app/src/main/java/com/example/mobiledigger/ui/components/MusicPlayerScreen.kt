@@ -969,7 +969,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.65 ::",
+                            text = ":: v10.66 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3059,6 +3059,24 @@ viewModel.updateSearchText("")
                                 animationSpec = tween(1000),
                                 label = "activeAlpha"
                             )
+                            // Slide-in from below when becoming active
+                            val density = LocalDensity.current
+                            var activeSlideTarget by remember(item.uri) { mutableStateOf(0f) }
+                            LaunchedEffect(isCurrent) {
+                                if (isCurrent) {
+                                    activeSlideTarget = with(density) { 20.dp.toPx() }
+                                    // next frame
+                                    kotlinx.coroutines.yield()
+                                    activeSlideTarget = 0f
+                                } else {
+                                    activeSlideTarget = 0f
+                                }
+                            }
+                            val activeSlideY by animateFloatAsState(
+                                targetValue = activeSlideTarget,
+                                animationSpec = tween(1000),
+                                label = "activeSlideY"
+                            )
 
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold
@@ -3111,7 +3129,7 @@ viewModel.updateSearchText("")
                                         vertical = 0.dp
                                     )
                                         .animateItemPlacement(tween(durationMillis = 900))
-                                        .graphicsLayer { translationX = rowSwipeOffset.value; alpha = rowAlpha * activeAlpha }
+                                        .graphicsLayer { translationX = rowSwipeOffset.value; translationY = activeSlideY; alpha = rowAlpha * activeAlpha }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->

@@ -970,7 +970,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.74 ::",
+                            text = ":: v10.75 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1197,23 +1197,25 @@ viewModel.updateSearchText("")
                         )
                     }
                 }
-                // Send to Folder (bulk)
+                // Send to Folder (bulk) - only in Multi-Select mode
                 var showBulkSendDialog by remember { mutableStateOf(false) }
-                Button(
-                    onClick = { showBulkSendDialog = true },
-                    modifier = Modifier
-                        .shadow(6.dp, RoundedCornerShape(22.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    shape = RoundedCornerShape(22.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text("Send to Folder")
+                if (isMultiSelectionMode) {
+                    Button(
+                        onClick = { showBulkSendDialog = true },
+                        modifier = Modifier
+                            .shadow(6.dp, RoundedCornerShape(22.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(22.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        shape = RoundedCornerShape(22.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text("Send to Folder")
+                    }
                 }
-                if (showBulkSendDialog) {
+                if (showBulkSendDialog && isMultiSelectionMode) {
                     AlertDialog(
                         onDismissRequest = { showBulkSendDialog = false },
                         title = { Text("Send Selected Files To") },
@@ -3510,8 +3512,8 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                                 
-                                                // Play/Pause button
-                                                IconButton(
+                                                // Play/Pause button (hidden in Multi-Select mode)
+                                                if (!isMultiSelectionMode) IconButton(
                                                     onClick = { 
                                                         try {
                                                             viewModel.playPause()
@@ -3596,15 +3598,7 @@ viewModel.updateSearchText("")
                                                     modifier = Modifier
                                                         .weight(1f)
                                                         .height(88.dp)
-                                                        .combinedClickable(
-                                                            onClick = {},
-                                                            onLongClick = {
-                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
-                                                                manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
-                                                                showRenameActionDialog = true
-                                                            }
-                                                        ),
+                                                        ,
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     WaveformWithToggle(
@@ -3621,6 +3615,21 @@ viewModel.updateSearchText("")
                                                         fileName = item.name,
                                                         opacity = 0.7f,
                                                         modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                    // Overlay to capture long press above waveform
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .matchParentSize()
+                                                            .pointerInput(item.uri) {
+                                                                detectTapGestures(
+                                                                    onLongPress = {
+                                                                        val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                        pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                                        manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                                        showRenameActionDialog = true
+                                                                    }
+                                                                )
+                                                            }
                                                     )
                                                 }
                                             }

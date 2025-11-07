@@ -36,6 +36,11 @@ v10.74
 - 🧼 Hide all row-level like/dislike controls in Multi-Select mode
 - 📍 Keep top action row anchored consistently; visible during Multi-Select
 
+v10.75
+- 🔧 Send to Folder button shown only in Multi-Select mode (not on main page)
+- ✋ Active row long-press fixed with overlay above waveform (menu shows “Rename”)
+- 🧩 Play/Pause hidden on active row during Multi-Select
+- 🪄 Inline MS controls improved and anchored; “| N Selected | Select All | Clear | Exit MS Mode” visible
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

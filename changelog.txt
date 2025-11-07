@@ -45,6 +45,10 @@ v10.75
 v10.76
 - 🎚️ Reduced spacing below reject row; counters row pulled closer
 - 📏 MS top row: +10% top padding, buttons shrink ~30%, horizontal scroll for overflow
+
+v10.77
+- 🗜️ MS top row cleanup: removed “x selected | Select All | Clear”
+- 🧾 Button labels now shrink and wrap to two lines to fit in one row
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

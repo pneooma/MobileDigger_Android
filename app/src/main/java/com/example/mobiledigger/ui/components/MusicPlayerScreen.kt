@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.76 ::",
+                            text = ":: v10.77 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1249,7 +1249,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text(if (isNarrow) "Rename" else "Rename Selected", style = labelStyle) }
+                    ) { Text(if (isNarrow) "Rename" else "Rename Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                     Button(
                         onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
                         modifier = Modifier
@@ -1261,7 +1261,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text(if (isNarrow) "Like" else "Like Selected", style = labelStyle) }
+                    ) { Text(if (isNarrow) "Like" else "Like Selected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                     Button(
                         onClick = { viewModel.toggleMultiSelectionMode() },
                         modifier = Modifier
@@ -1273,10 +1273,7 @@ viewModel.updateSearchText("")
                         ),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text(if (isNarrow) "Exit" else "Exit MS Mode", style = labelStyle) }
-                    Text("| ${selectedIndices.size} Selected |", style = labelStyle, color = MaterialTheme.colorScheme.primary)
-                    TextButton(onClick = { viewModel.selectAll() }) { Text(if (isNarrow) "All" else "Select All", style = labelStyle) }
-                    TextButton(onClick = { viewModel.clearSelection() }) { Text(if (isNarrow) "Clear" else "Clear", style = labelStyle) }
+                    ) { Text(if (isNarrow) "Exit" else "Exit MS Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
                 }
             }
         }

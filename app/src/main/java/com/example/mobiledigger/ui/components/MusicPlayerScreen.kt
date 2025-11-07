@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.75 ::",
+                            text = ":: v10.76 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1162,7 +1162,7 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 2.dp)
                     .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
@@ -1576,7 +1576,7 @@ viewModel.updateSearchText("")
         }
         
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             
             // Folder selection buttons - minimize after selection
             if (!hasSourceFolder) { // Show folder selection when no music files are loaded
@@ -1891,7 +1891,7 @@ viewModel.updateSearchText("")
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 4.dp, bottom = 2.dp),
+                                        .padding(top = 0.dp, bottom = 0.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {

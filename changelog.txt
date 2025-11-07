@@ -41,6 +41,10 @@ v10.75
 - ✋ Active row long-press fixed with overlay above waveform (menu shows “Rename”)
 - 🧩 Play/Pause hidden on active row during Multi-Select
 - 🪄 Inline MS controls improved and anchored; “| N Selected | Select All | Clear | Exit MS Mode” visible
+
+v10.76
+- 🎚️ Reduced spacing below reject row; counters row pulled closer
+- 📏 MS top row: +10% top padding, buttons shrink ~30%, horizontal scroll for overflow
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

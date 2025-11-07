@@ -17,6 +17,11 @@ v10.71
 - ✅ Hide Like/Dislike on inactive rows in Multi-Select mode
 - 🧭 Header banner in Multi-Select: count + Select All / Clear / Exit
 
+v10.72
+- 🪄 Moved Rename Selected into top action row next to Reject
+- 🧾 Inline multi-select controls and count in the same row (no extra banner)
+- 🎛️ Long-press active waveform supported; current file rename resumes at same time
+
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

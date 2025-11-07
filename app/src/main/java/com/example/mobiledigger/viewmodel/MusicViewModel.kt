@@ -2473,6 +2473,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         viewModelScope.launch(Dispatchers.IO) {
             val cur = _currentPlayingFile.value ?: return@launch
             try {
+                val resumePos = _currentPosition.value
                 val base = if (manualBase.isNotBlank()) manualBase else cur.name.substringBeforeLast('.', cur.name)
                 val finalBase = applyCaseTransform(base, mode)
                 val renamed = fileManager.renameFile(cur, finalBase)
@@ -2485,6 +2486,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.map { if (it.uri == cur.uri) renamed else it }
                         }
                         _currentPlayingFile.value = renamed
+                        // Ensure playback continues from same time
+                        try { seekTo(resumePos) } catch (_: Exception) {}
                         _errorMessage.value = "Renamed current file"
                     }
                 } else {

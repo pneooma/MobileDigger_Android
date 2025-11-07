@@ -970,7 +970,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.71 ::",
+                            text = ":: v10.72 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -979,24 +979,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            // Multi-Selection banner controls
-            if (isMultiSelectionMode) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    val selCount = selectedIndices.size
-                    Text(
-                        text = "Multi-Selection Mode | ${selCount} Selected |",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
-                    TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
-                    TextButton(onClick = { viewModel.toggleMultiSelectionMode() }) { Text("Exit MS Mode") }
-                }
-            }
+            // (Removed header multi-select banner; moved controls to the top popup row below playlist pills)
             
             // Calculate responsive spacing based on screen width - reduced to prevent text wrapping
             val buttonSpacing = when {
@@ -1171,52 +1154,62 @@ viewModel.updateSearchText("")
                 alignment = Alignment.TopCenter,
                 offset = IntOffset(0, with(LocalDensity.current) { 66.dp.toPx().toInt() }) // Moved up by 20dp
             ) {
-                Button(
-                    onClick = { 
-                        if (playedButNotActionedCount > 0) {
-                            CrashLogger.log("MusicPlayerScreen", "Reject played files button clicked, count: $playedButNotActionedCount")
-                            viewModel.movePlayedButNotActionedToRejected()
-                        }
-                    },
-                    modifier = Modifier
-                        .shadow(8.dp, RoundedCornerShape(24.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    shape = RoundedCornerShape(24.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp), // Reduced by 20% (from 8dp to 6.4dp, rounded to 5dp)
-                    enabled = true // Always enabled, but only acts when count > 0
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    Button(
+                        onClick = { 
+                            if (playedButNotActionedCount > 0) {
+                                CrashLogger.log("MusicPlayerScreen", "Reject played files button clicked, count: $playedButNotActionedCount")
+                                viewModel.movePlayedButNotActionedToRejected()
+                            }
+                        },
+                        modifier = Modifier
+                            .shadow(8.dp, RoundedCornerShape(24.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        shape = RoundedCornerShape(24.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.Red
-                        )
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                        Icon(
-                            Icons.Default.ThumbDown,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.Red
-                        )
-                        Text(
-                            text = "Reject $playedButNotActionedCount",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.Red)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface)
+                            Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.Red)
+                            Text(
+                                text = "Reject $playedButNotActionedCount",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                        Button(
+                            onClick = { showRenameSelectedDialog = true },
+                            modifier = Modifier
+                                .shadow(8.dp, RoundedCornerShape(24.dp))
+                                .border(2.dp, Color.White, RoundedCornerShape(24.dp)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 5.dp)
+                        ) {
+                            Text("Rename Selected")
+                        }
+                        Text("| ${selectedIndices.size} Selected |", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        TextButton(onClick = { viewModel.selectAll() }) { Text("Select All") }
+                        TextButton(onClick = { viewModel.clearSelection() }) { Text("Clear") }
+                        TextButton(onClick = { viewModel.toggleMultiSelectionMode() }) { Text("Exit MS Mode") }
                     }
                 }
             }
@@ -1233,11 +1226,6 @@ viewModel.updateSearchText("")
                             showRenameActionDialog = false
                             pendingIndexForMulti?.let { viewModel.enableMultiSelectionMode(it) } ?: viewModel.toggleMultiSelectionMode()
                         }, modifier = Modifier.fillMaxWidth()) { Text("Enter Multi-Select Mode") }
-
-                        Button(onClick = {
-                            showRenameActionDialog = false
-                            showRenameSelectedDialog = true
-                        }, modifier = Modifier.fillMaxWidth()) { Text("Rename Selected Files") }
 
                         Button(onClick = {
                             showRenameActionDialog = false
@@ -3543,7 +3531,16 @@ viewModel.updateSearchText("")
                                                 Box(
                                                     modifier = Modifier
                                                         .weight(1f)
-                                                        .height(88.dp),
+                                                        .height(88.dp)
+                                                        .combinedClickable(
+                                                            onClick = {},
+                                                            onLongClick = {
+                                                                val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                                manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                                showRenameActionDialog = true
+                                                            }
+                                                        ),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     WaveformWithToggle(

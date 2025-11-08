@@ -976,7 +976,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.95 ::",
+                            text = ":: v10.96 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3950,6 +3950,8 @@ viewModel.updateSearchText("")
                     // Smart visibility: show when current playing track is not in current playlist OR not visible in viewport
                     val currentTrackIndex = currentPlaylistFiles.indexOfFirst { it.uri == currentPlayingFile?.uri }
                     val isFileInCurrentPlaylist = currentTrackIndex != -1
+                    // First-open behavior: hide miniplayer while the very first track is in sight
+                    var isFirstOpen by remember { mutableStateOf(true) }
                     val isCurrentTrackHalfVisible = remember(listState.layoutInfo, currentTrackIndex) {
                         val info = listState.layoutInfo
                         val item = info.visibleItemsInfo.firstOrNull { it.index == currentTrackIndex }
@@ -3967,6 +3969,11 @@ viewModel.updateSearchText("")
                         }
                     }
                     
+                    // Mark first-open completed once user scrolls or advances beyond the first row
+                    LaunchedEffect(isScrolled, currentTrackIndex) {
+                        if (isScrolled || currentTrackIndex > 0) isFirstOpen = false
+                    }
+                    
                     // PHASE 4: Show miniplayer when file not in playlist OR when scrolled and not visible
                     var isMiniPlayerHidden by remember { mutableStateOf(false) }
                     LaunchedEffect(currentPlayingFile?.uri) { 
@@ -3974,6 +3981,7 @@ viewModel.updateSearchText("")
                         suppressMiniOnLeftSwipe = false
                         if (currentPlayingFile?.uri == promotingNextUri) promotingNextUri = null
                     }
+                    val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackHalfVisible
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentPlayingFile != null &&
                                 (
@@ -3982,7 +3990,8 @@ viewModel.updateSearchText("")
                                     (isWaveformVisible && !isCurrentTrackHalfVisible)
                                 ) &&
                                 !isMiniPlayerHidden &&
-                                !suppressMiniOnLeftSwipe,
+                                !suppressMiniOnLeftSwipe &&
+                                !hideMiniBecauseFirstTrackInSight,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                         modifier = Modifier

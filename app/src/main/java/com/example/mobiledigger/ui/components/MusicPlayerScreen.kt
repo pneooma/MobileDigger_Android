@@ -200,6 +200,10 @@ fun MusicPlayerScreen(
     var isMainPlayerVisible by remember { mutableStateOf(false) }
     var isPlaylistsVisible by remember { mutableStateOf(false) }
     
+    // Preserve user preferences for visibility when entering/exiting Multi-Select
+    var prevMainPlayerVisible by remember { mutableStateOf<Boolean?>(null) }
+    var prevWaveformVisible by remember { mutableStateOf<Boolean?>(null) }
+    
     val folderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -972,7 +976,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.94 ::",
+                            text = ":: v10.95 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1153,9 +1157,19 @@ viewModel.updateSearchText("")
         var pendingIndexForSingle by remember { mutableStateOf<Int?>(null) }
         var renameCase by remember { mutableStateOf(MusicViewModel.RenameCase.MANUAL) }
 
-        // Ensure main player is visible when entering multi-select; disable hide toggle while active
+        // In Multi-Select: force show controls and waveform; restore user's prefs on exit
         LaunchedEffect(isMultiSelectionMode) {
-            if (isMultiSelectionMode) isMainPlayerVisible = true
+            if (isMultiSelectionMode) {
+                if (prevMainPlayerVisible == null) prevMainPlayerVisible = isMainPlayerVisible
+                if (prevWaveformVisible == null) prevWaveformVisible = isWaveformVisible
+                isMainPlayerVisible = true
+                isWaveformVisible = true
+            } else {
+                prevMainPlayerVisible?.let { isMainPlayerVisible = it }
+                prevWaveformVisible?.let { isWaveformVisible = it }
+                prevMainPlayerVisible = null
+                prevWaveformVisible = null
+            }
         }
 
         if (musicFiles.isNotEmpty() && !isLoading && ((currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) || isMultiSelectionMode)) {

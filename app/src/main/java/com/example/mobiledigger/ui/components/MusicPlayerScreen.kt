@@ -976,7 +976,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.100 ::",
+                            text = ":: v10.101 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3978,16 +3978,14 @@ viewModel.updateSearchText("")
                     LaunchedEffect(currentTrackIndex, isFirstOpen, currentPlayingFile?.uri) {
                         if (isFirstOpen && !initialAutoScrolled && isFileInCurrentPlaylist && currentTrackIndex == 0 && currentPlayingFile != null) {
                             try {
-                                // Approximate 400ms scroll to reveal main player (compat fallback)
-                                val total = 500
-                                val steps = 20
-                                val perStep = total / steps
-                                repeat(steps) {
-                                    val idx = listState.firstVisibleItemIndex
-                                    val off = listState.firstVisibleItemScrollOffset
-                                    listState.scrollToItem(idx, off + perStep)
-                                    delay(20)
+                                // Wait until LazyColumn has laid out at least one item to avoid no-op scrolls
+                                var attempts = 0
+                                while (listState.layoutInfo.visibleItemsInfo.isEmpty() && attempts < 20) {
+                                    delay(25)
+                                    attempts++
                                 }
+                                // Smoothly scroll ~500px from top of first item to reveal main player area
+                                listState.animateScrollToItem(0, 500)
                             } catch (e: Exception) {
                                 CrashLogger.log("MusicPlayerScreen", "Auto-scroll failed: ${e.message}")
                             } finally {

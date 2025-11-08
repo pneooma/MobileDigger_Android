@@ -42,6 +42,9 @@ v10.99
 
 v10.100
 - ⏬ First-open auto-scroll now uses smooth stepped scrolling (~400ms total)
+
+v10.101
+- ✅ First-open auto-scroll: wait for list layout and use animateScrollToItem for reliable ~500px reveal
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

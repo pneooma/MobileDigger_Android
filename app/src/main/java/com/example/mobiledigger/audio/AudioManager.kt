@@ -1334,7 +1334,8 @@ class AudioManager(private val context: Context) {
                 extractPcmDecodedForAnalysis(uri) ?: extractAudioDataWithMemoryManagement(uri)
             }
             if (audioData == null || audioData.isEmpty()) return null
-            val analysis = withContext(Dispatchers.Default) { analyzer.analyze(audioData, 44100) }
+            val detectedSampleRate = getSampleRateForUri(uri)
+            val analysis = withContext(Dispatchers.Default) { analyzer.analyze(audioData, detectedSampleRate) }
             analysisCache[key] = analysis
             _analysisResult.value = analysis
             analysis
@@ -1868,7 +1869,8 @@ class AudioManager(private val context: Context) {
                     _analysisResult.value = cached
                 } else {
                     // Assume 44100 Hz if unknown
-                    val analysis = analyzer.analyze(audioData, 44100)
+                    val detectedSampleRate = getSampleRateForUri(uri)
+                    val analysis = analyzer.analyze(audioData, detectedSampleRate)
                     analysisCache[key] = analysis
                     _analysisResult.value = analysis
                 }
@@ -1896,6 +1898,32 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Spectrogram generation internal error after ${overallTime}ms", e)
             e.printStackTrace()
             generateFallbackSpectrogram(musicFile)
+        }
+    }
+
+    /**
+     * Detect sample rate for a given audio Uri using MediaExtractor.
+     * Falls back to 44100 Hz if detection fails.
+     */
+    private fun getSampleRateForUri(uri: Uri): Int {
+        return try {
+            val extractor = android.media.MediaExtractor()
+            extractor.setDataSource(context, uri, emptyMap<String, String>())
+            var sr = 44100
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(android.media.MediaFormat.KEY_MIME)
+                if (mime?.startsWith("audio/") == true) {
+                    if (format.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) {
+                        sr = format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE)
+                    }
+                    break
+                }
+            }
+            extractor.release()
+            sr
+        } catch (_: Exception) {
+            44100
         }
     }
     

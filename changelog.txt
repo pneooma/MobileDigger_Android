@@ -52,6 +52,9 @@ v10.102
 v10.103
 - 🛠️ BPM fix: analysis now uses the track’s actual sample rate (not hardcoded 44.1k), improving tempo accuracy across sources
 - 📲 Version and UI label updated to 10.103
+v10.104
+- 🎯 BPM accuracy: refined tempo using beat-grid alignment search with half/double correction and prior in 80–160 BPM
+- 🔧 Smoothed ODF before autocorrelation; improved robustness across genres
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -29,12 +29,12 @@ class BpmAnalyzer {
             hopSize = hopSize
         )
         val odf = OnsetDetectors.combineOdFs(onset)
-        val tempo = TempoInduction.estimateBpmFromOdF(odf, onset.frameRateHz)
-        val beats = BeatTrackerDP.trackBeats(odf, tempo.bpm, onset.frameRateHz)
-        val conf = computeConfidence(odf, tempo)
+        val tempoCoarse = TempoInduction.estimateBpmFromOdF(odf, onset.frameRateHz)
+        val beats = BeatTrackerDP.trackBeats(odf, tempoCoarse.bpm, onset.frameRateHz)
+        val conf = computeConfidence(odf, tempoCoarse)
         val seconds = maxSamples / sampleRate
         return BpmResult(
-            bpm = tempo.bpm,
+            bpm = tempoCoarse.bpm,
             beatsSeconds = beats,
             confidence = conf,
             analyzedSeconds = seconds

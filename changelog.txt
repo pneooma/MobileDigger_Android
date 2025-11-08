@@ -45,6 +45,10 @@ v10.100
 
 v10.101
 - ✅ First-open auto-scroll: wait for list layout and use animateScrollToItem for reliable ~500px reveal
+v10.102
+- 🎼 Added in-house analyzers (POC): BPM (onset fusion, tempo induction, DP beat tracking) and Key (spectral peaks, HPCP, key-profile matching)
+- ⚙️ New modules under `audio/analysis`: OnsetDetectors, TempoInduction, BeatTrackerDP, SpectralPeaks, HPCP, KeyProfileMatcher, BpmAnalyzer, KeyAnalyzer
+- 🧪 Not wired to UI yet; background integration and caching coming next
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

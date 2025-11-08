@@ -976,7 +976,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.99 ::",
+                            text = ":: v10.100 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3978,8 +3978,16 @@ viewModel.updateSearchText("")
                     LaunchedEffect(currentTrackIndex, isFirstOpen, currentPlayingFile?.uri) {
                         if (isFirstOpen && !initialAutoScrolled && isFileInCurrentPlaylist && currentTrackIndex == 0 && currentPlayingFile != null) {
                             try {
-                                // Approximate 400ms scroll to reveal main player
-                                listState.animateScrollBy(500f)
+                                // Approximate 400ms scroll to reveal main player (compat fallback)
+                                val total = 500
+                                val steps = 20
+                                val perStep = total / steps
+                                repeat(steps) {
+                                    val idx = listState.firstVisibleItemIndex
+                                    val off = listState.firstVisibleItemScrollOffset
+                                    listState.scrollToItem(idx, off + perStep)
+                                    delay(20)
+                                }
                             } catch (e: Exception) {
                                 CrashLogger.log("MusicPlayerScreen", "Auto-scroll failed: ${e.message}")
                             } finally {

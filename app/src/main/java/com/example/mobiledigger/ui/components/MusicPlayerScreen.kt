@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.93 ::",
+                            text = ":: v10.94 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -983,12 +983,12 @@ fun MusicPlayerScreen(
             }
             // (Removed header multi-select banner; moved controls to the top popup row below playlist pills)
             
-            // Calculate responsive spacing based on screen width - reduced to prevent text wrapping
+            // Calculate responsive spacing based on screen width - reduce by ~50%
             val buttonSpacing = when {
-                screenWidth < 400.dp -> 2.dp
-                screenWidth < 600.dp -> 3.dp
-                screenWidth < 800.dp -> 4.dp
-                else -> 6.dp
+                screenWidth < 400.dp -> 1.dp
+                screenWidth < 600.dp -> 2.dp
+                screenWidth < 800.dp -> 2.dp
+                else -> 3.dp
             }
             
             // Home button (always visible) - resets to initial state
@@ -1061,7 +1061,7 @@ viewModel.updateSearchText("")
                 var menuExpanded by remember { mutableStateOf(false) }
                 OutlinedButton(
                     onClick = { menuExpanded = true },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text("Actions", style = MaterialTheme.typography.bodySmall)
@@ -1260,8 +1260,7 @@ viewModel.updateSearchText("")
                         .border(2.dp, Color.White, RoundedCornerShape(20.dp))
                         .height(22.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = MaterialTheme.colorScheme.surface,                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)

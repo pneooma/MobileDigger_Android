@@ -54,20 +54,13 @@ class AudioAnalyzer {
 
     private fun toFloatMono(samples: ShortArray): FloatArray {
         if (samples.isEmpty()) return FloatArray(0)
-        // If stereo interleaved, average; otherwise pass-through
-        val isStereo = samples.size % 2 == 0
-        return if (isStereo) {
-            val mono = FloatArray(samples.size / 2)
-            var j = 0
-            for (i in mono.indices) {
-                val left = samples[j].toInt()
-                val right = samples[j + 1].toInt()
-                mono[i] = ((left + right) / 2f) / 32768f
-                j += 2
-            }
-            mono
-        } else {
-            FloatArray(samples.size) { idx -> samples[idx] / 32768f }
+        // Input is already mono from extraction; convert directly to float
+        val out = FloatArray(samples.size)
+        var i = 0
+        while (i < samples.size) {
+            out[i] = samples[i] / 32768f
+            i++
         }
+        return out
     }
 }

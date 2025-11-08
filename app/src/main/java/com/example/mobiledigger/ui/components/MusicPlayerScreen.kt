@@ -976,7 +976,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.97 ::",
+                            text = ":: v10.98 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3952,6 +3952,7 @@ viewModel.updateSearchText("")
                     val isFileInCurrentPlaylist = currentTrackIndex != -1
                     // First-open behavior: hide miniplayer while the very first track is in sight
                     var isFirstOpen by remember { mutableStateOf(true) }
+                    var initialAutoScrolled by remember { mutableStateOf(false) }
                     val isCurrentTrackHalfVisible = remember(listState.layoutInfo, currentTrackIndex) {
                         val info = listState.layoutInfo
                         val item = info.visibleItemsInfo.firstOrNull { it.index == currentTrackIndex }
@@ -3972,6 +3973,27 @@ viewModel.updateSearchText("")
                     // Mark first-open completed once user scrolls or advances beyond the first row
                     LaunchedEffect(isScrolled, currentTrackIndex) {
                         if (isScrolled || currentTrackIndex > 0) isFirstOpen = false
+                    }
+                    // First-time auto-scroll to reveal main player
+                    LaunchedEffect(currentTrackIndex, isFirstOpen, currentPlayingFile?.uri) {
+                        if (isFirstOpen && !initialAutoScrolled && isFileInCurrentPlaylist && currentTrackIndex == 0 && currentPlayingFile != null) {
+                            try {
+                                var last = 0f
+                                val anim = Animatable(0f)
+                                anim.animateTo(500f, animationSpec = tween(durationMillis = 400)) {
+                                    val delta = value - last
+                                    if (delta != 0f) {
+                                        // Best-effort incremental scroll
+                                        listState.scrollBy(delta)
+                                    }
+                                    last = value
+                                }
+                            } catch (e: Exception) {
+                                CrashLogger.log("MusicPlayerScreen", "Auto-scroll failed: ${e.message}")
+                            } finally {
+                                initialAutoScrolled = true
+                            }
+                        }
                     }
                     
                     // PHASE 4: Show miniplayer when file not in playlist OR when scrolled and not visible

@@ -33,6 +33,9 @@ v10.96
 
 v10.97
 - ⚙️ Default startup: controls visible and waveform active
+
+v10.98
+- 🚀 First open: auto-scroll playlist by ~500px over ~400ms to reveal main player
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

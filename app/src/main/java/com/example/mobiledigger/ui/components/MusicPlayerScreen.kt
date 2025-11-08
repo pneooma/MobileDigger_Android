@@ -194,10 +194,10 @@ fun MusicPlayerScreen(
     var triggerSpectrogramAfterDelay by remember { mutableStateOf(false) }
     
     // Waveform visibility state (main player)
-    var isWaveformVisible by remember { mutableStateOf(false) }
+    var isWaveformVisible by remember { mutableStateOf(true) }
     
     // Main player and playlists visibility states (start hidden by default)
-    var isMainPlayerVisible by remember { mutableStateOf(false) }
+    var isMainPlayerVisible by remember { mutableStateOf(true) }
     var isPlaylistsVisible by remember { mutableStateOf(false) }
     
     // Preserve user preferences for visibility when entering/exiting Multi-Select
@@ -976,7 +976,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.96 ::",
+                            text = ":: v10.97 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height

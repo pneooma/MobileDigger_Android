@@ -14,6 +14,9 @@ v10.90
 
 v10.91
 - 🧰 Default startup: controls hidden, playlists hidden
+
+v10.92
+- 🪄 Swipe UX: incomplete playlist row swipes now bounce back smoothly
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

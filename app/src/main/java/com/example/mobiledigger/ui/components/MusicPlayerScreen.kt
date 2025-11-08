@@ -972,7 +972,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.91 ::",
+                            text = ":: v10.92 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3474,8 +3474,22 @@ viewModel.updateSearchText("")
                                                             } catch (e: Exception) {
                                                                 CrashLogger.log("MusicPlayerScreen", "❌ Swipe gesture error: ${e.message}")
                                                             }
+                                                        } else {
+                                                            // Incomplete swipe → bounce back to original position
+                                                            try {
+                                                                scope.launch {
+                                                                    rowSwipeOffset.animateTo(
+                                                                        0f,
+                                                                        spring(
+                                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                                            stiffness = Spring.StiffnessVeryLow
+                                                                        )
+                                                                    )
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                CrashLogger.log("MusicPlayerScreen", "❌ Bounce-back error: ${e.message}")
+                                                            }
                                                         }
-                                                        // No bounce-back
                                                         swipeDirection = 0
                                                         isSwipeActive = false
                                                     }

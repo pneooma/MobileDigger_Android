@@ -961,7 +961,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.125 ::",
+                            text = ":: v10.126 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2761,6 +2761,19 @@ viewModel.updateSearchText("")
                                                                                 .size(16.dp)
                                                                                 .clickable { viewModel.clearLikedFilterAndReload() },
                                                                             tint = if (isSelected) Color.White else Color.Black
+                                                                        )
+                                                                    } else if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                                                        Icon(
+                                                                            Icons.Default.Folder,
+                                                                            contentDescription = "Select subfolders to view in Liked",
+                                                                            modifier = Modifier
+                                                                                .size(16.dp)
+                                                                                .clickable {
+                                                                                    showSubfolderSelectionDialog = true
+                                                                                    // Ensure latest subfolder info
+                                                                                    viewModel.updateSubfolderInfo()
+                                                                                },
+                                                                            tint = Color(0xFF2196F3)
                                                                         )
                                                                     }
                                                                 }
@@ -4771,7 +4784,23 @@ viewModel.updateSearchText("")
                                 }
                             }
                             Spacer(Modifier.height(8.dp))
-                            Button(
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        showSubfolderSelectionDialog = false
+                                        viewModel.loadLikedRootOnly()
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder
+                                ) {
+                                    Text("View Root Only")
+                                }
+                                Button(
                                 onClick = {
                                     val list = selectedViewSubfolders.toList()
                                     if (list.isNotEmpty()) {
@@ -4781,9 +4810,10 @@ viewModel.updateSearchText("")
                                 },
                                 enabled = selectedViewSubfolders.isNotEmpty(),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Text("View", color = MaterialTheme.colorScheme.onPrimary)
+                                }
                             }
                         }
                     }

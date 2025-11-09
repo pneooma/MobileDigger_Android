@@ -134,6 +134,9 @@ v10.124
 v10.125
 - 👎 Main player swipe-left: now moves the current file to Rejected first, then advances to the next track (was next-only in some cases).
 - 📲 Version and UI label updated to 10.125
+v10.126
+- ❤️ Liked pill: when no filter is active the pill shows a blue folder icon (16dp) to open subfolder selection for viewing (including a new “View Root Only” option). When a filter is active, the pill shows the refresh icon instead to clear it.
+- 📲 Version and UI label updated to 10.126
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

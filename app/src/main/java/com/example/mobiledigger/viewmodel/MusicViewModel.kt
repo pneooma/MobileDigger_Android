@@ -3344,6 +3344,32 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         loadLikedFiles()
     }
     
+    fun loadLikedRootOnly() {
+        viewModelScope.launch(Dispatchers.IO) {
+            fileLoadingMutex.withLock {
+                try {
+                    val destinationFolder = fileManager.getDestinationFolder()
+                    val likedFolder = destinationFolder?.findFile("Liked") ?: destinationFolder?.findFile("I DIG")
+                    val rootFiles = if (likedFolder != null) {
+                        fileManager.listMusicFilesInFolder(likedFolder.uri)
+                    } else {
+                        emptyList()
+                    }
+                    withContext(Dispatchers.Main) {
+                        val sorted = rootFiles.map { it.copy(sourcePlaylist = PlaylistTab.LIKED, subfolder = null) }
+                            .sortedByDescending { it.dateAdded }
+                        _likedFiles.value = sorted
+                        // Mark a special filter state to show reload icon
+                        _likedFilter.value = listOf("<ROOT_ONLY>")
+                        CrashLogger.log("MusicViewModel", "Loaded ${sorted.size} files from Liked root only")
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Error loading liked root only", e)
+                }
+            }
+        }
+    }
+    
     // External audio file handling methods
     private fun checkForPendingExternalAudio() {
         viewModelScope.launch {

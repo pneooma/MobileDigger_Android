@@ -14,9 +14,9 @@ enum class HapticFeedbackType { // New enum
 
 data class VisualSettings(
     // Waveform Settings
-    val waveformHeight: Float = 96f, // Increased by 20% (80 * 1.2)
-    val miniWaveformHeight: Float = 72f, // Increased by 20% (60 * 1.2)
-    val rowWaveformHeight: Float = 80f, // Row waveform height (same as main player)
+    val waveformHeight: Float = 144f, // +50%
+    val miniWaveformHeight: Float = 108f, // +50%
+    val rowWaveformHeight: Float = 120f, // +50%
     // Animation Settings
     val enableAnimations: Boolean = true,
     val animationSpeed: Float = 1.0f, // 0.5x to 2.0x speed

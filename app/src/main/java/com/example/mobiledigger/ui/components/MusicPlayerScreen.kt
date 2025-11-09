@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.129 ::",
+                            text = ":: v10.130 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3719,52 +3719,30 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                             } else {
-                                                // When main player is visible but row waveform is hidden, present like an inactive row with highlighted filename
+                                                // When main player is visible but main waveform is hidden, show the row waveform for the active row
                                                 if (isMainPlayerVisible && !isWaveformVisible) {
+                                                    val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
                                                     Box(
                                                         modifier = Modifier
                                                             .weight(1f)
-                                                            .height(animatedRowHeight)
-                                                            .combinedClickable(
-                                                                onClick = {
-                                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                    if (actualIndex >= 0) viewModel.jumpTo(actualIndex)
-                                                                },
-                                                                onLongClick = {
-                                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                    pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
-                                                                    manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
-                                                                    showRenameActionDialog = true
-                                                                }
-                                                            ),
-                                                        contentAlignment = Alignment.CenterStart
+                                                            .height(visualSettings.rowWaveformHeight.dp),
+                                                        contentAlignment = Alignment.Center
                                                     ) {
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.Start,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                            if (isMultiSelectionMode && actualIndex >= 0) {
-                                                                Checkbox(
-                                                                    checked = selectedIndices.contains(actualIndex),
-                                                                    onCheckedChange = { viewModel.toggleSelection(actualIndex) },
-                                                                    modifier = Modifier.padding(end = 6.dp)
-                                                                )
-                                                            }
-                                                            Text(
-                                                                text = item.name,
-                                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
-                                                                    fontWeight = FontWeight.Bold,
-                                                                    color = MaterialTheme.colorScheme.primary
-                                                                ),
-                                                                maxLines = 2,
-                                                                overflow = TextOverflow.Ellipsis,
-                                                                textAlign = TextAlign.Start,
-                                                                modifier = Modifier.weight(1f, fill = true)
-                                                            )
-                                                        }
+                                                        WaveformWithToggle(
+                                                            sharedState = sharedWaveformState,
+                                                            progress = progressPercent,
+                                                            onSeek = { seekProgress ->
+                                                                val seekPosition = (seekProgress * duration).toLong()
+                                                                viewModel.seekTo(seekPosition)
+                                                            },
+                                                            songUri = item.uri.toString(),
+                                                            waveformHeight = visualSettings.rowWaveformHeight.toInt(),
+                                                            currentPosition = currentPosition,
+                                                            totalDuration = duration,
+                                                            fileName = item.name,
+                                                            opacity = 0.7f,
+                                                            modifier = Modifier.fillMaxWidth()
+                                                        )
                                                     }
                                                 } else {
                                                     val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f

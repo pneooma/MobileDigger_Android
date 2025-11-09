@@ -89,23 +89,23 @@ fun VisualSettingsDialog(
                         SliderSettingItem(
                             label = "Main Waveform Height",
                             value = currentSettings.waveformHeight,
-                            range = 40f..150f,
+                            range = 40f..225f,
                             onValueChange = { currentSettings = currentSettings.copy(waveformHeight = it) },
-                            onReset = { currentSettings = currentSettings.copy(waveformHeight = settings.waveformHeight) }
+                            onReset = { currentSettings = currentSettings.copy(waveformHeight = com.example.mobiledigger.ui.theme.VisualSettings().waveformHeight) }
                         )
                         SliderSettingItem(
                             label = "Mini Waveform Height",
                             value = currentSettings.miniWaveformHeight,
-                            range = 30f..130f,
+                            range = 30f..195f,
                             onValueChange = { currentSettings = currentSettings.copy(miniWaveformHeight = it) },
-                            onReset = { currentSettings = currentSettings.copy(miniWaveformHeight = settings.miniWaveformHeight) }
+                            onReset = { currentSettings = currentSettings.copy(miniWaveformHeight = com.example.mobiledigger.ui.theme.VisualSettings().miniWaveformHeight) }
                         )
                         SliderSettingItem(
                             label = "Row Waveform Height",
                             value = currentSettings.rowWaveformHeight,
-                            range = 30f..130f,
+                            range = 30f..200f,
                             onValueChange = { currentSettings = currentSettings.copy(rowWaveformHeight = it) },
-                            onReset = { currentSettings = currentSettings.copy(rowWaveformHeight = settings.rowWaveformHeight) }
+                            onReset = { currentSettings = currentSettings.copy(rowWaveformHeight = com.example.mobiledigger.ui.theme.VisualSettings().rowWaveformHeight) }
                         )
                         // Removed Bar Width
                         // Removed Bar Gap

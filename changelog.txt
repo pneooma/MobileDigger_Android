@@ -153,6 +153,11 @@ v10.129
 - 📁 Root-only filter persists within Liked (properly handled on tab switch/refresh); mini and row waveform heights now reflect settings.
 - 🧹 Actions menu simplified: removed “✓ Source selected”, “✓ Destination selected”, “Multi-Select Files”, and “README”.
 - 📲 Version and UI label updated to 10.129
+v10.130
+- 👀 Active-row waveform: when main waveform is hidden (controls visible), the active row shows its waveform; when visible, the row waveform is hidden.
+- 📏 Waveform settings: increased ranges (Main to 225, Mini to 195, Row to 200). Defaults +50% (Main 144, Mini 108, Row 120). Individual “return to default” fixed.
+- ⚡ Swipe latency: reduced fade and delays to make next/previous trigger faster after swipe animation.
+- 📲 Version and UI label updated to 10.130
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

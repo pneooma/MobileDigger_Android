@@ -178,7 +178,7 @@ class AudioManager(private val context: Context) {
                         file.delete()
                         CrashLogger.log("AudioManager", "📊 Cache cleanup: Removed temp file (${sizeMB}MB): ${file.name}")
                         // CRITICAL: Give OS time to release file descriptors after deletion
-                        Thread.sleep(20)
+                        // removed sleep to avoid main-thread stalls
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "Failed to delete temp file: ${eldest.value}", e)
                     }
@@ -485,7 +485,7 @@ class AudioManager(private val context: Context) {
             stopAllPlayback()
             
             // Additional delay to ensure cleanup is complete
-            Thread.sleep(100)
+            // removed sleep to avoid UI jank
             
             // CRITICAL: Force garbage collection every 5 tracks to prevent memory buildup
             // This helps prevent crashes after playing many files
@@ -493,7 +493,7 @@ class AudioManager(private val context: Context) {
             if (trackCount >= 3) {
                 CrashLogger.log("AudioManager", "Running aggressive GC after $trackCount cached files")
                 System.gc()
-                Thread.sleep(30) // Give GC time to complete
+                // removed sleep to avoid UI jank
             }
             
             // Check if this is an AIFF file that needs FFmpeg
@@ -693,7 +693,7 @@ class AudioManager(private val context: Context) {
             // Enhanced memory management before FFmpeg operations
             CrashLogger.log("AudioManager", "🧠 Running garbage collection...")
             System.gc()
-            Thread.sleep(100) // Increased delay for better cleanup
+            // removed sleep to avoid UI jank
             
             // Try to set data source for FFmpegMediaPlayer
             val dataSource = getFFmpegDataSource(uri)
@@ -852,7 +852,7 @@ class AudioManager(private val context: Context) {
                     CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer reset completed")
                     
                     // Additional cleanup delay
-                    Thread.sleep(50)
+                    // removed sleep to avoid UI jank
                 } catch (e: Exception) {
                     CrashLogger.log("AudioManager", "💥 Error stopping FFmpegMediaPlayer", e)
                 }
@@ -1026,7 +1026,7 @@ class AudioManager(private val context: Context) {
                         File(tempPath).delete()
                         CrashLogger.log("AudioManager", "Cleaned up temp file during cache clear: $tempPath")
                         // CRITICAL: Give OS time to release file descriptors after deletion
-                        Thread.sleep(20)
+                        // removed sleep to avoid UI jank
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "Failed to delete temp file: $tempPath", e)
                     }
@@ -1185,7 +1185,7 @@ class AudioManager(private val context: Context) {
             // Force garbage collection to ensure all file handles are released
             CrashLogger.log("AudioManager", "🔄 Running GC and waiting for file descriptor cleanup...")
             System.gc()
-            Thread.sleep(150) // Increased delay to 150ms for AIFF files
+            // removed sleep to avoid UI jank
             
             // Verify the file is accessible and properly closed
             if (!tempFile.exists() || !tempFile.canRead()) {
@@ -2924,7 +2924,7 @@ class AudioManager(private val context: Context) {
             if (width > 1000 || fileSizeMB > 30) {
                 CrashLogger.log("AudioManager", "Forcing garbage collection for large spectrogram (width=$width, fileSize=${fileSizeMB}MB)")
                 System.gc()
-                Thread.sleep(200) // Give GC time to work
+                // removed sleep to avoid UI jank
             }
             
             // Calculate dynamic range adjustment for quiet sections

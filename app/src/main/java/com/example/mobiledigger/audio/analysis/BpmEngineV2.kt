@@ -34,9 +34,14 @@ class BpmEngineV2 {
         bpmMin: Int = 60,
         bpmMax: Int = 180
     ): BpmEngineV2Result {
+        // Downsample to ~22.05 kHz for faster analysis when input is high-rate
+        val targetRate = 22050
+        val useDecimation = sampleRate > 32000
+        val data = if (useDecimation) decimateToTarget(pcmMono, sampleRate, targetRate) else pcmMono
+        val sr = if (useDecimation) targetRate else sampleRate
         val stft = Stft(frameSize)
         val hann = AnalysisWindows.hann(frameSize)
-        val numFrames = ((pcmMono.size - frameSize).coerceAtLeast(0) / hopSize) + 1
+        val numFrames = ((data.size - frameSize).coerceAtLeast(0) / hopSize) + 1
         
         // Build magnitude spectra per frame (parallelized across up to 6 workers)
         val mags = Array(numFrames) { FloatArray(frameSize / 2) }
@@ -48,11 +53,11 @@ class BpmEngineV2 {
                     var frameIndex = w
                     while (frameIndex < numFrames) {
                         val offset = frameIndex * hopSize
-                        if (offset + frameSize > pcmMono.size) break
+                        if (offset + frameSize > data.size) break
                         val frame = FloatArray(frameSize)
                         var i = 0
                         while (i < frameSize) {
-                            frame[i] = pcmMono[offset + i] * hann[i]
+                            frame[i] = data[offset + i] * hann[i]
                             i++
                         }
                         val spec = stft.fft(frame)
@@ -77,13 +82,13 @@ class BpmEngineV2 {
         
         // Tri-band spectral flux ODF
         val tOdfStart = android.os.SystemClock.elapsedRealtime()
-        val odf = triBandSpectralFlux(mags, sampleRate, frameSize)
+        val odf = triBandSpectralFlux(mags, sr, frameSize)
         val odfSmooth = movingAverage(odf, 6)
         normalizeInPlace(odfSmooth)
         val tOdfEnd = android.os.SystemClock.elapsedRealtime()
         PerformanceProfiler.recordOperation("BPM.ODF", (tOdfEnd - tOdfStart))
         
-        val frameRate = sampleRate.toFloat() / hopSize.toFloat()
+        val frameRate = sr.toFloat() / hopSize.toFloat()
         
         // Tempogram via autocorrelation
         val tTempoStart = android.os.SystemClock.elapsedRealtime()
@@ -385,6 +390,27 @@ class BpmEngineV2 {
         if (maxV <= 0.0 || second < 0.0) return 0.0
         val margin = (maxV - second) / (maxV + 1e-9)
         return margin.coerceIn(0.0, 1.0)
+    }
+    
+    private fun decimateToTarget(pcm: FloatArray, srcRate: Int, dstRate: Int): FloatArray {
+        val factor = (srcRate / dstRate).coerceAtLeast(1)
+        if (factor <= 1) return pcm
+        val outLen = pcm.size / factor
+        val out = FloatArray(outLen)
+        var inIdx = 0
+        var outIdx = 0
+        while (outIdx < outLen) {
+            var sum = 0f
+            var k = 0
+            while (k < factor && inIdx + k < pcm.size) {
+                sum += pcm[inIdx + k]
+                k++
+            }
+            out[outIdx] = sum / k.coerceAtLeast(1)
+            inIdx += factor
+            outIdx++
+        }
+        return out
     }
 }
 

@@ -22,14 +22,20 @@ class KeyAnalyzer {
         hopSize: Int = 2048,
         hpcpBins: Int = 36
     ): KeyAnalysisResult {
-        val maxSamples = (maxAnalyzeSeconds * sampleRate).coerceAtMost(pcmMono.size)
-        val data = if (maxSamples < pcmMono.size) pcmMono.copyOf(maxSamples) else pcmMono
+        // Downsample to ~22.05 kHz for faster key profiling when high-rate
+        val targetRate = 22050
+        val useDecimation = sampleRate > 32000
+        val src = if (useDecimation) decimateToTarget(pcmMono, sampleRate, targetRate) else pcmMono
+        val sr = if (useDecimation) targetRate else sampleRate
+        
+        val maxSamples = (maxAnalyzeSeconds * sr).coerceAtMost(src.size)
+        val data = if (maxSamples < src.size) src.copyOf(maxSamples) else src
         
         // 1) Estimate tuning from a subset of frames
         val tTuneStart = android.os.SystemClock.elapsedRealtime()
         val tuningRef = estimateTuningA4Hz(
             data = data,
-            sampleRate = sampleRate,
+            sampleRate = sr,
             frameSize = frameSize,
             hopSize = hopSize
         )
@@ -53,7 +59,7 @@ class KeyAnalyzer {
                         val frame = data.copyOfRange(offset, offset + frameSize)
                         val peaks = SpectralPeaks.computeFramePeaks(
                             frame = frame,
-                            sampleRate = sampleRate,
+                            sampleRate = sr,
                             minFreqHz = 80.0,
                             maxFreqHz = 5000.0,
                             maxPeaks = 80
@@ -203,6 +209,27 @@ class KeyAnalyzer {
             val v = out[i] / maxV
             out[i] *= (0.8 + 0.2 * v) // 0.8..1.0 boost
             i++
+        }
+        return out
+    }
+    
+    private fun decimateToTarget(pcm: FloatArray, srcRate: Int, dstRate: Int): FloatArray {
+        val factor = (srcRate / dstRate).coerceAtLeast(1)
+        if (factor <= 1) return pcm
+        val outLen = pcm.size / factor
+        val out = FloatArray(outLen)
+        var inIdx = 0
+        var outIdx = 0
+        while (outIdx < outLen) {
+            var sum = 0f
+            var k = 0
+            while (k < factor && inIdx + k < pcm.size) {
+                sum += pcm[inIdx + k]
+                k++
+            }
+            out[outIdx] = sum / k.coerceAtLeast(1)
+            inIdx += factor
+            outIdx++
         }
         return out
     }

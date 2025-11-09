@@ -1151,15 +1151,17 @@ class AudioManager(private val context: Context) {
             // Copy data with larger buffer for better performance
             val buffer = ByteArray(131072) // 128KB buffer for better performance
             var bytesRead: Int
+            var lastLogBytes = 0L
             
                 while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                     outputStream.write(buffer, 0, bytesRead)
                     totalBytes += bytesRead
                         
-                        // Log progress for large files
-                        if (totalBytes % (1024 * 1024) == 0L) { // Every MB
+                        // Throttled progress logging (every 10MB)
+                        if (totalBytes - lastLogBytes >= 10L * 1024L * 1024L) {
                             val mbCopied = totalBytes / (1024.0 * 1024.0)
-                            CrashLogger.log("AudioManager", "📊 Copied ${String.format(Locale.getDefault(), "%.1f", mbCopied)}MB...")
+                            CrashLogger.log("AudioManager", "📊 Copied ${String.format(Locale.getDefault(), \"%.1f\", mbCopied)}MB...")
+                            lastLogBytes = totalBytes
                         }
                     
                     // Check if we're exceeding our size limit during copy

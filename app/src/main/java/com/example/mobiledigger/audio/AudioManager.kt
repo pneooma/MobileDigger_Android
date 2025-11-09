@@ -23,6 +23,7 @@ import com.example.mobiledigger.util.ResourceManager
 import com.example.mobiledigger.util.PerformanceProfiler
 import wseemann.media.FFmpegMediaPlayer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.delay
@@ -2947,7 +2948,7 @@ class AudioManager(private val context: Context) {
             val workers = 8
             kotlinx.coroutines.runBlocking {
                 for (w in 0 until workers) {
-                    kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.Default) {
+                    launch(kotlinx.coroutines.Dispatchers.Default) {
                         var timeIndex = w
                         while (timeIndex < width) {
                             val startSample = timeIndex * hopSizeAdjusted

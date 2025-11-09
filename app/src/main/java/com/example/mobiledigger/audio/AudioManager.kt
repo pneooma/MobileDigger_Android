@@ -2944,12 +2944,21 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Calculated hop size: $hopSize, Adjusted hop size: $hopSizeAdjusted, Window size: $windowSize, FFT size: $fftSize")
             CrashLogger.log("AudioManager", "Analyzing ${maxAnalysisSeconds} seconds (${maxAnalysisSeconds/60.0} minutes) of audio data")
             
-            // Parallelize time columns across 8 workers
-            val workers = 8
+            // Precompute FFT bin index per frequency row to avoid recomputing inside loops
+            val freqBinIndex = IntArray(height) { row ->
+                val targetFreq = (row * maxFreq) / height
+                ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
+            }
+            
+            // Parallelize time columns across up to 8 workers (or CPU count)
+            val workers = kotlin.math.min(8, Runtime.getRuntime().availableProcessors())
+            val localMax = FloatArray(workers) { 0f }
+            val tColumnsStart = android.os.SystemClock.elapsedRealtime()
             kotlinx.coroutines.runBlocking {
                 for (w in 0 until workers) {
                     launch(kotlinx.coroutines.Dispatchers.Default) {
                         var timeIndex = w
+                        var wMax = 0f
                         while (timeIndex < width) {
                             val startSample = timeIndex * hopSizeAdjusted
                             if (startSample >= monoData.size) break
@@ -2966,8 +2975,7 @@ class AudioManager(private val context: Context) {
                             
                             var freqIndex = 0
                             while (freqIndex < height) {
-                                val targetFreq = (freqIndex * maxFreq) / height
-                                val fftIndex = ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
+                                val fftIndex = freqBinIndex[freqIndex]
                                 val idxRe = fftIndex * 2
                                 val idxIm = idxRe + 1
                                 if (idxIm < fftResult.size) {
@@ -2976,30 +2984,51 @@ class AudioManager(private val context: Context) {
                                     val magnitude = sqrt(real * real + imag * imag)
                                     val power = magnitude * magnitude * dynamicRangeAdjustment
                                     spectrogramData[height - 1 - freqIndex][timeIndex] = power
-                                    synchronized(this@AudioManager) {
-                                        if (power > maxPower) maxPower = power
-                                    }
+                                    if (power > wMax) wMax = power
                                 }
                                 freqIndex++
                             }
                             
                             timeIndex += workers
                         }
+                        localMax[w] = wMax
                     }
                 }
             }
+            // Combine local maxima
+            var iMax = 0
+            while (iMax < workers) {
+                if (localMax[iMax] > maxPower) maxPower = localMax[iMax]
+                iMax++
+            }
+            val tColumnsEnd = android.os.SystemClock.elapsedRealtime()
+            PerformanceProfiler.recordOperation("Spectrogram.ColumnsFFT", (tColumnsEnd - tColumnsStart))
             
             // Apply smoothing to reduce artifacts
             val smoothedData = applySmoothing(spectrogramData, width, height)
             
             // Convert power to dB and create bitmap with professional color mapping
-            for (y in 0 until height) {
-                for (x in 0 until width) {
-                    val power = smoothedData[y][x]
-                    val color = powerToColor(power, maxPower)
-                    bitmap.setPixel(x, y, color)
+            val tBitmapStart = android.os.SystemClock.elapsedRealtime()
+            // Parallelize rows across workers
+            kotlinx.coroutines.runBlocking {
+                for (w in 0 until workers) {
+                    launch(kotlinx.coroutines.Dispatchers.Default) {
+                        var y = w
+                        while (y < height) {
+                            var x = 0
+                            while (x < width) {
+                                val power = smoothedData[y][x]
+                                val color = powerToColor(power, maxPower)
+                                bitmap.setPixel(x, y, color)
+                                x++
+                            }
+                            y += workers
+                        }
+                    }
                 }
             }
+            val tBitmapEnd = android.os.SystemClock.elapsedRealtime()
+            PerformanceProfiler.recordOperation("Spectrogram.BitmapWrite", (tBitmapEnd - tBitmapStart))
             
             val endTime = System.currentTimeMillis()
             val totalTime = endTime - startTime

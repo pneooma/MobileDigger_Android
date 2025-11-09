@@ -3,6 +3,7 @@ package com.example.mobiledigger.audio.analysis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import com.example.mobiledigger.util.PerformanceProfiler
 
 data class KeyAnalysisResult(
     val key: String,
@@ -25,18 +26,22 @@ class KeyAnalyzer {
         val data = if (maxSamples < pcmMono.size) pcmMono.copyOf(maxSamples) else pcmMono
         
         // 1) Estimate tuning from a subset of frames
+        val tTuneStart = android.os.SystemClock.elapsedRealtime()
         val tuningRef = estimateTuningA4Hz(
             data = data,
             sampleRate = sampleRate,
             frameSize = frameSize,
             hopSize = hopSize
         )
+        val tTuneEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("KEY.Tuning", (tTuneEnd - tTuneStart))
         
         val pooled = DoubleArray(hpcpBins)
         var frames = 0
         // Parallelize frame processing across up to 6 workers
-        val workers = 8
+        val workers = kotlin.math.min(8, Runtime.getRuntime().availableProcessors())
         val partials = Array(workers) { DoubleArray(hpcpBins) }
+        val tFramesStart = android.os.SystemClock.elapsedRealtime()
         runBlocking {
             for (w in 0 until workers) {
                 launch(Dispatchers.Default) {
@@ -71,6 +76,8 @@ class KeyAnalyzer {
                 }
             }
         }
+        val tFramesEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("KEY.Frames+HPCP", (tFramesEnd - tFramesStart))
         var wi = 0
         while (wi < workers) {
             var j = 0
@@ -88,8 +95,11 @@ class KeyAnalyzer {
             pooled[i] /= frames.toDouble()
             i++
         }
+        val tMatchStart = android.os.SystemClock.elapsedRealtime()
         val h12 = aggregateTo12(pooled)
         val match = KeyProfileMatcher.matchKey(emphasizeTonalPeaks(h12))
+        val tMatchEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("KEY.Match", (tMatchEnd - tMatchStart))
         return KeyAnalysisResult(
             key = match.key,
             camelot = match.camelot,

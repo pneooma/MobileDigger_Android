@@ -3,6 +3,7 @@ package com.example.mobiledigger.audio.analysis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import com.example.mobiledigger.util.PerformanceProfiler
 
 import kotlin.math.abs
 import kotlin.math.cos
@@ -39,7 +40,8 @@ class BpmEngineV2 {
         
         // Build magnitude spectra per frame (parallelized across up to 6 workers)
         val mags = Array(numFrames) { FloatArray(frameSize / 2) }
-        val workers = 8
+        val workers = kotlin.math.min(8, Runtime.getRuntime().availableProcessors())
+        val tStftStart = android.os.SystemClock.elapsedRealtime()
         runBlocking {
             for (w in 0 until workers) {
                 launch(Dispatchers.Default) {
@@ -68,23 +70,32 @@ class BpmEngineV2 {
                 }
             }
         }
+        val tStftEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("BPM.StftMags", (tStftEnd - tStftStart))
         
         if (numFrames == 0) return BpmEngineV2Result(120.0, doubleArrayOf(), 0.0)
         
         // Tri-band spectral flux ODF
+        val tOdfStart = android.os.SystemClock.elapsedRealtime()
         val odf = triBandSpectralFlux(mags, sampleRate, frameSize)
         val odfSmooth = movingAverage(odf, 6)
         normalizeInPlace(odfSmooth)
+        val tOdfEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("BPM.ODF", (tOdfEnd - tOdfStart))
         
         val frameRate = sampleRate.toFloat() / hopSize.toFloat()
         
         // Tempogram via autocorrelation
+        val tTempoStart = android.os.SystemClock.elapsedRealtime()
         val tempoSeries = tempoSeriesFromACF(odfSmooth, frameRate, bpmMin, bpmMax, step = 0.5)
         // Harmonic product spectrum across tempo axis
         val hps = harmonicProductSpectrum(tempoSeries, factors = intArrayOf(2, 3))
         val bestBpm = tempoAtMax(hps, bpmMin, 0.5)
+        val tTempoEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("BPM.Tempogram+HPS", (tTempoEnd - tTempoStart))
         
         // Beat-grid alignment refinement around best BPM
+        val tRefineStart = android.os.SystemClock.elapsedRealtime()
         var bpmRefined = refineWithBeatGrid(odfSmooth, frameRate, bestBpm)
         // Infer BPM from tracked beats and choose best among multiple hypotheses
         var beats = BeatTrackerDP.trackBeats(odfSmooth, bpmRefined, frameRate)
@@ -99,6 +110,8 @@ class BpmEngineV2 {
         ))
         bpmRefined = finalBpm
         beats = BeatTrackerDP.trackBeats(odfSmooth, bpmRefined, frameRate)
+        val tRefineEnd = android.os.SystemClock.elapsedRealtime()
+        PerformanceProfiler.recordOperation("BPM.Refine+BeatTrack", (tRefineEnd - tRefineStart))
         val conf = confidenceFromSeries(hps)
         
         return BpmEngineV2Result(

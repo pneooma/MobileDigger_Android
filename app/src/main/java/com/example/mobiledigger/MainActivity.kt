@@ -28,6 +28,9 @@ import androidx.core.content.edit
 import com.example.mobiledigger.util.CrashLogger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
+import android.view.Surface
+import android.view.WindowManager
+import android.view.Display
 
 class MainActivity : ComponentActivity() {
     
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        applyHighRefreshRatePreference()
         
         // Check if this is the first start and show permissions popup
         checkFirstStartAndRequestPermissions()
@@ -113,6 +117,32 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+    
+    private fun applyHighRefreshRatePreference() {
+        try {
+            // Hint the system to use the highest refresh rate mode that matches current resolution
+            val display: Display = window.windowManager.defaultDisplay
+            val currentMode = display.mode
+            val matchingModes = display.supportedModes.filter {
+                it.physicalWidth == currentMode.physicalWidth && it.physicalHeight == currentMode.physicalHeight
+            }
+            val bestMode = matchingModes.maxByOrNull { it.refreshRate } ?: currentMode
+            
+            // Prefer the best mode and refresh rate for the window
+            val params = window.attributes
+            params.preferredDisplayModeId = bestMode.modeId
+            params.preferredRefreshRate = bestMode.refreshRate
+            window.attributes = params
+            
+            // On API 31+, hint the frame rate on the decor view to support variable refresh rate
+            window.decorView.setFrameRate(bestMode.refreshRate, Surface.FRAME_RATE_COMPATIBLE, 0)
+            
+            CrashLogger.log("MainActivity", "Applied high refresh rate preference: ${bestMode.refreshRate}Hz (modeId=${bestMode.modeId})")
+        } catch (e: Throwable) {
+            // Fallback silently if any API isn't available on the device
+            CrashLogger.log("MainActivity", "Failed to apply high refresh rate preference", e)
         }
     }
     

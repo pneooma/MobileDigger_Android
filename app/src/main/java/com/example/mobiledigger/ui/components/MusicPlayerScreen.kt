@@ -629,23 +629,7 @@ fun MusicPlayerScreen(
         }
     }
     
-    // Analyze prompt dialog when file is opened externally
-    LaunchedEffect(Unit) {
-        while (true) {
-            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-            val shouldShowPrompt = prefs.getBoolean("show_analyze_prompt", false)
-            if (shouldShowPrompt && currentPlayingFile != null) {
-                // Clear the flag
-                prefs.edit().apply {
-                    putBoolean("show_analyze_prompt", false)
-                    apply()
-                }
-                // Show the prompt dialog
-                showAnalyzePrompt = true
-            }
-            delay(500) // Check every 500ms
-        }
-    }
+    // Removed periodic analyze prompt polling; manual-only policy applies
     
     // Analyze prompt dialog
     if (showAnalyzePrompt) {
@@ -976,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.112 ::",
+                            text = ":: v10.113 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height

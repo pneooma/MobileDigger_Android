@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class VlcAudioBackend(private val context: Context) {
     
+    private val verboseLogs = false
+    
     private var libVLC: LibVLC? = null
     private var mediaPlayer: MediaPlayer? = null
     private val isInitialized = AtomicBoolean(false)
@@ -82,8 +84,10 @@ class VlcAudioBackend(private val context: Context) {
                     CrashLogger.log("VlcAudioBackend", "🔄 Opening media...")
                 }
                 MediaPlayer.Event.Buffering -> {
-                    val percent = event.buffering
-                    CrashLogger.log("VlcAudioBackend", "📊 Buffering: $percent%")
+                    if (verboseLogs) {
+                        val percent = event.buffering
+                        CrashLogger.log("VlcAudioBackend", "📊 Buffering: $percent%")
+                    }
                 }
                 MediaPlayer.Event.Playing -> {
                     isPlaying.set(true)
@@ -175,13 +179,13 @@ class VlcAudioBackend(private val context: Context) {
                 return
             }
             
-            CrashLogger.log("VlcAudioBackend", "🔄 Starting VLC prepare async...")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔄 Starting VLC prepare async...")
             
             // VLC doesn't have a separate prepare step - it prepares automatically
             // We'll simulate the prepared callback after a short delay
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 isPrepared.set(true)
-                CrashLogger.log("VlcAudioBackend", "✅ VLC prepared")
+                if (verboseLogs) CrashLogger.log("VlcAudioBackend", "✅ VLC prepared")
                 onPreparedListener?.invoke()
             }, 100)
             
@@ -198,7 +202,7 @@ class VlcAudioBackend(private val context: Context) {
                 return
             }
             
-            CrashLogger.log("VlcAudioBackend", "▶️ Starting VLC playback...")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "▶️ Starting VLC playback...")
             mediaPlayer?.play()
             
         } catch (e: Exception) {
@@ -210,7 +214,7 @@ class VlcAudioBackend(private val context: Context) {
     fun pause() {
         try {
             if (isPlaying.get()) {
-                CrashLogger.log("VlcAudioBackend", "⏸️ Pausing VLC playback...")
+                if (verboseLogs) CrashLogger.log("VlcAudioBackend", "⏸️ Pausing VLC playback...")
                 mediaPlayer?.pause()
             }
         } catch (e: Exception) {
@@ -220,7 +224,7 @@ class VlcAudioBackend(private val context: Context) {
     
     fun stop() {
         try {
-            CrashLogger.log("VlcAudioBackend", "⏹️ Stopping VLC playback...")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "⏹️ Stopping VLC playback...")
             mediaPlayer?.stop()
             isPlaying.set(false)
             isPrepared.set(false)
@@ -231,7 +235,7 @@ class VlcAudioBackend(private val context: Context) {
     
     fun reset() {
         try {
-            CrashLogger.log("VlcAudioBackend", "🔄 Resetting VLC player...")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔄 Resetting VLC player...")
             mediaPlayer?.stop()
             mediaPlayer?.media = null
             isPlaying.set(false)
@@ -243,7 +247,7 @@ class VlcAudioBackend(private val context: Context) {
     
     fun release() {
         try {
-            CrashLogger.log("VlcAudioBackend", "🧹 Releasing VLC resources...")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🧹 Releasing VLC resources...")
             
             mediaPlayer?.stop()
             mediaPlayer?.release()
@@ -256,7 +260,7 @@ class VlcAudioBackend(private val context: Context) {
             isPlaying.set(false)
             isPrepared.set(false)
             
-            CrashLogger.log("VlcAudioBackend", "✅ VLC resources released")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "✅ VLC resources released")
             
         } catch (e: Exception) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC release failed", e)
@@ -287,7 +291,7 @@ class VlcAudioBackend(private val context: Context) {
         try {
             val clampedVolume = volume.coerceIn(0f, 1f)
             mediaPlayer?.volume = (clampedVolume * 100).toInt()
-            CrashLogger.log("VlcAudioBackend", "🔊 VLC volume set to: ${(clampedVolume * 100).toInt()}%")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔊 VLC volume set to: ${(clampedVolume * 100).toInt()}%")
         } catch (e: Exception) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC volume set failed", e)
         }
@@ -299,7 +303,7 @@ class VlcAudioBackend(private val context: Context) {
                 CrashLogger.log("VlcAudioBackend", "❌ VLC not initialized for seek")
                 return
             }
-            CrashLogger.log("VlcAudioBackend", "↔️ Seeking to ${positionMs}ms")
+            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "↔️ Seeking to ${positionMs}ms")
             mediaPlayer?.time = positionMs
         } catch (e: Exception) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC seek failed", e)

@@ -88,6 +88,11 @@ v10.112
 - ✋ Manual-only: spectrogram and analysis now run only when you press Generate Spectrogram or Analyze.
 - 🧭 Removed auto_show_spectrogram flow in ViewModel; no delayed auto-open.
 - 📲 Version and UI label updated to 10.112
+v10.113
+- 🧈 120Hz: Added high refresh rate preference (preferredDisplayModeId + setFrameRate) to favor highest Hz at current resolution.
+- 🔇 Reduced VLC log spam (buffering/volume/seek) behind a verbose flag; default off.
+- 🧹 Removed periodic analyze-prompt polling loop to cut idle recomposition/CPU.
+- 📲 Version and UI label updated to 10.113
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -125,6 +125,9 @@ v10.121
 v10.122
 - ❤️ Liked subfolder filter: Liked tab now honors selected subfolders persistently. Added reload button in Liked header to clear the filter and load all liked files from all folders. Pill count reflects the filtered list.
 - 📲 Version and UI label updated to 10.122
+v10.123
+- ❤️ UI: Moved reload for Liked into the Liked pill itself, next to the heart (same size). Tap refresh clears the filter and reloads all liked files.
+- 📲 Version and UI label updated to 10.123
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.122 ::",
+                            text = ":: v10.123 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2730,30 +2730,43 @@ viewModel.updateSearchText("")
                                                         horizontalAlignment = Alignment.CenterHorizontally,
                                                         modifier = Modifier.weight(0.3f)
                                                     ) {
-                                                    when (tab) {
-                                                        PlaylistTab.TODO -> {
-                                                            Icon(
-                                                                Icons.AutoMirrored.Filled.PlaylistPlay,
-                                                                contentDescription = "To Do",
-                                                                modifier = Modifier.size(16.dp),
-                                                                tint = if (isSelected) Color.White else Color.Black
-                                                            )
-                                                        }
-                                                        PlaylistTab.LIKED -> {
-                                                            Icon(
-                                                                Icons.Default.Favorite,
-                                                                contentDescription = "Liked",
-                                                                modifier = Modifier.size(16.dp),
-                                                                tint = if (isSelected) Color.White else Color.Black
-                                                            )
-                                                        }
-                                                        PlaylistTab.REJECTED -> {
-                                                            Icon(
-                                                                Icons.Default.ThumbDown,
-                                                                contentDescription = "Rejected",
-                                                                modifier = Modifier.size(16.dp),
-                                                                tint = if (isSelected) Color.White else Color.Black
-                                                            )
+                                                        when (tab) {
+                                                            PlaylistTab.TODO -> {
+                                                                Icon(
+                                                                    Icons.AutoMirrored.Filled.PlaylistPlay,
+                                                                    contentDescription = "To Do",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
+                                                            }
+                                                            PlaylistTab.LIKED -> {
+                                                                Row(
+                                                                    verticalAlignment = Alignment.CenterVertically,
+                                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                                ) {
+                                                                    Icon(
+                                                                        Icons.Default.Favorite,
+                                                                        contentDescription = "Liked",
+                                                                        modifier = Modifier.size(16.dp),
+                                                                        tint = if (isSelected) Color.White else Color.Black
+                                                                    )
+                                                                    Icon(
+                                                                        Icons.Default.Refresh,
+                                                                        contentDescription = "Reload all liked (clear filter)",
+                                                                        modifier = Modifier
+                                                                            .size(16.dp)
+                                                                            .clickable { viewModel.clearLikedFilterAndReload() },
+                                                                        tint = if (isSelected) Color.White else Color.Black
+                                                                    )
+                                                                }
+                                                            }
+                                                            PlaylistTab.REJECTED -> {
+                                                                Icon(
+                                                                    Icons.Default.ThumbDown,
+                                                                    contentDescription = "Rejected",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
                                                             }
                                                         }
                                                     }
@@ -2796,18 +2809,6 @@ viewModel.updateSearchText("")
                                     
                                     // Always show action button - changes based on playlist
                                     if (currentPlaylistTab == PlaylistTab.LIKED) {
-                                        // Reload all liked (clear filter) button
-                                        IconButton(
-                                            onClick = { viewModel.clearLikedFilterAndReload() },
-                                            modifier = Modifier.size(36.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Refresh,
-                                                contentDescription = "Reload all Liked (clear filter)",
-                                                tint = Color(0xFF4CAF50),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
                                         // Share as ZIP button for liked files
                                         IconButton(
                                             onClick = { 

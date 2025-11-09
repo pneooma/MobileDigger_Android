@@ -136,9 +136,6 @@ class MainActivity : ComponentActivity() {
             params.preferredRefreshRate = bestMode.refreshRate
             window.attributes = params
             
-            // On API 31+, hint the frame rate on the decor view to support variable refresh rate
-            window.decorView.setFrameRate(bestMode.refreshRate, Surface.FRAME_RATE_COMPATIBLE, 0)
-            
             CrashLogger.log("MainActivity", "Applied high refresh rate preference: ${bestMode.refreshRate}Hz (modeId=${bestMode.modeId})")
         } catch (e: Throwable) {
             // Fallback silently if any API isn't available on the device

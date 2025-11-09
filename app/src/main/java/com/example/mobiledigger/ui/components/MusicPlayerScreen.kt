@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.130 ::",
+                            text = ":: v10.131 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1024,17 +1024,7 @@ viewModel.updateSearchText("")
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-            // Added Rescan Source button
-            IconButton(
-                onClick = { viewModel.rescanSourceFolder() },
-                modifier = Modifier.padding(end = buttonSpacing)
-            ) {
-                Icon(
-                    Icons.Default.Sync,
-                    contentDescription = "Rescan Source",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            // Removed Rescan Source button per request
             // Added README/Info button
             IconButton(
                 onClick = { showReadmeDialog = true },
@@ -1060,11 +1050,7 @@ viewModel.updateSearchText("")
                 }
                                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         // Removed per request: ✓ Source selected, ✓ Destination selected
-                        DropdownMenuItem(
-                            text = { Text("Rescan Source") },
-                            onClick = { menuExpanded = false; viewModel.rescanSourceFolder() },
-                            leadingIcon = { Icon(Icons.Default.Sync, contentDescription = null) }
-                        )
+                        // Removed per request: Rescan Source
                         // Removed per request: Multi-Select Files
                         HorizontalDivider()
                         DropdownMenuItem(
@@ -1327,6 +1313,54 @@ viewModel.updateSearchText("")
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
                     ) { Text("Exit\nM.S. Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                }
+            }
+        }
+        // Moved counts/toggles row outside scroll area (placed under pill buttons)
+        run {
+            val played = viewModel.preferences.getListened()
+            val yes = viewModel.preferences.getLiked()
+            val no = viewModel.preferences.getRefused()
+            val totalTracks = when (currentPlaylistTab) {
+                PlaylistTab.TODO -> musicFiles.size
+                PlaylistTab.LIKED -> likedFiles.size
+                PlaylistTab.REJECTED -> rejectedFiles.size
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Total: $totalTracks  |  Played: $played  |  Liked: $yes  |  Rejected: $no",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp).weight(1f, fill = true)
+                )
+                OutlinedButton(
+                    onClick = { isMainPlayerVisible = !isMainPlayerVisible },
+                    enabled = !isMultiSelectionMode,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    modifier = Modifier.height(22.dp)
+                ) {
+                    Text(
+                        text = if (isMainPlayerVisible) "Hide Controls" else "Show Controls",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                OutlinedButton(
+                    onClick = { isPlaylistsVisible = !isPlaylistsVisible },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    modifier = Modifier.height(22.dp)
+                ) {
+                    Text(
+                        text = if (isPlaylistsVisible) "Hide Playlists" else "Show Playlists",
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
@@ -1939,43 +1973,7 @@ viewModel.updateSearchText("")
                                     PlaylistTab.LIKED -> likedFiles.size
                                     PlaylistTab.REJECTED -> rejectedFiles.size
                                 }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 0.dp, bottom = 0.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                Text(
-                                    text = "Total: $totalTracks  |  Played: $played  |  Liked: $yes  |  Rejected: $no",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 6.dp)
-                                    )
-                                    OutlinedButton(
-                                        onClick = { isMainPlayerVisible = !isMainPlayerVisible },
-                                        enabled = !isMultiSelectionMode,
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                        modifier = Modifier.height(22.dp)
-                                    ) {
-                                        Text(
-                                            text = if (isMainPlayerVisible) "Hide Controls" else "Show Controls",
-                                            style = MaterialTheme.typography.labelSmall
-                                        )
-                                    }
-                                    OutlinedButton(
-                                        onClick = { isPlaylistsVisible = !isPlaylistsVisible },
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                        modifier = Modifier.height(22.dp)
-                                    ) {
-                                        Text(
-                                            text = if (isPlaylistsVisible) "Hide Playlists" else "Show Playlists",
-                                            style = MaterialTheme.typography.labelSmall
-                                        )
-                                    }
-                                }
+                                Spacer(Modifier.height(0.dp)) // moved counts/toggles outside scroll area
                                 
                                 // Clear previous analysis on track change; do not auto-analyze
                                 LaunchedEffect(file.uri) {

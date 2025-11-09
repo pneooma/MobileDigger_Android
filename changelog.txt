@@ -158,6 +158,9 @@ v10.130
 - 📏 Waveform settings: increased ranges (Main to 225, Mini to 195, Row to 200). Defaults +50% (Main 144, Mini 108, Row 120). Individual “return to default” fixed.
 - ⚡ Swipe latency: reduced fade and delays to make next/previous trigger faster after swipe animation.
 - 📲 Version and UI label updated to 10.130
+v10.131
+- 🧹 Actions menu: removed “Rescan Source” from the Actions dropdown (and header button already removed).
+- 📲 Version and UI label updated to 10.131
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

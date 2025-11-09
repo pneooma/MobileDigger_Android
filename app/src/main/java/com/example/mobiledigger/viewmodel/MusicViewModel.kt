@@ -3344,9 +3344,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 
                 CrashLogger.log("MusicViewModel", "Handling external audio file: $audioUri")
                 
-                // Check if we should auto-show spectrogram (only for analyze mode)
-                val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                val shouldShowSpectrogram = prefs.getBoolean("auto_show_spectrogram", false)
+                // Manual-only policy: do not auto-trigger spectrogram or analysis here
                 
                 // Create a MusicFile object from the URI with better error handling
                 val musicFile = try {
@@ -3384,20 +3382,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             return@launch
                         }
                         
-                        if (shouldShowSpectrogram) {
-                            // Clear the flag
-                            prefs.edit().apply {
-                                putBoolean("auto_show_spectrogram", false)
-                                apply()
-                            }
-                            
-                            // Trigger spectrogram generation after a short delay
-                            delay(2000) // Wait for playback to start
-                            showSpectrogramForCurrentFile()
-                            _errorMessage.value = "File loaded for analysis: ${musicFile.name}"
-                        } else {
-                            _errorMessage.value = "Opened external file: ${musicFile.name}"
-                        }
+                        _errorMessage.value = "Opened external file: ${musicFile.name}"
                         
                         CrashLogger.log("MusicViewModel", "Successfully opened external audio file: ${musicFile.name}")
                     } catch (e: Exception) {
@@ -3559,25 +3544,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
-    // Method to show spectrogram for current file
-    private fun showSpectrogramForCurrentFile() {
-        viewModelScope.launch {
-            try {
-                val currentFile = _currentPlayingFile.value
-                if (currentFile != null) {
-                    CrashLogger.log("MusicViewModel", "Auto-showing spectrogram for: ${currentFile.name}")
-                    // Set a flag that the UI can detect to show the spectrogram
-                    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                    prefs.edit().apply {
-                        putBoolean("auto_show_spectrogram", true)
-                        apply()
-                    }
-                }
-            } catch (e: Exception) {
-                CrashLogger.log("MusicViewModel", "Error showing spectrogram for current file", e)
-            }
-        }
-    }
+    // Manual-only policy: spectrogram display is controlled exclusively by explicit UI actions (buttons/prompts).
     
 }
 

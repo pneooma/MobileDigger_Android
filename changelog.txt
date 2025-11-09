@@ -83,6 +83,11 @@ v10.111
 - 🖼️ Spectrogram: kept FFT/time-column work parallel; ensured bitmap writes remain sequential for thread safety.
 - 📊 Logging: throttled large file copy logs (every 10MB) to minimize main-thread congestion.
 - 📲 Version and UI label updated to 10.111
+v10.112
+- 🚫 Startup jank: disabled all automatic spectrogram/BPM/Key triggers at startup and external file load.
+- ✋ Manual-only: spectrogram and analysis now run only when you press Generate Spectrogram or Analyze.
+- 🧭 Removed auto_show_spectrogram flow in ViewModel; no delayed auto-open.
+- 📲 Version and UI label updated to 10.112
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

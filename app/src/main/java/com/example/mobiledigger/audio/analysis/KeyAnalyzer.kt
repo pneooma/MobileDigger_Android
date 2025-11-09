@@ -35,7 +35,7 @@ class KeyAnalyzer {
         val pooled = DoubleArray(hpcpBins)
         var frames = 0
         // Parallelize frame processing across up to 6 workers
-        val workers = 6
+        val workers = 8
         val partials = Array(workers) { DoubleArray(hpcpBins) }
         runBlocking {
             for (w in 0 until workers) {

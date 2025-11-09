@@ -39,7 +39,7 @@ class BpmEngineV2 {
         
         // Build magnitude spectra per frame (parallelized across up to 6 workers)
         val mags = Array(numFrames) { FloatArray(frameSize / 2) }
-        val workers = 6
+        val workers = 8
         runBlocking {
             for (w in 0 until workers) {
                 launch(Dispatchers.Default) {
@@ -135,6 +135,14 @@ class BpmEngineV2 {
             }
         }
         return bestBpm
+    }
+    
+    private fun bpmPrior(bpm: Double): Double {
+        return when {
+            bpm in 80.0..160.0 -> 1.0
+            bpm in 60.0..80.0 || bpm in 160.0..180.0 -> 0.9
+            else -> 0.7
+        }
     }
     
     private fun triBandSpectralFlux(

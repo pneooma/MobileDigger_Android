@@ -70,6 +70,10 @@ v10.108
 - 🛠️ BPM fix: removed unconditional doubling; choose among {bpm/2, bpm, 2×bpm, bpmFromBeats variants} using beat-grid alignment + prior
 - 📏 BPM stability: recompute tempo from median inter-beat interval; re-track beats at final tempo
 - 📲 Version and UI label updated to 10.108
+v10.109
+- ⚡ Spectrogram: parallelize time columns across 8 workers to avoid stalls and speed up generation
+- ⚡ BPM/Key: increased parallel workers to 8 for STFT/HPCP
+- 📲 Version and UI label updated to 10.109
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -2943,45 +2943,47 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Calculated hop size: $hopSize, Adjusted hop size: $hopSizeAdjusted, Window size: $windowSize, FFT size: $fftSize")
             CrashLogger.log("AudioManager", "Analyzing ${maxAnalysisSeconds} seconds (${maxAnalysisSeconds/60.0} minutes) of audio data")
             
-            for (timeIndex in 0 until width) {
-                val startSample = timeIndex * hopSizeAdjusted
-                
-                if (startSample >= monoData.size) break
-                
-                // Extract window of audio data
-                val window = ShortArray(fftSize)
-                for (i in 0 until fftSize) {
-                    val sampleIndex = startSample + i
-                    window[i] = if (sampleIndex < monoData.size) monoData[sampleIndex] else 0
-                }
-                
-                // Apply Hanning window
-                val windowedData = applyHanningWindow(window)
-                
-                // No logging for maximum speed
-                
-                // Perform FFT
-                val fftResult = performSimpleFFT(windowedData)
-                
-                // No logging for maximum speed
-                
-                // Calculate power spectrum (magnitude squared) with user-defined frequency limit
-                for (freqIndex in 0 until height) {
-                    // Map frequency index to actual frequency (0 to maxFrequency)
-                    val targetFreq = (freqIndex * maxFreq) / height
-                    
-                    // Convert frequency to FFT bin index with better precision
-                    val fftIndex = ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
-                    
-                    if (fftIndex * 2 + 1 < fftResult.size) {
-                        val real = fftResult[fftIndex * 2]
-                        val imag = fftResult[fftIndex * 2 + 1]
-                        val magnitude = sqrt(real * real + imag * imag)
-                        val power = magnitude * magnitude * dynamicRangeAdjustment  // Power = magnitude squared with dynamic range adjustment
-                        
-                        // Store in reverse order (high frequencies at top)
-                        spectrogramData[height - 1 - freqIndex][timeIndex] = power
-                        maxPower = maxOf(maxPower, power)
+            // Parallelize time columns across 8 workers
+            val workers = 8
+            kotlinx.coroutines.runBlocking {
+                for (w in 0 until workers) {
+                    kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.Default) {
+                        var timeIndex = w
+                        while (timeIndex < width) {
+                            val startSample = timeIndex * hopSizeAdjusted
+                            if (startSample >= monoData.size) break
+                            
+                            val window = ShortArray(fftSize)
+                            var wi = 0
+                            while (wi < fftSize) {
+                                val sampleIndex = startSample + wi
+                                window[wi] = if (sampleIndex < monoData.size) monoData[sampleIndex] else 0
+                                wi++
+                            }
+                            val windowedData = applyHanningWindow(window)
+                            val fftResult = performSimpleFFT(windowedData)
+                            
+                            var freqIndex = 0
+                            while (freqIndex < height) {
+                                val targetFreq = (freqIndex * maxFreq) / height
+                                val fftIndex = ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
+                                val idxRe = fftIndex * 2
+                                val idxIm = idxRe + 1
+                                if (idxIm < fftResult.size) {
+                                    val real = fftResult[idxRe]
+                                    val imag = fftResult[idxIm]
+                                    val magnitude = sqrt(real * real + imag * imag)
+                                    val power = magnitude * magnitude * dynamicRangeAdjustment
+                                    spectrogramData[height - 1 - freqIndex][timeIndex] = power
+                                    synchronized(this@AudioManager) {
+                                        if (power > maxPower) maxPower = power
+                                    }
+                                }
+                                freqIndex++
+                            }
+                            
+                            timeIndex += workers
+                        }
                     }
                 }
             }

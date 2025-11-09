@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.131 ::",
+                            text = ":: v10.132 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1024,7 +1024,17 @@ viewModel.updateSearchText("")
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-            // Removed Rescan Source button per request
+            // Rescan Source button (kept in header)
+            IconButton(
+                onClick = { viewModel.rescanSourceFolder() },
+                modifier = Modifier.padding(end = buttonSpacing)
+            ) {
+                Icon(
+                    Icons.Default.Sync,
+                    contentDescription = "Rescan Source",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             // Added README/Info button
             IconButton(
                 onClick = { showReadmeDialog = true },

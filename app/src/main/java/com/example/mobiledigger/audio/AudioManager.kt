@@ -59,6 +59,7 @@ class AudioManager(private val context: Context) {
         private const val USE_VLC_FOR_ALL = true // Enable VLC for all files (enabled)
     }
     private val analyzer = AudioAnalyzer()
+    private val verbosePreloadLogs = false
     
     private var ffmpegPlayer: FFmpegMediaPlayer? = null
     private var exoPlayerFallback: ExoPlayer? = null
@@ -66,6 +67,10 @@ class AudioManager(private val context: Context) {
     private var currentFile: MusicFile? = null
     private var isUsingFFmpeg = false
     private var isUsingVlc = false
+    private var lastGcTimestampMs: Long = 0L
+
+    fun isVlcActive(): Boolean = isUsingVlc
+    fun isRecentGc(windowMs: Long = 2000L): Boolean = (System.currentTimeMillis() - lastGcTimestampMs) < windowMs
     
     // Listener for track completion events
     interface PlaybackCompletionListener {
@@ -353,11 +358,26 @@ class AudioManager(private val context: Context) {
     
     fun preloadFile(musicFile: MusicFile) {
         if (musicFile == preloadedFile) {
-            CrashLogger.log("AudioManager", "File ${musicFile.name} already preloaded.")
+            if (verbosePreloadLogs) CrashLogger.log("AudioManager", "File ${musicFile.name} already preloaded.")
             return
         }
         
-        CrashLogger.log("AudioManager", "Preloading file: ${musicFile.name}")
+        if (isUsingVlc) {
+            if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Skipping preload while VLC is active")
+            return
+        }
+        val now = System.currentTimeMillis()
+        if (now - lastGcTimestampMs < 2000L) {
+            if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Skipping preload due to recent GC (${now - lastGcTimestampMs}ms ago)")
+            return
+        }
+        val sizeBytes = musicFile.size
+        if (sizeBytes > 80L * 1024L * 1024L) {
+            if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Skipping preload for large file (${sizeBytes / (1024 * 1024)}MB)")
+            return
+        }
+        
+        if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Preloading file: ${musicFile.name}")
         
         // Stop any current preloading
         releasePreloadedPlayer()
@@ -493,6 +513,7 @@ class AudioManager(private val context: Context) {
             if (trackCount >= 3) {
                 CrashLogger.log("AudioManager", "Running aggressive GC after $trackCount cached files")
                 System.gc()
+                lastGcTimestampMs = System.currentTimeMillis()
                 // removed sleep to avoid UI jank
             }
             
@@ -693,6 +714,7 @@ class AudioManager(private val context: Context) {
             // Enhanced memory management before FFmpeg operations
             CrashLogger.log("AudioManager", "🧠 Running garbage collection...")
             System.gc()
+            lastGcTimestampMs = System.currentTimeMillis()
             // removed sleep to avoid UI jank
             
             // Try to set data source for FFmpegMediaPlayer
@@ -1113,14 +1135,16 @@ class AudioManager(private val context: Context) {
                     CrashLogger.log("AudioManager", "CRITICAL: Memory usage at ${memoryUsagePercent}%, emergency cleanup")
                     clearAllCaches()
                     spectrogramCache.clear() // Force clear spectrogram cache
-                    System.gc()
+                System.gc()
+                lastGcTimestampMs = System.currentTimeMillis()
                     Thread.sleep(200) // Give GC more time to work
                 }
                 memoryUsagePercent > 70 -> {
                     // High memory usage - aggressive cleanup (lowered threshold)
                     CrashLogger.log("AudioManager", "High memory usage detected: ${memoryUsagePercent}%, aggressive cleanup")
                     clearAllCaches()
-                    System.gc()
+                System.gc()
+                lastGcTimestampMs = System.currentTimeMillis()
                 }
                 memoryUsagePercent > 50 -> {
                     // Moderate memory usage - standard cleanup (lowered threshold)
@@ -1613,11 +1637,7 @@ class AudioManager(private val context: Context) {
                     
                     val audioSamples = mutableListOf<Short>()
                     // Calculate how much audio we actually need for spectrogram
-                    val maxAnalysisSeconds = when (spectrogramQuality) {
-                        SpectrogramQuality.FAST -> 60      // 1 minute for fast
-                        SpectrogramQuality.BALANCED -> 90   // 1.5 minutes for balanced
-                        SpectrogramQuality.HIGH -> 120     // 2 minutes for high quality
-                    }
+                    val maxAnalysisSeconds = 30 // Cap to 30s for spectrogram conversion
                     val maxSamples = sampleRate * maxAnalysisSeconds // Only convert what we need
                     var totalSamplesExpected = maxSamples
                     
@@ -2828,36 +2848,11 @@ class AudioManager(private val context: Context) {
             // Calculate hop size based on quality settings and available data
             val pixelsPerSecond = temporalResolution
             
-            // Get actual audio duration for dynamic width calculation with safety bounds
+            // Get actual audio duration for dynamic width calculation (capped)
             val audioDurationSeconds = monoData.size / sampleRate.toFloat()
-            // Adaptive limits based on file size to prevent memory issues
+            // Cap analysis strictly to 30 seconds for spectrogram visualization
             val fileSizeMB = monoData.size * 2 / (1024 * 1024) // Rough estimate in MB
-            val maxAnalysisSeconds = when {
-                fileSizeMB > 50 -> {
-                    // Large files: reduce limits significantly
-                    when (spectrogramQuality) {
-                        SpectrogramQuality.FAST -> minOf(audioDurationSeconds.toInt(), 120)      // 2 minutes max
-                        SpectrogramQuality.BALANCED -> minOf(audioDurationSeconds.toInt(), 90)   // 1.5 minutes max
-                        SpectrogramQuality.HIGH -> minOf(audioDurationSeconds.toInt(), 60)       // 1 minute max
-                    }
-                }
-                fileSizeMB > 20 -> {
-                    // Medium files: moderate limits
-                    when (spectrogramQuality) {
-                        SpectrogramQuality.FAST -> minOf(audioDurationSeconds.toInt(), 240)      // 4 minutes max
-                        SpectrogramQuality.BALANCED -> minOf(audioDurationSeconds.toInt(), 180)  // 3 minutes max
-                        SpectrogramQuality.HIGH -> minOf(audioDurationSeconds.toInt(), 120)      // 2 minutes max
-                    }
-                }
-                else -> {
-                    // Small files: full limits
-                    when (spectrogramQuality) {
-                        SpectrogramQuality.FAST -> minOf(audioDurationSeconds.toInt(), 480)      // 8 minutes max
-                        SpectrogramQuality.BALANCED -> minOf(audioDurationSeconds.toInt(), 480)  // 8 minutes max
-                        SpectrogramQuality.HIGH -> minOf(audioDurationSeconds.toInt(), 480)      // 8 minutes max
-                    }
-                }
-            }
+            val maxAnalysisSeconds = 30
 
             CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, limiting analysis to ${maxAnalysisSeconds}s for memory management")
             

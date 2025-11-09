@@ -1328,37 +1328,32 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 return
             }
             
-            // Call playFile directly (no longer a suspend function)
-            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - calling audioManager.playFile()")
-            val started = audioManager.playFile(currentFile)
-            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playFile result: $started")
-            _isPlaying.value = started
-            if (!started) {
-                if (isAiffFile) {
-                    _errorMessage.value = "Cannot play AIFF file. This format might not be supported by your device's audio codec."
-                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - AIFF playback failed for ${currentFile.name}")
+            // Play off main thread; coalesce UI state updates in one main post
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - calling audioManager.playFile() [IO]")
+            val started = withContext(Dispatchers.IO) { audioManager.playFile(currentFile) }
+            withContext(Dispatchers.Main) {
+                _isPlaying.value = started
+                if (!started) {
+                    if (isAiffFile) {
+                        _errorMessage.value = "Cannot play AIFF file. This format might not be supported by your device's audio codec."
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - AIFF playback failed for ${currentFile.name}")
+                    } else {
+                        _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed for ${currentFile.name}")
+                    }
+                    // CRITICAL FIX: Don't auto-skip here to prevent recursive crashes
+                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed - FFmpegMediaPlayer error listener will handle auto-skip")
                 } else {
-                    _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
-                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed for ${currentFile.name}")
+                    _errorMessage.value = null
+                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
+                    if (_currentPlaylistTab.value == PlaylistTab.TODO) {
+                        _playedButNotActioned.value = _playedButNotActioned.value + currentFile.uri
+                        CrashLogger.log("MusicViewModel", "✅ Added ${currentFile.name} to played-but-not-actioned list. Total tracked: ${_playedButNotActioned.value.size}")
+                    } else {
+                        CrashLogger.log("MusicViewModel", "⏭️ Not tracking ${currentFile.name} - not in TODO playlist (current: ${_currentPlaylistTab.value})")
+                    }
+                    try { preferences.incrementListened() } catch (_: Exception) {}
                 }
-                
-                // CRITICAL FIX: Don't auto-skip here to prevent recursive crashes
-                // The FFmpegMediaPlayer error listener already handles auto-skip
-                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed - FFmpegMediaPlayer error listener will handle auto-skip")
-            } else {
-                _errorMessage.value = null
-                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
-                
-                // Track this file as played but not actioned (only if in TODO playlist)
-                if (_currentPlaylistTab.value == PlaylistTab.TODO) {
-                    _playedButNotActioned.value = _playedButNotActioned.value + currentFile.uri
-                    CrashLogger.log("MusicViewModel", "✅ Added ${currentFile.name} to played-but-not-actioned list. Total tracked: ${_playedButNotActioned.value.size}")
-                } else {
-                    CrashLogger.log("MusicViewModel", "⏭️ Not tracking ${currentFile.name} - not in TODO playlist (current: ${_currentPlaylistTab.value})")
-                }
-                
-                // increment listened stat
-                try { preferences.incrementListened() } catch (_: Exception) {}
             }
         
             // Extract and update duration if not available
@@ -1387,8 +1382,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updating notification")
             updateNotification()
             
-            // Start preloading next song for smooth transitions
-            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - starting preload next song")
+            // Start preloading next song for smooth transitions (guarded)
+            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - starting preload next song (guarded)")
             preloadNextSong()
             
             CrashLogger.log("MusicViewModel", "✅ LOAD_CURRENT_FILE() completed successfully")
@@ -1411,15 +1406,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 }
                 val currentIdx = _currentIndex.value
                 
-                // Preload next song if available
+                // Preload next song if available (guard by size, VLC usage, recent GC)
                 if (isPreloadEnabled && currentIdx + 1 < currentFiles.size) {
                     val nextFile = currentFiles[currentIdx + 1]
-                    preloadedFile = nextFile
-                    CrashLogger.log("MusicViewModel", "Preloaded next song: ${nextFile.name}")
-                    try {
-                        audioManager.preloadFile(nextFile)
-                    } catch (e: Exception) {
-                        CrashLogger.log("MusicViewModel", "Error calling audioManager.preloadFile", e)
+                    val sizeMb = nextFile.size / (1024 * 1024)
+                    val skipBySize = sizeMb > 80
+                    val skipByVlc = audioManager.isVlcActive()
+                    val skipByGc = audioManager.isRecentGc(2000)
+                    if (skipBySize || skipByVlc || skipByGc) {
+                        CrashLogger.log("MusicViewModel", "Skipping preload (sizeMb=$sizeMb, vlc=$skipByVlc, recentGc=$skipByGc) for ${nextFile.name}")
+                    } else {
+                        preloadedFile = nextFile
+                        CrashLogger.log("MusicViewModel", "Preloading next song: ${nextFile.name}")
+                        try {
+                            audioManager.preloadFile(nextFile)
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error calling audioManager.preloadFile", e)
+                        }
                     }
                 }
             } catch (e: Exception) {

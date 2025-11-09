@@ -1160,7 +1160,7 @@ class AudioManager(private val context: Context) {
                         // Throttled progress logging (every 10MB)
                         if (totalBytes - lastLogBytes >= 10L * 1024L * 1024L) {
                             val mbCopied = totalBytes / (1024.0 * 1024.0)
-                            CrashLogger.log("AudioManager", "📊 Copied ${String.format(Locale.getDefault(), \"%.1f\", mbCopied)}MB...")
+                            CrashLogger.log("AudioManager", "📊 Copied ${String.format(Locale.getDefault(), "%.1f", mbCopied)}MB...")
                             lastLogBytes = totalBytes
                         }
                     
@@ -3011,23 +3011,17 @@ class AudioManager(private val context: Context) {
             
             // Convert power to dB and create bitmap with professional color mapping
             val tBitmapStart = android.os.SystemClock.elapsedRealtime()
-            // Parallelize rows across workers
-            kotlinx.coroutines.runBlocking {
-                for (w in 0 until workers) {
-                    launch(kotlinx.coroutines.Dispatchers.Default) {
-                        var y = w
-                        while (y < height) {
-                            var x = 0
-                            while (x < width) {
-                                val power = smoothedData[y][x]
-                                val color = powerToColor(power, maxPower)
-                                bitmap.setPixel(x, y, color)
-                                x++
-                            }
-                            y += workers
-                        }
-                    }
+            // SAFETY: Bitmap.setPixel is not thread-safe; write sequentially
+            var y = 0
+            while (y < height) {
+                var x = 0
+                while (x < width) {
+                    val power = smoothedData[y][x]
+                    val color = powerToColor(power, maxPower)
+                    bitmap.setPixel(x, y, color)
+                    x++
                 }
+                y++
             }
             val tBitmapEnd = android.os.SystemClock.elapsedRealtime()
             PerformanceProfiler.recordOperation("Spectrogram.BitmapWrite", (tBitmapEnd - tBitmapStart))

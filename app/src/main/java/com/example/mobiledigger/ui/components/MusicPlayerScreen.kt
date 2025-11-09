@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.116 ::",
+                            text = ":: v10.117 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3591,8 +3591,8 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                                 
-                                                // Play/Pause button (hidden in Multi-Select mode)
-                                                if (!isMultiSelectionMode) IconButton(
+                                                // Play/Pause button (hidden in Multi-Select mode; also hide when main player is visible and row waveform is hidden)
+                                                if (!isMultiSelectionMode && !(isMainPlayerVisible && !isWaveformVisible)) IconButton(
                                                     onClick = { 
                                                         try {
                                                             viewModel.playPause()
@@ -3687,30 +3687,78 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                             } else {
-                                            val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                            Box(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                        .height(88.dp)
-                                                        ,
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                    WaveformWithToggle(
-                                                        sharedState = sharedWaveformState,
-                                                        progress = progressPercent,
-                                                        onSeek = { seekProgress ->
-                                                            val seekPosition = (seekProgress * duration).toLong()
-                                                            viewModel.seekTo(seekPosition)
-                                                        },
-                                                        songUri = item.uri.toString(),
-                                                        waveformHeight = visualSettings.rowWaveformHeight.toInt(),
-                                                        currentPosition = currentPosition,
-                                                        totalDuration = duration,
-                                                        fileName = item.name,
-                                                        opacity = 0.7f,
-                                                        modifier = Modifier.fillMaxWidth()
-                                                    )
-                                                    // No consuming overlay so single-tap seek works
+                                                // When main player is visible but row waveform is hidden, present like an inactive row with highlighted filename
+                                                if (isMainPlayerVisible && !isWaveformVisible) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(animatedRowHeight)
+                                                            .combinedClickable(
+                                                                onClick = {
+                                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                    if (actualIndex >= 0) viewModel.jumpTo(actualIndex)
+                                                                },
+                                                                onLongClick = {
+                                                                    val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                                    pendingIndexForMulti = if (actualIndex >= 0) actualIndex else null
+                                                                    manualRenameText = (currentPlayingFile?.name ?: item.name).substringBeforeLast('.', (currentPlayingFile?.name ?: item.name))
+                                                                    showRenameActionDialog = true
+                                                                }
+                                                            ),
+                                                        contentAlignment = Alignment.CenterStart
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.Start,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
+                                                            if (isMultiSelectionMode && actualIndex >= 0) {
+                                                                Checkbox(
+                                                                    checked = selectedIndices.contains(actualIndex),
+                                                                    onCheckedChange = { viewModel.toggleSelection(actualIndex) },
+                                                                    modifier = Modifier.padding(end = 6.dp)
+                                                                )
+                                                            }
+                                                            Text(
+                                                                text = item.name,
+                                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.85f,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = MaterialTheme.colorScheme.primary
+                                                                ),
+                                                                maxLines = 2,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                textAlign = TextAlign.Start,
+                                                                modifier = Modifier.weight(1f, fill = true)
+                                                            )
+                                                        }
+                                                    }
+                                                } else {
+                                                    val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(88.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        WaveformWithToggle(
+                                                            sharedState = sharedWaveformState,
+                                                            progress = progressPercent,
+                                                            onSeek = { seekProgress ->
+                                                                val seekPosition = (seekProgress * duration).toLong()
+                                                                viewModel.seekTo(seekPosition)
+                                                            },
+                                                            songUri = item.uri.toString(),
+                                                            waveformHeight = visualSettings.rowWaveformHeight.toInt(),
+                                                            currentPosition = currentPosition,
+                                                            totalDuration = duration,
+                                                            fileName = item.name,
+                                                            opacity = 0.7f,
+                                                            modifier = Modifier.fillMaxWidth()
+                                                        )
+                                                        // No consuming overlay so single-tap seek works
+                                                    }
                                                 }
                                             }
                                             
@@ -3763,75 +3811,78 @@ viewModel.updateSearchText("")
                                                         )
                                                     }
                                                 }
-                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                    // Spectrogram (bottom-left)
-                                                    IconButton(
-                                                        onClick = {
-                                                            try {
-                                                                val currentFiles = when (currentPlaylistTab) {
-                                                                    PlaylistTab.TODO -> musicFiles
-                                                                    PlaylistTab.LIKED -> likedFiles
-                                                                    PlaylistTab.REJECTED -> rejectedFiles
+                                                // Hide Spectrogram/Share when main player is visible and row waveform is hidden
+                                                if (!(isMainPlayerVisible && !isWaveformVisible)) {
+                                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                        // Spectrogram (bottom-left)
+                                                        IconButton(
+                                                            onClick = {
+                                                                try {
+                                                                    val currentFiles = when (currentPlaylistTab) {
+                                                                        PlaylistTab.TODO -> musicFiles
+                                                                        PlaylistTab.LIKED -> likedFiles
+                                                                        PlaylistTab.REJECTED -> rejectedFiles
+                                                                    }
+                                                                    if (index < currentFiles.size) {
+                                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                                        showSpectrogram = true
+                                                                    }
+                                                                } catch (e: Exception) {
+                                                                    CrashLogger.log("Debug", "Error in spectrogram button: ${e.message}")
                                                                 }
-                                                                if (index < currentFiles.size) {
-                                                                    viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                                    showSpectrogram = true
-                                                                }
-                                                            } catch (e: Exception) {
-                                                                CrashLogger.log("Debug", "Error in spectrogram button: ${e.message}")
-                                                            }
-                                                        },
-                                                        modifier = Modifier.size(32.dp)
-                                                    ) {
-                                                        Column(
-                                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                                            verticalArrangement = Arrangement.Center
+                                                            },
+                                                            modifier = Modifier.size(32.dp)
                                                         ) {
-                                                            Text(
-                                                                text = "Sp",
-                                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                                    fontWeight = FontWeight.Bold,
-                                                                    fontSize = 8.sp
-                                                                ),
-                                                                color = Color(0xFFFFB6C1), // Light Pink to match main player and miniplayer
-                                                                textAlign = TextAlign.Center
-                                                            )
-                                                            Text(
-                                                                text = "eK",
-                                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                                    fontWeight = FontWeight.Bold,
-                                                                    fontSize = 8.sp
-                                                                ),
-                                                                color = Color(0xFFFFB6C1), // Light Pink to match main player and miniplayer
-                                                                textAlign = TextAlign.Center
+                                                            Column(
+                                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                                verticalArrangement = Arrangement.Center
+                                                            ) {
+                                                                Text(
+                                                                    text = "Sp",
+                                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        fontSize = 8.sp
+                                                                    ),
+                                                                    color = Color(0xFFFFB6C1),
+                                                                    textAlign = TextAlign.Center
+                                                                )
+                                                                Text(
+                                                                    text = "eK",
+                                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        fontSize = 8.sp
+                                                                    ),
+                                                                    color = Color(0xFFFFB6C1),
+                                                                    textAlign = TextAlign.Center
+                                                                )
+                                                            }
+                                                        }
+                                                        // Share (bottom-right)
+                                                        IconButton(
+                                                            onClick = {
+                                                                try {
+                                                                    val currentFiles = when (currentPlaylistTab) {
+                                                                        PlaylistTab.TODO -> musicFiles
+                                                                        PlaylistTab.LIKED -> likedFiles
+                                                                        PlaylistTab.REJECTED -> rejectedFiles
+                                                                    }
+                                                                    if (index < currentFiles.size) {
+                                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
+                                                                        viewModel.shareToWhatsApp()
+                                                                    }
+                                                                } catch (e: Exception) {
+                                                                    CrashLogger.log("Debug", "Error in share button: ${e.message}")
+                                                                }
+                                                            },
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.Share,
+                                                                contentDescription = "Share File",
+                                                                tint = Color(0xFF2196F3),
+                                                                modifier = Modifier.size(18.dp)
                                                             )
                                                         }
-                                                    }
-                                                    // Share (bottom-right)
-                                                    IconButton(
-                                                        onClick = {
-                                                            try {
-                                                                val currentFiles = when (currentPlaylistTab) {
-                                                                    PlaylistTab.TODO -> musicFiles
-                                                                    PlaylistTab.LIKED -> likedFiles
-                                                                    PlaylistTab.REJECTED -> rejectedFiles
-                                                                }
-                                                                if (index < currentFiles.size) {
-                                                                    viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                                    viewModel.shareToWhatsApp()
-                                                                }
-                                                            } catch (e: Exception) {
-                                                                CrashLogger.log("Debug", "Error in share button: ${e.message}")
-                                                            }
-                                                        },
-                                                        modifier = Modifier.size(32.dp)
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.Share,
-                                                            contentDescription = "Share File",
-                                                            tint = Color(0xFF2196F3),
-                                                            modifier = Modifier.size(18.dp)
-                                                        )
                                                     }
                                                 }
                                             }

@@ -961,7 +961,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.124 ::",
+                            text = ":: v10.125 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2043,10 +2043,12 @@ viewModel.updateSearchText("")
                                                             // 3) Then perform actions
                                                             if (current < 0) {
                                                                 try {
-                                                                    viewModel.next()
+                                                                    // First move current file to Rejected, then go next
                                                                     prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
-                                                        } catch (e: Exception) {
-                                                                    CrashLogger.log("Debug", "Error in swipe (main) next/sort: ${e.message}")
+                                                                    delay(80)
+                                                                    viewModel.next()
+                                                                } catch (e: Exception) {
+                                                                    CrashLogger.log("Debug", "Error in swipe (main) sort/next: ${e.message}")
                                                                 }
                                                             } else if (current > 0) {
                                                                 try { prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (e: Exception) {

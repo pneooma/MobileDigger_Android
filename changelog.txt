@@ -131,6 +131,9 @@ v10.123
 v10.124
 - ❤️ Conditional reload: The Liked pill refresh icon is now shown only when a subfolder filter is active. Hidden when showing all liked files.
 - 📲 Version and UI label updated to 10.124
+v10.125
+- 👎 Main player swipe-left: now moves the current file to Rejected first, then advances to the next track (was next-only in some cases).
+- 📲 Version and UI label updated to 10.125
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

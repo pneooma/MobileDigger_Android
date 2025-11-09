@@ -86,13 +86,19 @@ class BpmEngineV2 {
         
         // Beat-grid alignment refinement around best BPM
         var bpmRefined = refineWithBeatGrid(odfSmooth, frameRate, bestBpm)
-        // User preference: prefer double if result appears halved
-        if (bpmRefined < 100.0) {
-            val doubled = (bpmRefined * 2.0).coerceAtMost(200.0)
-            // Choose doubled unconditionally per request
-            bpmRefined = doubled
-        }
-        val beats = BeatTrackerDP.trackBeats(odfSmooth, bpmRefined, frameRate)
+        // Infer BPM from tracked beats and choose best among multiple hypotheses
+        var beats = BeatTrackerDP.trackBeats(odfSmooth, bpmRefined, frameRate)
+        val bpmFromBeats = bpmFromBeatTimes(beats).takeIf { it in 50.0..200.0 }
+        val finalBpm = chooseBestTempo(odfSmooth, frameRate, listOfNotNull(
+            bpmRefined,
+            bpmRefined / 2.0,
+            (bpmRefined * 2.0).coerceAtMost(200.0),
+            bpmFromBeats,
+            bpmFromBeats?.div(2.0),
+            bpmFromBeats?.times(2.0)?.coerceAtMost(200.0)
+        ))
+        bpmRefined = finalBpm
+        beats = BeatTrackerDP.trackBeats(odfSmooth, bpmRefined, frameRate)
         val conf = confidenceFromSeries(hps)
         
         return BpmEngineV2Result(
@@ -100,6 +106,35 @@ class BpmEngineV2 {
             beatsSeconds = beats,
             confidence = conf
         )
+    }
+    
+    private fun bpmFromBeatTimes(beats: DoubleArray): Double {
+        if (beats.size < 3) return 120.0
+        val intervals = DoubleArray(beats.size - 1)
+        var i = 1
+        while (i < beats.size) {
+            intervals[i - 1] = (beats[i] - beats[i - 1]).coerceAtLeast(1e-3)
+            i++
+        }
+        intervals.sort()
+        val median = intervals[intervals.size / 2]
+        return (60.0 / median)
+    }
+    
+    private fun chooseBestTempo(odf: FloatArray, frameRate: Float, candidates: List<Double>): Double {
+        var bestBpm = 120.0
+        var bestScore = Double.NEGATIVE_INFINITY
+        candidates.forEach { bpm ->
+            if (bpm in 50.0..200.0) {
+                val align = beatGridAlignment(odf, frameRate, bpm)
+                val score = align * bpmPrior(bpm)
+                if (score > bestScore) {
+                    bestScore = score
+                    bestBpm = bpm
+                }
+            }
+        }
+        return bestBpm
     }
     
     private fun triBandSpectralFlux(

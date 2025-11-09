@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.os.Handler
+import android.os.Looper
 import android.os.Build
 import android.graphics.Canvas
 import android.graphics.Color
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.*
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
 import java.util.Collections
 import java.io.File
 import java.io.FileOutputStream
@@ -72,6 +75,42 @@ class AudioManager(private val context: Context) {
     fun isVlcActive(): Boolean = isUsingVlc
     fun isRecentGc(windowMs: Long = 2000L): Boolean = (System.currentTimeMillis() - lastGcTimestampMs) < windowMs
     
+    private fun runOnMainSync(action: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action()
+        } else {
+            val latch = CountDownLatch(1)
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    action()
+                } finally {
+                    latch.countDown()
+                }
+            }
+            try { latch.await() } catch (_: InterruptedException) {}
+        }
+    }
+    private fun <T> callOnMainSync(call: () -> T): T {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return call()
+        }
+        var result: Any? = null
+        var error: Throwable? = null
+        val latch = CountDownLatch(1)
+        Handler(Looper.getMainLooper()).post {
+            try {
+                result = call()
+            } catch (t: Throwable) {
+                error = t
+            } finally {
+                latch.countDown()
+            }
+        }
+        try { latch.await() } catch (_: InterruptedException) {}
+        if (error != null) throw error as Throwable
+        @Suppress("UNCHECKED_CAST")
+        return result as T
+    }
     // Listener for track completion events
     interface PlaybackCompletionListener {
         fun onTrackCompletion()
@@ -883,13 +922,15 @@ class AudioManager(private val context: Context) {
             // Stop ExoPlayer if it's playing - with proper cleanup to prevent dead thread handlers
             exoPlayerFallback?.let { player ->
                 try {
-                    if (player.isPlaying) {
-                        player.stop()
-                        CrashLogger.log("AudioManager", "ExoPlayer stopped")
+                    runOnMainSync {
+                        if (player.isPlaying) {
+                            player.stop()
+                            CrashLogger.log("AudioManager", "ExoPlayer stopped")
+                        }
+                        // Clear media items first
+                        player.clearMediaItems()
+                        CrashLogger.log("AudioManager", "ExoPlayer cleared")
                     }
-                    // Clear media items first
-                    player.clearMediaItems()
-                    CrashLogger.log("AudioManager", "ExoPlayer cleared")
                     
                     // Don't prepare here - let it be prepared when needed
                     // This prevents the dead thread handler issue
@@ -915,7 +956,7 @@ class AudioManager(private val context: Context) {
             } else if (isUsingFFmpeg) {
                 ffmpegPlayer?.start()
             } else {
-                exoPlayerFallback?.play()
+                runOnMainSync { exoPlayerFallback?.play() }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Resume error", e)
@@ -930,7 +971,7 @@ class AudioManager(private val context: Context) {
             } else if (isUsingFFmpeg) {
                 ffmpegPlayer?.setVolume(v, v)
             } else {
-                exoPlayerFallback?.volume = v
+                runOnMainSync { exoPlayerFallback?.volume = v }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Set volume error", e)
@@ -977,7 +1018,7 @@ class AudioManager(private val context: Context) {
             } else if (isUsingFFmpeg) {
                 ffmpegPlayer?.seekTo(position.toInt())
             } else {
-                exoPlayerFallback?.seekTo(position)
+                runOnMainSync { exoPlayerFallback?.seekTo(position) }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Seek error", e)
@@ -989,7 +1030,7 @@ class AudioManager(private val context: Context) {
             if (isUsingFFmpeg) {
                 ffmpegPlayer?.isPlaying ?: false
             } else {
-                exoPlayerFallback?.isPlaying ?: false
+                callOnMainSync { exoPlayerFallback?.isPlaying ?: false }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Error checking playing state", e)
@@ -1004,7 +1045,7 @@ class AudioManager(private val context: Context) {
             } else if (isUsingFFmpeg) {
                 (ffmpegPlayer?.currentPosition ?: 0).toLong()
             } else {
-                exoPlayerFallback?.currentPosition ?: 0L
+                callOnMainSync { exoPlayerFallback?.currentPosition ?: 0L }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Get position error", e)
@@ -1019,7 +1060,7 @@ class AudioManager(private val context: Context) {
             } else if (isUsingFFmpeg) {
                 (ffmpegPlayer?.duration ?: 0).toLong()
             } else {
-                exoPlayerFallback?.duration ?: 0L
+                callOnMainSync { exoPlayerFallback?.duration ?: 0L }
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Get duration error", e)

@@ -263,6 +263,7 @@ fun MusicPlayerScreen(
     var showSubfolderDropdown by remember { mutableStateOf(false) } // State for subfolder dropdown
     var showSubfolderManagementDialog by remember { mutableStateOf(false) } // State for subfolder management dialog
     var showSubfolderSelectionDialog by remember { mutableStateOf(false) } // State for subfolder selection dialog from playlist
+    var viewModeForSubfolderDialog by remember { mutableStateOf(false) } // When true, dialog shows VIEW selector; when false, MOVE-only
     var showLikedSubfoldersViewDialog by remember { mutableStateOf(false) } // New: multi-select liked subfolders to view
     var selectedLikedSubfolders by remember { mutableStateOf(setOf<String>()) }
 
@@ -961,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.126 ::",
+                            text = ":: v10.127 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2769,6 +2770,7 @@ viewModel.updateSearchText("")
                                                                             modifier = Modifier
                                                                                 .size(16.dp)
                                                                                 .clickable {
+                                                                                    viewModeForSubfolderDialog = true
                                                                                     showSubfolderSelectionDialog = true
                                                                                     // Ensure latest subfolder info
                                                                                     viewModel.updateSubfolderInfo()
@@ -3843,6 +3845,7 @@ viewModel.updateSearchText("")
                                                     if (index < currentFiles.size) {
                                                         viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
                                                     }
+                                                    viewModeForSubfolderDialog = false
                                                     showSubfolderSelectionDialog = true
                                                 },
                                                         modifier = Modifier.size(32.dp)
@@ -4657,10 +4660,14 @@ viewModel.updateSearchText("")
             onDismissRequest = { showSubfolderSelectionDialog = false },
             title = { 
                 Text(
-                    when (currentPlaylistTab) {
-                        PlaylistTab.TODO -> "Move to Liked Subfolder"
-                        PlaylistTab.REJECTED -> "Move to Liked Subfolder"
-                        PlaylistTab.LIKED -> "Move to Subfolder"
+                    if (viewModeForSubfolderDialog) {
+                        "Select Liked Subfolders to View"
+                    } else {
+                        when (currentPlaylistTab) {
+                            PlaylistTab.TODO -> "Move to Liked Subfolder"
+                            PlaylistTab.REJECTED -> "Move to Liked Subfolder"
+                            PlaylistTab.LIKED -> "Move to Subfolder"
+                        }
                     }
                 )
             },
@@ -4668,34 +4675,38 @@ viewModel.updateSearchText("")
                 var selectedViewSubfolders by remember { mutableStateOf(setOf<String>()) }
                 val scroll = androidx.compose.foundation.rememberScrollState()
                 Column(modifier = Modifier.fillMaxWidth().verticalScroll(scroll)) {
-                    Text("Select a subfolder to move the current file:")
-                    Spacer(modifier = Modifier.height(8.dp))
+                    if (!viewModeForSubfolderDialog) {
+                        Text("Select a subfolder to move the current file:")
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     
                     // Add new subfolder option
-                    TextButton(
-                        onClick = {
-                            showSubfolderSelectionDialog = false
-                            viewModel.showSubfolderDialog()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    if (!viewModeForSubfolderDialog) {
+                        TextButton(
+                            onClick = {
+                                showSubfolderSelectionDialog = false
+                                viewModel.showSubfolderDialog()
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = null,
-                                tint = Color(0xFF4CAF50)
-                            )
-                            Text("Create new subfolder")
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color(0xFF4CAF50)
+                                )
+                                Text("Create new subfolder")
+                            }
                         }
                     }
                     
-                    // Available subfolders as 2-column pill buttons (tap to move current file)
+                    // Available subfolders grid
                     if (availableSubfolders.isNotEmpty()) {
                         Text(
-                            "Available subfolders:",
+                            if (viewModeForSubfolderDialog) "Available subfolders to view:" else "Available subfolders:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
@@ -4718,8 +4729,12 @@ viewModel.updateSearchText("")
                                 val subfolder = gridItems[idx]
                                 OutlinedButton(
                                     onClick = {
-                                        showSubfolderSelectionDialog = false
-                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                        if (viewModeForSubfolderDialog) {
+                                            // toggle selection in view mode
+                                        } else {
+                                            showSubfolderSelectionDialog = false
+                                            viewModel.moveCurrentFileToSubfolder(subfolder)
+                                        }
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(20.dp),
@@ -4736,11 +4751,11 @@ viewModel.updateSearchText("")
                                 }
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
-                        HorizontalDivider()
-                        Spacer(Modifier.height(8.dp))
-                        // Multi-select to VIEW liked subfolders: chips as 2-column pills
-                        if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
+                        if (viewModeForSubfolderDialog) {
+                            Spacer(Modifier.height(12.dp))
+                            HorizontalDivider()
+                            Spacer(Modifier.height(8.dp))
+                            // Multi-select to VIEW liked subfolders: chips as 2-column pills
                             Text(
                                 "Or select multiple subfolders to view in Liked:",
                                 style = MaterialTheme.typography.bodySmall,

@@ -137,6 +137,11 @@ v10.125
 v10.126
 - ❤️ Liked pill: when no filter is active the pill shows a blue folder icon (16dp) to open subfolder selection for viewing (including a new “View Root Only” option). When a filter is active, the pill shows the refresh icon instead to clear it.
 - 📲 Version and UI label updated to 10.126
+v10.127
+- 👎 Swipe-left reliability: main player swipe-left now always rejects the current track first, then advances (stabilized sequence and index updates).
+- 🗂️ Clean UI: Removed “select which folders to view” from the active-row “Move to subfolder” dialog. Viewing filters are only accessible from the Liked pill folder icon.
+- 📁 Root-only view: “View Root Only” shows only files from Liked root (no subfolders).
+- 📲 Version and UI label updated to 10.127
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

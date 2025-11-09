@@ -110,6 +110,9 @@ v10.116
 v10.117
 - 🎛️ Active row UX: when main player is visible and row waveform is hidden, hide Pause/Share/Spek on current row and render it like an inactive row with the filename highlighted.
 - 📲 Version and UI label updated to 10.117
+v10.118
+- 👎 Main player Dislike now instantly moves current file to Rejected and auto-plays the next track. File move runs in background, playback continues seamlessly.
+- 📲 Version and UI label updated to 10.118
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

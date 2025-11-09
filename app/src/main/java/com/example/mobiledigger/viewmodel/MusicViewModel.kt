@@ -992,8 +992,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 // 2. Immediately update UI and counters
                 handleSuccessfulSort(fileToSort, action)
                 
-                // 3. Immediately move to next track (no waiting!)
+                // 3. Immediately move to next track when disliking from main player
                 // The file will be moved in background while next track plays
+                if (action == SortAction.DISLIKE) {
+                    // Small delay to let UI animate the removal marker without jank
+                    viewModelScope.launch {
+                        delay(80)
+                        try {
+                            next()
+                        } catch (e: Exception) {
+                            CrashLogger.log("MusicViewModel", "Error advancing to next after dislike", e)
+                        }
+                    }
+                }
                 
             } catch (e: Exception) {
                 handleError("sortCurrentFile", e)

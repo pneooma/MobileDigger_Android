@@ -262,6 +262,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _rejectedFiles = MutableStateFlow<List<MusicFile>>(emptyList())
     val rejectedFiles: StateFlow<List<MusicFile>> = _rejectedFiles.asStateFlow()
     
+    // Liked playlist subfolder filter (null or empty = no filter, show all liked)
+    private val _likedFilter = MutableStateFlow<List<String>?>(null)
+    val likedFilter: StateFlow<List<String>?> = _likedFilter.asStateFlow()
+    
     // Current file for notification
     private var currentFile: MusicFile? = null
     
@@ -2593,7 +2597,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
             PlaylistTab.LIKED -> {
                 CrashLogger.log("MusicViewModel", "LIKED tab - loading files")
-                loadLikedFiles()
+                val filter = _likedFilter.value
+                if (!filter.isNullOrEmpty()) {
+                    loadFilesFromLikedSubfolders(filter)
+                } else {
+                    loadLikedFiles()
+                }
                 updateSubfolderInfo() // Update subfolder info for liked playlist
             }
             PlaylistTab.REJECTED -> {
@@ -2608,7 +2617,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         // Force UI refresh by triggering a small delay and reload
         viewModelScope.launch {
             delay(100) // Small delay to ensure file operations complete
-            loadLikedFiles()
+            if (_currentPlaylistTab.value == PlaylistTab.LIKED) {
+                val filter = _likedFilter.value
+                if (!filter.isNullOrEmpty()) {
+                    loadFilesFromLikedSubfolders(filter)
+                } else {
+                    loadLikedFiles()
+                }
+            }
             loadRejectedFiles()
         }
     }
@@ -3279,6 +3295,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun loadFilesFromLikedSubfolders(subfolderNames: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                _likedFilter.value = subfolderNames
                 val destinationFolder = fileManager.getDestinationFolder()
                 if (destinationFolder == null) {
                     withContext(Dispatchers.Main) { _errorMessage.value = "No destination folder selected" }
@@ -3315,6 +3332,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "Error loading files from liked subfolders", e)
             }
         }
+    }
+    
+    fun setLikedFilter(subfolderNames: List<String>) {
+        _likedFilter.value = subfolderNames
+        loadFilesFromLikedSubfolders(subfolderNames)
+    }
+    
+    fun clearLikedFilterAndReload() {
+        _likedFilter.value = null
+        loadLikedFiles()
     }
     
     // External audio file handling methods

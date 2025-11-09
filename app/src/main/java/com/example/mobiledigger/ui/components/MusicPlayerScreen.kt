@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.121 ::",
+                            text = ":: v10.122 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2796,6 +2796,18 @@ viewModel.updateSearchText("")
                                     
                                     // Always show action button - changes based on playlist
                                     if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                        // Reload all liked (clear filter) button
+                                        IconButton(
+                                            onClick = { viewModel.clearLikedFilterAndReload() },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Refresh,
+                                                contentDescription = "Reload all Liked (clear filter)",
+                                                tint = Color(0xFF4CAF50),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                         // Share as ZIP button for liked files
                                         IconButton(
                                             onClick = { 

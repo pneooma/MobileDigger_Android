@@ -1,5 +1,9 @@
 package com.example.mobiledigger.audio.analysis
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+
 data class KeyAnalysisResult(
     val key: String,
     val camelot: String,
@@ -30,27 +34,51 @@ class KeyAnalyzer {
         
         val pooled = DoubleArray(hpcpBins)
         var frames = 0
-        var start = 0
-        while (start + frameSize <= data.size) {
-            val frame = data.copyOfRange(start, start + frameSize)
-            val peaks = SpectralPeaks.computeFramePeaks(
-                frame = frame,
-                sampleRate = sampleRate,
-                minFreqHz = 80.0,
-                maxFreqHz = 5000.0,
-                maxPeaks = 80
-            )
-            val hpcp = Hpcp.computeHpcp(
-                peaks = peaks,
-                config = HpcpConfig(bins = hpcpBins, referenceA4Hz = tuningRef, harmonics = 8)
-            )
-            var i = 0
-            while (i < hpcp.size) {
-                pooled[i] += hpcp[i]
-                i++
+        // Parallelize frame processing across up to 6 workers
+        val workers = 6
+        val partials = Array(workers) { DoubleArray(hpcpBins) }
+        runBlocking {
+            for (w in 0 until workers) {
+                launch(Dispatchers.Default) {
+                    var start = w
+                    var localFrames = 0
+                    while (true) {
+                        val offset = start * hopSize
+                        if (offset + frameSize > data.size) break
+                        val frame = data.copyOfRange(offset, offset + frameSize)
+                        val peaks = SpectralPeaks.computeFramePeaks(
+                            frame = frame,
+                            sampleRate = sampleRate,
+                            minFreqHz = 80.0,
+                            maxFreqHz = 5000.0,
+                            maxPeaks = 80
+                        )
+                        val hpcp = Hpcp.computeHpcp(
+                            peaks = peaks,
+                            config = HpcpConfig(bins = hpcpBins, referenceA4Hz = tuningRef, harmonics = 8)
+                        )
+                        var i = 0
+                        while (i < hpcp.size) {
+                            partials[w][i] += hpcp[i]
+                            i++
+                        }
+                        localFrames++
+                        start += workers
+                    }
+                    synchronized(this@KeyAnalyzer) {
+                        frames += localFrames
+                    }
+                }
             }
-            frames++
-            start += hopSize
+        }
+        var wi = 0
+        while (wi < workers) {
+            var j = 0
+            while (j < hpcpBins) {
+                pooled[j] += partials[wi][j]
+                j++
+            }
+            wi++
         }
         if (frames == 0) {
             return KeyAnalysisResult("Unknown", "--", 0.0, maxSamples / sampleRate)
@@ -126,7 +154,7 @@ class KeyAnalyzer {
         if (cents.isEmpty()) return 440.0
         cents.sort()
         val median = cents[cents.size / 2]
-        return 440.0 * kotlin.math.pow(2.0, median / 1200.0)
+        return 440.0 * Math.pow(2.0, median / 1200.0)
     }
     
     private fun centsFromA440(freq: Double): Double {

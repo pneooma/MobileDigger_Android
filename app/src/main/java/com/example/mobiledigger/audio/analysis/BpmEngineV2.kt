@@ -1,5 +1,9 @@
 package com.example.mobiledigger.audio.analysis
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -33,32 +37,39 @@ class BpmEngineV2 {
         val hann = AnalysisWindows.hann(frameSize)
         val numFrames = ((pcmMono.size - frameSize).coerceAtLeast(0) / hopSize) + 1
         
-        // Build magnitude spectra per frame
+        // Build magnitude spectra per frame (parallelized across up to 6 workers)
         val mags = Array(numFrames) { FloatArray(frameSize / 2) }
-        var frameIndex = 0
-        var offset = 0
-        while (offset + frameSize <= pcmMono.size && frameIndex < numFrames) {
-            val frame = FloatArray(frameSize)
-            var i = 0
-            while (i < frameSize) {
-                frame[i] = pcmMono[offset + i] * hann[i]
-                i++
+        val workers = 6
+        runBlocking {
+            for (w in 0 until workers) {
+                launch(Dispatchers.Default) {
+                    var frameIndex = w
+                    while (frameIndex < numFrames) {
+                        val offset = frameIndex * hopSize
+                        if (offset + frameSize > pcmMono.size) break
+                        val frame = FloatArray(frameSize)
+                        var i = 0
+                        while (i < frameSize) {
+                            frame[i] = pcmMono[offset + i] * hann[i]
+                            i++
+                        }
+                        val spec = stft.fft(frame)
+                        val bins = frameSize / 2
+                        var k = 0
+                        var si = 0
+                        while (k < bins) {
+                            val re = spec[si]
+                            val im = spec[si + 1]
+                            mags[frameIndex][k] = sqrt(re * re + im * im)
+                            k++; si += 2
+                        }
+                        frameIndex += workers
+                    }
+                }
             }
-            val spec = stft.fft(frame)
-            val bins = frameSize / 2
-            var k = 0
-            var si = 0
-            while (k < bins) {
-                val re = spec[si]
-                val im = spec[si + 1]
-                mags[frameIndex][k] = sqrt(re * re + im * im)
-                k++; si += 2
-            }
-            frameIndex++
-            offset += hopSize
         }
         
-        if (frameIndex == 0) return BpmEngineV2Result(120.0, doubleArrayOf(), 0.0)
+        if (numFrames == 0) return BpmEngineV2Result(120.0, doubleArrayOf(), 0.0)
         
         // Tri-band spectral flux ODF
         val odf = triBandSpectralFlux(mags, sampleRate, frameSize)
@@ -74,7 +85,13 @@ class BpmEngineV2 {
         val bestBpm = tempoAtMax(hps, bpmMin, 0.5)
         
         // Beat-grid alignment refinement around best BPM
-        val bpmRefined = refineWithBeatGrid(odfSmooth, frameRate, bestBpm)
+        var bpmRefined = refineWithBeatGrid(odfSmooth, frameRate, bestBpm)
+        // User preference: prefer double if result appears halved
+        if (bpmRefined < 100.0) {
+            val doubled = (bpmRefined * 2.0).coerceAtMost(200.0)
+            // Choose doubled unconditionally per request
+            bpmRefined = doubled
+        }
         val beats = BeatTrackerDP.trackBeats(odfSmooth, bpmRefined, frameRate)
         val conf = confidenceFromSeries(hps)
         

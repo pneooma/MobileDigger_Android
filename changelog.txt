@@ -62,6 +62,10 @@ v10.106
 - 🔁 BPM engine swapped: new tempogram + harmonic product spectrum + beat-grid refinement (reduces half/double errors, more stable across genres)
 - 🎼 Key accuracy: added tuning estimation (A4 reference), improved pooling and peak emphasis
 - 📲 Version and UI label updated to 10.106
+v10.107
+- 🎯 BPM: force-double when result < 100 BPM to address systematic half-tempo; recompute beat grid at 2×
+- ⚡ Performance: parallelized BPM STFT and Key HPCP across 6 cores (Dispatchers.Default)
+- 📲 Version and UI label updated to 10.107
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

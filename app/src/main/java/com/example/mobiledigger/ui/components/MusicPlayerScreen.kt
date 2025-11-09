@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.118 ::",
+                            text = ":: v10.119 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3591,8 +3591,8 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                                 
-                                                // Play/Pause button (hidden in Multi-Select mode; also hide when main player is visible and row waveform is hidden)
-                                                if (!isMultiSelectionMode && !(isMainPlayerVisible && !isWaveformVisible)) IconButton(
+                                                // Play/Pause button (hidden in Multi-Select mode; also hide whenever main player is visible)
+                                                if (!isMultiSelectionMode && !isMainPlayerVisible) IconButton(
                                                     onClick = { 
                                                         try {
                                                             viewModel.playPause()
@@ -3811,8 +3811,8 @@ viewModel.updateSearchText("")
                                                         )
                                                     }
                                                 }
-                                                // Hide Spectrogram/Share when main player is visible and row waveform is hidden
-                                                if (!(isMainPlayerVisible && !isWaveformVisible)) {
+                                                // Hide Spectrogram/Share whenever main player is visible
+                                                if (!isMainPlayerVisible) {
                                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                         // Spectrogram (bottom-left)
                                                         IconButton(

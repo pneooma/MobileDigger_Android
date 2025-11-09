@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.120 ::",
+                            text = ":: v10.121 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3577,6 +3577,8 @@ viewModel.updateSearchText("")
                                                                     if (isCurrent) {
                                                                         // Mirror active-row swipe-left behavior: play next, remove row, then sort in background
                                                                         scope.launch {
+                                                                            // Prevent miniplayer flash while transitioning
+                                                                            suppressMiniOnLeftSwipe = true
                                                                             try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "playNextAfterRemoval() error: ${e.message}") }
                                                                             // Give a brief moment for transition, then remove and sort
                                                                             delay(80)
@@ -4045,7 +4047,13 @@ viewModel.updateSearchText("")
                     var isMiniPlayerHidden by remember { mutableStateOf(false) }
                     LaunchedEffect(currentPlayingFile?.uri) { 
                         isMiniPlayerHidden = false
-                        suppressMiniOnLeftSwipe = false
+                        // If we just suppressed due to a dislike/swipe, keep it suppressed briefly to avoid flash
+                        if (suppressMiniOnLeftSwipe) {
+                            delay(500)
+                            suppressMiniOnLeftSwipe = false
+                        } else {
+                            suppressMiniOnLeftSwipe = false
+                        }
                         if (currentPlayingFile?.uri == promotingNextUri) promotingNextUri = null
                     }
                     val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackHalfVisible

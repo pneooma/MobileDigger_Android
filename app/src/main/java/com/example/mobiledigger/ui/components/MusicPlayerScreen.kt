@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.119 ::",
+                            text = ":: v10.120 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3570,11 +3570,22 @@ viewModel.updateSearchText("")
                                                 // Dislike button
                                                 if (!isMultiSelectionMode && (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED)) {
                                                     IconButton(
-                                                        onClick = { 
+                                                        onClick = {
                                                             try {
                                                                 val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
                                                                 if (actualIndex >= 0) {
-                                                                    viewModel.sortAtIndex(actualIndex, SortAction.DISLIKE)
+                                                                    if (isCurrent) {
+                                                                        // Mirror active-row swipe-left behavior: play next, remove row, then sort in background
+                                                                        scope.launch {
+                                                                            try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "playNextAfterRemoval() error: ${e.message}") }
+                                                                            // Give a brief moment for transition, then remove and sort
+                                                                            delay(80)
+                                                                            try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
+                                                                            try { viewModel.sortMusicFile(item, SortAction.DISLIKE) } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "sortMusicFile(DISLIKE) error: ${e.message}") }
+                                                                        }
+                                                                    } else {
+                                                                        viewModel.sortAtIndex(actualIndex, SortAction.DISLIKE)
+                                                                    }
                                                                 }
                                                             } catch (e: Exception) {
                                                                 CrashLogger.log("Debug", "Error in dislike button: ${e.message}")

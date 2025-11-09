@@ -116,6 +116,9 @@ v10.118
 v10.119
 - 🧭 Active row cleanup: When the main player is visible, hide Play/Pause and Spectrogram/Share on the current row (regardless of row waveform visibility). Keeps Like/Move available.
 - 📲 Version and UI label updated to 10.119
+v10.120
+- 👎 Active row Dislike: If you Dislike on the current row, it now plays the next track immediately (same behavior as swipe-left), removes the row, and moves the file to Rejected in the background.
+- 📲 Version and UI label updated to 10.120
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

@@ -960,7 +960,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.113 ::",
+                            text = ":: v10.114 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1180,7 +1180,7 @@ viewModel.updateSearchText("")
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
                         .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
+                        .height(25.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -1204,7 +1204,7 @@ viewModel.updateSearchText("")
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
                         .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(33.dp),
+                        .height(38.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -1256,7 +1256,7 @@ viewModel.updateSearchText("")
                     modifier = Modifier
                         .shadow(4.dp, RoundedCornerShape(20.dp))
                         .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
+                        .height(25.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
@@ -1895,7 +1895,8 @@ viewModel.updateSearchText("")
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         // Add performance hints for large lists
                         userScrollEnabled = true,
-                        reverseLayout = false
+                        reverseLayout = false,
+                        beyondBoundsItemCount = 2
                     ) {
                         // Current song info
                         item {
@@ -2002,7 +2003,7 @@ viewModel.updateSearchText("")
                                         .fillMaxWidth()
                                         .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
                                         .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
-                                        .animateItemPlacement(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow))
+                                        .animateItem(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow))
                                         .graphicsLayer {
                                             translationX = animatedOffset
                                             scaleX = 1f + abs(animatedOffset) / 2000f // Slight scale effect
@@ -3400,7 +3401,7 @@ viewModel.updateSearchText("")
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = 0.dp
                                     )
-                                        .animateItemPlacement(tween(durationMillis = 900))
+                                        .animateItem(tween(durationMillis = 900))
                                         .combinedClickable(
                                             onClick = {
                                                 val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
@@ -3633,6 +3634,7 @@ viewModel.updateSearchText("")
                                                         modifier = Modifier.size(adaptiveIconSize) // Adaptive icon size
                                                     )
                                                 }
+                                                Spacer(Modifier.width(10.dp))
                                             }
                                         }
                                         
@@ -4468,7 +4470,11 @@ viewModel.updateSearchText("")
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.height(200.dp)
                     ) {
-                        items(subfolderHistory) { subfolder ->
+                        items(
+                            items = subfolderHistory,
+                            key = { it },
+                            contentType = { "subfolder-history" }
+                        ) { subfolder ->
                             val isSelected = selectedSubfolders.contains(subfolder)
                             
                             Card(
@@ -4604,7 +4610,11 @@ viewModel.updateSearchText("")
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             userScrollEnabled = true
                         ) {
-                            items(gridItems.size) { idx ->
+                            items(
+                                count = gridItems.size,
+                                key = { idx -> gridItems[idx] },
+                                contentType = { "available-subfolder" }
+                            ) { idx ->
                                 val subfolder = gridItems[idx]
                                 OutlinedButton(
                                     onClick = {
@@ -4647,7 +4657,11 @@ viewModel.updateSearchText("")
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 userScrollEnabled = true
                             ) {
-                                items(viewList.size) { idx ->
+                                items(
+                                    count = viewList.size,
+                                    key = { idx -> viewList[idx] },
+                                    contentType = { "view-subfolder" }
+                                ) { idx ->
                                     val name = viewList[idx]
                                     val checked = selectedViewSubfolders.contains(name)
                                     OutlinedButton(
@@ -4705,7 +4719,11 @@ viewModel.updateSearchText("")
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             userScrollEnabled = true
                         ) {
-                            items(recentSubfolders.size) { idx ->
+                            items(
+                                count = recentSubfolders.size,
+                                key = { idx -> recentSubfolders[idx] },
+                                contentType = { "recent-subfolder" }
+                            ) { idx ->
                                 val subfolder = recentSubfolders[idx]
                                 OutlinedButton(
                                 onClick = {

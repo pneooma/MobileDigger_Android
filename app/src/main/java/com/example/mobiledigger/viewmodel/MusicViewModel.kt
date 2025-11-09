@@ -2599,7 +2599,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "LIKED tab - loading files")
                 val filter = _likedFilter.value
                 if (!filter.isNullOrEmpty()) {
-                    loadFilesFromLikedSubfolders(filter)
+                    if (filter.contains("<ROOT_ONLY>")) {
+                        loadLikedRootOnly()
+                    } else {
+                        loadFilesFromLikedSubfolders(filter)
+                    }
                 } else {
                     loadLikedFiles()
                 }
@@ -2620,7 +2624,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             if (_currentPlaylistTab.value == PlaylistTab.LIKED) {
                 val filter = _likedFilter.value
                 if (!filter.isNullOrEmpty()) {
-                    loadFilesFromLikedSubfolders(filter)
+                    if (filter.contains("<ROOT_ONLY>")) {
+                        loadLikedRootOnly()
+                    } else {
+                        loadFilesFromLikedSubfolders(filter)
+                    }
                 } else {
                     loadLikedFiles()
                 }

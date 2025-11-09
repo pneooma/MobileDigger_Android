@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.128 ::",
+                            text = ":: v10.129 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1059,26 +1059,13 @@ viewModel.updateSearchText("")
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                 }
                                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(
-                            text = { Text("✓ Source selected") },
-                            onClick = { menuExpanded = false; folderLauncher.launch(null) },
-                            leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("✓ Destination selected") },
-                            onClick = { menuExpanded = false; destLauncher.launch(null) },
-                            leadingIcon = { Icon(Icons.Default.FolderOpen, contentDescription = null) }
-                        )
+                        // Removed per request: ✓ Source selected, ✓ Destination selected
                         DropdownMenuItem(
                             text = { Text("Rescan Source") },
                             onClick = { menuExpanded = false; viewModel.rescanSourceFolder() },
                             leadingIcon = { Icon(Icons.Default.Sync, contentDescription = null) }
                         )
-                        DropdownMenuItem(
-                            text = { Text(if (isMultiSelectionMode) "Exit Multi-Select" else "Multi-Select Files") },
-                            onClick = { menuExpanded = false; viewModel.toggleMultiSelectionMode() },
-                            leadingIcon = { Icon(if (isMultiSelectionMode) Icons.Default.Close else Icons.Default.CheckBox, contentDescription = null) }
-                        )
+                        // Removed per request: Multi-Select Files
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Share Liked Songs as ZIP") },
@@ -1111,11 +1098,7 @@ viewModel.updateSearchText("")
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) }
                         )
                         HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text("README", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold) },
-                            onClick = { menuExpanded = false; showReadmeDialog = true },
-                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF4CAF50)) }
-                        )
+                        // Removed per request: README
                         
                     }
             }
@@ -3788,7 +3771,7 @@ viewModel.updateSearchText("")
                                                     Box(
                                                         modifier = Modifier
                                                             .weight(1f)
-                                                            .height(88.dp),
+                                                .height(visualSettings.rowWaveformHeight.dp),
                                                         contentAlignment = Alignment.Center
                                                     ) {
                                                         WaveformWithToggle(
@@ -3839,18 +3822,10 @@ viewModel.updateSearchText("")
                                                     // Move to (top-right)
                                                     IconButton(
                                                         onClick = {
-                                                            // Set current file for move action
-                                                    val currentFiles = when (currentPlaylistTab) {
-                                                        PlaylistTab.TODO -> musicFiles
-                                                        PlaylistTab.LIKED -> likedFiles
-                                                        PlaylistTab.REJECTED -> rejectedFiles
-                                                    }
-                                                    if (index < currentFiles.size) {
-                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                    }
-                                                    viewModeForSubfolderDialog = false
-                                                    showSubfolderSelectionDialog = true
-                                                },
+                                                            // Open move dialog (no viewing options)
+                                                            viewModeForSubfolderDialog = false
+                                                            showSubfolderSelectionDialog = true
+                                                        },
                                                         modifier = Modifier.size(32.dp)
                                             ) {
                                                 Icon(
@@ -4502,7 +4477,7 @@ viewModel.updateSearchText("")
                                             viewModel.seekTo(seekPosition)
                                         },
                                         songUri = file.uri.toString(),
-                                        waveformHeight = 60, // Mini waveform height
+                                        waveformHeight = visualSettings.miniWaveformHeight.toInt(),
                                         currentPosition = currentPosition,
                                         totalDuration = duration,
                                         fileName = file.name,
@@ -4679,7 +4654,7 @@ viewModel.updateSearchText("")
                 val scroll = androidx.compose.foundation.rememberScrollState()
                 Column(modifier = Modifier.fillMaxWidth().verticalScroll(scroll)) {
                     if (!viewModeForSubfolderDialog) {
-                        Text("Select a subfolder to move the current file:")
+                        Text("Select or create a subfolder to move the current playing file")
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     
@@ -4757,11 +4732,7 @@ viewModel.updateSearchText("")
                             HorizontalDivider()
                             Spacer(Modifier.height(8.dp))
                             // Multi-select to VIEW liked subfolders: chips as 2-column pills
-                            Text(
-                                "Or select multiple subfolders to view in Liked:",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            // Removed helper text line per request
                             Spacer(Modifier.height(6.dp))
                             val viewList = availableSubfolders
                             androidx.compose.foundation.lazy.grid.LazyVerticalGrid(

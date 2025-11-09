@@ -183,6 +183,7 @@ fun MusicPlayerScreen(
     val currentPlayingFile by viewModel.currentPlayingFile.collectAsState()
     val isTransitioning by viewModel.isTransitioning.collectAsState()
     val lastSortedAction by viewModel.lastSortedAction.collectAsState()
+    val likedFilter by viewModel.likedFilter.collectAsState()
     
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
@@ -960,7 +961,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.123 ::",
+                            text = ":: v10.124 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2750,14 +2751,16 @@ viewModel.updateSearchText("")
                                                                         modifier = Modifier.size(16.dp),
                                                                         tint = if (isSelected) Color.White else Color.Black
                                                                     )
-                                                                    Icon(
-                                                                        Icons.Default.Refresh,
-                                                                        contentDescription = "Reload all liked (clear filter)",
-                                                                        modifier = Modifier
-                                                                            .size(16.dp)
-                                                                            .clickable { viewModel.clearLikedFilterAndReload() },
-                                                                        tint = if (isSelected) Color.White else Color.Black
-                                                                    )
+                                                                    if (!likedFilter.isNullOrEmpty()) {
+                                                                        Icon(
+                                                                            Icons.Default.Refresh,
+                                                                            contentDescription = "Reload all liked (clear filter)",
+                                                                            modifier = Modifier
+                                                                                .size(16.dp)
+                                                                                .clickable { viewModel.clearLikedFilterAndReload() },
+                                                                            tint = if (isSelected) Color.White else Color.Black
+                                                                        )
+                                                                    }
                                                                 }
                                                             }
                                                             PlaylistTab.REJECTED -> {

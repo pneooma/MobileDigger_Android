@@ -1328,41 +1328,39 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 return
             }
             
-            // Play off main thread; coalesce UI state updates in one main post
+            // Play off main thread; coalesce UI updates
             CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - calling audioManager.playFile() [IO]")
-            val started = withContext(Dispatchers.IO) { audioManager.playFile(currentFile) }
-            withContext(Dispatchers.Main) {
-                _isPlaying.value = started
-                if (!started) {
-                    if (isAiffFile) {
-                        _errorMessage.value = "Cannot play AIFF file. This format might not be supported by your device's audio codec."
-                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - AIFF playback failed for ${currentFile.name}")
+            viewModelScope.launch(Dispatchers.IO) {
+                val started = audioManager.playFile(currentFile)
+                withContext(Dispatchers.Main) {
+                    _isPlaying.value = started
+                    if (!started) {
+                        if (isAiffFile) {
+                            _errorMessage.value = "Cannot play AIFF file. This format might not be supported by your device's audio codec."
+                            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - AIFF playback failed for ${currentFile.name}")
+                        } else {
+                            _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
+                            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed for ${currentFile.name}")
+                        }
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed - FFmpegMediaPlayer error listener will handle auto-skip")
                     } else {
-                        _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
-                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed for ${currentFile.name}")
+                        _errorMessage.value = null
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
+                        if (_currentPlaylistTab.value == PlaylistTab.TODO) {
+                            _playedButNotActioned.value = _playedButNotActioned.value + currentFile.uri
+                            CrashLogger.log("MusicViewModel", "✅ Added ${currentFile.name} to played-but-not-actioned list. Total tracked: ${_playedButNotActioned.value.size}")
+                        } else {
+                            CrashLogger.log("MusicViewModel", "⏭️ Not tracking ${currentFile.name} - not in TODO playlist (current: ${_currentPlaylistTab.value})")
+                        }
+                        try { preferences.incrementListened() } catch (_: Exception) {}
+                        updateNotification()
                     }
-                    // CRITICAL FIX: Don't auto-skip here to prevent recursive crashes
-                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed - FFmpegMediaPlayer error listener will handle auto-skip")
-                } else {
-                    _errorMessage.value = null
-                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
-                    if (_currentPlaylistTab.value == PlaylistTab.TODO) {
-                        _playedButNotActioned.value = _playedButNotActioned.value + currentFile.uri
-                        CrashLogger.log("MusicViewModel", "✅ Added ${currentFile.name} to played-but-not-actioned list. Total tracked: ${_playedButNotActioned.value.size}")
-                    } else {
-                        CrashLogger.log("MusicViewModel", "⏭️ Not tracking ${currentFile.name} - not in TODO playlist (current: ${_currentPlaylistTab.value})")
-                    }
-                    try { preferences.incrementListened() } catch (_: Exception) {}
                 }
-            }
-        
-            // Extract and update duration if not available
-            if (currentFile.duration == 0L) {
-                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - extracting duration for ${currentFile.name}")
-                viewModelScope.launch(Dispatchers.IO) {
+                // Extract and update duration if not available
+                if (currentFile.duration == 0L) {
                     try {
                         val actualDuration = extractDuration(currentFile)
-                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - extracted duration: ${actualDuration}ms")
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - extracted duration (IO): ${actualDuration}ms")
                         if (actualDuration > 0) {
                             withContext(Dispatchers.Main) {
                                 _duration.value = actualDuration
@@ -1373,20 +1371,22 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     } catch (e: Exception) {
                         CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - error extracting duration", e)
                     }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _duration.value = currentFile.duration
+                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - using existing duration: ${currentFile.duration}ms")
+                    }
                 }
-            } else {
-                _duration.value = currentFile.duration
-                CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - using existing duration: ${currentFile.duration}ms")
+                // Preload next song (guarded)
+                withContext(Dispatchers.Main) {
+                    CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - starting preload next song (guarded)")
+                }
+                preloadNextSong()
+                withContext(Dispatchers.Main) {
+                    CrashLogger.log("MusicViewModel", "✅ LOAD_CURRENT_FILE() async flow completed")
+                }
             }
-            
-            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updating notification")
-            updateNotification()
-            
-            // Start preloading next song for smooth transitions (guarded)
-            CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - starting preload next song (guarded)")
-            preloadNextSong()
-            
-            CrashLogger.log("MusicViewModel", "✅ LOAD_CURRENT_FILE() completed successfully")
+            CrashLogger.log("MusicViewModel", "✅ LOAD_CURRENT_FILE() scheduled async work")
         } catch (e: Exception) {
             CrashLogger.log("MusicViewModel", "💥 LOAD_CURRENT_FILE() - exception occurred", e)
             _errorMessage.value = "Error loading current file: ${e.message}"

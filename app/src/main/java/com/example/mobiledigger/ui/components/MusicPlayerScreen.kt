@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.127 ::",
+                            text = ":: v10.128 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2044,10 +2044,13 @@ viewModel.updateSearchText("")
                                                             // 3) Then perform actions
                                                             if (current < 0) {
                                                                 try {
-                                                                    // First move current file to Rejected, then go next
-                                                                    prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
+                                                                    // Prevent mini-player flash
+                                                                    suppressMiniOnLeftSwipe = true
+                                                                    // Play next after removal animation, then remove and sort previous file
+                                                                    viewModel.playNextAfterRemoval()
                                                                     delay(80)
-                                                                    viewModel.next()
+                                                                    try { prevFile?.let { viewModel.removeFromCurrentListByUri(it.uri) } } catch (_: Exception) {}
+                                                                    prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
                                                                 } catch (e: Exception) {
                                                                     CrashLogger.log("Debug", "Error in swipe (main) sort/next: ${e.message}")
                                                                 }
@@ -2775,7 +2778,7 @@ viewModel.updateSearchText("")
                                                                                     // Ensure latest subfolder info
                                                                                     viewModel.updateSubfolderInfo()
                                                                                 },
-                                                                            tint = Color(0xFF2196F3)
+                                                                            tint = Color(0xFFFFB6C1)
                                                                         )
                                                                     }
                                                                 }
@@ -4711,43 +4714,41 @@ viewModel.updateSearchText("")
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
-                        val gridItems = availableSubfolders
-                        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-                            columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 300.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            userScrollEnabled = true
-                        ) {
-                            items(
-                                count = gridItems.size,
-                                key = { idx -> gridItems[idx] },
-                                contentType = { "available-subfolder" }
-                            ) { idx ->
-                                val subfolder = gridItems[idx]
-                                OutlinedButton(
-                                    onClick = {
-                                        if (viewModeForSubfolderDialog) {
-                                            // toggle selection in view mode
-                                        } else {
+                        if (!viewModeForSubfolderDialog) {
+                            val gridItems = availableSubfolders
+                            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 300.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                userScrollEnabled = true
+                            ) {
+                                items(
+                                    count = gridItems.size,
+                                    key = { idx -> gridItems[idx] },
+                                    contentType = { "available-subfolder" }
+                                ) { idx ->
+                                    val subfolder = gridItems[idx]
+                                    OutlinedButton(
+                                        onClick = {
                                             showSubfolderSelectionDialog = false
                                             viewModel.moveCurrentFileToSubfolder(subfolder)
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(20.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = Color.Transparent,
-                                        contentColor = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    border = ButtonDefaults.outlinedButtonBorder
-                                    ) {
-                                        Text(
-                                        text = subfolder,
-                                        style = MaterialTheme.typography.bodySmall
-                                        )
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            containerColor = Color.Transparent,
+                                            contentColor = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        border = ButtonDefaults.outlinedButtonBorder
+                                        ) {
+                                            Text(
+                                            text = subfolder,
+                                            style = MaterialTheme.typography.bodySmall
+                                            )
+                                    }
                                 }
                             }
                         }

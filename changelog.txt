@@ -142,6 +142,11 @@ v10.127
 - 🗂️ Clean UI: Removed “select which folders to view” from the active-row “Move to subfolder” dialog. Viewing filters are only accessible from the Liked pill folder icon.
 - 📁 Root-only view: “View Root Only” shows only files from Liked root (no subfolders).
 - 📲 Version and UI label updated to 10.127
+v10.128
+- 👎 Main swipe-left improved: mimic active-row behavior (playNextAfterRemoval + list removal + reject) and suppress miniplayer flash; should reject every time.
+- 💖 Liked pill folder icon changed to pink for better visual consistency.
+- 🧭 View dialog now strictly view-only (no move options) when opened from the Liked pill.
+- 📲 Version and UI label updated to 10.128
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

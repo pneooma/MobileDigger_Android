@@ -20,6 +20,14 @@ class KeyAnalyzer {
         val maxSamples = (maxAnalyzeSeconds * sampleRate).coerceAtMost(pcmMono.size)
         val data = if (maxSamples < pcmMono.size) pcmMono.copyOf(maxSamples) else pcmMono
         
+        // 1) Estimate tuning from a subset of frames
+        val tuningRef = estimateTuningA4Hz(
+            data = data,
+            sampleRate = sampleRate,
+            frameSize = frameSize,
+            hopSize = hopSize
+        )
+        
         val pooled = DoubleArray(hpcpBins)
         var frames = 0
         var start = 0
@@ -34,7 +42,7 @@ class KeyAnalyzer {
             )
             val hpcp = Hpcp.computeHpcp(
                 peaks = peaks,
-                config = HpcpConfig(bins = hpcpBins, referenceA4Hz = 440.0, harmonics = 8)
+                config = HpcpConfig(bins = hpcpBins, referenceA4Hz = tuningRef, harmonics = 8)
             )
             var i = 0
             while (i < hpcp.size) {
@@ -53,7 +61,7 @@ class KeyAnalyzer {
             i++
         }
         val h12 = aggregateTo12(pooled)
-        val match = KeyProfileMatcher.matchKey(h12)
+        val match = KeyProfileMatcher.matchKey(emphasizeTonalPeaks(h12))
         return KeyAnalysisResult(
             key = match.key,
             camelot = match.camelot,
@@ -62,10 +70,72 @@ class KeyAnalyzer {
         )
     }
     
+    private fun estimateTuningA4Hz(
+        data: FloatArray,
+        sampleRate: Int,
+        frameSize: Int,
+        hopSize: Int
+    ): Double {
+        // Analyze up to first ~20 frames for speed
+        val stft = Stft(frameSize)
+        val hann = AnalysisWindows.hann(frameSize)
+        val cents = ArrayList<Double>()
+        var frames = 0
+        var start = 0
+        while (start + frameSize <= data.size && frames < 20) {
+            val frame = FloatArray(frameSize)
+            var i = 0
+            while (i < frameSize) {
+                frame[i] = data[start + i] * hann[i]
+                i++
+            }
+            val spec = stft.fft(frame)
+            val bins = frameSize / 2
+            var k = 1
+            var si = 2
+            while (k < bins - 1) {
+                val re = spec[si].toDouble()
+                val im = spec[si + 1].toDouble()
+                val mag = kotlin.math.hypot(re, im)
+                val reL = spec[si - 2].toDouble()
+                val imL = spec[si - 1].toDouble()
+                val reR = spec[si + 2].toDouble()
+                val imR = spec[si + 3].toDouble()
+                val mL = kotlin.math.hypot(reL, imL)
+                val mR = kotlin.math.hypot(reR, imR)
+                if (mag > mL && mag > mR) {
+                    // Quadratic interpolation
+                    val alpha = mL
+                    val beta = mag
+                    val gamma = mR
+                    val denom = (alpha - 2 * beta + gamma)
+                    val p = if (kotlin.math.abs(denom) > 1e-12) 0.5 * (alpha - gamma) / denom else 0.0
+                    val peakBin = k + p
+                    val freq = (peakBin * sampleRate) / frameSize.toDouble()
+                    if (freq > 80.0 && freq < 5000.0) {
+                        val centsOff = centsFromA440(freq)
+                        cents.add(centsOff)
+                    }
+                }
+                k++
+                si += 2
+            }
+            frames++
+            start += hopSize
+        }
+        if (cents.isEmpty()) return 440.0
+        cents.sort()
+        val median = cents[cents.size / 2]
+        return 440.0 * kotlin.math.pow(2.0, median / 1200.0)
+    }
+    
+    private fun centsFromA440(freq: Double): Double {
+        return 1200.0 * kotlin.math.log(freq / 440.0, 2.0)
+    }
+    
     private fun aggregateTo12(hpcp: DoubleArray): DoubleArray {
         if (hpcp.size == 12) return hpcp.copyOf()
         val out = DoubleArray(12)
-        val factor = hpcp.size / 12
         var i = 0
         while (i < hpcp.size) {
             val idx = i % 12
@@ -76,6 +146,25 @@ class KeyAnalyzer {
         while (j < 12) {
             out[j] /= (hpcp.size / 12.0)
             j++
+        }
+        return out
+    }
+    
+    private fun emphasizeTonalPeaks(h12: DoubleArray): DoubleArray {
+        // Lightly emphasize strongest bins to help key profile matching
+        val out = h12.copyOf()
+        var maxV = 0.0
+        var i = 0
+        while (i < out.size) {
+            if (out[i] > maxV) maxV = out[i]
+            i++
+        }
+        if (maxV <= 0.0) return out
+        i = 0
+        while (i < out.size) {
+            val v = out[i] / maxV
+            out[i] *= (0.8 + 0.2 * v) // 0.8..1.0 boost
+            i++
         }
         return out
     }

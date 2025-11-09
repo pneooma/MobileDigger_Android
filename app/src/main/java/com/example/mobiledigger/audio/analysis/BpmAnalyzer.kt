@@ -22,31 +22,24 @@ class BpmAnalyzer {
         } else {
             pcmMono
         }
-        val onset = OnsetDetectors.computeOnsetFeatures(
-            pcm = data,
+        // Swap to new BPM engine V2 (tempogram + HPS + grid refinement)
+        val engine = BpmEngineV2()
+        val res = engine.analyze(
+            pcmMono = data,
             sampleRate = sampleRate,
             frameSize = frameSize,
             hopSize = hopSize
         )
-        val odf = OnsetDetectors.combineOdFs(onset)
-        val tempoCoarse = TempoInduction.estimateBpmFromOdF(odf, onset.frameRateHz)
-        val beats = BeatTrackerDP.trackBeats(odf, tempoCoarse.bpm, onset.frameRateHz)
-        val conf = computeConfidence(odf, tempoCoarse)
         val seconds = maxSamples / sampleRate
         return BpmResult(
-            bpm = tempoCoarse.bpm,
-            beatsSeconds = beats,
-            confidence = conf,
+            bpm = res.bpm,
+            beatsSeconds = res.beatsSeconds,
+            confidence = res.confidence,
             analyzedSeconds = seconds
         )
     }
     
-    private fun computeConfidence(odf: FloatArray, tempo: TempoCandidate): Double {
-        val energy = odf.fold(0.0) { acc, v -> acc + v }
-        if (energy <= 1e-9) return 0.0
-        val normScore = tempo.score / energy
-        return normScore.coerceIn(0.0, 1.0)
-    }
+    // Confidence handled inside engine
 }
 
 

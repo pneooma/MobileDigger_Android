@@ -1895,8 +1895,7 @@ viewModel.updateSearchText("")
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         // Add performance hints for large lists
                         userScrollEnabled = true,
-                        reverseLayout = false,
-                        beyondBoundsItemCount = 2
+                        reverseLayout = false
                     ) {
                         // Current song info
                         item {

@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.139 ::",
+                            text = ":: v10.140 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3426,7 +3426,7 @@ viewModel.updateSearchText("")
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = 0.dp
                                     )
-                                        .animateItem(tween(durationMillis = 900))
+                                        .animateItem(tween(durationMillis = 1800))
                                         .combinedClickable(
                                             onClick = {
                                                 val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }

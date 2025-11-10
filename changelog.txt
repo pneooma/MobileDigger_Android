@@ -7,6 +7,12 @@ v10.145
 - 📐 Spacing: Main player is now placed ~10dp below the counters/controls row for a tighter layout.
 - 📲 Version and UI label updated to 10.145
 
+v10.146
+- 📐 Spacing fix: Reduced gap between counters/controls and main player using a small upward offset to achieve ~10dp.
+- 📱 Responsive controls: On compact screens, main player’s right-side controls collapse into two lines; on wider screens they render on one line.
+- 📂 Move to subfolder: Main player’s dropdown now mirrors active row behavior across all tabs (TODO/REJECTED show direct targets; LIKED shows current, root, recent, and add/manage flows).
+- 📲 Version and UI label updated to 10.146
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

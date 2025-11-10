@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.135 ::",
+                            text = ":: v10.136 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3375,7 +3375,6 @@ viewModel.updateSearchText("")
                                 label = "rowAlpha"
                             )
                             // Remove down-to-up/alpha enter; we'll animate only height on promotion
-                            val isPromoHidden = remember(isCurrent, promotingNextUri, item.uri) { !isCurrent && promotingNextUri == item.uri }
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold
                             val swipeTriggerThreshold = 100f  // Medium swipes trigger action
@@ -3383,10 +3382,6 @@ viewModel.updateSearchText("")
                             val swipeResistance = 0.7f        // More resistance for better control
                             
                             Box(modifier = Modifier.fillMaxWidth()) {
-                                // If this row is the one being promoted next, collapse it completely (no placeholder gap)
-                                if (isPromoHidden) {
-                                    Spacer(modifier = Modifier.height(0.dp))
-                                } else {
                                 // Swipe indicators behind the card
                                 if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {
                                     Row(
@@ -3477,22 +3472,18 @@ viewModel.updateSearchText("")
                                                                 scope.launch {
                                                                     isRowDismissed = true
                                                                     if (current < 0 && isActiveNow) suppressMiniOnLeftSwipe = true
-                                                                    // Determine next uri to promote and hide its placeholder until active
-                                                                    if (current < 0 && isActiveNow) {
-                                                                        val idx = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
-                                                                        if (idx >= 0 && idx + 1 < currentPlaylistFiles.size) {
-                                                                            promotingNextUri = currentPlaylistFiles[idx + 1].uri
-                                                                        }
-                                                                    }
-                                                                    // Immediately start next playback for active-row left swipe
+                                                                    // 1) Run the swipe-out animation
+                                                                    launch { rowSwipeOffset.animateTo(exit, tween(180)) }
+                                                                    // 2) After swipe out, remove the row to trigger list reflow animation
+                                                                    delay(200)
+                                                                    try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
+                                                                    // 3) Let the list reflow upwards more visibly before applying actions
+                                                                    delay(400)
+                                                                    // 4) If active-row left swipe, move to next after removal (no double-advance)
                                                                     if (current < 0 && isActiveNow) {
                                                                         try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
                                                                     }
-                                                                    // Run the swipe-out animation and then remove the row for smooth reflow
-                                                                    launch { rowSwipeOffset.animateTo(exit, tween(150)) }
-                                                                    delay(300)
-                                                                    viewModel.removeFromCurrentListByUri(item.uri)
-                                                                    // Background sort action
+                                                                    // 5) Background sort action for the swiped file only
                                                                     try {
                                                                         if (current > 0) viewModel.sortMusicFile(fileToSort, SortAction.LIKE) else viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
                                                                     } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
@@ -3989,7 +3980,6 @@ viewModel.updateSearchText("")
                                     }
                                 }
                             }
-                                } // end promo-hidden collapse else
                             }
                                 }
                             }
@@ -4003,7 +3993,7 @@ viewModel.updateSearchText("")
                     // First-open behavior: hide miniplayer while the very first track is in sight
                     var isFirstOpen by remember { mutableStateOf(true) }
                     var initialAutoScrolled by remember { mutableStateOf(false) }
-                    val isCurrentTrackHalfVisible = remember(listState.layoutInfo, currentTrackIndex) {
+                    val isCurrentTrackFullyVisible = remember(listState.layoutInfo, currentTrackIndex) {
                         val info = listState.layoutInfo
                         val item = info.visibleItemsInfo.firstOrNull { it.index == currentTrackIndex }
                         if (item == null) {
@@ -4013,10 +4003,8 @@ viewModel.updateSearchText("")
                             val viewportEnd = info.viewportEndOffset
                             val top = item.offset
                             val bottom = item.offset + item.size
-                            val visibleTop = maxOf(top, viewportStart)
-                            val visibleBottom = minOf(bottom, viewportEnd)
-                            val visible = (visibleBottom - visibleTop).coerceAtLeast(0)
-                            visible.toFloat() / item.size.toFloat() >= 0.5f
+                            // Fully visible if entire item bounds within viewport
+                            top >= viewportStart && bottom <= viewportEnd
                         }
                     }
                     
@@ -4057,15 +4045,15 @@ viewModel.updateSearchText("")
                         }
                         if (currentPlayingFile?.uri == promotingNextUri) promotingNextUri = null
                     }
-                    val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackHalfVisible
+                    val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackFullyVisible
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentPlayingFile != null &&
                                 (
                                     !isFileInCurrentPlaylist ||
-                                    (isScrolled && !isCurrentTrackHalfVisible) ||
-                                    (isWaveformVisible && !isCurrentTrackHalfVisible)
+                                    (isScrolled && !isCurrentTrackFullyVisible) ||
+                                    (isWaveformVisible && !isCurrentTrackFullyVisible)
                                 ) &&
-                                !(isMainPlayerVisible && !isCurrentTrackHalfVisible) &&
+                                !(isMainPlayerVisible && !isCurrentTrackFullyVisible) &&
                                 !isMiniPlayerHidden &&
                                 !suppressMiniOnLeftSwipe &&
                                 !hideMiniBecauseFirstTrackInSight,

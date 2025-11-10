@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.143 ::",
+                            text = ":: v10.144 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1909,25 +1909,496 @@ viewModel.updateSearchText("")
                     }
                 }
                 
-                Box(modifier = Modifier.fillMaxSize()) {
+                // Render fixed headers (main player and playlist tabs) outside the scrolling list
+                Column(modifier = Modifier.fillMaxSize()) {
                     var suppressMiniOnLeftSwipe by remember { mutableStateOf(false) }
                     var promotingNextUri by remember { mutableStateOf<Uri?>(null) }
-                    // Main scrollable content
+                    
+                    // Local composable to render the main player section (previously inside the list)
+                    @Composable
+                    fun MainPlayerSection() {
+                        val currentFile = currentPlayingFile
+                        if (currentFile != null) {
+                            val file = currentFile
+                            val scope = rememberCoroutineScope()
+                            val mainSwipeOffset = remember { Animatable(0f) }
+                            var swipeDirection by remember { mutableStateOf(0) }
+                            val transitionAlpha by animateFloatAsState(
+                                targetValue = if (isTransitioning) 0.3f else 1f,
+                                animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
+                                label = "transition_fade"
+                            )
+                            val animationSpec = remember(visualSettings.enableAnimations, visualSettings.animationSpeed) {
+                                if (visualSettings.enableAnimations) {
+                                    val speedFactor = 1f / visualSettings.animationSpeed
+                                    spring<Float>(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
+                                        stiffness = Spring.StiffnessMediumLow * speedFactor * 1.5f
+                                    )
+                                } else {
+                                    tween<Float>(durationMillis = 0)
+                                }
+                            }
+                            val animatedOffset = mainSwipeOffset.value
+                            val cardColor = when (swipeDirection) {
+                                1 -> LikeGreen.copy(alpha = 0.3f)
+                                -1 -> DislikeRed.copy(alpha = 0.3f)
+                                else -> MaterialTheme.colorScheme.primaryContainer
+                            }
+                            val borderColor = when (swipeDirection) {
+                                1 -> LikeGreen
+                                -1 -> DislikeRed
+                                else -> Color.Transparent
+                            }
+                            val played = viewModel.preferences.getListened()
+                            val yes = viewModel.preferences.getLiked()
+                            val no = viewModel.preferences.getRefused()
+                            val totalTracks = when (currentPlaylistTab) {
+                                PlaylistTab.TODO -> musicFiles.size
+                                PlaylistTab.LIKED -> likedFiles.size
+                                PlaylistTab.REJECTED -> rejectedFiles.size
+                            }
+                            Spacer(Modifier.height(0.dp))
+                            LaunchedEffect(file.uri) {
+                                viewModel.audioManager.clearAnalysis()
+                            }
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
+                                    .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
+                                    .graphicsLayer {
+                                        translationX = animatedOffset
+                                        scaleX = 1f + abs(animatedOffset) / 2000f
+                                        scaleY = 1f + abs(animatedOffset) / 2000f
+                                        alpha = if (isMainPlayerVisible) transitionAlpha else 0f
+                                    }
+                                    .then(
+                                        if (swipeDirection != 0) {
+                                            Modifier.border(
+                                                width = 3.dp,
+                                                color = borderColor,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
+                                    .then(
+                                        run {
+                                            val isCurrentInPlaylist = currentPlaylistFiles.any { it.uri == file.uri }
+                                            if (isCurrentInPlaylist) Modifier.pointerInput(Unit) {
+                                                detectDragGestures(
+                                                    onDragStart = { },
+                                                    onDragEnd = {
+                                                        val current = mainSwipeOffset.value
+                                                        val threshold = 150f
+                                                        val exit = if (current > 0) 520f else -520f
+                                                        if (abs(current) > threshold) {
+                                                            val prevFile = file
+                                                            scope.launch {
+                                                                mainSwipeOffset.animateTo(exit, tween(220))
+                                                                mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                                if (current < 0) {
+                                                                    try {
+                                                                        suppressMiniOnLeftSwipe = true
+                                                                        try { prevFile?.let { viewModel.removeFromCurrentListByUri(it.uri) } } catch (_: Exception) {}
+                                                                        viewModel.playNextAfterRemoval()
+                                                                        prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
+                                                                    } catch (_: Exception) { }
+                                                                } else if (current > 0) {
+                                                                    try { prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (_: Exception) { }
+                                                                }
+                                                            }
+                                                        } else {
+                                                            scope.launch {
+                                                                mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                            }
+                                                        }
+                                                        swipeDirection = 0
+                                                    }
+                                                ) { _, dragAmount ->
+                                                    val (x, _) = dragAmount
+                                                    val newValue = (mainSwipeOffset.value + x * 0.85f).coerceIn(-300f, 300f)
+                                                    scope.launch { mainSwipeOffset.snapTo(newValue) }
+                                                    swipeDirection = when {
+                                                        newValue > 80f -> 1
+                                                        newValue < -80f -> -1
+                                                        else -> 0
+                                                    }
+                                                }
+                                            } else Modifier
+                                        }
+                                    ),
+                                colors = CardDefaults.cardColors(containerColor = cardColor)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    val analysis by viewModel.audioManager.analysisResult.collectAsState()
+                                    val durationText = formatTime(duration)
+                                    val bitrateText = "${calculateBitrate(file.size, duration)} kbps"
+                                    val sizeText = formatFileSize(file.size)
+                                    val bpmText = analysis?.bpm?.let { "${(it + 0.5f).toInt()}" } ?: "—"
+                                    val keyText = analysis?.key?.let { toCamelotKey(it) } ?: "—"
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "| Time $durationText | $bitrateText | $sizeText | BPM: $bpmText | Key $keyText |",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        val isAnalyzing by viewModel.audioManager.isAnalyzing.collectAsState()
+                                        OutlinedButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    currentPlayingFile?.let { viewModel.audioManager.analyzeFile(it, force = true) }
+                                                }
+                                            },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                            modifier = Modifier.height(22.dp),
+                                            enabled = !isAnalyzing
+                                        ) {
+                                            if (isAnalyzing) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(14.dp),
+                                                    strokeWidth = 2.dp
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = "Analyze",
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        OutlinedButton(
+                                            onClick = { isWaveformVisible = !isWaveformVisible },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                            modifier = Modifier.height(22.dp)
+                                        ) {
+                                            Text(
+                                                text = if (isWaveformVisible) "Hide Wave" else "Show Wave",
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    if (isWaveformVisible && isMainPlayerVisible) {
+                                        val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
+                                        WaveformWithToggle(
+                                            sharedState = sharedWaveformState,
+                                            progress = progressPercent,
+                                            onSeek = { seekProgress ->
+                                                val seekPosition = (seekProgress * duration).toLong()
+                                                CrashLogger.log("Debug", "🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
+                                                viewModel.seekTo(seekPosition)
+                                            },
+                                            songUri = currentFile?.uri.toString(),
+                                            waveformHeight = visualSettings.waveformHeight.toInt(),
+                                            currentPosition = currentPosition,
+                                            totalDuration = duration,
+                                            fileName = file.name,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                    if (isMainPlayerVisible) Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) { }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Card(
+                                                onClick = { viewModel.previous() },
+                                                modifier = Modifier.size(38.dp),
+                                                shape = CircleShape,
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                                                ),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.SkipPrevious,
+                                                        "Previous",
+                                                        modifier = Modifier.size(19.dp),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                            FloatingActionButton(
+                                                onClick = { viewModel.playPause() },
+                                                modifier = Modifier.size(45.dp),
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                elevation = FloatingActionButtonDefaults.elevation(
+                                                    defaultElevation = 6.dp,
+                                                    pressedElevation = 8.dp
+                                                )
+                                            ) {
+                                                Icon(
+                                                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                    contentDescription = if (isPlaying) "Pause" else "Play",
+                                                    modifier = Modifier.size(26.dp)
+                                                )
+                                            }
+                                            Card(
+                                                onClick = { viewModel.next() },
+                                                modifier = Modifier.size(38.dp),
+                                                shape = CircleShape,
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                                                ),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.SkipNext,
+                                                        "Next",
+                                                        modifier = Modifier.size(19.dp),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        // Right side controls (star rating etc.) remain as in original
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Local composable to render the playlist tabs header (previously inside the list)
+                    @Composable
+                    fun PlaylistTabsHeader() {
+                        if (isPlaylistsVisible) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(onClick = { showSubfolderDialog = true }) {
+                                        Icon(Icons.Default.FolderOpen, contentDescription = "Select Subfolder")
+                                    }
+                                    PlaylistTab.entries.forEach { tab ->
+                                        val isSelected = currentPlaylistTab == tab
+                                        val tabColor = when (tab) {
+                                            PlaylistTab.TODO -> Color(0xFF2196F3)
+                                            PlaylistTab.LIKED -> Color(0xFF4CAF50)
+                                            PlaylistTab.REJECTED -> Color(0xFFFFCDD2)
+                                        }
+                                        val selectedColor = when (tab) {
+                                            PlaylistTab.TODO -> Color(0xFF1976D2)
+                                            PlaylistTab.LIKED -> Color(0xFF388E3C)
+                                            PlaylistTab.REJECTED -> Color(0xFFEF9A9A)
+                                        }
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { viewModel.switchPlaylistTab(tab) }
+                                                .then(
+                                                    if (isSelected) {
+                                                        Modifier
+                                                            .border(2.dp, Color.White, RoundedCornerShape(20.dp))
+                                                            .shadow(
+                                                                elevation = 8.dp,
+                                                                shape = RoundedCornerShape(20.dp),
+                                                                ambientColor = Color.Black.copy(alpha = 0.3f),
+                                                                spotColor = Color.Black.copy(alpha = 0.3f)
+                                                            )
+                                                    } else {
+                                                        Modifier
+                                                    }
+                                                ),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isSelected) selectedColor else tabColor
+                                            ),
+                                            shape = RoundedCornerShape(20.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        modifier = Modifier.weight(0.3f)
+                                                    ) {
+                                                        when (tab) {
+                                                            PlaylistTab.TODO -> {
+                                                                Icon(
+                                                                    Icons.AutoMirrored.Filled.PlaylistPlay,
+                                                                    contentDescription = "To Do",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
+                                                            }
+                                                            PlaylistTab.LIKED -> {
+                                                                Row(
+                                                                    verticalAlignment = Alignment.CenterVertically,
+                                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                                ) {
+                                                                    Icon(
+                                                                        Icons.Default.Favorite,
+                                                                        contentDescription = "Liked",
+                                                                        modifier = Modifier.size(16.dp),
+                                                                        tint = if (isSelected) Color.White else Color.Black
+                                                                    )
+                                                                    if (!likedFilter.isNullOrEmpty()) {
+                                                                        Icon(
+                                                                            Icons.Default.Refresh,
+                                                                            contentDescription = "Reload all liked (clear filter)",
+                                                                            modifier = Modifier
+                                                                                .size(16.dp)
+                                                                                .clickable { viewModel.clearLikedFilterAndReload() },
+                                                                            tint = if (isSelected) Color.White else Color.Black
+                                                                        )
+                                                                    } else if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                                                        Icon(
+                                                                            Icons.Default.Folder,
+                                                                            contentDescription = "Select subfolders to view in Liked",
+                                                                            modifier = Modifier
+                                                                                .size(16.dp)
+                                                                                .clickable {
+                                                                                    viewModeForSubfolderDialog = true
+                                                                                    showSubfolderSelectionDialog = true
+                                                                                    viewModel.updateSubfolderInfo()
+                                                                                },
+                                                                            tint = Color(0xFFFFB6C1)
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                            PlaylistTab.REJECTED -> {
+                                                                Icon(
+                                                                    Icons.Default.ThumbDown,
+                                                                    contentDescription = "Rejected",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = if (isSelected) Color.White else Color.Black
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    Spacer(modifier = Modifier.width(0.dp))
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        modifier = Modifier.weight(0.7f)
+                                                    ) {
+                                                        Text(
+                                                            text = when (tab) {
+                                                                PlaylistTab.TODO -> "To Do"
+                                                                PlaylistTab.LIKED -> "Liked"
+                                                                PlaylistTab.REJECTED -> "Rejected"
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = if (isSelected) Color.White else Color.Black,
+                                                            textAlign = TextAlign.Center,
+                                                            maxLines = 1
+                                                        )
+                                                        Text(
+                                                            text = when (tab) {
+                                                                PlaylistTab.TODO -> "(${musicFiles.size} files)"
+                                                                PlaylistTab.LIKED -> "(${likedFiles.size} files)"
+                                                                PlaylistTab.REJECTED -> "(${rejectedFiles.size} files)"
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                            color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.7f),
+                                                            textAlign = TextAlign.Center,
+                                                            maxLines = 1
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (currentPlaylistTab == PlaylistTab.LIKED) {
+                                        IconButton(
+                                            onClick = { showShareZipDialog = true },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Archive,
+                                                contentDescription = "Share Liked as ZIP",
+                                                tint = Color(0xFF4CAF50),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    } else {
+                                        IconButton(
+                                            onClick = { 
+                                                deleteActionType = currentPlaylistTab
+                                                showDeleteAllDialog = true
+                                            },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = when (currentPlaylistTab) {
+                                                    PlaylistTab.REJECTED -> "Delete All Rejected Files"
+                                                    PlaylistTab.TODO -> "Delete All To Do Files"
+                                                    else -> "Delete All Files"
+                                                },
+                                                tint = Color.Red,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Render fixed sections
+                    MainPlayerSection()
+                    PlaylistTabsHeader()
+                    
+                    // Only the playlist list scrolls
+                    val renderHeadersInList = false
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .heightIn(max = playlistMaxHeight)
-                            .then(Modifier.offset(y = (-27).dp)),
-                        // Performance optimizations
+                            .fillMaxWidth()
+                            .weight(1f),
                         contentPadding = PaddingValues(vertical = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
-                        // Add performance hints for large lists
                         userScrollEnabled = true,
                         reverseLayout = false
                     ) {
                         // Current song info
-                        item {
+                        if (renderHeadersInList) item {
                             val currentFile = currentPlayingFile // Use the actually playing file
             if (currentFile != null) {
                                 val file = currentFile
@@ -2657,7 +3128,7 @@ viewModel.updateSearchText("")
                         // Removed Like/Undo/Dislike compact row (moved inline with playlist waveform)
                         
                         // Tabbed Playlist Header (hideable)
-                        if (isPlaylistsVisible) item {
+                        if (renderHeadersInList && isPlaylistsVisible) item {
                             Column {
                                 // Custom Pill-Shaped Tabs
                                 Row(
@@ -4086,7 +4557,7 @@ viewModel.updateSearchText("")
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                         modifier = Modifier
-                            .align(Alignment.TopCenter)
+                            .align(Alignment.CenterHorizontally)
                             .zIndex(1f),
                         label = "Miniplayer Animated Visibility"
                     ) {

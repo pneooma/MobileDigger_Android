@@ -13,6 +13,39 @@ v10.146
 - 📂 Move to subfolder: Main player’s dropdown now mirrors active row behavior across all tabs (TODO/REJECTED show direct targets; LIKED shows current, root, recent, and add/manage flows).
 - 📲 Version and UI label updated to 10.146
 
+v10.147
+- 🎛️ Main player: Like/Undo/Dislike, Share, Spectrogram, and Move-to-Liked are now forced into a single row alongside playback controls.
+- 📲 Version and UI label updated to 10.147
+
+v10.148
+- 📐 Spacing: Main player moved 10dp closer (offset -20dp) to counters/controls row for tighter layout.
+- 📲 Version and UI label updated to 10.148
+
+v10.149
+- 📐 Spacing: Main player moved further up (offset -40dp) towards counters/controls row.
+- 📲 Version and UI label updated to 10.149
+
+v10.150
+- 📐 Spacing: Playlist tabs row offset -40dp to align closer to counters/controls row.
+- 📲 Version and UI label updated to 10.150
+
+v10.151
+- 📐 Spacing: Scrollable playlist (main LazyColumn) offset -40dp from the top to bring content closer.
+- 📲 Version and UI label updated to 10.151
+
+v10.152
+- 🎛️ Mini-player visibility: now appears only when the active row is no longer visible in the playlist viewport (instead of when it's merely not fully visible). Keeps existing first-item/miniplayer suppression guards.
+- 📲 Version and UI label updated to 10.152
+
+v10.153
+- 📐 Spacing: Scrollable playlist top offset adjusted to -35dp for improved alignment.
+- 🎚️ Mini‑player: Hidden when main player and its waveform are visible and the current track is liked.
+- 📲 Version and UI label updated to 10.153
+
+v10.154
+- 🎚️ Mini‑player: Also hidden when main player AND its waveform are visible and the current playing row is not visible (to avoid duplicate waveform/audio controls on screen).
+- 📲 Version and UI label updated to 10.154
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

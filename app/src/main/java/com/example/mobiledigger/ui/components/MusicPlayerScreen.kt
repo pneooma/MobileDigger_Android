@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.146 ::",
+                            text = ":: v10.154 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1966,7 +1966,7 @@ viewModel.updateSearchText("")
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
-                                    .offset(y = (-10).dp)
+                                    .offset(y = (-40).dp)
                                     .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
                                     .graphicsLayer {
                                         translationX = animatedOffset
@@ -2190,7 +2190,7 @@ viewModel.updateSearchText("")
                                         val isCompactMain by remember(screenWidth, screenHeight) {
                                             mutableStateOf(screenWidth < 600.dp || screenHeight < 800.dp)
                                         }
-                                        if (!isCompactMain) {
+                                        if (true) {
                                             Row(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically
@@ -2700,7 +2700,8 @@ viewModel.updateSearchText("")
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .offset(y = (-40).dp),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -2891,7 +2892,8 @@ viewModel.updateSearchText("")
                         state = listState,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .offset(y = (-35).dp),
                         contentPadding = PaddingValues(vertical = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         userScrollEnabled = true,
@@ -5002,6 +5004,11 @@ viewModel.updateSearchText("")
                             top >= viewportStart && bottom <= viewportEnd
                         }
                     }
+                    // Row is visible in ANY amount if it's present in visibleItemsInfo
+                    val isCurrentTrackAnyVisible = remember(listState.layoutInfo, currentTrackIndex) {
+                        val info = listState.layoutInfo
+                        info.visibleItemsInfo.any { it.index == currentTrackIndex }
+                    }
                     
                     // Mark first-open completed once user scrolls or advances beyond the first row
                     LaunchedEffect(isScrolled, currentTrackIndex) {
@@ -5041,15 +5048,23 @@ viewModel.updateSearchText("")
                         if (currentPlayingFile?.uri == promotingNextUri) promotingNextUri = null
                     }
                     val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackFullyVisible
+                    // Determine if current playing file is liked
+                    val isCurrentLiked = remember(currentPlayingFile?.uri, likedFiles) {
+                        currentPlayingFile?.let { f -> likedFiles.any { it.uri == f.uri } } ?: false
+                    }
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentPlayingFile != null &&
                                 (
+                                    // If not part of current playlist, always allow mini visibility
                                     !isFileInCurrentPlaylist ||
-                                    (isScrolled && !isCurrentTrackFullyVisible) ||
-                                    (isWaveformVisible && !isCurrentTrackFullyVisible)
+                                    // Show only when the active row (waveform region) is no longer visible at all
+                                    !isCurrentTrackAnyVisible
                                 ) &&
-                                !(isMainPlayerVisible && !isCurrentTrackFullyVisible) &&
-                                // Never show miniplayer when playing the first item in the playlist
+                                // Do not show mini-player when main player AND its waveform are visible and the current track is liked
+                                !(isMainPlayerVisible && isWaveformVisible && isCurrentLiked) &&
+                        // Also do not show mini-player when main player AND its waveform are visible and the current playing row is not visible
+                                !(isMainPlayerVisible && isWaveformVisible && !isCurrentTrackAnyVisible) &&
+                                // Guard: don't show mini on very first open if first item is fully visible
                                 !(isFileInCurrentPlaylist && currentTrackIndex == 0) &&
                                 !isMiniPlayerHidden &&
                                 !suppressMiniOnLeftSwipe &&

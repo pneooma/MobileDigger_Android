@@ -180,6 +180,11 @@ v10.136
 - 🧭 Miniplayer visibility: only shows when the active row’s waveform is 100% outside the viewport.
 - 🧹 Removed promo-hide behavior that could obscure the next row; list now simply reflows upward.
 - 📲 Version and UI label updated to 10.136
+v10.137
+- ▶️ Active-row left swipe now always plays the next track after removal (short reflow delay).
+- 🧤 Guard: if destination not selected, left-swipe bounces back and shows the error (no removal).
+- 🧭 Miniplayer is never shown when the first playlist item is playing.
+- 📲 Version and UI label updated to 10.137
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

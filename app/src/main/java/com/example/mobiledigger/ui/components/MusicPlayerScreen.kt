@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.141 ::",
+                            text = ":: v10.142 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3382,7 +3382,12 @@ viewModel.updateSearchText("")
                             val swipeMaxOffset = 200f         // Maximum drag distance
                             val swipeResistance = 0.7f        // More resistance for better control
                             
-                            Box(modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    // Apply placement animation at the ITEM ROOT so all children (overlay + card) glide together
+                                    .animateItem(tween(durationMillis = 1800))
+                            ) {
                                 // Swipe indicators behind the card (match row height for true vertical centering)
                                 if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {
                                     Row(
@@ -3427,7 +3432,6 @@ viewModel.updateSearchText("")
                                         horizontal = if (isCompactScreen) 6.dp else 10.dp, 
                                         vertical = 0.dp
                                     )
-                                        .animateItem(tween(durationMillis = 1800))
                                         .combinedClickable(
                                             onClick = {
                                                 val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }

@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.140 ::",
+                            text = ":: v10.141 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3383,11 +3383,12 @@ viewModel.updateSearchText("")
                             val swipeResistance = 0.7f        // More resistance for better control
                             
                             Box(modifier = Modifier.fillMaxWidth()) {
-                                // Swipe indicators behind the card
+                                // Swipe indicators behind the card (match row height for true vertical centering)
                                 if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {
                                     Row(
                                         modifier = Modifier
-                                            .fillMaxSize()
+                                            .fillMaxWidth()
+                                            .height(animatedRowHeight)
                                             .padding(horizontal = if (isCompactScreen) 6.dp else 10.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically

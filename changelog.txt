@@ -196,6 +196,9 @@ v10.139
 v10.140
 - 🪄 Playlist reflow: doubled list glide-up animation duration (900ms → 1800ms) for smoother upward motion after row removal.
 - 📲 Version and UI label updated to 10.140
+v10.141
+- 🎯 Swipe indicators: vertically centered within the row by matching the overlay height to the row height.
+- 📲 Version and UI label updated to 10.141
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

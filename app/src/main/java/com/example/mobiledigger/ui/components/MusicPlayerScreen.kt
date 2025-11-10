@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.137 ::",
+                            text = ":: v10.138 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3468,43 +3468,47 @@ viewModel.updateSearchText("")
                                                                 val fileToSort = item
                                                                 val isActiveNow = currentPlayingFile?.uri == item.uri
                                                             hapticFeedback()
-                                                                // Guard: if left swipe but destination not selected, bounce back and show error via sort attempt (for message) without removal
-                                                                if (current < 0 && destinationFolder == null) {
-                                                                    scope.launch {
-                                                                        // Use sort call to trigger error message, but don't remove or advance
-                                                                        try { viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE) } catch (_: Exception) {}
-                                                                        rowSwipeOffset.animateTo(
-                                                                            0f,
-                                                                            spring(
-                                                                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                                                stiffness = Spring.StiffnessVeryLow
+                                                                if (current < 0) {
+                                                                    // Left swipe (DISLIKE)
+                                                                    if (destinationFolder == null) {
+                                                                        // Bounce back and show error via sort attempt; DO NOT remove or advance
+                                                                        scope.launch {
+                                                                            try { viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE) } catch (_: Exception) {}
+                                                                            rowSwipeOffset.animateTo(
+                                                                                0f,
+                                                                                spring(
+                                                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                                                    stiffness = Spring.StiffnessVeryLow
+                                                                                )
                                                                             )
-                                                                        )
+                                                                        }
+                                                                    } else {
+                                                                        // Proceed: swipe-out → remove → reflow → next (if active) → sort
+                                                                        val exit = -520f
+                                                                        scope.launch {
+                                                                            isRowDismissed = true
+                                                                            if (isActiveNow) suppressMiniOnLeftSwipe = true
+                                                                            launch { rowSwipeOffset.animateTo(exit, tween(180)) }
+                                                                            delay(180)
+                                                                            try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
+                                                                            delay(220)
+                                                                            if (isActiveNow) {
+                                                                                try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
+                                                                            }
+                                                                            try { viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE) } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
+                                                                        }
                                                                     }
-                                                                    swipeDirection = 0
-                                                                    isSwipeActive = false
-                                                                    return@detectHorizontalDragGestures
-                                                                }
-                                                                // Fade-out and remove immediately (no bounce back)
-                                                                val exit = if (current > 0) 520f else -520f
-                                                                scope.launch {
-                                                                    isRowDismissed = true
-                                                                    if (current < 0 && isActiveNow) suppressMiniOnLeftSwipe = true
-                                                                    // 1) Run the swipe-out animation
-                                                                    launch { rowSwipeOffset.animateTo(exit, tween(180)) }
-                                                                    // 2) After swipe out, remove the row to trigger list reflow animation
-                                                                    delay(180)
-                                                                    try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
-                                                                    // 3) Allow list to reflow, then perform actions
-                                                                    delay(220)
-                                                                    // 4) If active-row left swipe, move to next after removal (no double-advance)
-                                                                    if (current < 0 && isActiveNow) {
-                                                                        try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
+                                                                } else {
+                                                                    // Right swipe (LIKE) - no destination guard needed
+                                                                    val exit = 520f
+                                                                    scope.launch {
+                                                                        isRowDismissed = true
+                                                                        launch { rowSwipeOffset.animateTo(exit, tween(180)) }
+                                                                        delay(180)
+                                                                        try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
+                                                                        delay(220)
+                                                                        try { viewModel.sortMusicFile(fileToSort, SortAction.LIKE) } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
                                                                     }
-                                                                    // 5) Background sort action for the swiped file only
-                                                                    try {
-                                                                        if (current > 0) viewModel.sortMusicFile(fileToSort, SortAction.LIKE) else viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE)
-                                                                    } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
                                                                 }
                                                             } catch (e: Exception) {
                                                                 CrashLogger.log("MusicPlayerScreen", "❌ Swipe gesture error: ${e.message}")

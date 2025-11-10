@@ -171,6 +171,10 @@ v10.134
 - 🐛 Active-row swipe-left (with main waveform visible): advance index before loading to prevent replaying the same file and avoid leftover blank placeholder rows.
 - 🔧 Updated playNextAfterRemoval to increment index first; row removal and promo-hide now settle correctly.
 - 📲 Version and UI label updated to 10.134
+v10.135
+- 🐛 Main swipe-left: fixed “skip-one” by not incrementing index after row removal; next track now loads correctly from the same index.
+- 🎨 Playlist UI: removed blank placeholder by fully collapsing the row marked as next-to-promote (no alpha-only hide gaps).
+- 📲 Version and UI label updated to 10.135
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

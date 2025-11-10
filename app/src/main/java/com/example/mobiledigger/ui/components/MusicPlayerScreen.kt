@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.134 ::",
+                            text = ":: v10.135 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3375,7 +3375,7 @@ viewModel.updateSearchText("")
                                 label = "rowAlpha"
                             )
                             // Remove down-to-up/alpha enter; we'll animate only height on promotion
-
+                            val isPromoHidden = remember(isCurrent, promotingNextUri, item.uri) { !isCurrent && promotingNextUri == item.uri }
                             // Optimized thresholds for reliable swiping
                             val swipeIndicatorThreshold = 50f  // Show indicator threshold
                             val swipeTriggerThreshold = 100f  // Medium swipes trigger action
@@ -3383,6 +3383,10 @@ viewModel.updateSearchText("")
                             val swipeResistance = 0.7f        // More resistance for better control
                             
                             Box(modifier = Modifier.fillMaxWidth()) {
+                                // If this row is the one being promoted next, collapse it completely (no placeholder gap)
+                                if (isPromoHidden) {
+                                    Spacer(modifier = Modifier.height(0.dp))
+                                } else {
                                 // Swipe indicators behind the card
                                 if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {
                                     Row(
@@ -3448,8 +3452,7 @@ viewModel.updateSearchText("")
                                         .graphicsLayer {
                                             translationX = rowSwipeOffset.value
                                             translationY = 0f
-                                            val promoHide = if (!isCurrent && promotingNextUri == item.uri) 0f else 1f
-                                            alpha = rowAlpha * 1f * promoHide
+                                            alpha = rowAlpha
                                         }
                                         .pointerInput(Unit) {
                                             detectHorizontalDragGestures(
@@ -3986,6 +3989,7 @@ viewModel.updateSearchText("")
                                     }
                                 }
                             }
+                                } // end promo-hidden collapse else
                             }
                                 }
                             }

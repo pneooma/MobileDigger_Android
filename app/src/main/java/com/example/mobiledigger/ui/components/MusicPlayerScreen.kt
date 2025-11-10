@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.142 ::",
+                            text = ":: v10.143 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3386,7 +3386,7 @@ viewModel.updateSearchText("")
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     // Apply placement animation at the ITEM ROOT so all children (overlay + card) glide together
-                                    .animateItem(tween(durationMillis = 1800))
+                                    .animateItem(tween(durationMillis = 1500))
                             ) {
                                 // Swipe indicators behind the card (match row height for true vertical centering)
                                 if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {

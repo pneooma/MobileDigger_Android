@@ -202,6 +202,9 @@ v10.141
 v10.142
 - 🪄 Reflow visibility: placement animation moved to the playlist item root so the entire item (including overlay and card) glides upward together. 1800ms tween preserved.
 - 📲 Version and UI label updated to 10.142
+v10.143
+- 🪄 Playlist reflow duration adjusted: 1500ms (was 1800ms) for a snappier yet visible upward glide after row removal.
+- 📲 Version and UI label updated to 10.143
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

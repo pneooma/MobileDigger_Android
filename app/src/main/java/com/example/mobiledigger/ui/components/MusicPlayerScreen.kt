@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.138 ::",
+                            text = ":: v10.139 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -3491,11 +3491,8 @@ viewModel.updateSearchText("")
                                                                             launch { rowSwipeOffset.animateTo(exit, tween(180)) }
                                                                             delay(180)
                                                                             try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
-                                                                            delay(220)
-                                                                            if (isActiveNow) {
-                                                                                try { viewModel.playNextAfterRemoval() } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ playNextAfterRemoval() error: ${e.message}") }
-                                                                            }
-                                                                            try { viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE) } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
+                                                                    // Hand off the rest to ViewModel so coroutine isn't cancelled when this row is removed
+                                                                    viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.DISLIKE, isActiveNow)
                                                                         }
                                                                     }
                                                                 } else {
@@ -3506,8 +3503,8 @@ viewModel.updateSearchText("")
                                                                         launch { rowSwipeOffset.animateTo(exit, tween(180)) }
                                                                         delay(180)
                                                                         try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
-                                                                        delay(220)
-                                                                        try { viewModel.sortMusicFile(fileToSort, SortAction.LIKE) } catch (e: Exception) { CrashLogger.log("MusicPlayerScreen", "❌ sort error: ${e.message}") }
+                                                                        // Hand off to ViewModel (stable scope) after removal
+                                                                        viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.LIKE, false)
                                                                     }
                                                                 }
                                                             } catch (e: Exception) {

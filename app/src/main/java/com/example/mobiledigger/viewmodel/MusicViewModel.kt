@@ -209,6 +209,26 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             updateNotification()
         }
     }
+
+    // Run post-removal actions from a stable scope so row Composable removal doesn't cancel the flow
+    fun handleRowSwipeAfterRemoval(file: MusicFile, action: SortAction, wasActiveRow: Boolean) {
+        viewModelScope.launch {
+            try {
+                // Small reflow delay before actions to let list settle visually
+                delay(120)
+                if (wasActiveRow && action == SortAction.DISLIKE) {
+                    // Advance playback first, then move the file in background
+                    playNextAfterRemoval()
+                    // Give next a brief head start to avoid jank
+                    delay(80)
+                }
+                // Perform the sort (LIKE/DISLIKE) - already robust and guarded internally
+                sortMusicFile(file, action)
+            } catch (e: Exception) {
+                handleError("handleRowSwipeAfterRemoval", e)
+            }
+        }
+    }
     
     private val _volume = MutableStateFlow(1f)
     val volume: StateFlow<Float> = _volume.asStateFlow()

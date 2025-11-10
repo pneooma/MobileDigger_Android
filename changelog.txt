@@ -189,6 +189,10 @@ v10.138
 - 🧱 Active-row swipe guard refactor: the removal/next/sort sequence executes only when destination is selected; otherwise the row bounces back and shows the error. Prevents counting as played without rejecting.
 - 🔁 Robust next-after-removal for active-row left swipe with clear sequencing; LIKE path mirrors removal → reflow → sort.
 - 📲 Version and UI label updated to 10.138
+v10.139
+- 🧵 Row-swipe stability: post-removal actions (next/sort) now run from ViewModel scope to avoid cancellation when the swiped row composable disappears.
+- ▶️ Active-row left swipe: guaranteed next-after-removal and move to Rejected even when main waveform is hidden and controls are shown/hidden.
+- 📲 Version and UI label updated to 10.139
 v10.66
 - ⬆️ Active-row slide-in from below (1000ms) when becoming current
 

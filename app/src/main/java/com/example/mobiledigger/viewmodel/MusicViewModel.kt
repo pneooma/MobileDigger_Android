@@ -196,9 +196,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 updateNotification()
                 return@launch
             }
-            if (_currentIndex.value >= files.size) {
-                _currentIndex.value = (files.size - 1).coerceAtLeast(0)
+            // Advance index BEFORE loading to avoid replaying the same file
+            val hasNext = _currentIndex.value + 1 < files.size
+            if (hasNext) {
+                _currentIndex.value = _currentIndex.value + 1
+            } else {
+                // No next track available → stop gracefully
+                _isPlaying.value = false
+                updateNotification()
+                return@launch
             }
+            // Now load and play the next file
             loadCurrentFile()
             // Start new file at 0 volume then fade in
             audioManager.setVolume(0f)

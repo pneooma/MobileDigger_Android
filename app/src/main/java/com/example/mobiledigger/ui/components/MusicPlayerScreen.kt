@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.132 ::",
+                            text = ":: v10.134 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -1339,7 +1339,7 @@ viewModel.updateSearchText("")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                    .padding(start = 8.dp, top = 9.dp, end = 8.dp, bottom = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1349,7 +1349,7 @@ viewModel.updateSearchText("")
                         fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp).weight(1f, fill = true)
+                    modifier = Modifier.weight(1f, fill = true)
                 )
                 OutlinedButton(
                     onClick = { isMainPlayerVisible = !isMainPlayerVisible },
@@ -2037,10 +2037,9 @@ viewModel.updateSearchText("")
                                                                 try {
                                                                     // Prevent mini-player flash
                                                                     suppressMiniOnLeftSwipe = true
-                                                                    // Play next after removal animation, then remove and sort previous file
-                                                                    viewModel.playNextAfterRemoval()
-                                                                    delay(80)
+                                                                    // Remove current from list FIRST so index shifts, then advance and sort
                                                                     try { prevFile?.let { viewModel.removeFromCurrentListByUri(it.uri) } } catch (_: Exception) {}
+                                                                    viewModel.playNextAfterRemoval()
                                                                     prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
                                                                 } catch (e: Exception) {
                                                                     CrashLogger.log("Debug", "Error in swipe (main) sort/next: ${e.message}")

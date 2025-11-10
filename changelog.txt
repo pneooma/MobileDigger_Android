@@ -2,6 +2,11 @@ v10.144
 - 🧱 Layout: Only the playlist list scrolls beneath counters/controls; main player and playlist tabs are fixed outside the scroll for a stable header.
 - 📲 Version and UI label updated to 10.144
 
+v10.145
+- 🎛️ Main player: Restored Like/Undo/Dislike, Share, Spectrogram, and Move-to-subfolder controls on the same line as playback controls.
+- 📐 Spacing: Main player is now placed ~10dp below the counters/controls row for a tighter layout.
+- 📲 Version and UI label updated to 10.145
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

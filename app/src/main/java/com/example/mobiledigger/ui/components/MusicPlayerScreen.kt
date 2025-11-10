@@ -962,7 +962,7 @@ fun MusicPlayerScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
         Text(
-                            text = ":: v10.144 ::",
+                            text = ":: v10.145 ::",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
                 lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
@@ -2185,7 +2185,291 @@ viewModel.updateSearchText("")
                                                 }
                                             }
                                         }
-                                        // Right side controls (star rating etc.) remain as in original
+                                        // Right side controls: Dislike / Undo / Like  |  Share / Spectrogram / Move
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // Group 2: Dislike / Undo / Like
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Dislike current
+                                                Card(
+                                                    onClick = {
+                                                        if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                            viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                        } else {
+                                                            viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = NoButton
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.ThumbDown,
+                                                            contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+                                                // Undo
+                                                Card(
+                                                    onClick = { viewModel.undoLastAction() },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = MaterialTheme.colorScheme.secondary
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.AutoMirrored.Filled.Undo,
+                                                            contentDescription = "Undo",
+                                                            tint = MaterialTheme.colorScheme.onSecondary,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+                                                // Like current
+                                                Card(
+                                                    onClick = {
+                                                        if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
+                                                            viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                        } else {
+                                                            viewModel.sortCurrentFile(SortAction.LIKE)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = YesButton
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Favorite,
+                                                            contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Like All Selected" else "Like",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            
+                                            // Group 3: Share / Spectrogram / Move-to-subfolder
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Share to WhatsApp
+                                                Card(
+                                                    onClick = { viewModel.shareToWhatsApp() },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color(0xFF25D366)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Share,
+                                                            contentDescription = "Share to WhatsApp",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+                                                // Spectrogram quick button
+                                                Card(
+                                                    onClick = { showSpectrogram = true },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color(0xFFFFB6C1)
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Column(
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            verticalArrangement = Arrangement.Center
+                                                        ) {
+                                                            Text(
+                                                                text = "Sp",
+                                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    fontSize = 8.sp
+                                                                ),
+                                                                color = Color.White,
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                            Text(
+                                                                text = "eK",
+                                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    fontSize = 8.sp
+                                                                ),
+                                                                color = Color.White,
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                // Move to subfolder (opens dropdown)
+                                                Card(
+                                                    onClick = { showSubfolderDropdown = true },
+                                                    modifier = Modifier.size(38.dp),
+                                                    shape = CircleShape,
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = MaterialTheme.colorScheme.secondary
+                                                    ),
+                                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Folder,
+                                                            contentDescription = "Move to Subfolder",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(19.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Subfolder dropdown menu (context-aware)
+                                            Box {
+                                                DropdownMenu(
+                                                    expanded = showSubfolderDropdown,
+                                                    onDismissRequest = { showSubfolderDropdown = false }
+                                                ) {
+                                                    when (currentPlaylistTab) {
+                                                        PlaylistTab.TODO -> {
+                                                            DropdownMenuItem(
+                                                                text = { Text("Move to Liked Subfolder") },
+                                                                onClick = { 
+                                                                    showSubfolderDropdown = false
+                                                                    viewModel.showSubfolderDialog()
+                                                                }
+                                                            )
+                                                        }
+                                                        PlaylistTab.REJECTED -> {
+                                                            DropdownMenuItem(
+                                                                text = { Text("Move to Liked Subfolder") },
+                                                                onClick = { 
+                                                                    showSubfolderDropdown = false
+                                                                    viewModel.showSubfolderDialog()
+                                                                }
+                                                            )
+                                                        }
+                                                        PlaylistTab.LIKED -> {
+                                                            // For LIKED playlist: show full subfolder management options
+                                                            DropdownMenuItem(
+                                                                text = { 
+                                                                    Row(
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            Icons.Default.Add,
+                                                                            contentDescription = null,
+                                                                            tint = Color(0xFF4CAF50)
+                                                                        )
+                                                                        Text("Add new subfolder")
+                                                                    }
+                                                                },
+                                                                onClick = { 
+                                                                    showSubfolderDropdown = false
+                                                                    viewModel.showSubfolderDialog()
+                                                                }
+                                                            )
+                                                            
+                                                            // Current file's subfolder info (only for liked files)
+                                                            val currentSubfolder = viewModel.getCurrentFileSubfolder()
+                                                            if (currentSubfolder != null) {
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text(
+                                                                            "Remove from \"$currentSubfolder\" to Root",
+                                                                            color = Color(0xFFFF5722)
+                                                                        )
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileFromSubfolderToRoot()
+                                                                    }
+                                                                )
+                                                            }
+                                                            
+                                                            // Available subfolders with file counts
+                                                            availableSubfolders.forEach { subfolder ->
+                                                                val fileCount = subfolderFileCounts[subfolder] ?: 0
+                                                                val isCurrentSubfolder = currentSubfolder == subfolder
+                                                                
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text(
+                                                                            if (isCurrentSubfolder) "Currently in \"$subfolder\" ($fileCount files)"
+                                                                            else "Move to \"$subfolder\" ($fileCount files)"
+                                                                        )
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        if (!isCurrentSubfolder) {
+                                                                            viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                        }
+                                                                    },
+                                                                    enabled = !isCurrentSubfolder
+                                                                )
+                                                            }
+                                                            
+                                                            // Recent subfolders (from history)
+                                                            subfolderHistory.filter { it !in availableSubfolders }.forEach { subfolder ->
+                                                                DropdownMenuItem(
+                                                                    text = { 
+                                                                        Text("Move to \"$subfolder\" (0 files)")
+                                                                    },
+                                                                    onClick = { 
+                                                                        showSubfolderDropdown = false
+                                                                        viewModel.moveCurrentFileToSubfolder(subfolder)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2382,6 +2666,7 @@ viewModel.updateSearchText("")
                     }
                     
                     // Render fixed sections
+                    Spacer(modifier = Modifier.height(10.dp))
                     MainPlayerSection()
                     PlaylistTabsHeader()
                     

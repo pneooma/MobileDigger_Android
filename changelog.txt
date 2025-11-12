@@ -61,6 +61,12 @@ v10.157
 - 🖼️ Spectrogram width: auto-boosted when memory budget allows (up to ~10 px/s, typically doubling width from 5 px/s) while keeping budget guardrails.
 - 📲 Version and UI label updated to 10.157
 
+v10.158
+- 📈 Waveform: removed duration/size-derived timeouts; fixed decode timeout so all files are treated uniformly.
+- 🧠 Spectrogram memory: budget raised to near-maximum (90% of app heap); surfaces allowed up to 80% of that.
+- 📏 Spectrogram width: forced to 1 px/s as requested; no boosting beyond this.
+- 📲 Version and UI label updated to 10.158
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

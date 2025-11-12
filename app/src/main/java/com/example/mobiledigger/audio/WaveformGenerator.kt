@@ -70,10 +70,8 @@ class WaveformGenerator(private val context: Context) {
             
             val mimeType = format.getString(MediaFormat.KEY_MIME) ?: return@withContext null
             
-            // Calculate timeout as half of file duration
-            val durationUs = format.getLong(MediaFormat.KEY_DURATION)
-            val maxGenerationTimeMs = (durationUs / 2_000).toLong()
-            val decodeTimeoutUs = (maxGenerationTimeMs * 1000) / targetSampleCount
+            // Treat all files the same: use fixed decode timeout regardless of duration/size
+            val decodeTimeoutUs = DECODE_TIMEOUT_US
             
             // Create and configure codec
             codec = MediaCodec.createDecoderByType(mimeType)

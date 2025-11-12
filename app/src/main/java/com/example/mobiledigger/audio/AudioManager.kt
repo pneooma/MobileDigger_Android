@@ -135,7 +135,7 @@ class AudioManager(private val context: Context) {
     // User preferences for spectrogram quality
     private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
-    private var temporalResolution: Int = 5 // pixels per second
+    private var temporalResolution: Int = 1 // pixels per second (forced)
     private var isFFmpegPrepared = false
     
     // Spectrogram cache with size limit to prevent memory leaks (EXTREMELY REDUCED for memory safety)
@@ -171,8 +171,9 @@ class AudioManager(private val context: Context) {
     }
     
     fun setTemporalResolution(resolution: Int) {
-        temporalResolution = resolution.coerceIn(3, 10) // Limit between 3-10 pixels/second
-        CrashLogger.log("AudioManager", "Temporal resolution set to: $temporalResolution pixels/second")
+        // Treat all files the same and force minimal width: 1 px/s
+        temporalResolution = 1
+        CrashLogger.log("AudioManager", "Temporal resolution forced to: $temporalResolution pixels/second")
     }
     
     fun getCurrentSettings(): Triple<SpectrogramQuality, FrequencyRange, Int> {
@@ -1868,9 +1869,8 @@ class AudioManager(private val context: Context) {
             val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
             val hasLargeHeap = (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_LARGE_HEAP) != 0
             val heapMb = if (hasLargeHeap) am.largeMemoryClass else am.memoryClass
-            // Use at most 60% of heap but cap absolute budget to 500 MB as requested
-            val safeFraction = (heapMb * 0.6f).toInt()
-            kotlin.math.min(500, safeFraction).coerceAtLeast(64)
+            // Increase budget to maximum (use 90% of available app heap)
+            (heapMb * 0.9f).toInt().coerceAtLeast(64)
         } catch (_: Exception) {
             // Fallback conservative budget
             128
@@ -2927,19 +2927,16 @@ class AudioManager(private val context: Context) {
             // Estimate memory for THREE surfaces: grid (height*width*4), smoothed grid (same), and bitmap (same)
             val budgetMb = getAppMemoryBudgetMb()
             val bytesPerSurface = height * 4 // per pixel, per surface → multiply by width below
-            // Reserve at most 50% of budget for these three surfaces
-            val allowedBytesForSurfaces = (budgetMb * 1024L * 1024L * 0.5).toLong()
+            // Reserve up to 80% of budget for these three surfaces (increased)
+            val allowedBytesForSurfaces = (budgetMb * 1024L * 1024L * 0.8).toLong()
             // Each column consumes: height * 4 bytes per surface × 3 surfaces
             val bytesPerColumn = bytesPerSurface.toLong() * 3L
             // Max width we can afford under the budget
             val maxWidthFromBudget = (allowedBytesForSurfaces / bytesPerColumn).toInt().coerceAtLeast(64)
-            // Desired width from temporal resolution and analysis cap (baseline 5 px/s)
-            val desiredWidth = (pixelsPerSecond * maxAnalysisSeconds)
-            // Allow boosting width when budget allows, up to 10 px/s (at most double baseline)
-            val maxBoostedWidth = 10 * maxAnalysisSeconds
-            val boostedWidth = kotlin.math.min(desiredWidth * 2, maxBoostedWidth)
-            // Final target width: prefer boosted when budget allows, else fall back
-            val targetWidth = minOf(boostedWidth, maxWidthFromBudget).coerceAtLeast(64)
+            // Desired width: force 1 px/s as requested
+            val desiredWidth = (1 * maxAnalysisSeconds)
+            // Final target width strictly from desired width and budget
+            val targetWidth = minOf(desiredWidth, maxWidthFromBudget).coerceAtLeast(1)
 
             // Compute hop from total windows relation and choose grouping g ∈ {1,2,4}
             val L = monoData.size

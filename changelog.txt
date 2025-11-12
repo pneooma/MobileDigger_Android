@@ -67,6 +67,10 @@ v10.158
 - 📏 Spectrogram width: forced to 1 px/s as requested; no boosting beyond this.
 - 📲 Version and UI label updated to 10.158
 
+v10.159
+- 🖼️ Spectrogram: removed time/size analysis cap; width now based on full duration (still memory-budget guarded). Logs updated accordingly.
+- 📲 Version and UI label updated to 10.159
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

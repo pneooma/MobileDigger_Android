@@ -2915,13 +2915,10 @@ class AudioManager(private val context: Context) {
             // Calculate hop size based on pixels vs FFT windows and grouping (1/2/4)
             val pixelsPerSecond = temporalResolution
             
-            // Get actual audio duration for dynamic width calculation (capped)
+            // Get actual audio duration for dynamic width calculation (no artificial cap)
             val audioDurationSeconds = monoData.size / sampleRate.toFloat()
-            // Cap analysis strictly to 30 seconds for spectrogram visualization
             val fileSizeMB = monoData.size * 2 / (1024 * 1024) // Rough estimate in MB
-            val maxAnalysisSeconds = 30
-
-            CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, limiting analysis to ${maxAnalysisSeconds}s for memory management")
+            CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, analyzing full duration (~${String.format(java.util.Locale.US, "%.2f", audioDurationSeconds)}s) subject to memory budget")
             
             // Safety: derive target width from available memory budget instead of fixed cap
             // Estimate memory for THREE surfaces: grid (height*width*4), smoothed grid (same), and bitmap (same)
@@ -2933,8 +2930,8 @@ class AudioManager(private val context: Context) {
             val bytesPerColumn = bytesPerSurface.toLong() * 3L
             // Max width we can afford under the budget
             val maxWidthFromBudget = (allowedBytesForSurfaces / bytesPerColumn).toInt().coerceAtLeast(64)
-            // Desired width: force 1 px/s as requested
-            val desiredWidth = (1 * maxAnalysisSeconds)
+            // Desired width: force 1 px/s as requested, based on full duration
+            val desiredWidth = kotlin.math.max(1, audioDurationSeconds.toInt())
             // Final target width strictly from desired width and budget
             val targetWidth = minOf(desiredWidth, maxWidthFromBudget).coerceAtLeast(1)
 
@@ -2994,7 +2991,7 @@ class AudioManager(private val context: Context) {
                 }
             }
             
-            CrashLogger.log("AudioManager", "Spectrogram dims: duration=${audioDurationSeconds}s, cap=${maxAnalysisSeconds}s, targetWidth=${targetWidth}px, hop=${hopSizeAdjusted}, group=${chosenG}, fftSize=${N}")
+            CrashLogger.log("AudioManager", "Spectrogram dims: duration=${audioDurationSeconds}s, targetWidth=${targetWidth}px, hop=${hopSizeAdjusted}, group=${chosenG}, fftSize=${N}")
             
             // Calculate actual width based on available data
             val maxPossibleWindows = ((L - N) / hopSizeAdjusted + 1).coerceAtLeast(1)
@@ -3069,7 +3066,7 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Target width: $targetWidth, Max possible windows: $maxPossibleWindows, Using: $width windows")
             CrashLogger.log("AudioManager", "Quality: $spectrogramQuality, Frequency: $frequencyRange, Resolution: ${temporalResolution}px/s")
             CrashLogger.log("AudioManager", "Calculated hop size: $hopSizeAdjusted, Window size: $windowSize, FFT size: $fftSize")
-            CrashLogger.log("AudioManager", "Analyzing ${maxAnalysisSeconds} seconds (${maxAnalysisSeconds/60.0} minutes) of audio data")
+            CrashLogger.log("AudioManager", "Analyzing ~${String.format(java.util.Locale.US, "%.2f", audioDurationSeconds)} seconds (${String.format(java.util.Locale.US, "%.2f", (audioDurationSeconds/60.0f))} minutes) of audio data")
             
             // Precompute FFT bin index per frequency row to avoid recomputing inside loops
             val freqBinIndex = IntArray(height) { row ->

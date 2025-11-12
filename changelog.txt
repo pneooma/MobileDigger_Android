@@ -46,6 +46,16 @@ v10.154
 - 🎚️ Mini‑player: Also hidden when main player AND its waveform are visible and the current playing row is not visible (to avoid duplicate waveform/audio controls on screen).
 - 📲 Version and UI label updated to 10.154
 
+v10.155
+- 🧠 Spectrogram memory: increased dynamically up to a safe fraction of device heap. Target width derived from heap budget; fixed 50MB guard replaced with budget-aware cap. Prevents OOM while allowing larger images on high-memory devices.
+- 📲 Version and UI label updated to 10.155
+
+v10.156
+- 🧠 Spectrogram: fixed 500 MB RAM cap (bounded by device heap) and RAM-only processing during FFT; no redundant disk reads in analysis.
+- 📐 Pixels/FFT alignment: added grouping of FFT windows (1/2/4 per pixel) with hop computed from total windows to match target width; overlap kept in a sane range by adapting hop and FFT size.
+- 🖼️ Width still budget-aware; grouped aggregation uses peak-preserving reducer.
+- 📲 Version and UI label updated to 10.156
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

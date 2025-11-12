@@ -1860,6 +1860,24 @@ class AudioManager(private val context: Context) {
     }
     
     /**
+     * Returns an approximate memory budget (in MB) that this process can safely use for spectrogram grids.
+     * Uses a fraction of the app heap (memoryClass / largeMemoryClass) to avoid OOM on high-end devices.
+     */
+    private fun getAppMemoryBudgetMb(): Int {
+        return try {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            val hasLargeHeap = (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_LARGE_HEAP) != 0
+            val heapMb = if (hasLargeHeap) am.largeMemoryClass else am.memoryClass
+            // Use at most 60% of heap but cap absolute budget to 500 MB as requested
+            val safeFraction = (heapMb * 0.6f).toInt()
+            kotlin.math.min(500, safeFraction).coerceAtLeast(64)
+        } catch (_: Exception) {
+            // Fallback conservative budget
+            128
+        }
+    }
+    
+    /**
      * Clean up temporary WAV file after spectrogram generation
      */
     private fun cleanupTempWavFile(tempWavFile: MusicFile) {
@@ -2886,7 +2904,7 @@ class AudioManager(private val context: Context) {
             val (windowSize, height, maxFreq) = getQualityParameters()
             val fftSize = findNextPowerOf2(windowSize)
             
-            // Calculate hop size based on quality settings and available data
+            // Calculate hop size based on pixels vs FFT windows and grouping (1/2/4)
             val pixelsPerSecond = temporalResolution
             
             // Get actual audio duration for dynamic width calculation (capped)
@@ -2897,18 +2915,84 @@ class AudioManager(private val context: Context) {
 
             CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, limiting analysis to ${maxAnalysisSeconds}s for memory management")
             
-            // Safety check: limit target width to prevent memory issues
-            val targetWidth = (pixelsPerSecond * maxAnalysisSeconds).coerceAtMost(2000) // Max 2000 pixels width
-            val hopSize = sampleRate / pixelsPerSecond  // Samples per pixel
-            val hopSizeAdjusted = hopSize.coerceAtLeast(64)  // Minimum hop size for performance
+            // Safety: derive target width from available memory budget instead of fixed cap
+            // Estimate memory for THREE surfaces: grid (height*width*4), smoothed grid (same), and bitmap (same)
+            val budgetMb = getAppMemoryBudgetMb()
+            val bytesPerSurface = height * 4 // per pixel, per surface → multiply by width below
+            // Reserve at most 50% of budget for these three surfaces
+            val allowedBytesForSurfaces = (budgetMb * 1024L * 1024L * 0.5).toLong()
+            // Each column consumes: height * 4 bytes per surface × 3 surfaces
+            val bytesPerColumn = bytesPerSurface.toLong() * 3L
+            // Max width we can afford under the budget
+            val maxWidthFromBudget = (allowedBytesForSurfaces / bytesPerColumn).toInt().coerceAtLeast(64)
+            // Desired width from temporal resolution and analysis cap
+            val desiredWidth = (pixelsPerSecond * maxAnalysisSeconds)
+            // Final target width: bound by both budget and desired width
+            val targetWidth = minOf(desiredWidth, maxWidthFromBudget).coerceAtLeast(64)
+
+            // Compute hop from total windows relation and choose grouping g ∈ {1,2,4}
+            val L = monoData.size
+            var N = fftSize
+            fun computeHopFor(widthPx: Int, g: Int, nWin: Int): Int {
+                // H ≈ floor((L - N) / (widthPx * g)) with guard
+                val denom = (widthPx * g).coerceAtLeast(1)
+                val raw = ((L - N).toLong() / denom.toLong()).toInt()
+                return raw.coerceAtLeast(64)
+            }
+            // Try groupings with preferred overlap N/H in [2,8]
+            val candidatesG = intArrayOf(1, 2, 4)
+            var chosenG = 1
+            var hopSizeAdjusted = 256
+            var estimatedWindows = 1
+            var groupedWidth = targetWidth
+            run {
+                var bestScore = Int.MAX_VALUE
+                for (g in candidatesG) {
+                    val hopCandidate = computeHopFor(targetWidth, g, 0)
+                    if (hopCandidate <= 0) continue
+                    val overlap = if (hopCandidate > 0) N / hopCandidate else Int.MAX_VALUE
+                    val withinOverlap = overlap in 2..8
+                    val Wn = if (hopCandidate > 0) ((L - N) / hopCandidate + 1).coerceAtLeast(1) else 1
+                    val widthG = ((Wn + g - 1) / g).coerceAtLeast(1)
+                    // Penalize overshoot beyond targetWidth and overlap violations
+                    val overshoot = (widthG - targetWidth).coerceAtLeast(0)
+                    val score = overshoot * 1000 + if (withinOverlap) 0 else 100
+                    if (score < bestScore) {
+                        bestScore = score
+                        chosenG = g
+                        hopSizeAdjusted = hopCandidate
+                        estimatedWindows = Wn
+                        groupedWidth = widthG
+                    }
+                }
+                // If still too wide, recompute hop to strictly fit width using chosenG
+                if (groupedWidth > targetWidth) {
+                    hopSizeAdjusted = computeHopFor(targetWidth, chosenG, estimatedWindows)
+                    estimatedWindows = ((L - N) / hopSizeAdjusted + 1).coerceAtLeast(1)
+                    groupedWidth = ((estimatedWindows + chosenG - 1) / chosenG).coerceAtLeast(1)
+                }
+                // Guard overlap extremes by adapting N if necessary
+                val overlapNow = N / hopSizeAdjusted
+                if (overlapNow < 2 && N < 4096) {
+                    N = N * 2
+                    hopSizeAdjusted = computeHopFor(targetWidth, chosenG, 0)
+                    estimatedWindows = ((L - N) / hopSizeAdjusted + 1).coerceAtLeast(1)
+                    groupedWidth = ((estimatedWindows + chosenG - 1) / chosenG).coerceAtLeast(1)
+                } else if (overlapNow > 8 && N > 1024) {
+                    N = kotlin.math.max(1024, N / 2)
+                    hopSizeAdjusted = computeHopFor(targetWidth, chosenG, 0)
+                    estimatedWindows = ((L - N) / hopSizeAdjusted + 1).coerceAtLeast(1)
+                    groupedWidth = ((estimatedWindows + chosenG - 1) / chosenG).coerceAtLeast(1)
+                }
+            }
             
-            CrashLogger.log("AudioManager", "Spectrogram dimensions: audioDuration=${audioDurationSeconds}s, maxAnalysis=${maxAnalysisSeconds}s, targetWidth=${targetWidth}px, hopSize=${hopSizeAdjusted}")
+            CrashLogger.log("AudioManager", "Spectrogram dims: duration=${audioDurationSeconds}s, cap=${maxAnalysisSeconds}s, targetWidth=${targetWidth}px, hop=${hopSizeAdjusted}, group=${chosenG}, fftSize=${N}")
             
             // Calculate actual width based on available data
-            val maxPossibleWindows = (monoData.size - windowSize) / hopSizeAdjusted + 1
-            val width = minOf(maxPossibleWindows, targetWidth)  // Use calculated width
+            val maxPossibleWindows = ((L - N) / hopSizeAdjusted + 1).coerceAtLeast(1)
+            val width = ((maxPossibleWindows + chosenG - 1) / chosenG).coerceAtLeast(1).coerceAtMost(targetWidth)
             
-            CrashLogger.log("AudioManager", "Streaming spectrogram: ${monoData.size} samples, targetWidth=$targetWidth, actualWidth=$width, hopSize=$hopSizeAdjusted")
+            CrashLogger.log("AudioManager", "Streaming spectrogram: ${monoData.size} samples, targetWidth=$targetWidth, actualWidth=$width (grouped), hop=$hopSizeAdjusted, group=$chosenG")
             
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             
@@ -2929,14 +3013,11 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Third quarter range: min=${thirdQuarter.minOrNull()}, max=${thirdQuarter.maxOrNull()}")
             CrashLogger.log("AudioManager", "Last quarter range: min=${lastQuarter.minOrNull()}, max=${lastQuarter.maxOrNull()}")
             
-            // Memory management: check if spectrogram would be too large
-            val estimatedMemoryMB = (width * height * 4) / (1024 * 1024) // 4 bytes per float
-            if (estimatedMemoryMB > 50) {
-                CrashLogger.log("AudioManager", "Spectrogram too large (${estimatedMemoryMB}MB), reducing dimensions")
-                // Reduce width to prevent memory issues
-                val maxWidth = (50 * 1024 * 1024) / (height * 4) // Calculate max width for 50MB
-                val reducedWidth = minOf(width, maxWidth)
-                CrashLogger.log("AudioManager", "Reducing width from $width to $reducedWidth to prevent OOM")
+            // Memory guard: ensure three surfaces fit under budget; otherwise shrink width and restart
+            val totalSurfaceBytes = width.toLong() * bytesPerColumn
+            if (totalSurfaceBytes > allowedBytesForSurfaces) {
+                val reducedWidth = maxWidthFromBudget.coerceAtMost(width)
+                CrashLogger.log("AudioManager", "Spectrogram surfaces exceed budget (${totalSurfaceBytes / (1024 * 1024)}MB > ${(allowedBytesForSurfaces / (1024 * 1024))}MB), reducing width to $reducedWidth")
                 return generateSpectrogramFromAudioData(audioData.copyOfRange(0, (reducedWidth * hopSizeAdjusted).coerceAtMost(audioData.size)))
             }
             
@@ -2979,13 +3060,13 @@ class AudioManager(private val context: Context) {
             CrashLogger.log("AudioManager", "Starting spectrogram generation with ${monoData.size} samples, width=$width, height=$height")
             CrashLogger.log("AudioManager", "Target width: $targetWidth, Max possible windows: $maxPossibleWindows, Using: $width windows")
             CrashLogger.log("AudioManager", "Quality: $spectrogramQuality, Frequency: $frequencyRange, Resolution: ${temporalResolution}px/s")
-            CrashLogger.log("AudioManager", "Calculated hop size: $hopSize, Adjusted hop size: $hopSizeAdjusted, Window size: $windowSize, FFT size: $fftSize")
+            CrashLogger.log("AudioManager", "Calculated hop size: $hopSizeAdjusted, Window size: $windowSize, FFT size: $fftSize")
             CrashLogger.log("AudioManager", "Analyzing ${maxAnalysisSeconds} seconds (${maxAnalysisSeconds/60.0} minutes) of audio data")
             
             // Precompute FFT bin index per frequency row to avoid recomputing inside loops
             val freqBinIndex = IntArray(height) { row ->
                 val targetFreq = (row * maxFreq) / height
-                ((targetFreq * fftSize) / sampleRate).toInt().coerceAtMost(fftSize / 2 - 1)
+                ((targetFreq * N) / sampleRate).toInt().coerceAtMost(N / 2 - 1)
             }
             
             // Parallelize time columns across up to 8 workers (or CPU count)
@@ -2998,33 +3079,49 @@ class AudioManager(private val context: Context) {
                         var timeIndex = w
                         var wMax = 0f
                         while (timeIndex < width) {
-                            val startSample = timeIndex * hopSizeAdjusted
-                            if (startSample >= monoData.size) break
-                            
-                            val window = ShortArray(fftSize)
-                            var wi = 0
-                            while (wi < fftSize) {
-                                val sampleIndex = startSample + wi
-                                window[wi] = if (sampleIndex < monoData.size) monoData[sampleIndex] else 0
-                                wi++
-                            }
-                            val windowedData = applyHanningWindow(window)
-                            val fftResult = performSimpleFFT(windowedData)
-                            
-                            var freqIndex = 0
-                            while (freqIndex < height) {
-                                val fftIndex = freqBinIndex[freqIndex]
-                                val idxRe = fftIndex * 2
-                                val idxIm = idxRe + 1
-                                if (idxIm < fftResult.size) {
-                                    val real = fftResult[idxRe]
-                                    val imag = fftResult[idxIm]
-                                    val magnitude = sqrt(real * real + imag * imag)
-                                    val power = magnitude * magnitude * dynamicRangeAdjustment
-                                    spectrogramData[height - 1 - freqIndex][timeIndex] = power
-                                    if (power > wMax) wMax = power
+                            // Aggregate g windows per pixel using max reducer
+                            val perPixelMax = FloatArray(height) { 0f }
+                            var k = 0
+                            while (k < chosenG) {
+                                val absoluteIndex = timeIndex * chosenG + k
+                                val startSample = absoluteIndex * hopSizeAdjusted
+                                if (startSample >= monoData.size) break
+                                
+                                val window = ShortArray(N)
+                                var wi = 0
+                                while (wi < N) {
+                                    val sampleIndex = startSample + wi
+                                    window[wi] = if (sampleIndex < monoData.size) monoData[sampleIndex] else 0
+                                    wi++
                                 }
-                                freqIndex++
+                                val windowedData = applyHanningWindow(window)
+                                val fftResult = performSimpleFFT(windowedData)
+                                
+                                var freqIndex = 0
+                                while (freqIndex < height) {
+                                    val fftIndex = freqBinIndex[freqIndex]
+                                    val idxRe = fftIndex * 2
+                                    val idxIm = idxRe + 1
+                                    if (idxIm < fftResult.size) {
+                                        val real = fftResult[idxRe]
+                                        val imag = fftResult[idxIm]
+                                        val magnitude = sqrt(real * real + imag * imag)
+                                        val power = magnitude * magnitude * dynamicRangeAdjustment
+                                        if (power > perPixelMax[freqIndex]) {
+                                            perPixelMax[freqIndex] = power
+                                        }
+                                    }
+                                    freqIndex++
+                                }
+                                k++
+                            }
+                            // Write aggregated column and track local max
+                            var freqIndex2 = 0
+                            while (freqIndex2 < height) {
+                                val p = perPixelMax[freqIndex2]
+                                spectrogramData[height - 1 - freqIndex2][timeIndex] = p
+                                if (p > wMax) wMax = p
+                                freqIndex2++
                             }
                             
                             timeIndex += workers

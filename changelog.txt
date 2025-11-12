@@ -56,6 +56,11 @@ v10.156
 - 🖼️ Width still budget-aware; grouped aggregation uses peak-preserving reducer.
 - 📲 Version and UI label updated to 10.156
 
+v10.157
+- 🧾 AIFF path hardened: skip MediaMetadataRetriever for AIFF/aif; parse directly from stream to avoid device-specific retriever errors during spectrogram.
+- 🖼️ Spectrogram width: auto-boosted when memory budget allows (up to ~10 px/s, typically doubling width from 5 px/s) while keeping budget guardrails.
+- 📲 Version and UI label updated to 10.157
+
 v10.88
 - ✨ Header buttons are now equally spaced.
 - 💅 The "Bulk Reject" button is now 1.5 times taller than the "Rename" and "Multi-select" buttons.

@@ -2148,16 +2148,24 @@ class AudioManager(private val context: Context) {
     private fun extractAudioDataWithMemoryManagement(uri: Uri): ShortArray? {
         return try {
             // Check file size first for memory management
-            val durationMs = try {
-            val retriever = android.media.MediaMetadataRetriever()
-            retriever.setDataSource(context, uri)
-            val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
-            retriever.release()
-            durationStr?.toLongOrNull() ?: 0L
-        } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Failed to extract duration", e)
-            0L
-        }
+            val uriStr = uri.toString().lowercase()
+            val isAiff = uriStr.endsWith(".aif") || uriStr.endsWith(".aiff")
+            val durationMs = if (isAiff) {
+                // Skip MediaMetadataRetriever for AIFF to avoid device-specific errors; we'll parse directly
+                CrashLogger.log("AudioManager", "AIFF detected, skipping MediaMetadataRetriever for duration")
+                0L
+            } else {
+                try {
+                    val retriever = android.media.MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    retriever.release()
+                    durationStr?.toLongOrNull() ?: 0L
+                } catch (_: Exception) {
+                    // Guard: do not spam stack traces; proceed without duration
+                    0L
+                }
+            }
             
             val durationSeconds = durationMs / 1000f
             val estimatedSamples = (durationSeconds * 44100).toInt()
@@ -2925,10 +2933,13 @@ class AudioManager(private val context: Context) {
             val bytesPerColumn = bytesPerSurface.toLong() * 3L
             // Max width we can afford under the budget
             val maxWidthFromBudget = (allowedBytesForSurfaces / bytesPerColumn).toInt().coerceAtLeast(64)
-            // Desired width from temporal resolution and analysis cap
+            // Desired width from temporal resolution and analysis cap (baseline 5 px/s)
             val desiredWidth = (pixelsPerSecond * maxAnalysisSeconds)
-            // Final target width: bound by both budget and desired width
-            val targetWidth = minOf(desiredWidth, maxWidthFromBudget).coerceAtLeast(64)
+            // Allow boosting width when budget allows, up to 10 px/s (at most double baseline)
+            val maxBoostedWidth = 10 * maxAnalysisSeconds
+            val boostedWidth = kotlin.math.min(desiredWidth * 2, maxBoostedWidth)
+            // Final target width: prefer boosted when budget allows, else fall back
+            val targetWidth = minOf(boostedWidth, maxWidthFromBudget).coerceAtLeast(64)
 
             // Compute hop from total windows relation and choose grouping g ∈ {1,2,4}
             val L = monoData.size

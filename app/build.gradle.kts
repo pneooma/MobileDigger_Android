@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-         versionCode = 1154
-         versionName = "10.154"
+         versionCode = 1109
+         versionName = "11.09"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -69,6 +69,9 @@ dependencies {
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.runtime:runtime-livedata")
     
+    // Google Fonts for Compose
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
+
     // File operations and permissions
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.2")

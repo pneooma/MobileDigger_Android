@@ -85,20 +85,6 @@ data class SearchState(
 )
 
 /**
- * Represents the current audio analysis state
- */
-data class AudioAnalysisState(
-    val isAnalyzing: Boolean = false,
-    val analysisProgress: Float = 0f,
-    val currentAnalysisType: AnalysisType? = null,
-    val analysisResults: Map<String, Any> = emptyMap(),
-    val isBPMDetected: Boolean = false,
-    val detectedBPM: Float = 0f,
-    val detectedKey: String = "",
-    val confidence: Float = 0f
-)
-
-/**
  * Represents the current file management state
  */
 data class FileManagementState(
@@ -146,8 +132,6 @@ enum class RepeatMode {
  */
 enum class AnalysisType {
     SPECTROGRAM,
-    BPM,
-    KEY,
     WAVEFORM,
     FULL_ANALYSIS
 }

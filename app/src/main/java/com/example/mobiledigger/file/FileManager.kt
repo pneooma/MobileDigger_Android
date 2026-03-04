@@ -12,6 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import java.io.File
+import java.io.FileOutputStream
+import java.util.zip.ZipInputStream
 import android.util.Log
 import android.provider.DocumentsContract
 import android.content.ContentResolver
@@ -197,6 +199,7 @@ class FileManager(private val context: Context) {
             contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
                 while (cursor.moveToNext()) {
                     val displayName = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME))
+                    if (isHiddenOrTrashed(displayName)) continue
                     val docId = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID))
                     val mimeType = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE))
                     val childUri = DocumentsContract.buildDocumentUriUsingTree(directoryUri, docId)
@@ -309,6 +312,7 @@ class FileManager(private val context: Context) {
             }
             
             for (file in files) {
+                if (isHiddenOrTrashed(file.name)) continue
                 if (file.isDirectory) {
                     // Recursively scan subdirectories
                     scanDirectoryRecursive(rootFolder, file, musicFiles)
@@ -359,6 +363,75 @@ class FileManager(private val context: Context) {
         if (fileName == null) return false
         val extension = fileName.substringAfterLast('.', "").lowercase()
         return musicExtensions.contains(extension)
+    }
+
+    /**
+     * Scan a ZIP archive for music files. Files are listed but not extracted.
+     * Use extractZipEntry() to extract individual files on demand.
+     */
+    suspend fun scanZipForMusicFiles(zipUri: Uri): List<MusicFile> = withContext(Dispatchers.IO) {
+        val musicFiles = mutableListOf<MusicFile>()
+        try {
+            contentResolver.openInputStream(zipUri)?.use { inputStream ->
+                ZipInputStream(inputStream).use { zis ->
+                    var entry = zis.nextEntry
+                    while (entry != null) {
+                        if (!entry.isDirectory) {
+                            val name = entry.name.substringAfterLast('/')
+                            if (isMusicFile(name) && !isHiddenOrTrashed(name)) {
+                                val subfolder = entry.name.substringBeforeLast('/', "").ifEmpty { null }
+                                musicFiles.add(
+                                    MusicFile(
+                                        uri = Uri.parse("zip://${zipUri}#${entry.name}"),
+                                        name = name,
+                                        duration = 0L,
+                                        size = entry.size.coerceAtLeast(0L),
+                                        subfolder = subfolder
+                                    )
+                                )
+                            }
+                        }
+                        zis.closeEntry()
+                        entry = zis.nextEntry
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error scanning ZIP archive", e)
+        }
+        musicFiles
+    }
+
+    /**
+     * Extract a single entry from a ZIP to the app cache directory.
+     * Returns the URI of the extracted file, or null on failure.
+     */
+    suspend fun extractZipEntry(zipUri: Uri, entryPath: String): Uri? = withContext(Dispatchers.IO) {
+        try {
+            val cacheDir = File(context.cacheDir, "zip_extracted")
+            if (!cacheDir.exists()) cacheDir.mkdirs()
+            val outFile = File(cacheDir, entryPath.substringAfterLast('/'))
+
+            contentResolver.openInputStream(zipUri)?.use { inputStream ->
+                ZipInputStream(inputStream).use { zis ->
+                    var entry = zis.nextEntry
+                    while (entry != null) {
+                        if (entry.name == entryPath) {
+                            FileOutputStream(outFile).use { fos ->
+                                zis.copyTo(fos)
+                            }
+                            return@withContext Uri.fromFile(outFile)
+                        }
+                        zis.closeEntry()
+                        entry = zis.nextEntry
+                    }
+                }
+            }
+            null
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error extracting ZIP entry: $entryPath", e)
+            null
+        }
     }
 
     private fun isHiddenOrTrashed(name: String?): Boolean {

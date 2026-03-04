@@ -1,207 +1,116 @@
 package com.example.mobiledigger.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.mobiledigger.ui.theme.VisualSettings
 import com.example.mobiledigger.ui.theme.VisualSettingsManager
-import com.example.mobiledigger.utils.HapticFeedback
-import com.example.mobiledigger.ui.theme.HapticFeedbackType
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Undo
+import com.example.mobiledigger.ui.theme.WaveformAnimationType
+import com.example.mobiledigger.ui.theme.ThemeManager
+import com.example.mobiledigger.ui.theme.appFontFamilies
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VisualSettingsDialog(
+fun SettingsDialog(
     visualSettingsManager: VisualSettingsManager,
+    themeManager: ThemeManager,
     onDismiss: () -> Unit
 ) {
     val settings by visualSettingsManager.settings
     var currentSettings by remember { mutableStateOf(settings) }
-    var showColorPicker by remember { mutableStateOf<String?>(null) }
-    val hapticFeedback = HapticFeedback.rememberHapticFeedback(currentSettings) // Pass currentSettings
-    
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabs = listOf("General", "Visual", "About")
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
-            dismissOnClickOutside = true
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
         )
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f)
-                .padding(16.dp),
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.88f),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // Scrollable content
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Title
+                Text(
+                    "Settings",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth().padding(16.dp, 12.dp, 16.dp, 0.dp),
+                    textAlign = TextAlign.Center
+                )
+
+                // Tab row
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = { Text(title, fontSize = 13.sp, maxLines = 1) }
+                        )
+                    }
+                }
+
+                // Tab content
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Visual Settings",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    TextButton(onClick = onDismiss) {
-                        Text("Close")
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Waveform Settings Section (modified)
-                VisualSettingsSection(
-                    title = "Waveform",
-                    content = {
-                        SliderSettingItem(
-                            label = "Main Waveform Height",
-                            value = currentSettings.waveformHeight,
-                            range = 40f..225f,
-                            onValueChange = { currentSettings = currentSettings.copy(waveformHeight = it) },
-                            onReset = { currentSettings = currentSettings.copy(waveformHeight = com.example.mobiledigger.ui.theme.VisualSettings().waveformHeight) }
-                        )
-                        SliderSettingItem(
-                            label = "Mini Waveform Height",
-                            value = currentSettings.miniWaveformHeight,
-                            range = 30f..195f,
-                            onValueChange = { currentSettings = currentSettings.copy(miniWaveformHeight = it) },
-                            onReset = { currentSettings = currentSettings.copy(miniWaveformHeight = com.example.mobiledigger.ui.theme.VisualSettings().miniWaveformHeight) }
-                        )
-                        SliderSettingItem(
-                            label = "Row Waveform Height",
-                            value = currentSettings.rowWaveformHeight,
-                            range = 30f..200f,
-                            onValueChange = { currentSettings = currentSettings.copy(rowWaveformHeight = it) },
-                            onReset = { currentSettings = currentSettings.copy(rowWaveformHeight = com.example.mobiledigger.ui.theme.VisualSettings().rowWaveformHeight) }
-                        )
-                        // Removed Bar Width
-                        // Removed Bar Gap
-                        // Removed Waveform Opacity
-                        // Removed Waveform Color
-                        // Removed Played Waveform Color
-                    }
-                )
-                
-                // Animation Settings Section
-                VisualSettingsSection(
-                    title = "Animation",
-                    content = {
-                        SwitchSettingItem(
-                            label = "Enable Animations",
-                            checked = currentSettings.enableAnimations,
-                            onCheckedChange = { currentSettings = currentSettings.copy(enableAnimations = it) },
-                            onReset = { currentSettings = currentSettings.copy(enableAnimations = settings.enableAnimations) }
-                        )
-                        SliderSettingItem(
-                            label = "Animation Speed",
-                            value = currentSettings.animationSpeed,
-                            range = 0.5f..2.0f,
-                            onValueChange = { currentSettings = currentSettings.copy(animationSpeed = it) },
-                            onReset = { currentSettings = currentSettings.copy(animationSpeed = settings.animationSpeed) }
-                        )
-                        SwitchSettingItem(
-                            label = "Haptic Feedback",
-                            checked = currentSettings.enableHapticFeedback,
-                            onCheckedChange = { currentSettings = currentSettings.copy(enableHapticFeedback = it) },
-                            onReset = { currentSettings = currentSettings.copy(enableHapticFeedback = settings.enableHapticFeedback) }
-                        )
-                        // New Haptic Feedback Type Dropdown
-                        if (currentSettings.enableHapticFeedback) {
-                            DropdownSettingItem(
-                                label = "Haptic Feedback Type",
-                                value = currentSettings.hapticFeedbackType.name,
-                                options = HapticFeedbackType.entries.map { it.name },
-                                onValueChange = { newType ->
-                                    currentSettings = currentSettings.copy(hapticFeedbackType = HapticFeedbackType.valueOf(newType))
-                                },
-                                onReset = { currentSettings = currentSettings.copy(hapticFeedbackType = settings.hapticFeedbackType) }
-                            )
-                            // New Haptic Feedback Intensity Slider
-                            SliderSettingItem(
-                                label = "Haptic Feedback Intensity",
-                                value = currentSettings.hapticFeedbackIntensity,
-                                range = 0.0f..1.0f,
-                                onValueChange = { currentSettings = currentSettings.copy(hapticFeedbackIntensity = it) },
-                                onReset = { currentSettings = currentSettings.copy(hapticFeedbackIntensity = settings.hapticFeedbackIntensity) }
-                            )
-                        }
-                    }
-                )
+                    Spacer(Modifier.height(8.dp))
 
-                // Behavior settings moved to main Settings card
-                
+                    when (selectedTab) {
+                        0 -> GeneralTab(currentSettings, themeManager) { currentSettings = it }
+                        1 -> VisualTab(currentSettings) { currentSettings = it }
+                        2 -> AboutTab()
+                    }
+
+                    Spacer(Modifier.height(8.dp))
                 }
-                
-                // Fixed action buttons at bottom
+
+                // Bottom buttons
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                        .background(
-                            MaterialTheme.colorScheme.surface,
-                            RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
-                        ),
+                        .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    TextButton(
-                        onClick = {
-                            hapticFeedback() // Simplified call
-                            currentSettings = VisualSettings()
-                        }
-                    ) {
-                        Text("Reset to Defaults")
+                    TextButton(onClick = { currentSettings = VisualSettings() }) {
+                        Text("Reset", fontSize = 12.sp)
                     }
-                    
                     Row {
-                        TextButton(onClick = {
-                            hapticFeedback() // Simplified call
+                        TextButton(onClick = onDismiss) { Text("Cancel", fontSize = 12.sp) }
+                        Spacer(Modifier.width(6.dp))
+                        Button(onClick = {
+                            visualSettingsManager.updateSettings(currentSettings)
                             onDismiss()
-                        }) {
-                            Text("Cancel")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                hapticFeedback() // Simplified call
-                                visualSettingsManager.updateSettings(currentSettings)
-                                onDismiss()
-                            }
-                        ) {
-                            Text("Apply")
-                        }
+                        }) { Text("Apply", fontSize = 12.sp) }
                     }
                 }
             }
@@ -210,148 +119,237 @@ fun VisualSettingsDialog(
 }
 
 @Composable
-private fun VisualSettingsSection(
-    title: String,
-    content: @Composable () -> Unit
+private fun GeneralTab(
+    settings: VisualSettings,
+    themeManager: ThemeManager,
+    onUpdate: (VisualSettings) -> Unit
 ) {
-    Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-        content()
-        Spacer(modifier = Modifier.height(16.dp))
+    // Dark Mode
+    SettingsSwitch("Dark Mode", themeManager.isDarkMode.value) {
+        themeManager.toggleDarkMode()
+    }
+
+    // Enable Theme
+    SettingsSwitch("Enable Theme", !themeManager.useDynamicColor.value) {
+        themeManager.toggleDynamicColor()
+    }
+
+    // Theme selector
+    val selectedTheme by themeManager.selectedTheme
+    var showThemePicker by remember { mutableStateOf(false) }
+    Button(
+        onClick = { showThemePicker = !showThemePicker },
+        modifier = Modifier.fillMaxWidth().height(36.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        contentPadding = PaddingValues(horizontal = 12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(14.dp).background(selectedTheme.primary, CircleShape))
+            Spacer(Modifier.width(8.dp))
+            Text("Theme: ${selectedTheme.name}", fontSize = 13.sp)
+            Spacer(Modifier.weight(1f))
+            Text(if (showThemePicker) "▲" else "▼", fontSize = 12.sp)
+        }
+    }
+    if (showThemePicker) {
+        val themes = themeManager.availableThemes
+        themes.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                row.forEach { theme ->
+                    val isSel = theme.name == selectedTheme.name
+                    OutlinedButton(
+                        onClick = { themeManager.selectTheme(theme.name) },
+                        modifier = Modifier.weight(1f).height(30.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            if (isSel) 2.dp else 1.dp,
+                            if (isSel) theme.primary else MaterialTheme.colorScheme.outline
+                        ),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                    ) {
+                        Box(Modifier.size(10.dp).background(theme.primary, CircleShape))
+                        Spacer(Modifier.width(4.dp))
+                        Text(theme.name, fontSize = 9.sp, maxLines = 1, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal)
+                    }
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+
+    Spacer(Modifier.height(8.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(8.dp))
+
+    // Behavior
+    Text("Behavior", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+
+    SettingsSwitch("Auto-play first track after selecting source", settings.autoPlayFirstAfterSelect) {
+        onUpdate(settings.copy(autoPlayFirstAfterSelect = it))
+    }
+    SettingsSwitch("Auto-scan last source on start", settings.autoScanLastSourceOnStart) {
+        onUpdate(settings.copy(autoScanLastSourceOnStart = it))
+    }
+    SettingsSwitch("Show toolbar icon labels", settings.showToolbarLabels) {
+        onUpdate(settings.copy(showToolbarLabels = it))
+    }
+
+    Spacer(Modifier.height(8.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(8.dp))
+
+    // Font family
+    Text("Font", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+    val fontNames = appFontFamilies.keys.toList()
+    fontNames.chunked(3).forEach { rowFonts ->
+        Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            rowFonts.forEach { fontName ->
+                val isSelected = fontName == settings.fontFamily
+                OutlinedButton(
+                    onClick = { onUpdate(settings.copy(fontFamily = fontName)) },
+                    modifier = Modifier.weight(1f).height(30.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        if (isSelected) 2.dp else 1.dp,
+                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                    ),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                ) {
+                    Text(fontName, fontSize = 9.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
+                }
+            }
+            repeat(3 - rowFonts.size) { Spacer(Modifier.weight(1f)) }
+        }
     }
 }
 
 @Composable
-private fun SliderSettingItem(
-    label: String,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    onValueChange: (Float) -> Unit,
-    onReset: () -> Unit
+private fun VisualTab(
+    settings: VisualSettings,
+    onUpdate: (VisualSettings) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
+    // Waveform Heights
+    Text("Waveform", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+
+    CompactSlider("Main Height", settings.waveformHeight, 40f..225f) {
+        onUpdate(settings.copy(waveformHeight = it))
+    }
+    CompactSlider("Mini Height", settings.miniWaveformHeight, 30f..195f) {
+        onUpdate(settings.copy(miniWaveformHeight = it))
+    }
+    CompactSlider("Row Height", settings.rowWaveformHeight, 30f..200f) {
+        onUpdate(settings.copy(rowWaveformHeight = it))
+    }
+
+    Spacer(Modifier.height(12.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(8.dp))
+
+    // Animations
+    Text("Animations", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+
+    SettingsSwitch("Enable Animations", settings.enableAnimations) {
+        onUpdate(settings.copy(enableAnimations = it))
+    }
+
+    // Waveform animation type
+    Text("Waveform Show/Hide Animation:", style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(4.dp))
+    val animTypes = WaveformAnimationType.entries
+    val animLabels = mapOf(
+        WaveformAnimationType.EXPAND to "Expand",
+        WaveformAnimationType.SLIDE_UP to "Slide Up",
+        WaveformAnimationType.SLIDE_DOWN to "Slide Down",
+        WaveformAnimationType.FADE to "Fade",
+        WaveformAnimationType.SCALE to "Scale",
+        WaveformAnimationType.RANDOM to "Random",
+        WaveformAnimationType.NONE to "None"
+    )
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        animTypes.forEach { type ->
+            val isSelected = type == settings.waveformAnimationType
+            OutlinedButton(
+                onClick = { onUpdate(settings.copy(waveformAnimationType = type)) },
+                modifier = Modifier.height(28.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    if (isSelected) 2.dp else 1.dp,
+                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                ),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    animLabels[type] ?: type.name,
+                    fontSize = 10.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                )
+            }
+        }
+    }
+
+    Spacer(Modifier.height(8.dp))
+
+    CompactSlider("Animation Speed", settings.animationSpeed, 0.05f..3.0f) {
+        onUpdate(settings.copy(animationSpeed = it))
+    }
+
+    Spacer(Modifier.height(12.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(8.dp))
+
+    // Mini Player
+    Text("Mini Player", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+    SettingsSwitch("Enable Mini Player", settings.enableMiniPlayer) {
+        onUpdate(settings.copy(enableMiniPlayer = it))
+    }
+}
+
+@Composable
+private fun AboutTab() {
+    Spacer(Modifier.height(16.dp))
+    Text("MobileDigger", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+    Spacer(Modifier.height(8.dp))
+    Text("groovy's child", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(16.dp))
+    Text("Gestures", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+    Text("• Swipe card left to reject", style = MaterialTheme.typography.bodySmall)
+    Text("• Swipe card right to like", style = MaterialTheme.typography.bodySmall)
+    Text("• Tap and drag waveform to seek", style = MaterialTheme.typography.bodySmall)
+    Text("• Long-press filename to rename", style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 2)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun CompactSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, onValueChange: (Float) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "%.1f".format(value),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                IconButton(onClick = onReset) {
-                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
-                }
-            }
+            Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+            Text(if (value < 10f) "%.1f".format(value) else "%.0f".format(value), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
         }
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = range,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(40.dp)
         )
-    }
-}
-
-@Composable
-private fun SwitchSettingItem(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    onReset: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 8.dp),
-            lineHeight = 18.sp,
-            maxLines = 2
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
-            IconButton(onClick = onReset) {
-                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DropdownSettingItem(
-    label: String,
-    value: String,
-    options: List<String>,
-    onValueChange: (String) -> Unit,
-    onReset: () -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-            )
-            
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            onValueChange(option)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
     }
 }

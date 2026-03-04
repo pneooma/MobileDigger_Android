@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
@@ -50,6 +52,15 @@ enum class PlaylistTab {
     TODO, LIKED, REJECTED
 }
 
+enum class SortField {
+    NAME, FILE_SIZE, DATE_ADDED, DURATION, EXTENSION, SUBFOLDER, RANDOM
+}
+
+data class SortOrder(
+    val field: SortField = SortField.NAME,
+    val ascending: Boolean = true
+)
+
 class MusicViewModel(application: Application) : AndroidViewModel(application), AudioManager.PlaybackCompletionListener {
     
     val audioManager = AudioManager(application)
@@ -59,7 +70,54 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     val themeManager = settingsRepository.themeManager
     val visualSettingsManager = settingsRepository.visualSettingsManager
     private val context = application.applicationContext
-    
+
+    // Audio focus handling — pause when another app plays, resume when it stops
+    private val systemAudioManager = application.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+    private var pausedByAudioFocusLoss = false
+    private val audioFocusListener = android.media.AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            android.media.AudioManager.AUDIOFOCUS_LOSS,
+            android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                if (_isPlaying.value) {
+                    audioManager.pause()
+                    _isPlaying.value = false
+                    pausedByAudioFocusLoss = true
+                    updateNotification()
+                    CrashLogger.log("MusicViewModel", "Paused due to audio focus loss (transient=${ focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT })")
+                }
+            }
+            android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                // Could duck volume, but for a music triage app just pause
+                if (_isPlaying.value) {
+                    audioManager.pause()
+                    _isPlaying.value = false
+                    pausedByAudioFocusLoss = true
+                    updateNotification()
+                    CrashLogger.log("MusicViewModel", "Paused due to audio focus duck request")
+                }
+            }
+            android.media.AudioManager.AUDIOFOCUS_GAIN -> {
+                if (pausedByAudioFocusLoss) {
+                    audioManager.resume()
+                    _isPlaying.value = true
+                    pausedByAudioFocusLoss = false
+                    updateNotification()
+                    CrashLogger.log("MusicViewModel", "Resumed after audio focus gain")
+                }
+            }
+        }
+    }
+    private val audioFocusRequest: AudioFocusRequest = AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+        )
+        .setOnAudioFocusChangeListener(audioFocusListener)
+        .setWillPauseWhenDucked(true)
+        .build()
+
     // PHASE 3: Centralized error handling
     private val errorHandler = com.example.mobiledigger.util.ErrorHandler.createHandler("MusicViewModel") { error ->
         _errorMessage.value = error
@@ -120,6 +178,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_DISLIKE")
                     sortCurrentFile(SortAction.DISLIKE)
                 }
+                "com.example.mobiledigger.ACTION_SEEK" -> {
+                    val pos = intent.getLongExtra("position", 0L)
+                    seekTo(pos)
+                }
             }
         }
     }
@@ -142,6 +204,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private val _duration = MutableStateFlow(0L)
     val duration: StateFlow<Long> = _duration.asStateFlow()
+
+
     // UI removal animation support: URIs fading out before actual removal
     private val _removingUris = MutableStateFlow<Set<Uri>>(emptySet())
     val removingUris: StateFlow<Set<Uri>> = _removingUris.asStateFlow()
@@ -288,6 +352,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _likedFilter = MutableStateFlow<List<String>?>(null)
     val likedFilter: StateFlow<List<String>?> = _likedFilter.asStateFlow()
     
+    // Sort & filter
+    private val _sortOrder = MutableStateFlow<SortOrder?>(null)
+    val sortOrder: StateFlow<SortOrder?> = _sortOrder.asStateFlow()
+
+    private val _losslessOnly = MutableStateFlow(false)
+    val losslessOnly: StateFlow<Boolean> = _losslessOnly.asStateFlow()
+
     // Current file for notification
     private var currentFile: MusicFile? = null
     
@@ -302,18 +373,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _subfolders = MutableStateFlow<List<Uri>>(emptyList())
     val subfolders: StateFlow<List<Uri>> = _subfolders.asStateFlow()
     
-    // Computed StateFlow for current playlist files - reactive to tab changes
+    // Lossless extensions for filter
+    private val losslessExtensions = setOf("flac", "wav", "aiff", "aif", "alac", "ape", "dsd", "dsf", "dff", "wv")
+
+    // Computed StateFlow for current playlist files - reactive to tab changes, sort, and filter
     val currentPlaylistFiles: StateFlow<List<MusicFile>> = combine(
-        _musicFiles,
-        _likedFiles,
-        _rejectedFiles,
-        _currentPlaylistTab
-    ) { musicFiles, likedFiles, rejectedFiles, currentTab ->
-        when (currentTab) {
-            PlaylistTab.TODO -> musicFiles
-            PlaylistTab.LIKED -> likedFiles
-            PlaylistTab.REJECTED -> rejectedFiles
+        combine(_musicFiles, _likedFiles, _rejectedFiles, _currentPlaylistTab) { musicFiles, likedFiles, rejectedFiles, currentTab ->
+            when (currentTab) {
+                PlaylistTab.TODO -> musicFiles
+                PlaylistTab.LIKED -> likedFiles
+                PlaylistTab.REJECTED -> rejectedFiles
+            }
+        },
+        _sortOrder,
+        _losslessOnly
+    ) { files, sort, lossless ->
+        var result = files
+        if (lossless) {
+            result = result.filter { f ->
+                val ext = f.name.substringAfterLast('.', "").lowercase()
+                ext in losslessExtensions
+            }
         }
+        if (sort != null) {
+            result = when (sort.field) {
+                SortField.NAME -> if (sort.ascending) result.sortedBy { it.name.lowercase() } else result.sortedByDescending { it.name.lowercase() }
+                SortField.FILE_SIZE -> if (sort.ascending) result.sortedBy { it.size } else result.sortedByDescending { it.size }
+                SortField.DATE_ADDED -> if (sort.ascending) result.sortedBy { it.dateAdded } else result.sortedByDescending { it.dateAdded }
+                SortField.DURATION -> if (sort.ascending) result.sortedBy { it.duration } else result.sortedByDescending { it.duration }
+                SortField.EXTENSION -> if (sort.ascending) result.sortedBy { it.name.substringAfterLast('.', "").lowercase() } else result.sortedByDescending { it.name.substringAfterLast('.', "").lowercase() }
+                SortField.SUBFOLDER -> if (sort.ascending) result.sortedBy { (it.subfolder ?: "").lowercase() } else result.sortedByDescending { (it.subfolder ?: "").lowercase() }
+                SortField.RANDOM -> result.shuffled()
+            }
+        }
+        result
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -352,6 +445,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // Recent source folders (URIs as strings), max 10
     private val _recentSourceUris = MutableStateFlow<List<String>>(emptyList())
     val recentSourceUris: StateFlow<List<String>> = _recentSourceUris.asStateFlow()
+
+    // Recent destination folders (URIs as strings), max 10
+    private val _recentDestinationUris = MutableStateFlow<List<String>>(emptyList())
+    val recentDestinationUris: StateFlow<List<String>> = _recentDestinationUris.asStateFlow()
     
     // Tracking played files with no action in current session
     private val _playedButNotActioned = MutableStateFlow<Set<Uri>>(emptySet())
@@ -390,8 +487,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // PHASE 5: Start performance stat logging
             startPerformanceStatLogging()
 
-            // Load recent sources from preferences
+            // Load recent sources and destinations from preferences
             loadRecentSources()
+            loadRecentDestinations()
             
             // Start service and register receiver in background to avoid blocking
             viewModelScope.launch(Dispatchers.IO) {
@@ -524,6 +622,64 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         saveRecentSources()
     }
 
+    fun selectZipSource(zipUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _isLoading.value = true
+                val files = fileManager.scanZipForMusicFiles(zipUri)
+                withContext(Dispatchers.Main) {
+                    _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
+                    _currentPlaylistTab.value = PlaylistTab.TODO
+                    _currentIndex.value = 0
+                    _isLoading.value = false
+                    CrashLogger.log("MusicViewModel", "Loaded ${files.size} files from ZIP archive")
+                }
+            } catch (e: Exception) {
+                _isLoading.value = false
+                handleError("selectZipSource", e)
+            }
+        }
+    }
+
+    private fun loadRecentDestinations() {
+        try {
+            val prefs = getApplication<Application>().getSharedPreferences("recent_destinations", Context.MODE_PRIVATE)
+            val csv = prefs.getString("uris", "") ?: ""
+            val list = if (csv.isNotBlank()) csv.split("|").filter { it.isNotBlank() } else emptyList()
+            _recentDestinationUris.value = list.take(10)
+        } catch (_: Exception) {}
+    }
+
+    private fun saveRecentDestinations() {
+        try {
+            val prefs = getApplication<Application>().getSharedPreferences("recent_destinations", Context.MODE_PRIVATE)
+            prefs.edit().putString("uris", _recentDestinationUris.value.take(10).joinToString("|")).apply()
+        } catch (_: Exception) {}
+    }
+
+    private fun addRecentDestination(uri: Uri) {
+        val s = uri.toString()
+        val current = _recentDestinationUris.value.toMutableList()
+        current.remove(s)
+        current.add(0, s)
+        _recentDestinationUris.value = current.take(10)
+        saveRecentDestinations()
+    }
+
+    fun removeRecentDestination(uriString: String) {
+        val current = _recentDestinationUris.value.toMutableList()
+        current.remove(uriString)
+        _recentDestinationUris.value = current
+        saveRecentDestinations()
+    }
+
+    fun removeRecentSource(uriString: String) {
+        val current = _recentSourceUris.value.toMutableList()
+        current.remove(uriString)
+        _recentSourceUris.value = current
+        saveRecentSources()
+    }
+
     // Set source folder preference only (do not rescan yet)
     fun setSourceFolderPreference(uri: Uri) {
         try {
@@ -639,6 +795,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _destinationFolder.value = fileManager.getDestinationFolder()
                 // Remember user's like/dislike root
                 preferences.setDestinationRootUri(uri.toString())
+                addRecentDestination(uri)
                 CrashLogger.log("MusicViewModel", "Saved destination folder URI: $uri")
                 // Set crash logger destination
                 CrashLogger.setDestinationFolder(getApplication(), uri)
@@ -923,9 +1080,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         if (_isPlaying.value) {
             audioManager.pause()
             _isPlaying.value = false
+            pausedByAudioFocusLoss = false
+            systemAudioManager.abandonAudioFocusRequest(audioFocusRequest)
         } else {
-            audioManager.resume()
-            _isPlaying.value = true
+            val result = systemAudioManager.requestAudioFocus(audioFocusRequest)
+            if (result == android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                audioManager.resume()
+                _isPlaying.value = true
+                pausedByAudioFocusLoss = false
+            }
         }
         updateNotification()
     }
@@ -1365,6 +1528,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 return
             }
             
+            // Request audio focus before playing
+            systemAudioManager.requestAudioFocus(audioFocusRequest)
+            pausedByAudioFocusLoss = false
+
             // Play off main thread; coalesce UI updates
             CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - calling audioManager.playFile() [IO]")
             viewModelScope.launch(Dispatchers.IO) {
@@ -1413,6 +1580,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         _duration.value = currentFile.duration
                         CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - using existing duration: ${currentFile.duration}ms")
                     }
+                }
+                // Extract bitrate if not yet known
+                if (currentFile.bitrate == 0) {
+                    try {
+                        val bitrate = extractBitrate(currentFile)
+                        if (bitrate > 0) {
+                            withContext(Dispatchers.Main) { updateFileBitrate(currentFile, bitrate) }
+                        }
+                    } catch (_: Exception) {}
                 }
                 // Preload next song (guarded)
                 withContext(Dispatchers.Main) {
@@ -1503,6 +1679,32 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
+
+    private fun extractBitrate(file: MusicFile): Int {
+        return try {
+            val retriever = android.media.MediaMetadataRetriever()
+            try {
+                retriever.setDataSource(context, file.uri)
+                val bitrateStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_BITRATE)
+                val bps = bitrateStr?.toIntOrNull() ?: 0
+                bps / 1000 // Convert to kbps
+            } finally {
+                retriever.release()
+            }
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+    private fun updateFileBitrate(file: MusicFile, bitrate: Int) {
+        val update = { list: List<MusicFile> ->
+            list.map { if (it.uri == file.uri) it.copy(bitrate = bitrate) else it }
+        }
+        _musicFiles.value = update(_musicFiles.value)
+        _likedFiles.value = update(_likedFiles.value)
+        _rejectedFiles.value = update(_rejectedFiles.value)
+    }
+
     private fun updateFileDuration(file: MusicFile, newDuration: Long) {
         val updatedFile = file.copy(duration = newDuration)
         
@@ -1643,6 +1845,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _isPlaying.value = false
         _currentPosition.value = 0L
         _duration.value = 0L
+        pausedByAudioFocusLoss = false
+        systemAudioManager.abandonAudioFocusRequest(audioFocusRequest)
     }
     
     private fun startPositionUpdates() {
@@ -1900,12 +2104,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
 
     fun shareToWhatsApp() {
-        val currentFiles = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
-        }
-        val currentFile = currentFiles.getOrNull(_currentIndex.value)
+        val currentFile = _currentPlayingFile.value
         if (currentFile != null) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
@@ -1994,6 +2193,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 addAction(MusicService.ACTION_PREVIOUS)
                 addAction(MusicService.ACTION_LIKE)
                 addAction(MusicService.ACTION_DISLIKE)
+                addAction("com.example.mobiledigger.ACTION_SEEK")
             }
             context.registerReceiver(notificationReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
             CrashLogger.log("MusicViewModel", "Notification receiver registered successfully")
@@ -2202,6 +2402,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     // Multi-selection functions
+    // Sort & filter controls
+    fun setSortOrder(field: SortField, ascending: Boolean) {
+        _sortOrder.value = SortOrder(field, ascending)
+    }
+
+    fun clearSort() {
+        _sortOrder.value = null
+    }
+
+    fun toggleLosslessOnly() {
+        _losslessOnly.value = !_losslessOnly.value
+    }
+
     fun toggleMultiSelectionMode() {
         _isMultiSelectionMode.value = !_isMultiSelectionMode.value
         if (!_isMultiSelectionMode.value) {

@@ -28,6 +28,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 import com.example.mobiledigger.util.CrashLogger
+import com.example.mobiledigger.ui.theme.WaveformAnimationType
 
 @Composable
 fun SharedWaveformDisplay(
@@ -35,11 +36,14 @@ fun SharedWaveformDisplay(
     progress: Float, // 0.0 to 1.0
     onSeek: (Float) -> Unit = {},
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.Gray.copy(alpha = 0.1f), // Allow custom background color
+    backgroundColor: Color = Color.Transparent, // Transparent by default
     currentPosition: Long = 0L, // Current playback position in milliseconds
     totalDuration: Long = 0L, // Total duration in milliseconds
     fileName: String = "",
-    opacity: Float = 0.8f // Waveform opacity (default 80%)
+    opacity: Float = 0.8f, // Waveform opacity (default 80%)
+    customWaveformColor: Color? = null, // Custom waveform played color, null = use theme
+    animationType: WaveformAnimationType = WaveformAnimationType.EXPAND,
+    animationDurationMs: Int = 300
 ) {
     val context = LocalContext.current
     val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
@@ -108,7 +112,7 @@ fun SharedWaveformDisplay(
             
             sharedState.waveformData != null -> {
                 // Waveform display using WaveformSeekBar with long zoom animation (0% to 100%)
-                val playedColor = MaterialTheme.colorScheme.primary.toArgb()
+                val playedColor = (customWaveformColor ?: MaterialTheme.colorScheme.primary).toArgb()
                 val unplayedColor = MaterialTheme.colorScheme.outline.toArgb()
                 
                 // Track if waveform just appeared to trigger animation from 0
@@ -126,19 +130,47 @@ fun SharedWaveformDisplay(
                     }
                 }
                 
-                // Y-axis expand animation from center (0 → 1 in ~500ms)
-                val animatedScaleY by animateFloatAsState(
+                // Resolve RANDOM to a concrete type per-waveform appearance
+                val resolvedAnimationType = remember(sharedState.waveformData) {
+                    if (animationType == WaveformAnimationType.RANDOM) WaveformAnimationType.randomAnimatable()
+                    else animationType
+                }
+
+                // Animated appearance based on animation type
+                val animatedValue by animateFloatAsState(
                     targetValue = if (hasAppeared) 1f else 0f,
-                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-                    label = "waveformScaleY"
+                    animationSpec = tween(durationMillis = animationDurationMs, easing = FastOutSlowInEasing),
+                    label = "waveformAnimation"
                 )
-                
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            scaleX = 1f
-                            scaleY = animatedScaleY
+                            when (resolvedAnimationType) {
+                                WaveformAnimationType.EXPAND -> {
+                                    scaleX = 1f
+                                    scaleY = animatedValue
+                                }
+                                WaveformAnimationType.SLIDE_UP -> {
+                                    translationY = (1f - animatedValue) * 100f
+                                    alpha = animatedValue
+                                }
+                                WaveformAnimationType.SLIDE_DOWN -> {
+                                    translationY = -(1f - animatedValue) * 100f
+                                    alpha = animatedValue
+                                }
+                                WaveformAnimationType.FADE -> {
+                                    alpha = animatedValue
+                                }
+                                WaveformAnimationType.SCALE -> {
+                                    scaleX = animatedValue
+                                    scaleY = animatedValue
+                                }
+                                WaveformAnimationType.NONE, WaveformAnimationType.RANDOM -> {
+                                    // No animation (RANDOM already resolved above)
+                                }
+                            }
                         }
                 ) {
                     AndroidView(
@@ -237,25 +269,6 @@ fun SharedWaveformDisplay(
             )
         }
         
-        // OVERLAY LAYER: Elapsed time display (at bottom, left of seek line, in red)
-        if (currentPosition > 0L) {
-            val timeWidth = 45.dp // Approximate width of time text
-            val seekLinePosition = containerWidth * localProgress
-            // Position to the left of the seek line, with 4dp gap
-            val timeOffset = (seekLinePosition - timeWidth - 4.dp).coerceAtLeast(4.dp)
-            
-            Text(
-                text = formatTime(currentPosition),
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Red, // Changed to red
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(
-                        x = timeOffset,
-                        y = (-4).dp // 4dp from bottom
-                    )
-                    .padding(horizontal = 2.dp, vertical = 1.dp)
-            )
-        }
+        // Elapsed time counter removed — time is shown in playlist row icons
     }
 }

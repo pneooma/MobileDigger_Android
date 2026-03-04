@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.mobiledigger.ui.theme.WaveformAnimationType
 
 @Composable
 fun WaveformWithToggle(
@@ -24,15 +25,18 @@ fun WaveformWithToggle(
     waveformHeight: Int = 100,
     currentPosition: Long = 0L,
     totalDuration: Long = 0L,
-    fileName: String = "", // File name to display above the waveform when available
-    opacity: Float = 0.8f // Waveform opacity (default 80%)
+    fileName: String = "",
+    opacity: Float = 0.8f,
+    customWaveformColor: Color? = null,
+    animationType: WaveformAnimationType = WaveformAnimationType.EXPAND,
+    animationDurationMs: Int = 300
 ) {
     val context = LocalContext.current
     var isWaveformEnabled by remember { mutableStateOf(isWaveformGenerationEnabled(context)) }
-    
+
     // Get color for this song
     val songColor = remember(songUri) { getColorForSong(songUri) }
-    
+
     Box(modifier = modifier) {
         // Waveform display with appropriate background
         SharedWaveformDisplay(
@@ -43,25 +47,26 @@ fun WaveformWithToggle(
             totalDuration = totalDuration,
             fileName = fileName,
             opacity = opacity,
+            customWaveformColor = customWaveformColor,
+            animationType = animationType,
+            animationDurationMs = animationDurationMs,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(waveformHeight.dp),
             backgroundColor = if (isWaveformEnabled) {
-                Color.Gray.copy(alpha = 0.1f)
+                Color.Transparent
             } else {
-                songColor.copy(alpha = 0.3f) // Faded pastel color when disabled
+                songColor.copy(alpha = 0.3f)
             }
         )
-        
+
         // Toggle button in top-left corner
         IconButton(
             onClick = {
                 if (isWaveformEnabled) {
-                    // Disable immediately
                     setWaveformGenerationEnabled(context, false)
                     isWaveformEnabled = false
                 } else {
-                    // Enable immediately (no warning needed)
                     setWaveformGenerationEnabled(context, true)
                     isWaveformEnabled = true
                 }
@@ -84,4 +89,3 @@ fun WaveformWithToggle(
         }
     }
 }
-

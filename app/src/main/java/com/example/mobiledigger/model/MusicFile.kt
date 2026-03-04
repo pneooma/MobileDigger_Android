@@ -11,7 +11,8 @@ data class MusicFile(
     val size: Long = 0L,
     val sourcePlaylist: PlaylistTab = PlaylistTab.TODO,
     val subfolder: String? = null, // Subfolder name for liked files
-    val dateAdded: Long = System.currentTimeMillis() // Timestamp when added to playlist
+    val dateAdded: Long = System.currentTimeMillis(), // Timestamp when added to playlist
+    val bitrate: Int = 0 // Bitrate in kbps
 )
 
 enum class SortAction {

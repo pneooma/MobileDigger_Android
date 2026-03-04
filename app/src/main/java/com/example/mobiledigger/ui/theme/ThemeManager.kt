@@ -17,12 +17,12 @@ class ThemeManager(context: Context) {
     private val _isDarkMode = mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, true))
     val isDarkMode: State<Boolean> = _isDarkMode
     
-    private val _useDynamicColor = mutableStateOf(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
+    private val _useDynamicColor = mutableStateOf(prefs.getBoolean(KEY_DYNAMIC_COLOR, false))
     val useDynamicColor: State<Boolean> = _useDynamicColor
     
     private val _selectedTheme = mutableStateOf(
-        AvailableThemes.find { it.name == prefs.getString(KEY_SELECTED_THEME, "Mint") } 
-            ?: MintTheme
+        AvailableThemes.find { it.name == prefs.getString(KEY_SELECTED_THEME, "Ocean") }
+            ?: OceanTheme
     )
     val selectedTheme: State<ThemeColors> = _selectedTheme
     
@@ -55,5 +55,12 @@ class ThemeManager(context: Context) {
     
     fun getSelectedTheme(): ThemeColors {
         return _selectedTheme.value
+    }
+
+    val availableThemes: List<ThemeColors> = AvailableThemes
+
+    fun selectTheme(name: String) {
+        val theme = AvailableThemes.find { it.name == name } ?: return
+        setSelectedTheme(theme)
     }
 }

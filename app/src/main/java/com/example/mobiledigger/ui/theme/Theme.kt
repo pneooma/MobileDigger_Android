@@ -93,6 +93,7 @@ fun MobileDiggerTheme(
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     selectedTheme: ThemeColors = MobileDiggerTheme,
+    fontFamilyName: String = "Default",
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -110,9 +111,10 @@ fun MobileDiggerTheme(
     val isLargeScreen = configuration.screenWidthDp >= 840 || configuration.screenHeightDp >= 840
     
     // Use standard MaterialTheme (AdaptiveTheme not available in current Compose version)
+    val typography = getTypography(fontFamilyName)
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography
+        typography = typography
     ) {
         CompositionLocalProvider(LocalAppColors provides AppColors()) {
             content()

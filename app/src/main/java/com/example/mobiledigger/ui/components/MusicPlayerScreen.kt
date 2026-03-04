@@ -7,10 +7,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
@@ -37,10 +40,9 @@ import com.example.mobiledigger.ui.components.SharedWaveformState
 import com.example.mobiledigger.ui.components.rememberSharedWaveformState
 import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.ui.components.WaveformWithToggle
-import com.example.mobiledigger.ui.components.VisualSettingsDialog
+import com.example.mobiledigger.ui.components.SettingsDialog
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
 import com.example.mobiledigger.ui.components.ScrollableWaveformView
-import com.example.mobiledigger.utils.HapticFeedback
 import com.example.mobiledigger.utils.WaveformGenerator
 import com.example.mobiledigger.util.rememberOptimizedAnimationSpecs
 import androidx.compose.material.icons.Icons
@@ -101,8 +103,11 @@ import com.example.mobiledigger.ui.theme.LikeGreen
 import com.example.mobiledigger.ui.theme.NoButton
 import com.example.mobiledigger.ui.theme.YesButton
 import com.example.mobiledigger.ui.theme.AvailableThemes
+import com.example.mobiledigger.ui.theme.appFontFamilies
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import com.example.mobiledigger.viewmodel.PlaylistTab
+import com.example.mobiledigger.viewmodel.SortField
+import com.example.mobiledigger.viewmodel.SortOrder
 
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -132,25 +137,6 @@ private fun calculateBitrate(fileSizeBytes: Long, durationMs: Long): Int {
 private fun formatFileSize(sizeBytes: Long): String {
     val sizeMB = sizeBytes / (1024.0 * 1024.0)
     return String.format(Locale.getDefault(), "%.1f MB", sizeMB)
-}
-
-private fun toCamelotKey(key: String): String {
-    val parts = key.trim().split(" ")
-    if (parts.size != 2) return key
-    val root = parts[0].replace("♯", "#").replace("♭", "b").uppercase(Locale.ROOT)
-    val mode = parts[1].lowercase(Locale.ROOT)
-    val camelotMapMajor = mapOf(
-        "C" to "8B", "G" to "9B", "D" to "10B", "A" to "11B", "E" to "12B",
-        "B" to "1B", "F#" to "2B", "C#" to "3B", "G#" to "4B", "D#" to "5B",
-        "A#" to "6B", "F" to "7B"
-    )
-    val camelotMapMinor = mapOf(
-        "A" to "8A", "E" to "9A", "B" to "10A", "F#" to "11A", "C#" to "12A",
-        "G#" to "1A", "D#" to "2A", "A#" to "3A", "F" to "4A", "C" to "5A",
-        "G" to "6A", "D" to "7A"
-    )
-    val out = if (mode.contains("major")) camelotMapMajor[root] else camelotMapMinor[root]
-    return out ?: key
 }
 
 
@@ -184,7 +170,10 @@ fun MusicPlayerScreen(
     val isTransitioning by viewModel.isTransitioning.collectAsState()
     val lastSortedAction by viewModel.lastSortedAction.collectAsState()
     val likedFilter by viewModel.likedFilter.collectAsState()
-    
+    val sortOrder by viewModel.sortOrder.collectAsState()
+    val losslessOnly by viewModel.losslessOnly.collectAsState()
+    // BPM removed
+
     // Local state for spectrogram visibility
     var showSpectrogram by remember { mutableStateOf(false) }
     
@@ -216,9 +205,13 @@ fun MusicPlayerScreen(
     ) { uri ->
         uri?.let { viewModel.selectDestinationFolder(it) }
     }
-    
-    
-    
+
+    val zipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { viewModel.selectZipSource(it) }
+    }
+
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showThemeSelectionDialog by remember { mutableStateOf(false) }
@@ -292,13 +285,20 @@ fun MusicPlayerScreen(
     
     // Visual settings
     val visualSettings by viewModel.visualSettingsManager.settings
+    val isMonochrome = viewModel.themeManager.selectedTheme.value.name == "Monochrome"
+    val monoColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val customWaveformColor = remember(visualSettings.waveformColor) {
+        if (visualSettings.waveformColor != 0) Color(visualSettings.waveformColor) else null
+    }
     val animationSpecs = rememberOptimizedAnimationSpecs()
     
-    val hapticFeedback = HapticFeedback.rememberHapticFeedback(visualSettings) // Updated to pass visualSettings
 
     if (showShareDialog) {
         AlertDialog(
             onDismissRequest = { showShareDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Share Liked Songs") },
             text = { Text("This action will ZIP all the files in the \"Liked\" folder at this moment and will prompt to be shared via WhatsApp. This action will take time and storage from your device according to the amount of files available.") },
             confirmButton = {
@@ -324,6 +324,9 @@ fun MusicPlayerScreen(
         }
         AlertDialog(
             onDismissRequest = { showDeleteDialogStep = 0; deleteActionType = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("⚠️ Delete $playlistName Files") },
             text = { 
                 Column {
@@ -395,6 +398,9 @@ fun MusicPlayerScreen(
     if (showDeleteRejectedPrompt) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissDeleteRejectedPrompt() },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Delete Rejected Files?") },
             text = { Text("All files have been sorted! Would you like to delete all files from the 'Rejected' folder to free up space?") },
             confirmButton = {
@@ -432,6 +438,9 @@ fun MusicPlayerScreen(
         
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false; deleteActionType = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("⚠️ WARNING: Delete ALL $playlistName Files?") },
             text = { 
                 Column {
@@ -502,6 +511,9 @@ fun MusicPlayerScreen(
     if (showShareZipDialog) {
         AlertDialog(
             onDismissRequest = { showShareZipDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("📦 Share Liked Files as ZIP") },
             text = { 
                 Column {
@@ -545,6 +557,9 @@ fun MusicPlayerScreen(
     if (showReadmeDialog) {
         AlertDialog(
             onDismissRequest = { showReadmeDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("MobileDigger README") },
             text = { 
                 LazyColumn(
@@ -637,6 +652,9 @@ fun MusicPlayerScreen(
     if (showAnalyzePrompt) {
         AlertDialog(
             onDismissRequest = { showAnalyzePrompt = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("File Opened") },
             text = { Text("What would you like to do with this file?") },
             confirmButton = {
@@ -662,147 +680,15 @@ fun MusicPlayerScreen(
     
     
     if (showSettingsDialog) {
-        AlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            title = { Text("Settings", color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            text = {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Dark Mode")
-                        Switch(
-                            checked = viewModel.themeManager.isDarkMode.value,
-                            onCheckedChange = { viewModel.themeManager.toggleDarkMode() }
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                    Text("Enable Theme", color = MaterialTheme.colorScheme.onSurface)
-                        Switch(
-                            checked = !viewModel.themeManager.useDynamicColor.value,
-                            onCheckedChange = { viewModel.themeManager.toggleDynamicColor() }
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Theme Selection - Using Button to open theme selection dialog
-                    val selectedTheme by viewModel.themeManager.selectedTheme
-                    
-                    Button(
-                        onClick = { showThemeSelectionDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(16.dp)
-                                                    .background(
-                                        selectedTheme.primary,
-                                                        CircleShape
-                                                    )
-                                            )
-                            Text("Theme: ${selectedTheme.name}")
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Theme")
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Behavior settings moved here from Visual Settings
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Auto-play first track after selecting source",
-                            modifier = Modifier.weight(1f),
-                            maxLines = 2,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Switch(
-                            checked = viewModel.visualSettingsManager.settings.value.autoPlayFirstAfterSelect,
-                            onCheckedChange = { checked ->
-                                val cur = viewModel.visualSettingsManager.settings.value
-                                viewModel.visualSettingsManager.updateSettings(cur.copy(autoPlayFirstAfterSelect = checked))
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Auto-scan and load last source on start",
-                            modifier = Modifier.weight(1f),
-                            maxLines = 2,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Switch(
-                            checked = viewModel.visualSettingsManager.settings.value.autoScanLastSourceOnStart,
-                            onCheckedChange = { checked ->
-                                val cur = viewModel.visualSettingsManager.settings.value
-                                viewModel.visualSettingsManager.updateSettings(cur.copy(autoScanLastSourceOnStart = checked))
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { 
-                            hapticFeedback() // Simplified call
-                            showSettingsDialog = false
-                            showVisualSettingsDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Visual Settings")
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        "Gestures:",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text("• Swipe card left/right to sort")
-                    Text("• Tap and drag waveform to seek")
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                }
-            },
-            confirmButton = {
-                Button(onClick = { showSettingsDialog = false }) {
-                    Text("Done")
-                }
-            }
+        SettingsDialog(
+            visualSettingsManager = viewModel.visualSettingsManager,
+            themeManager = viewModel.themeManager,
+            onDismiss = { showSettingsDialog = false }
         )
     }
     
-    // Theme Selection Dialog
-    if (showThemeSelectionDialog) {
+    // Theme Selection Dialog (now integrated in SettingsDialog)
+    if (false && showThemeSelectionDialog) {
         AlertDialog(
             onDismissRequest = { showThemeSelectionDialog = false },
             title = { Text("Select Theme") },
@@ -880,13 +766,6 @@ fun MusicPlayerScreen(
 
     
 
-    // Visual Settings Dialog
-    if (showVisualSettingsDialog) {
-        VisualSettingsDialog(
-            visualSettingsManager = viewModel.visualSettingsManager,
-            onDismiss = { showVisualSettingsDialog = false }
-        )
-    }
 
     // Waveform Settings Dialog
 
@@ -896,6 +775,10 @@ fun MusicPlayerScreen(
     val screenWidth = configuration.screenWidthDp.dp
     // val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // isCompactScreen is used, keeping
     val playlistMaxHeight = screenHeight * 0.65f // Playlist takes 65% of screen
+    // Adaptive button size for 2x2 grid in playlist rows
+    val adaptiveButtonSize = (screenWidth.value / 14f).coerceIn(24f, 40f).dp
+    val adaptiveIconSize = (adaptiveButtonSize.value * 0.56f).dp
+    val adaptiveSpekFontSize = (adaptiveButtonSize.value * 0.25f).sp
 
     // Handle error messages with better display under header
     errorMessage?.let { message ->
@@ -923,9 +806,9 @@ fun MusicPlayerScreen(
                 )
             .padding(
                 start = 6.dp,
-                top = paddingValues.calculateTopPadding() / 2 + 6.dp,
+                top = paddingValues.calculateTopPadding() / 2,
                 end = 6.dp,
-                bottom = paddingValues.calculateBottomPadding() / 2 + 6.dp
+                bottom = paddingValues.calculateBottomPadding() / 2
             )
         ) {
         // Compute destination launcher and selection flags early (used by header)
@@ -938,171 +821,7 @@ fun MusicPlayerScreen(
         val hasDestinationFolder = viewModel.destinationFolder.collectAsState().value != null // This can be false
         val bothFoldersSelected = hasSourceFolder && hasDestinationFolder
 
-        // Header with app title and folders pill
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "MobileDigger",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = MaterialTheme.typography.headlineMedium.fontSize * 0.5f
-                    ),
-                    color = GreenAccent
-                )
-                Text(
-                    text = "groovy's child",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.5f,
-                        lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.5f // Compact line height
-                    ),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-        Text(
-                            text = ":: v10.154 ::",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.4f,
-                lineHeight = MaterialTheme.typography.headlineSmall.fontSize * 0.4f // Compact line height
-            ),
-            fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            // (Removed header multi-select banner; moved controls to the top popup row below playlist pills)
-            
-            // Calculate responsive spacing based on screen width - reduce by ~50%
-            val buttonSpacing = when {
-                screenWidth < 400.dp -> 1.dp
-                screenWidth < 600.dp -> 2.dp
-                screenWidth < 800.dp -> 2.dp
-                else -> 3.dp
-            }
-            
-            // Home button (always visible) - resets to initial state
-            IconButton(
-                onClick = { 
-                    // Reset to initial state by clearing source folder selection
-                    viewModel.resetToInitialState()
-                },
-                modifier = Modifier.padding(end = buttonSpacing)
-            ) {
-                Icon(
-                    Icons.Default.Home,
-                    contentDescription = "Home",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            // Settings button (always visible)
-            IconButton(
-                onClick = { showSettingsDialog = true },
-                modifier = Modifier.padding(end = buttonSpacing)
-            ) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            // Added Search button
-            IconButton(
-                onClick = { 
-                    showSearchInput = !showSearchInput 
-                    if (!showSearchInput) { // Clear search when hiding input
-viewModel.updateSearchText("")
-                        viewModel.clearSearchResults()
-                    }
-                },
-                modifier = Modifier.padding(end = buttonSpacing)
-            ) {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            // Rescan Source button (kept in header)
-            IconButton(
-                onClick = { viewModel.rescanSourceFolder() },
-                modifier = Modifier.padding(end = buttonSpacing)
-            ) {
-                Icon(
-                    Icons.Default.Sync,
-                    contentDescription = "Rescan Source",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            // Added README/Info button
-            IconButton(
-                onClick = { showReadmeDialog = true },
-                modifier = Modifier.padding(end = buttonSpacing)
-            ) {
-                Icon(
-                    Icons.Default.Info,
-                    contentDescription = "README",
-                    tint = Color(0xFF4CAF50) // Green color to match README theme
-                )
-            }
-            
-            if (hasSourceFolder) { // Show actions when music files are loaded
-                var menuExpanded by remember { mutableStateOf(false) }
-                OutlinedButton(
-                    onClick = { menuExpanded = true },
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text("Actions", style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.width(4.dp))
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                }
-                                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        // Removed per request: ✓ Source selected, ✓ Destination selected
-                        // Removed per request: Rescan Source
-                        // Removed per request: Multi-Select Files
-                        HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text("Share Liked Songs as ZIP") },
-                            onClick = { menuExpanded = false; showShareDialog = true },
-                            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Share TXT with Liked Songs") },
-                            onClick = { menuExpanded = false; viewModel.shareLikedFilesTxt() },
-                            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) }
-                        )
-                        HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text("Delete Rejected Files") },
-                            onClick = { 
-                                menuExpanded = false
-                                deleteActionType = PlaylistTab.REJECTED
-                                showDeleteAllDialog = true
-                            },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
-                        )
-                        HorizontalDivider(); HorizontalDivider(); HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text("Delete Liked Files", color = Color.Red, fontWeight = FontWeight.Bold) },
-                            onClick = { 
-                                menuExpanded = false
-                                deleteActionType = PlaylistTab.LIKED
-                                showDeleteDialogStep = 1
-                            },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) }
-                        )
-                        HorizontalDivider()
-                        // Removed per request: README
-                        
-                    }
-            }
-        }
-        
-        // Pill button to move played-but-not-actioned files to rejected
-        // Show this after files are loaded and there are files in TODO playlist
-        // Exclude the currently playing file from the count
+        // Reject count
         val playedButNotActionedCount = remember(playedButNotActioned, currentPlayingFile) {
             val currentUri = currentPlayingFile?.uri
             if (currentUri != null) {
@@ -1111,7 +830,7 @@ viewModel.updateSearchText("")
                 playedButNotActioned.size
             }
         }
-        
+
         // Rename dialogs state
         var showRenameActionDialog by remember { mutableStateOf(false) }
         var showRenameSelectedDialog by remember { mutableStateOf(false) }
@@ -1122,12 +841,12 @@ viewModel.updateSearchText("")
         var pendingIndexForSingle by remember { mutableStateOf<Int?>(null) }
         var renameCase by remember { mutableStateOf(MusicViewModel.RenameCase.MANUAL) }
 
-        // In Multi-Select: force show controls and waveform; restore user's prefs on exit
+        // In Multi-Select: hide main player; restore user's prefs on exit
         LaunchedEffect(isMultiSelectionMode) {
             if (isMultiSelectionMode) {
                 if (prevMainPlayerVisible == null) prevMainPlayerVisible = isMainPlayerVisible
                 if (prevWaveformVisible == null) prevWaveformVisible = isWaveformVisible
-                isMainPlayerVisible = true
+                isMainPlayerVisible = false
                 isWaveformVisible = true
             } else {
                 prevMainPlayerVisible?.let { isMainPlayerVisible = it }
@@ -1137,241 +856,177 @@ viewModel.updateSearchText("")
             }
         }
 
-        if (musicFiles.isNotEmpty() && !isLoading && ((currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) || isMultiSelectionMode)) {
+        // Header row: [Logo] [Reject All] [Player] [Playlist]
+        if (musicFiles.isNotEmpty() && !isLoading) {
+            val labelStyle = MaterialTheme.typography.labelSmall
+            var showBulkSendDialog by remember { mutableStateOf(false) }
+            val hdrBtnHeight = 29.dp
+            val hdrBtnPad = PaddingValues(horizontal = 7.dp, vertical = 1.dp)
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 6.dp, top = 3.dp, end = 6.dp, bottom = 2.dp)
-                    .horizontalScroll(rememberScrollState()),
+                    .padding(horizontal = 4.dp, vertical = 1.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val buttonHPad = 8.dp
-                val buttonVPad = 3.dp
-                val labelStyle = MaterialTheme.typography.labelSmall
-                // Left pill: Rename Current File (hidden in Multi-Select)
-                if (!isMultiSelectionMode) Button(
-                    onClick = {
-                        if (currentPlayingFile != null) {
-                            manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: ""))
-                            showRenameCurrentDialog = true
-                        }
-                    },
-                    enabled = currentPlayingFile != null,
-                    modifier = Modifier
-                        .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(25.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        Text("Rename\nCurrent file", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
-                    }
-                }
-                if (!isMultiSelectionMode) Spacer(Modifier.width(50.dp))
-                // Bulk Reject
-                Button(
-                    onClick = { 
-                        if (playedButNotActionedCount > 0) {
-                            CrashLogger.log("MusicPlayerScreen", "Reject played files button clicked, count: $playedButNotActionedCount")
-                            viewModel.movePlayedButNotActionedToRejected()
-                        }
-                    },
-                    modifier = Modifier
-                        .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(38.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                ) {
-                    if (isMultiSelectionMode) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
-                                Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
-                            }
-                            Text(
-                                text = "Reject $playedButNotActionedCount",
-                                style = labelStyle,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(10.dp), tint = MaterialTheme.colorScheme.onSurface)
-                            Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Red)
-                        Text(
-                            text = "Reject $playedButNotActionedCount",
-                                style = labelStyle,
-                            color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1
-                        )
-                    }
-                }
-            }
-                if (!isMultiSelectionMode) Spacer(Modifier.width(50.dp))
-                // Right pill: Multi-Select (hidden in Multi-Select)
-                if (!isMultiSelectionMode) Button(
-                    onClick = { viewModel.toggleMultiSelectionMode() },
-                    modifier = Modifier
-                        .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(25.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        Text("Multi-Select", style = labelStyle, maxLines = 1, textAlign = TextAlign.Center)
-                    }
-                }
-                // Send to Folder (bulk) - only in Multi-Select mode
-                var showBulkSendDialog by remember { mutableStateOf(false) }
-                if (isMultiSelectionMode) {
-                Spacer(Modifier.width(30.dp))
-                Button(
-                        onClick = { showBulkSendDialog = true },
-                        modifier = Modifier
-                            .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
+                // MobileDigger logo + version (first from left)
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text(
+                        text = "MobileDigger",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = MaterialTheme.typography.headlineMedium.fontSize * 0.45f,
+                            lineHeight = MaterialTheme.typography.headlineMedium.fontSize * 0.45f
                         ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) {
-                        Text("Send to\nFolder", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center)
-                    }
-                }
-                if (showBulkSendDialog && isMultiSelectionMode) {
-                    AlertDialog(
-                        onDismissRequest = { showBulkSendDialog = false },
-                        title = { Text("Send Selected Files To") },
-                        text = {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { showBulkSendDialog = false; viewModel.sortSelectedFiles(SortAction.LIKE) }, modifier = Modifier.fillMaxWidth()) { Text("Liked") }
-                                Button(onClick = { showBulkSendDialog = false; viewModel.sortSelectedFiles(SortAction.DISLIKE) }, modifier = Modifier.fillMaxWidth()) { Text("Rejected") }
-                            }
-                        },
-                        confirmButton = {},
-                        dismissButton = { TextButton(onClick = { showBulkSendDialog = false }) { Text("Close") } }
+                        color = if (isMonochrome) monoColor else GreenAccent
+                    )
+                    Text(
+                        text = "v11.09",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // Multi-select inline controls (always visible in MS mode)
-                if (isMultiSelectionMode) {
-                Button(
-                        onClick = { showRenameSelectedDialog = true },
-                        modifier = Modifier
-                            .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text("Rename\nSelected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
-                Button(
-                        onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) },
-                        modifier = Modifier
-                            .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text("Like\nSelected", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
-                Button(
-                        onClick = { viewModel.toggleMultiSelectionMode() },
-                        modifier = Modifier
-                            .shadow(4.dp, RoundedCornerShape(20.dp))
-                        .border(2.dp, Color.White, RoundedCornerShape(20.dp))
-                        .height(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = buttonHPad, vertical = buttonVPad)
-                    ) { Text("Exit\nM.S. Mode", style = labelStyle, maxLines = 2, textAlign = TextAlign.Center) }
+                Spacer(Modifier.weight(1f))
+                // Reject All button
+                if ((currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) || isMultiSelectionMode) {
+                    OutlinedButton(
+                        onClick = {
+                            if (playedButNotActionedCount > 0) viewModel.movePlayedButNotActionedToRejected()
+                        },
+                        modifier = Modifier.height(hdrBtnHeight),
+                        border = BorderStroke(1.dp, Color.White),
+                        contentPadding = hdrBtnPad,
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            val rejectColor = if (isMonochrome) monoColor else Color.Red
+                            Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(10.dp), tint = rejectColor)
+                            Text("Reject $playedButNotActionedCount", style = labelStyle, fontWeight = FontWeight.Bold, maxLines = 1, color = rejectColor)
+                        }
+                    }
                 }
-            }
-        }
-        // Moved counts/toggles row outside scroll area (placed under pill buttons)
-        run {
-            val played = viewModel.preferences.getListened()
-            val yes = viewModel.preferences.getLiked()
-            val no = viewModel.preferences.getRefused()
-            val totalTracks = when (currentPlaylistTab) {
-                PlaylistTab.TODO -> musicFiles.size
-                PlaylistTab.LIKED -> likedFiles.size
-                PlaylistTab.REJECTED -> rejectedFiles.size
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp, top = 9.dp, end = 8.dp, bottom = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Total: $totalTracks  |  Played: $played  |  Liked: $yes  |  Rejected: $no",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f, fill = true)
-                )
+                // Show/Hide Main Player
                 OutlinedButton(
                     onClick = { isMainPlayerVisible = !isMainPlayerVisible },
                     enabled = !isMultiSelectionMode,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                    modifier = Modifier.height(22.dp)
+                    contentPadding = hdrBtnPad,
+                    modifier = Modifier.height(hdrBtnHeight)
                 ) {
-                    Text(
-                        text = if (isMainPlayerVisible) "Hide Controls" else "Show Controls",
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                    Text(if (isMainPlayerVisible) "Hide Main Player" else "Show Main Player", style = labelStyle, maxLines = 1)
                 }
+                // Show/Hide Playlists
                 OutlinedButton(
                     onClick = { isPlaylistsVisible = !isPlaylistsVisible },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                    modifier = Modifier.height(22.dp)
+                    contentPadding = hdrBtnPad,
+                    modifier = Modifier.height(hdrBtnHeight)
                 ) {
-                    Text(
-                        text = if (isPlaylistsVisible) "Hide Playlists" else "Show Playlists",
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                    Text(if (isPlaylistsVisible) "Hide Playlists" else "Show Playlists", style = labelStyle, maxLines = 1)
                 }
+            }
+
+            // Toolbar bar: Home, Settings, Search, Rescan, Info, Sort, Rename, MultiSelect, SpEk
+            val tbIconSize = (screenWidth.value / 9f).coerceIn(22f, 36f).dp
+            val showLabels = visualSettings.showToolbarLabels
+            val tbLabelStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp)
+            var filterMenuExpanded by remember { mutableStateOf(false) }
+
+            @Composable
+            fun ToolbarButton(icon: @Composable () -> Unit, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = modifier.clickable(onClick = onClick).padding(vertical = 2.dp)
+                ) {
+                    icon()
+                    if (showLabels) Text(label, style = tbLabelStyle, maxLines = 1, textAlign = TextAlign.Center)
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                ToolbarButton(icon = { Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Home", onClick = { viewModel.resetToInitialState() })
+                ToolbarButton(icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Settings", onClick = { showSettingsDialog = true })
+                ToolbarButton(icon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Search", onClick = { showSearchInput = !showSearchInput; if (!showSearchInput) { viewModel.updateSearchText(""); viewModel.clearSearchResults() } })
+                ToolbarButton(icon = { Icon(Icons.Default.Sync, contentDescription = "Rescan", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rescan", onClick = { viewModel.rescanSourceFolder() })
+                Box {
+                    ToolbarButton(icon = { Icon(Icons.Default.List, contentDescription = "Sort", tint = if (sortOrder != null || losslessOnly) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tbIconSize)) }, label = "Sort", onClick = { filterMenuExpanded = true })
+                    DropdownMenu(
+                        expanded = filterMenuExpanded,
+                        onDismissRequest = { filterMenuExpanded = false },
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Name"); if (sortOrder?.field == SortField.NAME) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.NAME) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.NAME, asc) })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("File Size"); if (sortOrder?.field == SortField.FILE_SIZE) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.FILE_SIZE) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.FILE_SIZE, asc) })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Date Added"); if (sortOrder?.field == SortField.DATE_ADDED) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DATE_ADDED) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.DATE_ADDED, asc) })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Duration"); if (sortOrder?.field == SortField.DURATION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DURATION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.DURATION, asc) })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Extension"); if (sortOrder?.field == SortField.EXTENSION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.EXTENSION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.EXTENSION, asc) })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Subfolder"); if (sortOrder?.field == SortField.SUBFOLDER) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.SUBFOLDER) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.SUBFOLDER, asc) })
+                        DropdownMenuItem(text = { Text("Shuffle") }, onClick = { viewModel.setSortOrder(SortField.RANDOM, true) })
+                        HorizontalDivider()
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossless Only"); if (losslessOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLosslessOnly() })
+                        HorizontalDivider()
+                        DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly() })
+                    }
+                }
+                ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })
+                ToolbarButton(icon = { Icon(Icons.Default.Checklist, contentDescription = "Select", tint = if (isMultiSelectionMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Select", onClick = { viewModel.toggleMultiSelectionMode() })
+                ToolbarButton(
+                    icon = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy((-2).dp)) {
+                            val spekColor = if (isMonochrome) monoColor else Color(0xFFFFB6C1)
+                            Text("Sp", style = labelStyle.copy(fontWeight = FontWeight.Bold, fontSize = (tbIconSize.value * 0.35f).sp), color = spekColor)
+                            Text("eK", style = labelStyle.copy(fontWeight = FontWeight.Bold, fontSize = (tbIconSize.value * 0.35f).sp), color = spekColor)
+                        }
+                    },
+                    label = "SpEk",
+                    onClick = { if (currentPlayingFile != null) showSpectrogram = true }
+                )
+            }
+
+            // Multi-select inline controls — compact grid layout
+            if (isMultiSelectionMode) {
+                val selectedCount by viewModel.selectedIndices.collectAsState()
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 1.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    val msBtnMod = Modifier.height(26.dp).border(1.dp, Color.White, RoundedCornerShape(16.dp))
+                    val msBtnColors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface)
+                    val msPad = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                    val msLabelStyle = labelStyle.copy(fontSize = 10.sp)
+                    OutlinedButton(onClick = { viewModel.sortSelectedFiles(SortAction.DISLIKE) }, modifier = Modifier.height(26.dp), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
+                        Icon(Icons.Default.ThumbDown, contentDescription = null, modifier = Modifier.size(12.dp), tint = if (isMonochrome) monoColor else Color.Red); Spacer(Modifier.width(3.dp)); Text("Reject", style = msLabelStyle, maxLines = 1)
+                    }
+                    OutlinedButton(onClick = { showRenameSelectedDialog = true }, modifier = Modifier.height(26.dp), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(12.dp)); Spacer(Modifier.width(3.dp)); Text("Rename", style = msLabelStyle, maxLines = 1)
+                    }
+                    OutlinedButton(onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) }, modifier = Modifier.height(26.dp), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
+                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(12.dp), tint = YesButton); Spacer(Modifier.width(3.dp)); Text("Like", style = msLabelStyle, maxLines = 1)
+                    }
+                    OutlinedButton(onClick = { viewModel.toggleMultiSelectionMode() }, modifier = Modifier.height(26.dp), border = BorderStroke(1.dp, Color.Red), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
+                        Text("Exit", style = msLabelStyle, maxLines = 1, color = Color.Red)
+                    }
+                }
+                // Selection count indicator
+                Text("${selectedCount.size} selected", style = labelStyle.copy(fontSize = 9.sp), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(start = 8.dp))
+            }
+            if (showBulkSendDialog && isMultiSelectionMode) {
+                AlertDialog(
+                    onDismissRequest = { showBulkSendDialog = false },
+                    title = { Text("Send Selected Files To") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { showBulkSendDialog = false; viewModel.sortSelectedFiles(SortAction.LIKE) }, modifier = Modifier.fillMaxWidth()) { Text("Liked") }
+                            Button(onClick = { showBulkSendDialog = false; viewModel.sortSelectedFiles(SortAction.DISLIKE) }, modifier = Modifier.fillMaxWidth()) { Text("Rejected") }
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = { TextButton(onClick = { showBulkSendDialog = false }) { Text("Close") } }
+                )
             }
         }
         
@@ -1381,6 +1036,9 @@ viewModel.updateSearchText("")
             val isPendingCurrent = pendingIdx != null && pendingIdx >= 0 && pendingIdx < currentPlaylistFiles.size && currentPlaylistFiles[pendingIdx].uri == currentPlayingFile?.uri
             AlertDialog(
                 onDismissRequest = { showRenameActionDialog = false },
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 title = { Text("Choose Action") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1417,6 +1075,9 @@ viewModel.updateSearchText("")
         if (showRenameSelectedDialog) {
             AlertDialog(
                 onDismissRequest = { showRenameSelectedDialog = false },
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 title = { Text("Rename Selected Files") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1448,6 +1109,9 @@ viewModel.updateSearchText("")
         if (showRenameOneDialog) {
             AlertDialog(
                 onDismissRequest = { showRenameOneDialog = false },
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 title = { Text("Rename File") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1486,6 +1150,9 @@ viewModel.updateSearchText("")
         if (showRenameCurrentDialog) {
             AlertDialog(
                 onDismissRequest = { showRenameCurrentDialog = false },
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 title = { Text("Rename Current File") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1711,58 +1378,139 @@ viewModel.updateSearchText("")
                         Text(if (hasDestinationFolder) "✓ Destination" else "Destination")
                     }
                 }
-                    
+
+                    // Open ZIP Archive button
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedButton(
+                            onClick = { zipLauncher.launch(arrayOf("application/zip")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Open ZIP Archive")
+                        }
+                    }
+
                     // Second row: Rescan button
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        val lastSource = viewModel.preferences.getSourceRootUri()
+                        val lastFolderName = lastSource?.let { uri ->
+                            kotlin.runCatching { android.net.Uri.parse(uri).path ?: uri }.getOrNull()?.let { path ->
+                                path.trim('/').split('/').lastOrNull() ?: path
+                            }
+                        } ?: "(none)"
                         ElevatedButton(
                             onClick = { viewModel.rescanSourceFolder() },
-                            modifier = Modifier
-                                .height(80.dp) // Double the height
-                                .padding(horizontal = 16.dp), // Add horizontal padding for width
+                            modifier = Modifier.padding(horizontal = 16.dp),
                             colors = ButtonDefaults.elevatedButtonColors(
-                                containerColor = Color(0xFF2E7D32), // Darker green
+                                containerColor = Color(0xFF2E7D32),
                                 contentColor = Color.White
-                            )
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(36.dp))
-                            Spacer(Modifier.width(16.dp))
-                            val lastSource = viewModel.preferences.getSourceRootUri()
-                            val lastLabel = lastSource?.let { uri ->
-                                kotlin.runCatching { android.net.Uri.parse(uri).path ?: uri }.getOrNull()?.let { path ->
-                                    val parts = path.trim('/').split('/')
-                                    val tail = parts.takeLast(2)
-                                    if (tail.isNotEmpty()) tail.joinToString("/") else path
-                                }
-                            } ?: "(none)"
-                            Text("Rescan: $lastLabel", fontSize = 18.sp)
+                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Rescan\n$lastFolderName", fontSize = 11.sp, lineHeight = 13.sp, textAlign = TextAlign.Center)
                         }
                     }
-                    // Recent Sources (max 10) buttons, two per row
+                    // Recent Sources list
                     val recentSources by viewModel.recentSourceUris.collectAsState()
                     if (recentSources.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
-                        val rows = recentSources.take(10).chunked(2)
-                        rows.forEach { rowItems ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                rowItems.forEach { uriString ->
-                                    val label = kotlin.runCatching { android.net.Uri.parse(uriString).path ?: uriString }.getOrNull()?.let { p ->
-                                        val parts = p.trim('/').split('/')
-                                        val tail = parts.takeLast(2)
-                                        if (tail.isNotEmpty()) tail.joinToString("/") else p
-                                    } ?: uriString
-                                    OutlinedButton(onClick = { viewModel.setSourceFolderPreference(android.net.Uri.parse(uriString)) }, modifier = Modifier.weight(1f)) {
-                                        Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                    }
+                        Text(
+                            "Recent Sources",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                        )
+                        recentSources.take(10).forEach { uriString ->
+                            val label = kotlin.runCatching { android.net.Uri.parse(uriString).path ?: uriString }.getOrNull()?.let { p ->
+                                val parts = p.trim('/').split('/')
+                                val tail = parts.takeLast(2)
+                                if (tail.isNotEmpty()) tail.joinToString("/") else p
+                            } ?: uriString
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Folder,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 8.dp)
+                                )
+                                OutlinedButton(
+                                    onClick = { viewModel.setSourceFolderPreference(android.net.Uri.parse(uriString)) },
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Text("Load", style = MaterialTheme.typography.labelSmall)
                                 }
-                                if (rowItems.size == 1) Spacer(Modifier.weight(1f))
+                                IconButton(
+                                    onClick = { viewModel.removeRecentSource(uriString) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
-                            Spacer(Modifier.height(6.dp))
-                        }
                     }
                 }
+                }
+                    // Recent Destinations list
+                    val recentDestinations by viewModel.recentDestinationUris.collectAsState()
+                    if (recentDestinations.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Recent Destinations",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                        )
+                        recentDestinations.take(5).forEach { uriString ->
+                            val label = kotlin.runCatching { android.net.Uri.parse(uriString).path ?: uriString }.getOrNull()?.let { p ->
+                                val parts = p.trim('/').split('/')
+                                val tail = parts.takeLast(2)
+                                if (tail.isNotEmpty()) tail.joinToString("/") else p
+                            } ?: uriString
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(text = label, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
+                                OutlinedButton(
+                                    onClick = { viewModel.selectDestinationFolder(android.net.Uri.parse(uriString)) },
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(28.dp)
+                                ) { Text("Set", style = MaterialTheme.typography.labelSmall) }
+                                IconButton(onClick = { viewModel.removeRecentDestination(uriString) }, modifier = Modifier.size(28.dp)) {
+                                    Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                    }
             } else {
                 // When both not selected, show full-size buttons (kept below header)
             }
@@ -1790,7 +1538,7 @@ viewModel.updateSearchText("")
                 ExposedDropdownMenuBox(
                     expanded = searchExpanded,
                     onExpandedChange = { searchExpanded = !searchExpanded },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     OutlinedTextField(
                         value = currentSearchText,
@@ -1959,20 +1707,22 @@ viewModel.updateSearchText("")
                                 PlaylistTab.REJECTED -> rejectedFiles.size
                             }
                             Spacer(Modifier.height(0.dp))
-                            LaunchedEffect(file.uri) {
-                                viewModel.audioManager.clearAnalysis()
-                            }
+                            val panelAnimMs = (500 / visualSettings.animationSpeed).toInt()
+                            AnimatedVisibility(
+                                visible = isMainPlayerVisible,
+                                enter = expandVertically(animationSpec = tween(panelAnimMs)) + fadeIn(animationSpec = tween(panelAnimMs)),
+                                exit = shrinkVertically(animationSpec = tween(panelAnimMs)) + fadeOut(animationSpec = tween(panelAnimMs))
+                            ) {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
+                                    .padding(vertical = 4.dp)
                                     .offset(y = (-40).dp)
-                                    .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
                                     .graphicsLayer {
                                         translationX = animatedOffset
                                         scaleX = 1f + abs(animatedOffset) / 2000f
                                         scaleY = 1f + abs(animatedOffset) / 2000f
-                                        alpha = if (isMainPlayerVisible) transitionAlpha else 0f
+                                        alpha = transitionAlpha
                                     }
                                     .then(
                                         if (swipeDirection != 0) {
@@ -2040,47 +1790,20 @@ viewModel.updateSearchText("")
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    val analysis by viewModel.audioManager.analysisResult.collectAsState()
                                     val durationText = formatTime(duration)
                                     val bitrateText = "${calculateBitrate(file.size, duration)} kbps"
                                     val sizeText = formatFileSize(file.size)
-                                    val bpmText = analysis?.bpm?.let { "${(it + 0.5f).toInt()}" } ?: "—"
-                                    val keyText = analysis?.key?.let { toCamelotKey(it) } ?: "—"
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.Center,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "| Time $durationText | $bitrateText | $sizeText | BPM: $bpmText | Key $keyText |",
+                                            text = "| $durationText | $bitrateText | $sizeText |",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
                                             textAlign = TextAlign.Center
                                         )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        val isAnalyzing by viewModel.audioManager.isAnalyzing.collectAsState()
-                                        OutlinedButton(
-                                            onClick = {
-                                                scope.launch {
-                                                    currentPlayingFile?.let { viewModel.audioManager.analyzeFile(it, force = true) }
-                                                }
-                                            },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                            modifier = Modifier.height(22.dp),
-                                            enabled = !isAnalyzing
-                                        ) {
-                                            if (isAnalyzing) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.size(14.dp),
-                                                    strokeWidth = 2.dp
-                                                )
-                                            } else {
-                                                Text(
-                                                    text = "Analyze",
-                                                    style = MaterialTheme.typography.labelSmall
-                                                )
-                                            }
-                                        }
                                         Spacer(modifier = Modifier.width(6.dp))
                                         OutlinedButton(
                                             onClick = { isWaveformVisible = !isWaveformVisible },
@@ -2096,21 +1819,27 @@ viewModel.updateSearchText("")
                                     Spacer(modifier = Modifier.height(12.dp))
                                     if (isWaveformVisible && isMainPlayerVisible) {
                                         val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                        WaveformWithToggle(
-                                            sharedState = sharedWaveformState,
-                                            progress = progressPercent,
-                                            onSeek = { seekProgress ->
-                                                val seekPosition = (seekProgress * duration).toLong()
-                                                CrashLogger.log("Debug", "🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
-                                                viewModel.seekTo(seekPosition)
-                                            },
-                                            songUri = currentFile?.uri.toString(),
-                                            waveformHeight = visualSettings.waveformHeight.toInt(),
-                                            currentPosition = currentPosition,
-                                            totalDuration = duration,
-                                            fileName = file.name,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
+                                        Box(modifier = Modifier.fillMaxWidth()) {
+                                            WaveformWithToggle(
+                                                sharedState = sharedWaveformState,
+                                                progress = progressPercent,
+                                                onSeek = { seekProgress ->
+                                                    val seekPosition = (seekProgress * duration).toLong()
+                                                    CrashLogger.log("Debug", "🎯 Seek calculation: progress=$seekProgress, duration=$duration, seekPosition=$seekPosition")
+                                                    viewModel.seekTo(seekPosition)
+                                                },
+                                                songUri = currentFile?.uri.toString(),
+                                                waveformHeight = visualSettings.waveformHeight.toInt(),
+                                                currentPosition = currentPosition,
+                                                totalDuration = duration,
+                                                fileName = file.name,
+                                                customWaveformColor = customWaveformColor,
+                                                animationType = visualSettings.waveformAnimationType,
+                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            // BPM overlay removed
+                                        }
                                     }
                                     if (isMainPlayerVisible) Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -2365,7 +2094,7 @@ viewModel.updateSearchText("")
                                                         Icon(
                                                             Icons.Default.Folder,
                                                             contentDescription = "Move to Subfolder",
-                                                            tint = Color.White,
+                                                            tint = MaterialTheme.colorScheme.onSecondary,
                                                             modifier = Modifier.size(19.dp)
                                                         )
                                                     }
@@ -2689,9 +2418,10 @@ viewModel.updateSearchText("")
                                     }
                                 }
                             }
+                            } // end AnimatedVisibility (main player 1)
                         }
                     }
-                    
+
                     // Local composable to render the playlist tabs header (previously inside the list)
                     @Composable
                     fun PlaylistTabsHeader() {
@@ -2705,9 +2435,6 @@ viewModel.updateSearchText("")
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    IconButton(onClick = { showSubfolderDialog = true }) {
-                                        Icon(Icons.Default.FolderOpen, contentDescription = "Select Subfolder")
-                                    }
                                     PlaylistTab.entries.forEach { tab ->
                                         val isSelected = currentPlaylistTab == tab
                                         val tabColor = when (tab) {
@@ -2888,13 +2615,14 @@ viewModel.updateSearchText("")
                     
                     // Only the playlist list scrolls
                     val renderHeadersInList = false
+                    Box(modifier = Modifier.weight(1f)) {
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f)
+                            .fillMaxHeight()
                             .offset(y = (-35).dp),
-                        contentPadding = PaddingValues(vertical = 0.dp),
+                        contentPadding = PaddingValues(top = 0.dp, bottom = 80.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         userScrollEnabled = true,
                         reverseLayout = false
@@ -2957,23 +2685,23 @@ viewModel.updateSearchText("")
                                     PlaylistTab.REJECTED -> rejectedFiles.size
                                 }
                                 Spacer(Modifier.height(0.dp)) // moved counts/toggles outside scroll area
-                                
-                                // Clear previous analysis on track change; do not auto-analyze
-                                LaunchedEffect(file.uri) {
-                                    viewModel.audioManager.clearAnalysis()
-                                }
-
+                                val panelAnimMs2 = (500 / visualSettings.animationSpeed).toInt()
+                                val mainPlayerAlpha2 by animateFloatAsState(
+                                    targetValue = if (isMainPlayerVisible) 1f else 0f,
+                                    animationSpec = tween(panelAnimMs2),
+                                    label = "mainPlayerAlpha2"
+                                )
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
-                                        .then(if (isMainPlayerVisible) Modifier else Modifier.height(0.dp))
+                                        .then(if (mainPlayerAlpha2 == 0f) Modifier.height(0.dp) else Modifier)
                                         .animateItem(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow))
                                         .graphicsLayer {
                                             translationX = animatedOffset
-                                            scaleX = 1f + abs(animatedOffset) / 2000f // Slight scale effect
+                                            scaleX = 1f + abs(animatedOffset) / 2000f
                                             scaleY = 1f + abs(animatedOffset) / 2000f
-                                            alpha = if (isMainPlayerVisible) transitionAlpha else 0f // Hide completely when toggled off
+                                            alpha = if (isMainPlayerVisible) transitionAlpha else mainPlayerAlpha2
                                         }
                                         .then(
                                             if (swipeDirection != 0) {
@@ -3055,48 +2783,20 @@ viewModel.updateSearchText("")
                                         // Song info removed - now displayed in waveform container
                                         
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        // Metadata row under title:| Time | Bitrate | Size | BPM | Key |
-                                        val analysis by viewModel.audioManager.analysisResult.collectAsState()
                                         val durationText = formatTime(duration)
                                         val bitrateText = "${calculateBitrate(file.size, duration)} kbps"
                                         val sizeText = formatFileSize(file.size)
-                                        val bpmText = analysis?.bpm?.let { "${(it + 0.5f).toInt()}" } ?: "—"
-                                        val keyText = analysis?.key?.let { toCamelotKey(it) } ?: "—"
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.Center,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "| Time $durationText | $bitrateText | $sizeText | BPM: $bpmText | Key $keyText |",
+                                                text = "| $durationText | $bitrateText | $sizeText |",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
                                                 textAlign = TextAlign.Center
                                             )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            val isAnalyzing by viewModel.audioManager.isAnalyzing.collectAsState()
-                                            OutlinedButton(
-                                                onClick = {
-                                                    scope.launch {
-                                                        currentPlayingFile?.let { viewModel.audioManager.analyzeFile(it, force = true) }
-                                                    }
-                                                },
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                                modifier = Modifier.height(22.dp),
-                                                enabled = !isAnalyzing
-                                            ) {
-                                                if (isAnalyzing) {
-                                                    CircularProgressIndicator(
-                                                        modifier = Modifier.size(14.dp),
-                                                        strokeWidth = 2.dp
-                                                    )
-                                                } else {
-                                                    Text(
-                                                        text = "Analyze",
-                                                        style = MaterialTheme.typography.labelSmall
-                                                    )
-                                                }
-                                            }
                                             Spacer(modifier = Modifier.width(6.dp))
                                             OutlinedButton(
                                                 onClick = { isWaveformVisible = !isWaveformVisible },
@@ -3128,6 +2828,9 @@ viewModel.updateSearchText("")
                                                 currentPosition = currentPosition,
                                                 totalDuration = duration,
                                                 fileName = file.name, // Pass filename to display in waveform
+                                                customWaveformColor = customWaveformColor,
+                                                animationType = visualSettings.waveformAnimationType,
+                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
@@ -3198,7 +2901,7 @@ viewModel.updateSearchText("")
                                                 // Next button with modern style
                                                 Card(
                                                     onClick = { 
-                                                    hapticFeedback()
+                        
                                                 viewModel.next() 
                                                     },
                                                     modifier = Modifier.size(38.dp), // Reduced from 48dp to 38dp (20% smaller)
@@ -3623,8 +3326,8 @@ viewModel.updateSearchText("")
                                 // Spectrogram view removed - only available in dropdown menu
                             }
                         }
-                        
-                        
+
+
                         // Genre controls removed
                         
                         // Removed Like/Undo/Dislike compact row (moved inline with playlist waveform)
@@ -3640,10 +3343,6 @@ viewModel.updateSearchText("")
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Subfolder Selection Button
-                                    IconButton(onClick = { showSubfolderDialog = true }) {
-                                        Icon(Icons.Default.FolderOpen, contentDescription = "Select Subfolder")
-                                    }
                                     PlaylistTab.entries.forEach { tab ->
                                         val isSelected = currentPlaylistTab == tab
                                         val tabColor = when (tab) {
@@ -3871,7 +3570,10 @@ viewModel.updateSearchText("")
                                 if (showSubfolderDialog) {
                                     AlertDialog(
                                         onDismissRequest = { showSubfolderDialog = false },
-                                        title = { 
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                                        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        title = {
                                             Text(
                                                 when (currentPlaylistTab) {
                                                     PlaylistTab.TODO -> "Select Source Subfolder"
@@ -4218,8 +3920,8 @@ viewModel.updateSearchText("")
                         // Conditionally display search results or current playlist files (reverted to original)
                         val displayFiles = currentPlaylistFiles // Search results handled within dropdown
                         
-                        // Group files by subfolder for TODO playlist only
-                        val groupedItems: List<PlaylistItem> = if (currentPlaylistTab == PlaylistTab.TODO) {
+                        // Group files by subfolder for TODO and LIKED playlists
+                        val groupedItems: List<PlaylistItem> = if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
                             // Group by subfolder, handle null subfolders
                             val grouped = currentPlaylistFiles.groupBy { it.subfolder }
                             // Create flat list with headers: [Header, File, File, Header, File, ...]
@@ -4254,17 +3956,24 @@ viewModel.updateSearchText("")
                         ) { index, playlistItem ->
                             when (playlistItem) {
                                 is PlaylistItem.HeaderItem -> {
-                                    // Subfolder header
-                                    Text(
-                                        text = playlistItem.subfolder,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                                    )
+                                    // Subfolder header with divider
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                            thickness = 1.dp,
+                                            modifier = Modifier.padding(horizontal = 8.dp)
+                                        )
+                                        Text(
+                                            text = playlistItem.subfolder,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                        )
+                                    }
                                 }
                                 is PlaylistItem.FileItem -> {
                                     val item = playlistItem.file
@@ -4428,11 +4137,12 @@ viewModel.updateSearchText("")
                                             translationY = 0f
                                             alpha = rowAlpha
                                         }
-                                        .pointerInput(Unit) {
+                                        .pointerInput(isCurrent) {
+                                            if (!isCurrent) return@pointerInput // Only allow swipe on the currently playing row
                                             detectHorizontalDragGestures(
                                                 onDragStart = { _ ->
                                                     isSwipeActive = true
-                                                    hapticFeedback()
+                        
                                                 },
                                                 onDragEnd = {
                                                     if (!isMultiSelectionMode && isSwipeActive) {
@@ -4445,7 +4155,7 @@ viewModel.updateSearchText("")
                                                                 // Capture the file reference at the time of swipe to avoid race conditions
                                                                 val fileToSort = item
                                                                 val isActiveNow = currentPlayingFile?.uri == item.uri
-                                                            hapticFeedback()
+                                
                                                                 if (current < 0) {
                                                                     // Left swipe (DISLIKE)
                                                                     if (destinationFolder == null) {
@@ -4521,7 +4231,7 @@ viewModel.updateSearchText("")
                                                     
                                                     // Haptic feedback when crossing threshold
                                                     if (swipeDirection != newDirection && newDirection != 0) {
-                                                        hapticFeedback()
+                            
                                                     }
                                                     
                                                     swipeDirection = newDirection
@@ -4717,82 +4427,70 @@ viewModel.updateSearchText("")
                                                     }
                                                 }
                                             } else {
-                                                // When main player is visible but main waveform is hidden, show the row waveform for the active row
-                                                if (isMainPlayerVisible && !isWaveformVisible) {
-                                                    val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .weight(1f)
-                                                            .height(visualSettings.rowWaveformHeight.dp),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        WaveformWithToggle(
-                                                            sharedState = sharedWaveformState,
-                                                            progress = progressPercent,
-                                                            onSeek = { seekProgress ->
-                                                                val seekPosition = (seekProgress * duration).toLong()
-                                                                viewModel.seekTo(seekPosition)
-                                                            },
-                                                            songUri = item.uri.toString(),
-                                                            waveformHeight = visualSettings.rowWaveformHeight.toInt(),
-                                                            currentPosition = currentPosition,
-                                                            totalDuration = duration,
-                                                            fileName = item.name,
-                                                            opacity = 0.7f,
+                                                // Waveform with track info overlay at top
+                                                val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
+                                                val trackDurationText = if (duration > 0) { val m = duration / 60000; val s = (duration % 60000) / 1000; "${m}:${"%02d".format(s)}" } else ""
+                                                val trackSizeText = if (item.size > 0) { "%.1f MB".format(item.size / (1024.0 * 1024.0)) } else ""
+                                                val trackBitrateText = if (item.bitrate > 0) "${item.bitrate}kbps" else ""
+                                                val trackInfoParts = listOfNotNull(trackDurationText.ifEmpty { null }, trackBitrateText.ifEmpty { null }, trackSizeText.ifEmpty { null })
+                                                Column(
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    // Track info above waveform
+                                                    if (trackInfoParts.isNotEmpty()) {
+                                                        Text(
+                                                            text = trackInfoParts.joinToString(" | "),
+                                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, lineHeight = 7.sp),
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                            textAlign = TextAlign.Center,
+                                                            maxLines = 1,
                                                             modifier = Modifier.fillMaxWidth()
                                                         )
                                                     }
-                                                } else {
-                                                    val progressPercent = if (duration > 0) currentPosition.toFloat() / duration else 0f
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .weight(1f)
-                                                .height(visualSettings.rowWaveformHeight.dp),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        WaveformWithToggle(
-                                                            sharedState = sharedWaveformState,
-                                                            progress = progressPercent,
-                                                            onSeek = { seekProgress ->
-                                                                val seekPosition = (seekProgress * duration).toLong()
-                                                                viewModel.seekTo(seekPosition)
-                                                            },
-                                                            songUri = item.uri.toString(),
-                                                            waveformHeight = visualSettings.rowWaveformHeight.toInt(),
-                                                            currentPosition = currentPosition,
-                                                            totalDuration = duration,
-                                                            fileName = item.name,
-                                                            opacity = 0.7f,
-                                                            modifier = Modifier.fillMaxWidth()
-                                                        )
-                                                        // No consuming overlay so single-tap seek works
-                                                    }
+                                                    WaveformWithToggle(
+                                                        sharedState = sharedWaveformState,
+                                                        progress = progressPercent,
+                                                        onSeek = { seekProgress ->
+                                                            val seekPosition = (seekProgress * duration).toLong()
+                                                            viewModel.seekTo(seekPosition)
+                                                        },
+                                                        songUri = item.uri.toString(),
+                                                        waveformHeight = visualSettings.rowWaveformHeight.toInt(),
+                                                        currentPosition = currentPosition,
+                                                        totalDuration = duration,
+                                                        fileName = item.name,
+                                                        opacity = 0.7f,
+                                                        customWaveformColor = customWaveformColor,
+                                                        animationType = visualSettings.waveformAnimationType,
+                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                                        modifier = Modifier.fillMaxWidth().height(visualSettings.rowWaveformHeight.dp)
+                                                    )
                                                 }
                                             }
                                             
                                             // 2x2 control pack to the right (Like, Move, Spectrogram, Share)
                                             Column(
-                                                verticalArrangement = Arrangement.spacedBy(3.dp),
+                                                verticalArrangement = Arrangement.spacedBy(0.dp),
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
-                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                                     // Like (top-left)
                                             IconButton(
-                                                onClick = { 
-                                                            try { 
+                                                onClick = {
+                                                            try {
                                                                 val actualIndex = currentPlaylistFiles.indexOfFirst { it.uri == item.uri }
                                                                 if (actualIndex >= 0) {
                                                                     viewModel.sortAtIndex(actualIndex, SortAction.LIKE)
                                                                 }
                                                             } catch (e: Exception) { CrashLogger.log("Debug", "Error in like button: ${e.message}") }
                                                         },
-                                                        modifier = Modifier.size(32.dp)
+                                                        modifier = Modifier.size(adaptiveButtonSize)
                                                     ) {
                                                         Icon(
                                                             Icons.Default.Favorite,
                                                             contentDescription = "Like",
                                                             tint = YesButton,
-                                                            modifier = Modifier.size(18.dp)
+                                                            modifier = Modifier.size(adaptiveIconSize)
                                                         )
                                                     }
                                                     // Move to (top-right)
@@ -4802,88 +4500,53 @@ viewModel.updateSearchText("")
                                                             viewModeForSubfolderDialog = false
                                                             showSubfolderSelectionDialog = true
                                                         },
-                                                        modifier = Modifier.size(32.dp)
+                                                        modifier = Modifier.size(adaptiveButtonSize)
                                             ) {
                                                 Icon(
                                                     Icons.Default.Folder,
                                                     contentDescription = "Move to Subfolder",
                                                             tint = Color(0xFF4CAF50),
-                                                            modifier = Modifier.size(18.dp)
+                                                            modifier = Modifier.size(adaptiveIconSize)
                                                         )
                                                     }
                                                 }
-                                                // Hide Spectrogram/Share whenever main player is visible
-                                                if (!isMainPlayerVisible) {
-                                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                        // Spectrogram (bottom-left)
-                                                        IconButton(
-                                                            onClick = {
-                                                                try {
-                                                                    val currentFiles = when (currentPlaylistTab) {
-                                                                        PlaylistTab.TODO -> musicFiles
-                                                                        PlaylistTab.LIKED -> likedFiles
-                                                                        PlaylistTab.REJECTED -> rejectedFiles
-                                                                    }
-                                                                    if (index < currentFiles.size) {
-                                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                                        showSpectrogram = true
-                                                                    }
-                                                                } catch (e: Exception) {
-                                                                    CrashLogger.log("Debug", "Error in spectrogram button: ${e.message}")
-                                                                }
-                                                            },
-                                                            modifier = Modifier.size(32.dp)
-                                                        ) {
-                                                            Column(
-                                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                                verticalArrangement = Arrangement.Center
-                                                            ) {
-                                                                Text(
-                                                                    text = "Sp",
-                                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                                        fontWeight = FontWeight.Bold,
-                                                                        fontSize = 8.sp
-                                                                    ),
-                                                                    color = Color(0xFFFFB6C1),
-                                                                    textAlign = TextAlign.Center
-                                                                )
-                                                                Text(
-                                                                    text = "eK",
-                                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                                        fontWeight = FontWeight.Bold,
-                                                                        fontSize = 8.sp
-                                                                    ),
-                                                                    color = Color(0xFFFFB6C1),
-                                                                    textAlign = TextAlign.Center
-                                                                )
+                                                // Elapsed / Total time + Share (bottom row)
+                                                Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                                                    // Elapsed/Total time column
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        verticalArrangement = Arrangement.Center,
+                                                        modifier = Modifier.size(adaptiveButtonSize)
+                                                    ) {
+                                                        val elapsedMins = currentPosition / 60000
+                                                        val elapsedSecs = (currentPosition % 60000) / 1000
+                                                        val totalMins = duration / 60000
+                                                        val totalSecs = (duration % 60000) / 1000
+                                                        Text(
+                                                            text = "${elapsedMins}:${"%02d".format(elapsedSecs)}",
+                                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = adaptiveSpekFontSize, lineHeight = adaptiveSpekFontSize * 1.1f),
+                                                            color = Color.Red,
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                        Text(
+                                                            text = "${totalMins}:${"%02d".format(totalSecs)}",
+                                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = adaptiveSpekFontSize, lineHeight = adaptiveSpekFontSize * 1.1f),
+                                                            color = Color.Red,
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                    }
+                                                    // Share
+                                                    IconButton(
+                                                        onClick = {
+                                                            try {
+                                                                viewModel.shareToWhatsApp()
+                                                            } catch (e: Exception) {
+                                                                CrashLogger.log("Debug", "Error in share button: ${e.message}")
                                                             }
-                                                        }
-                                                        // Share (bottom-right)
-                                                        IconButton(
-                                                            onClick = {
-                                                                try {
-                                                                    val currentFiles = when (currentPlaylistTab) {
-                                                                        PlaylistTab.TODO -> musicFiles
-                                                                        PlaylistTab.LIKED -> likedFiles
-                                                                        PlaylistTab.REJECTED -> rejectedFiles
-                                                                    }
-                                                                    if (index < currentFiles.size) {
-                                                                        viewModel.setCurrentFileWithoutPlaying(currentFiles[index])
-                                                                        viewModel.shareToWhatsApp()
-                                                                    }
-                                                                } catch (e: Exception) {
-                                                                    CrashLogger.log("Debug", "Error in share button: ${e.message}")
-                                                                }
-                                                            },
-                                                            modifier = Modifier.size(32.dp)
-                                                        ) {
-                                                            Icon(
-                                                                Icons.Default.Share,
-                                                                contentDescription = "Share File",
-                                                                tint = Color(0xFF2196F3),
-                                                                modifier = Modifier.size(18.dp)
-                                                            )
-                                                        }
+                                                        },
+                                                        modifier = Modifier.size(adaptiveButtonSize)
+                                                    ) {
+                                                        Icon(Icons.Default.Share, contentDescription = "Share", tint = Color(0xFF2196F3), modifier = Modifier.size(adaptiveIconSize))
                                                     }
                                                 }
                                             }
@@ -4982,7 +4645,9 @@ viewModel.updateSearchText("")
                             }
                         }
                     }
-                    
+                    // Bottom shadow removed
+                    } // end Box wrapping LazyColumn
+
                     // Enhanced Sticky minimized player when scrolled - positioned correctly in BoxScope
                     // Smart visibility: show when current playing track is not in current playlist OR not visible in viewport
                     val currentTrackIndex = currentPlaylistFiles.indexOfFirst { it.uri == currentPlayingFile?.uri }
@@ -5047,13 +4712,14 @@ viewModel.updateSearchText("")
                         }
                         if (currentPlayingFile?.uri == promotingNextUri) promotingNextUri = null
                     }
-                    val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackFullyVisible
+                    val hideMiniBecauseFirstTrackInSight = isFirstOpen && isFileInCurrentPlaylist && currentTrackIndex == 0 && isCurrentTrackFullyVisible && isMainPlayerVisible
                     // Determine if current playing file is liked
                     val isCurrentLiked = remember(currentPlayingFile?.uri, likedFiles) {
                         currentPlayingFile?.let { f -> likedFiles.any { it.uri == f.uri } } ?: false
                     }
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = currentPlayingFile != null &&
+                        visible = visualSettings.enableMiniPlayer &&
+                                currentPlayingFile != null &&
                                 (
                                     // If not part of current playlist, always allow mini visibility
                                     !isFileInCurrentPlaylist ||
@@ -5065,14 +4731,15 @@ viewModel.updateSearchText("")
                         // Also do not show mini-player when main player AND its waveform are visible and the current playing row is not visible
                                 !(isMainPlayerVisible && isWaveformVisible && !isCurrentTrackAnyVisible) &&
                                 // Guard: don't show mini on very first open if first item is fully visible
-                                !(isFileInCurrentPlaylist && currentTrackIndex == 0) &&
+                                !(isFileInCurrentPlaylist && currentTrackIndex == 0 && isMainPlayerVisible) &&
                                 !isMiniPlayerHidden &&
                                 !suppressMiniOnLeftSwipe &&
                                 !hideMiniBecauseFirstTrackInSight,
-                        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-                        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
+                            .wrapContentHeight()
                             .zIndex(1f),
                         label = "Miniplayer Animated Visibility"
                     ) {
@@ -5099,7 +4766,8 @@ viewModel.updateSearchText("")
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(8.dp)
+                                    .heightIn(max = 140.dp)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
                                     .graphicsLayer {
                                         translationX = miniAnimatedOffset
                                         scaleX = 1f + abs(miniAnimatedOffset) / 3000f // Slightly more subtle scale for miniplayer
@@ -5167,297 +4835,86 @@ viewModel.updateSearchText("")
                                 colors = CardDefaults.cardColors(containerColor = miniCardColor),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
 ) {
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    // Floating close (X) button - top-left
-                                    IconButton(
-                                        onClick = { isMiniPlayerHidden = true },
-                                        modifier = Modifier
-                                            .align(Alignment.TopStart)
-                                            .padding(4.dp)
-                                            .size(24.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "Hide Miniplayer",
-                                            tint = Color.Red,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-
-    Column(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    // Main content - Song name and controls in 2 columns
+                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp)) {
+                                    // Row 1: Close + Song title + Controls
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 13.dp, vertical = 9.dp), // Increased by 10%
+                                        modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // Left column: Song info
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
+                                        // Close button
+                                        IconButton(
+                                            onClick = { isMiniPlayerHidden = true },
+                                            modifier = Modifier.size(24.dp)
                                         ) {
-                                            AnimatedContent(
-                                                targetState = file.name,
-                                                transitionSpec = {
-                                                    fadeIn(animationSpec = animationSpecs.songNameTween) + slideInVertically() togetherWith
-                                                    fadeOut(animationSpec = animationSpecs.songNameTween) + slideOutVertically()
-                                                },
-                                                label = "Miniplayer Song Name Animation",
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) { targetName ->
-                                            val title = targetName.ifEmpty { "Unknown Track" }
-                                            val desiredLines = when {
-                                                title.length <= 28 -> 2
-                                                title.length <= 56 -> 3
-                                                else -> 4
-                                            }
-                                            val fontScale = when (desiredLines) {
-                                                2 -> 0.9f    // bigger when fewer lines
-                                                3 -> 0.75f
-                                                else -> 0.62f
-                                            }
-                                            Text(
-                                                text = title,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
-                                                ),
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                maxLines = desiredLines,
-                                                overflow = TextOverflow.Ellipsis,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                            }
-                                            // Miniplayer metadata rows under title
-                                            val miniAnalysis by viewModel.audioManager.analysisResult.collectAsState()
-                                            val miniDurationText = formatTime(duration)
-                                            val miniBitrateText = "${calculateBitrate(file.size, duration)} kbps"
-                                            val miniSizeText = formatFileSize(file.size)
-                                            val miniBpm = miniAnalysis?.bpm?.let { "${(it + 0.5f).toInt()}" } ?: "—"
-                                            val miniKey = miniAnalysis?.key?.let { toCamelotKey(it) } ?: "—"
-                                            // Row 1: Time | Bitrate | Size
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "| Time $miniDurationText | $miniBitrateText | $miniSizeText |",
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.9f
-                                                    ),
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            }
-                                            // Row 2: BPM | Key | Analyze
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "| BPM: $miniBpm | Key $miniKey |",
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.9f
-                                                    ),
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                val miniAnalyzing by viewModel.audioManager.isAnalyzing.collectAsState()
-                                                OutlinedButton(
-                                                    onClick = {
-                                                        scope.launch {
-                                                            currentPlayingFile?.let { viewModel.audioManager.analyzeFile(it, force = true) }
-                                                        }
-                                                    },
-                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                                    modifier = Modifier.height(22.dp),
-                                                    enabled = !miniAnalyzing
-                                                ) {
-                                                    if (miniAnalyzing) {
-                                                        CircularProgressIndicator(
-                                                            modifier = Modifier.size(14.dp),
-                                                            strokeWidth = 2.dp
-                                                        )
-                                                    } else {
-                                                        Text(
-                                                            text = "Analyze",
-                                                            style = MaterialTheme.typography.labelSmall
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                            Icon(Icons.Default.Close, contentDescription = "Hide", tint = Color.Red, modifier = Modifier.size(14.dp))
                                         }
-                                        
-                                        // Right column: Control buttons in two rows
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
+                                        // Song title
+                                        Text(
+                                            text = file.name.ifEmpty { "Unknown Track" },
+                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+                                        )
+                                        // Playback controls
+                                        IconButton(onClick = { viewModel.previous() }, modifier = Modifier.size(28.dp)) {
+                                            Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        FloatingActionButton(
+                                            onClick = { viewModel.playPause() },
+                                            modifier = Modifier.size(28.dp),
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp)
                                         ) {
-                                            // First row: PREV PLAY NEXT with modern style
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                // Previous button - mini style
-                                                Card(
-                                                    onClick = { 
-                                                    hapticFeedback()
-                                                viewModel.previous() 
-                                                    },
-                                                    modifier = Modifier.size(41.dp),
-                                                    shape = CircleShape,
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                                                    ),
-                                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.SkipPrevious, 
-                                                            "Previous", 
-                                                            modifier = Modifier.size(22.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                }
-                                                
-                                                // Play/Pause button - mini FAB style
-                                                FloatingActionButton(
-                                                    onClick = { 
-                                                    hapticFeedback()
-                                                viewModel.playPause() 
-                                                    }, 
-                                                    modifier = Modifier.size(29.dp),
-                                                    containerColor = MaterialTheme.colorScheme.primary,
-                                                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                                                    elevation = FloatingActionButtonDefaults.elevation(
-                                                        defaultElevation = 4.dp,
-                                                        pressedElevation = 6.dp
-                                                    )
-                                                ) {
-        Icon(
-                                                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                    if (isPlaying) "Pause" else "Play",
-                                                        modifier = Modifier.size(15.dp)
-                                                )
-                                            }
-                                            
-                                                // Next button - mini style
-                                                Card(
-                                                    onClick = { 
-                                                    hapticFeedback()
-                                                viewModel.next() 
-                                                    },
-                                                    modifier = Modifier.size(41.dp),
-                                                    shape = CircleShape,
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                                                    ),
-                                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.SkipNext, 
-                                                            "Next", 
-                                                            modifier = Modifier.size(22.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            
-                                            // Second row: DISLIKE LIKE SPEK
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                // Dislike button in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                            viewModel.sortSelectedFiles(SortAction.DISLIKE)
-                                                    } else {
-                                                            viewModel.sortCurrentFile(SortAction.DISLIKE)
-                                                    }
-                                                }, 
-                                                modifier = Modifier.size(38.dp)
-                                            ) {
-                                                Icon(
-                                                        Icons.Default.ThumbDown, 
-                                                        contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Reject All Selected" else "Dislike", 
-                                                        tint = NoButton,
-                                                    modifier = Modifier.size(19.dp)
-                                                )
-                                            }
-                                            
-                                                // Like button in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
-                                                            viewModel.sortSelectedFiles(SortAction.LIKE)
-                                                    } else {
-                                                            viewModel.sortCurrentFile(SortAction.LIKE)
-                                                    }
-                                                }, 
-                                                modifier = Modifier.size(38.dp)
-                                            ) {
-                                                Icon(
-                                                        Icons.Default.Favorite, 
-                                                        contentDescription = if (isMultiSelectionMode && selectedIndices.isNotEmpty()) "Like All Selected" else "Like", 
-                                                        tint = YesButton,
-                                                    modifier = Modifier.size(19.dp)
-                                                )
-                                            }
-                                            
-                                                // Spectrogram Text Button in mini player
-                                            IconButton(
-                                                onClick = { 
-                                                    // Toggle spectrogram popup
-                                                    showSpectrogram = !showSpectrogram
-                                                }, 
-                                                modifier = Modifier.size(38.dp)
-                                            ) {
-                                                    Column(
-                                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                                        verticalArrangement = Arrangement.Center
-                                                    ) {
-                                                        Text(
-                                                            text = "Sp",
-                                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                                fontWeight = FontWeight.Bold
-                                                            ),
-                                                            color = Color(0xFFFFB6C1), // Light Pink
-                                                            textAlign = TextAlign.Center
-                                                        )
-                                                        Text(
-                                                            text = "eK",
-                                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                                fontWeight = FontWeight.Bold
-                                                            ),
-                                                            color = Color(0xFFFFB6C1), // Light Pink
-                                                            textAlign = TextAlign.Center
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                            Icon(
+                                                if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                if (isPlaying) "Pause" else "Play",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        IconButton(onClick = { viewModel.next() }, modifier = Modifier.size(28.dp)) {
+                                            Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     }
-                                    
-                                    // Mini player waveform
+                                    // Row 2: Metadata + Like/Dislike/SpEk
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val miniDurationText = formatTime(duration)
+                                        val miniBitrateText = "${calculateBitrate(file.size, duration)} kbps"
+                                        val miniSizeText = formatFileSize(file.size)
+                                        Text(
+                                            text = "$miniDurationText | $miniBitrateText | $miniSizeText",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                if (isMultiSelectionMode && selectedIndices.isNotEmpty()) viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                else viewModel.sortCurrentFile(SortAction.DISLIKE)
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) { Icon(Icons.Default.ThumbDown, "Dislike", tint = NoButton, modifier = Modifier.size(12.dp)) }
+                                        IconButton(
+                                            onClick = {
+                                                if (isMultiSelectionMode && selectedIndices.isNotEmpty()) viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                else viewModel.sortCurrentFile(SortAction.LIKE)
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) { Icon(Icons.Default.Favorite, "Like", tint = YesButton, modifier = Modifier.size(12.dp)) }
+                                        IconButton(
+                                            onClick = { showSpectrogram = !showSpectrogram },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Text("SpEk", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 7.sp), color = Color(0xFFFFB6C1))
+                                        }
+                                    }
+                                    // Row 3: Compact waveform
                                     WaveformWithToggle(
                                         sharedState = sharedWaveformState,
                                         progress = if (duration > 0) currentPosition.toFloat() / duration else 0f,
@@ -5466,28 +4923,30 @@ viewModel.updateSearchText("")
                                             viewModel.seekTo(seekPosition)
                                         },
                                         songUri = file.uri.toString(),
-                                        waveformHeight = visualSettings.miniWaveformHeight.toInt(),
+                                        waveformHeight = 36,
                                         currentPosition = currentPosition,
                                         totalDuration = duration,
                                         fileName = file.name,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        customWaveformColor = customWaveformColor,
+                                        animationType = visualSettings.waveformAnimationType,
+                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
-                            }
-                        }
                     }
 
                 }
             }
         }
     }
-    
+
     // Subfolder creation dialog
     if (showSubfolderCreateDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.hideSubfolderDialog() },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Create New Subfolder") },
             text = {
                 Column {
@@ -5523,10 +4982,13 @@ viewModel.updateSearchText("")
         var selectedSubfolders by remember { mutableStateOf(setOf<String>()) }
         
         AlertDialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 viewModel.hideSubfolderManagementDialog()
                 selectedSubfolders = emptySet()
             },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text("Manage Subfolders") },
             text = {
                 Column {
@@ -5625,7 +5087,10 @@ viewModel.updateSearchText("")
         
         AlertDialog(
             onDismissRequest = { showSubfolderSelectionDialog = false },
-            title = { 
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurface,
+            title = {
                 Text(
                     if (viewModeForSubfolderDialog) {
                         "Select Liked Subfolders to View"
@@ -5684,7 +5149,7 @@ viewModel.updateSearchText("")
                                 columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(max = 300.dp),
+                                    .heightIn(max = 500.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 userScrollEnabled = true
@@ -5846,5 +5311,6 @@ viewModel.updateSearchText("")
     }
 
 
+}
 }
 }

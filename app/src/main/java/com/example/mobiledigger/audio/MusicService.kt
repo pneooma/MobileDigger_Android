@@ -380,6 +380,11 @@ class MusicService : MediaSessionService() {
                             player?.seekTo(pos)
                             currentPosition = pos
                             updatePlaybackState(); sendNowPlayingUpdate(); updateNotification()
+                            // Broadcast seek to ViewModel
+                            sendBroadcast(Intent("com.example.mobiledigger.ACTION_SEEK").apply {
+                                setPackage(packageName)
+                                putExtra("position", pos)
+                            })
                         }
                     })
                     isActive = true
@@ -560,10 +565,9 @@ class MusicService : MediaSessionService() {
         )
 
         val prevPendingIntent = PendingIntent.getBroadcast(this, 1, Intent(ACTION_PREVIOUS).apply { setPackage(packageName) }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val rewindPendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_REWIND)
-        // Use MediaButtonReceiver for play/pause to ensure system transport toggles work
-        val playPausePendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)
-        val forwardPendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_FAST_FORWARD)
+        val likePendingIntent = PendingIntent.getBroadcast(this, 6, Intent(ACTION_LIKE).apply { setPackage(packageName) }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val playPausePendingIntent = PendingIntent.getBroadcast(this, 2, Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val dislikePendingIntent = PendingIntent.getBroadcast(this, 7, Intent(ACTION_DISLIKE).apply { setPackage(packageName) }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val nextPendingIntent = PendingIntent.getBroadcast(this, 3, Intent(ACTION_NEXT).apply { setPackage(packageName) }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val stopIntent = Intent(ACTION_STOP).apply { setPackage(packageName) }
         val stopPendingIntent = PendingIntent.getBroadcast(this, 10, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
@@ -575,12 +579,12 @@ class MusicService : MediaSessionService() {
         // Extract cover art from audio file
         val coverArt = extractCoverArt(currentFile)
         
-        // VLC-style notification similar to their NotificationHelper
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_pig_headphones)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentTitle(songTitle)
             .setContentText("MobileDigger Music Player")
+            .setTicker(songTitle)
             .setLargeIcon(coverArt)
             .setAutoCancel(!actualIsPlaying)
             .setOngoing(actualIsPlaying)
@@ -590,15 +594,15 @@ class MusicService : MediaSessionService() {
             .setDeleteIntent(stopPendingIntent)
             .setContentIntent(pendingIntent)
 
-        // VLC action order: Previous, Rewind, Play/Pause, Forward, Next
+        // Action order: Previous, Like, Play/Pause, Dislike, Next
         builder.addAction(android.R.drawable.ic_media_previous, "Previous", prevPendingIntent) // 0
-        builder.addAction(android.R.drawable.ic_media_rew, "Rewind", rewindPendingIntent) // 1
+        builder.addAction(android.R.drawable.btn_star_big_on, "Like", likePendingIntent) // 1
         val playIcon = if (actualIsPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
         builder.addAction(playIcon, if (actualIsPlaying) "Pause" else "Play", playPausePendingIntent) // 2
-        builder.addAction(android.R.drawable.ic_media_ff, "Forward", forwardPendingIntent) // 3
+        builder.addAction(android.R.drawable.ic_delete, "Dislike", dislikePendingIntent) // 3
         builder.addAction(android.R.drawable.ic_media_next, "Next", nextPendingIntent) // 4
 
-        // Force compact to show 10s skip buttons like VLC: [rewind, play/pause, forward]
+        // Compact view: Like, Play/Pause, Dislike
         val showActions = intArrayOf(1, 2, 3)
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
             .setShowActionsInCompactView(*showActions)

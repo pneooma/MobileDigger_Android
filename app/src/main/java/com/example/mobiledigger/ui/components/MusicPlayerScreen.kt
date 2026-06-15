@@ -810,31 +810,6 @@ fun MusicPlayerScreen(
                 bottom = paddingValues.calculateBottomPadding() / 2
             )
         ) {
-        // Transient info/status banner driven by showInfoMessage(). The state was set
-        // all over the screen but never rendered, so these messages were invisible.
-        if (showInfoMessage && infoMessageText.isNotBlank()) {
-            val bannerColor = when (infoMessageType) {
-                "success" -> Color(0xFF2E7D32)
-                "error" -> Color(0xFFC62828)
-                else -> MaterialTheme.colorScheme.secondaryContainer
-            }
-            val bannerTextColor = if (infoMessageType == "info")
-                MaterialTheme.colorScheme.onSecondaryContainer else Color.White
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .background(bannerColor, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = infoMessageText,
-                    color = bannerTextColor,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-
         // Compute destination launcher and selection flags early (used by header)
         val destLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocumentTree()
@@ -880,6 +855,31 @@ fun MusicPlayerScreen(
             }
         }
 
+        // Transient info/status banner (e.g. "Moved to 'Liked'/'Rejected'"), shown just
+        // above the header row that holds the Show/Hide Playlists toggle.
+        if (showInfoMessage && infoMessageText.isNotBlank()) {
+            val bannerColor = when (infoMessageType) {
+                "success" -> Color(0xFF2E7D32)
+                "error" -> Color(0xFFC62828)
+                else -> MaterialTheme.colorScheme.secondaryContainer
+            }
+            val bannerTextColor = if (infoMessageType == "info")
+                MaterialTheme.colorScheme.onSecondaryContainer else Color.White
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(bannerColor, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = infoMessageText,
+                    color = bannerTextColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
         // Header row: [Logo] [Reject All] [Player] [Playlist]
         if (musicFiles.isNotEmpty() && !isLoading) {
             val labelStyle = MaterialTheme.typography.labelSmall
@@ -906,7 +906,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.00",
+                        text = "v12.01",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1773,7 +1773,7 @@ fun MusicPlayerScreen(
                                                             val prevFile = file
                                                             scope.launch {
                                                                 mainSwipeOffset.animateTo(exit, tween(220))
-                                                                mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                                mainSwipeOffset.animateTo(0f, animationSpec)
                                                                 if (current < 0) {
                                                                     try {
                                                                         suppressMiniOnLeftSwipe = true
@@ -1787,7 +1787,7 @@ fun MusicPlayerScreen(
                                                             }
                                                         } else {
                                                             scope.launch {
-                                                                mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                                mainSwipeOffset.animateTo(0f, animationSpec)
                                                             }
                                                         }
                                                         swipeDirection = 0
@@ -2756,7 +2756,7 @@ fun MusicPlayerScreen(
                                                             // 1) Animate out fully
                                                             mainSwipeOffset.animateTo(exit, tween(220))
                                                             // 2) Animate back to rest
-                                                            mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                            mainSwipeOffset.animateTo(0f, animationSpec)
                                                             // 3) Then perform actions
                                                             if (current < 0) {
                                                                 try {
@@ -2777,7 +2777,7 @@ fun MusicPlayerScreen(
                                                         }
                                                     } else {
                                                         scope.launch {
-                                                            mainSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                                                            mainSwipeOffset.animateTo(0f, animationSpec)
                                                         }
                                                     }
                                                     swipeDirection = 0
@@ -4679,9 +4679,17 @@ fun MusicPlayerScreen(
                     // First-open behavior: hide miniplayer while the very first track is in sight
                     var isFirstOpen by remember { mutableStateOf(true) }
                     var initialAutoScrolled by remember { mutableStateOf(false) }
-                    val isCurrentTrackFullyVisible = remember(listState.layoutInfo, currentTrackIndex) {
+                    // Match the current track by its ROW KEY, not by a list index. The
+                    // LazyColumn renders `groupedItems` (file rows interleaved with
+                    // subfolder HeaderItems), so a currentPlaylistFiles index does NOT equal
+                    // the LazyColumn index when headers are present — which made the
+                    // mini-player show even though the current row was on screen. FileItem
+                    // rows are keyed "${uri}_${subfolder}", so we match on the URI prefix.
+                    val currentTrackKeyPrefix = currentPlayingFile?.uri?.let { "${it}_" }
+                    val isCurrentTrackFullyVisible = remember(listState.layoutInfo, currentTrackKeyPrefix) {
                         val info = listState.layoutInfo
-                        val item = info.visibleItemsInfo.firstOrNull { it.index == currentTrackIndex }
+                        val item = if (currentTrackKeyPrefix == null) null
+                            else info.visibleItemsInfo.firstOrNull { (it.key as? String)?.startsWith(currentTrackKeyPrefix) == true }
                         if (item == null) {
                             false
                         } else {
@@ -4694,9 +4702,10 @@ fun MusicPlayerScreen(
                         }
                     }
                     // Row is visible in ANY amount if it's present in visibleItemsInfo
-                    val isCurrentTrackAnyVisible = remember(listState.layoutInfo, currentTrackIndex) {
+                    val isCurrentTrackAnyVisible = remember(listState.layoutInfo, currentTrackKeyPrefix) {
                         val info = listState.layoutInfo
-                        info.visibleItemsInfo.any { it.index == currentTrackIndex }
+                        if (currentTrackKeyPrefix == null) false
+                        else info.visibleItemsInfo.any { (it.key as? String)?.startsWith(currentTrackKeyPrefix) == true }
                     }
                     
                     // Mark first-open completed once user scrolls or advances beyond the first row

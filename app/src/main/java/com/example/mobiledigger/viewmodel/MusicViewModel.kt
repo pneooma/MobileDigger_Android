@@ -1871,13 +1871,21 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private fun startPositionUpdates() {
         viewModelScope.launch {
             try {
+                var notifTick = 0
                 while (isActive) { // Check if coroutine is still active
                     kotlinx.coroutines.delay(33) // Update every ~33ms for 120Hz displays (30fps UI updates)
-                    
+
                     if (_isPlaying.value && isActive) { // Double check we're still active
                         try {
                             _currentPosition.value = audioManager.getCurrentPosition()
                             _duration.value = audioManager.getDuration()
+                            // Stream the real position to the notification ~once a second so the
+                            // notification media seekbar actually advances (it lives in the
+                            // service and otherwise only got position on discrete events).
+                            if (++notifTick >= 30) {
+                                notifTick = 0
+                                try { updateNotification() } catch (_: Exception) {}
+                            }
                         } catch (e: Exception) {
                             CrashLogger.log("MusicViewModel", "Error updating position", e)
                         }

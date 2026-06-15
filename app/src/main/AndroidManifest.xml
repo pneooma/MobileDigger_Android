@@ -42,7 +42,6 @@
             android:launchMode="singleTask"
             android:taskAffinity=""
             android:screenOrientation="portrait"
-            android:process=":main"
             android:attributionTags="main_activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -106,7 +105,6 @@
             android:name=".audio.MusicService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback"
-            android:process=":music"
             android:attributionTags="music_service">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService" />

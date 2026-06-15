@@ -1872,3 +1872,12 @@ v12.00
 - 🎵 Audio: wake lock now holds during real playback (background audio no longer drops on CPU sleep); audio focus requested on resume; notification rewind/forward/close actions and hardware NEXT/PREVIOUS now wired.
 - 🎚️ Settings: mini-player waveform height now honored; new waveform color picker; transient info banner now actually renders.
 - 📲 Version and UI label updated to 12.00
+
+v12.01
+- 🎵 Background playback: unified app processes so the foreground service keeps the real player alive — audio no longer stops when the app is backgrounded.
+- 🔔 Notification: media seekbar now advances (real position streamed ~1/s); scrubbing seeks the real player.
+- 🔤 Fonts: selected font now applies app-wide (provided as the default text style).
+- ⚡ Animation speed slider now drives the card swipe animations.
+- 📍 Mini-player: no longer shown when the current track row is visible in the playlist (now matched by row key, not a divergent index).
+- 💬 Info banner (e.g. Moved to Liked/Rejected) now shown just above the Show/Hide Playlists row.
+- 📲 Version and UI label updated to 12.01

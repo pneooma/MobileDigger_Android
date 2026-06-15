@@ -117,7 +117,12 @@ fun MobileDiggerTheme(
         typography = typography
     ) {
         CompositionLocalProvider(LocalAppColors provides AppColors()) {
-            content()
+            // Material3 leaves LocalTextStyle as the system default, so bare Text()
+            // ignored the selected font. Propagate the chosen typography as the default
+            // text style so every Text inherits the selected font family.
+            androidx.compose.material3.ProvideTextStyle(value = typography.bodyLarge) {
+                content()
+            }
         }
     }
 }

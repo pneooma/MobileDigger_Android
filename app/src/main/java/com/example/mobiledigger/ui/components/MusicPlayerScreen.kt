@@ -173,6 +173,7 @@ fun MusicPlayerScreen(
     val likedFilter by viewModel.likedFilter.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val losslessOnly by viewModel.losslessOnly.collectAsState()
+    val lossyOnly by viewModel.lossyOnly.collectAsState()
     // BPM removed
 
     // Local state for spectrogram visibility
@@ -884,7 +885,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.11",
+                        text = "v12.12",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -965,7 +966,7 @@ fun MusicPlayerScreen(
                 ToolbarButton(icon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Search", onClick = { showSearchInput = !showSearchInput; if (!showSearchInput) { viewModel.updateSearchText(""); viewModel.clearSearchResults() } })
                 ToolbarButton(icon = { Icon(Icons.Default.Sync, contentDescription = "Rescan", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rescan", onClick = { viewModel.rescanSourceFolder() })
                 Box {
-                    ToolbarButton(icon = { Icon(Icons.Default.List, contentDescription = "Sort", tint = if (sortOrder != null || losslessOnly) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tbIconSize)) }, label = "Sort", onClick = { filterMenuExpanded = true })
+                    ToolbarButton(icon = { Icon(Icons.Default.List, contentDescription = "Sort", tint = if (sortOrder != null || losslessOnly || lossyOnly) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tbIconSize)) }, label = "Sort", onClick = { filterMenuExpanded = true })
                     DropdownMenu(
                         expanded = filterMenuExpanded,
                         onDismissRequest = { filterMenuExpanded = false },
@@ -980,8 +981,9 @@ fun MusicPlayerScreen(
                         DropdownMenuItem(text = { Text("Shuffle") }, onClick = { viewModel.setSortOrder(SortField.RANDOM, true) })
                         HorizontalDivider()
                         DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossless Only"); if (losslessOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLosslessOnly() })
+                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossy Only (MP3, AAC…)"); if (lossyOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLossyOnly() })
                         HorizontalDivider()
-                        DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly() })
+                        DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly(); if (lossyOnly) viewModel.toggleLossyOnly() })
                     }
                 }
                 ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })

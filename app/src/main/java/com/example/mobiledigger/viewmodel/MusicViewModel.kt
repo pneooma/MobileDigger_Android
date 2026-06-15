@@ -364,6 +364,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val _losslessOnly = MutableStateFlow(false)
     val losslessOnly: StateFlow<Boolean> = _losslessOnly.asStateFlow()
 
+    private val _lossyOnly = MutableStateFlow(false)
+    val lossyOnly: StateFlow<Boolean> = _lossyOnly.asStateFlow()
+
     // Current file for notification
     private var currentFile: MusicFile? = null
     
@@ -380,6 +383,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     // Lossless extensions for filter
     private val losslessExtensions = setOf("flac", "wav", "aiff", "aif", "alac", "ape", "dsd", "dsf", "dff", "wv")
+    // Lossy extensions for filter (treated by extension; m4a is grouped as lossy here)
+    private val lossyExtensions = setOf("mp3", "aac", "m4a", "ogg", "oga", "opus", "wma")
 
     // Computed StateFlow for current playlist files - reactive to tab changes, sort, and filter
     val currentPlaylistFiles: StateFlow<List<MusicFile>> = combine(
@@ -391,13 +396,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
         },
         _sortOrder,
-        _losslessOnly
-    ) { files, sort, lossless ->
+        _losslessOnly,
+        _lossyOnly
+    ) { files, sort, lossless, lossy ->
         var result = files
         if (lossless) {
             result = result.filter { f ->
                 val ext = f.name.substringAfterLast('.', "").lowercase()
                 ext in losslessExtensions
+            }
+        }
+        if (lossy) {
+            result = result.filter { f ->
+                val ext = f.name.substringAfterLast('.', "").lowercase()
+                ext in lossyExtensions
             }
         }
         if (sort != null) {
@@ -2473,7 +2485,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     fun toggleLosslessOnly() {
-        _losslessOnly.value = !_losslessOnly.value
+        val newValue = !_losslessOnly.value
+        _losslessOnly.value = newValue
+        if (newValue) _lossyOnly.value = false // lossless and lossy are mutually exclusive
+    }
+
+    fun toggleLossyOnly() {
+        val newValue = !_lossyOnly.value
+        _lossyOnly.value = newValue
+        if (newValue) _losslessOnly.value = false
     }
 
     fun toggleMultiSelectionMode() {

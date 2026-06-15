@@ -1938,3 +1938,7 @@ v12.11
 - 🩹 Main player swipe (like/dislike) fixed: the action no longer waits on the animation, and the swipe animation is bounded (60-450ms) so a slow Animation Speed setting can no longer stall it. Same bounding applied to playlist-row and mini-player swipes.
 - 🔎 Search: pressing Enter on the keyboard now runs the search (added a Search IME action) instead of needing the search icon.
 - 📲 Version and UI label updated to 12.11
+
+v12.12
+- 🎛️ New "Lossy Only (MP3, AAC…)" filter in the Sort/Filter menu, mutually exclusive with "Lossless Only". Combine with multiselect → Select All → Reject to bulk-reject all lossy files.
+- 📲 Version and UI label updated to 12.12

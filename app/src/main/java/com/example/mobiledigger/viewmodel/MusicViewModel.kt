@@ -1884,7 +1884,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             // service and otherwise only got position on discrete events).
                             if (++notifTick >= 30) {
                                 notifTick = 0
-                                try { updateNotification() } catch (_: Exception) {}
+                                try { updateNotificationPosition() } catch (_: Exception) {}
                             }
                         } catch (e: Exception) {
                             CrashLogger.log("MusicViewModel", "Error updating position", e)
@@ -2251,7 +2251,21 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             CrashLogger.log("MusicViewModel", "Failed to update notification", e)
         }
     }
-    
+
+    // Lightweight: only refresh the notification seekbar position, without rebuilding /
+    // re-posting the whole notification (which made it flicker every second).
+    private fun updateNotificationPosition() {
+        try {
+            val intent = Intent(MusicService.ACTION_UPDATE_POSITION).apply { setPackage(context.packageName) }
+            intent.putExtra(MusicService.EXTRA_IS_PLAYING, _isPlaying.value)
+            intent.putExtra(MusicService.EXTRA_CURRENT_POSITION, _currentPosition.value)
+            intent.putExtra(MusicService.EXTRA_DURATION, _duration.value)
+            context.sendBroadcast(intent)
+        } catch (e: Exception) {
+            CrashLogger.log("MusicViewModel", "Failed to update notification position", e)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         try {

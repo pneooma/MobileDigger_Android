@@ -81,6 +81,9 @@ class MusicService : MediaSessionService() {
         const val ACTION_CONFIRM_CLOSE = "com.example.mobiledigger.CONFIRM_CLOSE"
         const val ACTION_CANCEL_CLOSE = "com.example.mobiledigger.CANCEL_CLOSE"
         const val ACTION_UPDATE_NOTIFICATION = "com.example.mobiledigger.UPDATE_NOTIFICATION"
+        // Lightweight: updates ONLY the MediaSession playback position (drives the
+        // notification seekbar) without re-posting the notification (which flickered).
+        const val ACTION_UPDATE_POSITION = "com.example.mobiledigger.UPDATE_POSITION"
         const val EXTRA_TITLE = "extra_title"
         const val EXTRA_IS_PLAYING = "extra_is_playing"
         const val EXTRA_CURRENT_POSITION = "extra_current_position"
@@ -234,6 +237,17 @@ class MusicService : MediaSessionService() {
                     val uriStr = intent.getStringExtra(EXTRA_URI)
                     val incomingUri = try { if (uriStr.isNullOrEmpty()) null else Uri.parse(uriStr) } catch (_: Exception) { null }
                     updateNotificationData(title, playing, position, dur, incomingUri)
+                }
+                ACTION_UPDATE_POSITION -> {
+                    // Update ONLY the MediaSession playback state (the seekbar). Do NOT
+                    // re-post the notification — that caused it to flicker every second.
+                    val position = intent.getLongExtra(EXTRA_CURRENT_POSITION, 0L)
+                    val dur = intent.getLongExtra(EXTRA_DURATION, 0L)
+                    val playing = intent.getBooleanExtra(EXTRA_IS_PLAYING, isPlaying)
+                    if (position >= 0) currentPosition = position
+                    if (dur > 0) duration = dur
+                    isPlaying = playing
+                    updatePlaybackState()
                 }
             }
         }
@@ -407,6 +421,7 @@ class MusicService : MediaSessionService() {
             addAction(ACTION_SPECTROGRAM)
             addAction(ACTION_SHARE)
             addAction(ACTION_UPDATE_NOTIFICATION)
+            addAction(ACTION_UPDATE_POSITION)
             // These actions were handled in onReceive() but never registered, so the
             // rewind/forward buttons, the swipe-to-dismiss STOP intent, and the
             // close-confirmation flow were all silently dead.

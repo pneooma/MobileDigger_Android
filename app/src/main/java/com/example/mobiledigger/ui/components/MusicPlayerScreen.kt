@@ -855,8 +855,9 @@ fun MusicPlayerScreen(
             }
         }
 
-        // Transient info/status banner (e.g. "Moved to 'Liked'/'Rejected'"), shown just
-        // above the header row that holds the Show/Hide Playlists toggle.
+        // Transient info/status banner (e.g. "Moved to 'Liked'/'Rejected'"). Rendered in
+        // a Popup so it floats over the content near the top WITHOUT pushing the layout
+        // down/up (it previously reflowed the whole view when it appeared/disappeared).
         if (showInfoMessage && infoMessageText.isNotBlank()) {
             val bannerColor = when (infoMessageType) {
                 "success" -> Color(0xFF2E7D32)
@@ -865,18 +866,21 @@ fun MusicPlayerScreen(
             }
             val bannerTextColor = if (infoMessageType == "info")
                 MaterialTheme.colorScheme.onSecondaryContainer else Color.White
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .background(bannerColor, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = infoMessageText,
-                    color = bannerTextColor,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            Popup(alignment = Alignment.TopCenter, offset = IntOffset(0, 8)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .background(bannerColor, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .zIndex(1f)
+                ) {
+                    Text(
+                        text = infoMessageText,
+                        color = bannerTextColor,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
 
@@ -906,15 +910,18 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.02",
+                        text = "v12.03",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // Number of files in the current playlist, right of the logo
+                // File count (number only), centered in the space between the logo and
+                // the Reject button via flexible spacers, so it adapts to any width and
+                // never steals room from the header buttons on narrow screens.
+                Spacer(Modifier.weight(1f))
                 Text(
-                    text = "${currentPlaylistFiles.size} files",
-                    style = labelStyle,
+                    text = "${currentPlaylistFiles.size}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, lineHeight = 7.sp),
                     fontWeight = FontWeight.Bold,
                     color = if (isMonochrome) monoColor else GreenAccent,
                     maxLines = 1

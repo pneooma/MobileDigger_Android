@@ -1886,3 +1886,9 @@ v12.02
 - 🌈 Spectrogram quality ~doubled: HIGH quality (512 freq bins, 8192-pt FFT) and temporal resolution 5→10 px/s; switched bitmap write to setPixels() so it stays fast.
 - 🔢 Header: current-playlist file count shown to the right of the MobileDigger logo, in the same row as the Show/Hide Player/Playlist buttons.
 - 📲 Version and UI label updated to 12.02
+
+v12.03
+- 🔔 Notification: fixed the player flickering every second — position now updates the MediaSession seekbar only, without re-posting the notification.
+- 💬 Info banner now floats (Popup) over the top without pushing the layout up/down.
+- 🔢 Header file count: number only, half size, centered between the logo and the Reject button, adaptive so it no longer squeezes the Show/Hide Playlists button.
+- 📲 Version and UI label updated to 12.03

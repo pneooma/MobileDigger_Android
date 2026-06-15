@@ -646,24 +646,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         saveRecentSources()
     }
 
-    fun selectZipSource(zipUri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _isLoading.value = true
-                val files = fileManager.scanZipForMusicFiles(zipUri)
-                withContext(Dispatchers.Main) {
-                    _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
-                    _currentPlaylistTab.value = PlaylistTab.TODO
-                    _currentIndex.value = 0
-                    _isLoading.value = false
-                    CrashLogger.log("MusicViewModel", "Loaded ${files.size} files from ZIP archive")
-                }
-            } catch (e: Exception) {
-                _isLoading.value = false
-                handleError("selectZipSource", e)
-            }
-        }
-    }
 
     private fun loadRecentDestinations() {
         try {
@@ -1513,28 +1495,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
     
     
-    /**
-     * If [musicFile] is a synthetic zip entry (uri scheme "zip"), extract that single entry
-     * to cache and return a copy whose uri is the real file:// uri (for the player). Otherwise
-     * returns the file unchanged. The original zip:// MusicFile stays in the list for sorting.
-     */
-    private suspend fun resolvePlayable(musicFile: MusicFile): MusicFile {
-        if (musicFile.uri.scheme != "zip") return musicFile
-        return try {
-            // "zip://<zipUri>#<entryName>" — zipUri is a content uri (no raw '#'); split on last '#'
-            val raw = musicFile.uri.toString().removePrefix("zip://")
-            val sep = raw.lastIndexOf('#')
-            if (sep <= 0) return musicFile
-            val zipUri = android.net.Uri.parse(raw.substring(0, sep))
-            val entryPath = raw.substring(sep + 1)
-            val extracted = fileManager.extractZipEntry(zipUri, entryPath)
-            if (extracted != null) musicFile.copy(uri = extracted) else musicFile
-        } catch (e: Exception) {
-            CrashLogger.log("MusicViewModel", "resolvePlayable error for ${musicFile.name}", e)
-            musicFile
-        }
-    }
-
     private fun loadCurrentFile() {
         CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() called")
         try {
@@ -1567,13 +1527,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
             if (nextFile != null) {
                 CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - preloaded next file: ${nextFile.name}")
-                // Best-effort prefetch: pre-extract the next zip entry so the next tap is instant
-                // (extraction scans the zip sequentially, so doing it ahead avoids the lag).
-                if (nextFile.uri.scheme == "zip" && nextFile.uri != currentFile.uri) {
-                    viewModelScope.launch(Dispatchers.IO) {
-                        try { resolvePlayable(nextFile) } catch (_: Exception) {}
-                    }
-                }
             }
             
             // Check if it's an AIFF file and provide specific feedback
@@ -1602,9 +1555,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             // Play off main thread; coalesce UI updates
             CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - calling audioManager.playFile() [IO]")
             viewModelScope.launch(Dispatchers.IO) {
-                // For zip entries this extracts the entry to a real file first; otherwise no-op.
-                val playable = resolvePlayable(currentFile)
-                val started = audioManager.playFile(playable)
+                val started = audioManager.playFile(currentFile)
                 withContext(Dispatchers.Main) {
                     _isPlaying.value = started
                     if (!started) {

@@ -208,11 +208,6 @@ fun MusicPlayerScreen(
         uri?.let { viewModel.selectDestinationFolder(it) }
     }
 
-    val zipLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        uri?.let { viewModel.selectZipSource(it) }
-    }
 
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -886,7 +881,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.15",
+                        text = "v12.16",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1411,21 +1406,6 @@ fun MusicPlayerScreen(
                         Text(if (hasDestinationFolder) "✓ Destination" else "Destination")
                     }
                 }
-
-                    // Open ZIP Archive button
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedButton(
-                            onClick = { zipLauncher.launch(arrayOf("application/zip")) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Open ZIP Archive")
-                        }
-                    }
 
                     // Second row: Rescan button
                     Row(

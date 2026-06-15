@@ -13,7 +13,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
-import java.util.zip.ZipInputStream
 import android.util.Log
 import android.provider.DocumentsContract
 import android.content.ContentResolver
@@ -365,170 +364,6 @@ class FileManager(private val context: Context) {
         return musicExtensions.contains(extension)
     }
 
-    /**
-     * Scan a ZIP archive for music files. Files are listed but not extracted.
-     * Use extractZipEntry() to extract individual files on demand.
-     */
-    suspend fun scanZipForMusicFiles(zipUri: Uri): List<MusicFile> = withContext(Dispatchers.IO) {
-        // Fast path: random access via the central directory (lists ALL entries instantly,
-        // even for multi-GB archives). ZipInputStream had to read/skip every entry's payload
-        // sequentially, which on a 2GB zip was so slow it often errored partway and returned
-        // only the first entry.
-        scanZipViaZipFile(zipUri)?.let { return@withContext it }
-
-        // Fallback: sequential ZipInputStream (providers without a seekable fd).
-        val musicFiles = mutableListOf<MusicFile>()
-        try {
-            contentResolver.openInputStream(zipUri)?.use { inputStream ->
-                ZipInputStream(inputStream).use { zis ->
-                    var entry = zis.nextEntry
-                    while (entry != null) {
-                        if (!entry.isDirectory) {
-                            val name = entry.name.substringAfterLast('/')
-                            if (isMusicFile(name) && !isHiddenOrTrashed(name)) {
-                                val subfolder = entry.name.substringBeforeLast('/', "").ifEmpty { null }
-                                musicFiles.add(
-                                    MusicFile(
-                                        uri = Uri.parse("zip://${zipUri}#${entry.name}"),
-                                        name = name,
-                                        duration = 0L,
-                                        size = entry.size.coerceAtLeast(0L),
-                                        subfolder = subfolder
-                                    )
-                                )
-                            }
-                        }
-                        zis.closeEntry()
-                        entry = zis.nextEntry
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            CrashLogger.log("FileManager", "Error scanning ZIP archive (sequential)", e)
-        }
-        musicFiles
-    }
-
-    /** Open a java.util.zip.ZipFile over a content uri's backing fd (/proc/self/fd/<fd>) for
-     *  random access. Returns null if the provider has no seekable fd (caller falls back). */
-    private inline fun <T> withZipFile(zipUri: Uri, block: (java.util.zip.ZipFile) -> T): T? {
-        var pfd: android.os.ParcelFileDescriptor? = null
-        return try {
-            pfd = contentResolver.openFileDescriptor(zipUri, "r") ?: return null
-            java.util.zip.ZipFile(File("/proc/self/fd/${pfd.fd}")).use { zf -> block(zf) }
-        } catch (e: Exception) {
-            CrashLogger.log("FileManager", "ZipFile random-access unavailable, will fall back", e)
-            null
-        } finally {
-            try { pfd?.close() } catch (_: Exception) {}
-        }
-    }
-
-    private fun scanZipViaZipFile(zipUri: Uri): List<MusicFile>? = withZipFile(zipUri) { zf ->
-        val musicFiles = mutableListOf<MusicFile>()
-        val entries = zf.entries()
-        while (entries.hasMoreElements()) {
-            val entry = entries.nextElement()
-            if (entry.isDirectory) continue
-            val name = entry.name.substringAfterLast('/')
-            if (isMusicFile(name) && !isHiddenOrTrashed(name)) {
-                val subfolder = entry.name.substringBeforeLast('/', "").ifEmpty { null }
-                musicFiles.add(
-                    MusicFile(
-                        uri = Uri.parse("zip://${zipUri}#${entry.name}"),
-                        name = name,
-                        duration = 0L,
-                        size = entry.size.coerceAtLeast(0L),
-                        subfolder = subfolder
-                    )
-                )
-            }
-        }
-        musicFiles
-    }
-
-    /**
-     * Extract a single entry from a ZIP to the app cache directory.
-     * Returns the URI of the extracted file, or null on failure.
-     */
-    private val MAX_ZIP_CACHE_FILES = 20
-    private val MAX_ZIP_CACHE_BYTES = 200L * 1024 * 1024 // 200MB
-
-    suspend fun extractZipEntry(zipUri: Uri, entryPath: String): Uri? = withContext(Dispatchers.IO) {
-        try {
-            val cacheDir = File(context.cacheDir, "zip_extracted")
-            if (!cacheDir.exists()) cacheDir.mkdirs()
-
-            // Unique-but-extension-preserving filename (hash of archive#entry) avoids
-            // basename collisions across zip subfolders and keeps the extension for the decoder.
-            val basename = entryPath.substringAfterLast('/')
-            val key = (zipUri.toString() + "#" + entryPath).hashCode()
-            val outFile = File(cacheDir, "${key}_$basename")
-
-            // Reuse a previous extraction (replays / prefetch-then-play don't re-unzip).
-            if (outFile.exists() && outFile.length() > 0L) {
-                outFile.setLastModified(System.currentTimeMillis())
-                return@withContext Uri.fromFile(outFile)
-            }
-
-            pruneZipCache(cacheDir)
-
-            // Fast path: seek directly to the entry via the central directory.
-            val viaRandom = withZipFile(zipUri) { zf ->
-                val entry = zf.getEntry(entryPath) ?: return@withZipFile null
-                zf.getInputStream(entry).use { input ->
-                    FileOutputStream(outFile).use { fos -> input.copyTo(fos) }
-                }
-                Uri.fromFile(outFile)
-            }
-            if (viaRandom != null) {
-                outFile.setLastModified(System.currentTimeMillis())
-                pruneZipCache(cacheDir)
-                return@withContext viaRandom
-            }
-
-            // Fallback: sequential ZipInputStream.
-            contentResolver.openInputStream(zipUri)?.use { inputStream ->
-                ZipInputStream(inputStream).use { zis ->
-                    var entry = zis.nextEntry
-                    while (entry != null) {
-                        if (entry.name == entryPath) {
-                            FileOutputStream(outFile).use { fos ->
-                                zis.copyTo(fos)
-                            }
-                            outFile.setLastModified(System.currentTimeMillis())
-                            pruneZipCache(cacheDir)
-                            return@withContext Uri.fromFile(outFile)
-                        }
-                        zis.closeEntry()
-                        entry = zis.nextEntry
-                    }
-                }
-            }
-            null
-        } catch (e: Exception) {
-            CrashLogger.log("FileManager", "Error extracting ZIP entry: $entryPath", e)
-            null
-        }
-    }
-
-    /** Keep zip_extracted/ bounded: evict oldest (by lastModified) past the file/byte caps. */
-    private fun pruneZipCache(cacheDir: File) {
-        try {
-            val files = cacheDir.listFiles()?.filter { it.isFile } ?: return
-            if (files.isEmpty()) return
-            val sorted = files.sortedBy { it.lastModified() } // oldest first
-            var totalBytes = sorted.sumOf { it.length() }
-            var count = sorted.size
-            for (f in sorted) {
-                if (count <= MAX_ZIP_CACHE_FILES && totalBytes <= MAX_ZIP_CACHE_BYTES) break
-                val len = f.length()
-                if (f.delete()) { totalBytes -= len; count -= 1 }
-            }
-        } catch (e: Exception) {
-            CrashLogger.log("FileManager", "Error pruning ZIP cache", e)
-        }
-    }
 
     private fun isHiddenOrTrashed(name: String?): Boolean {
         if (name == null) return true
@@ -543,14 +378,8 @@ class FileManager(private val context: Context) {
                 CrashLogger.log("FileManager", "🔍 File URI: ${musicFile.uri}")
                 CrashLogger.log("FileManager", "🔍 File size: ${musicFile.size} bytes")
                 
-                // Handle temporary files and zip:// entries differently (no movable source file)
-                val isZipEntry = musicFile.uri.scheme == "zip"
-                val sourceFile = if (isZipEntry) {
-                    // Zip entry: read-only archive, no on-disk source. We copy the entry OUT
-                    // into the destination below (and never delete from the zip).
-                    CrashLogger.log("FileManager", "Zip entry sort (copy-out): ${musicFile.uri}")
-                    null
-                } else if (musicFile.uri.scheme == "file" && musicFile.uri.path?.contains("temp_audio") == true) {
+                // Handle temporary files differently
+                val sourceFile = if (musicFile.uri.scheme == "file" && musicFile.uri.path?.contains("temp_audio") == true) {
                     // This is a temporary file, handle it as a regular File
                     val file = File(musicFile.uri.path!!)
                     if (!file.exists()) {
@@ -623,43 +452,7 @@ class FileManager(private val context: Context) {
                     }
 
                 var bytesCopied = 0L
-                if (isZipEntry) {
-                    // Copy the entry out of the read-only archive into the destination.
-                    val raw = musicFile.uri.toString().removePrefix("zip://")
-                    val archiveUri = Uri.parse(raw.substringBeforeLast('#'))
-                    val entryPath = raw.substringAfterLast('#')
-                    var found = false
-                    contentResolver.openOutputStream(target.uri)?.use { output ->
-                        // Fast path: random access via central directory.
-                        val n = withZipFile(archiveUri) { zf ->
-                            val e = zf.getEntry(entryPath) ?: return@withZipFile null
-                            zf.getInputStream(e).use { input -> input.copyTo(output) }
-                        }
-                        if (n != null) { bytesCopied = n; output.flush(); found = true }
-                        else {
-                            // Fallback: sequential.
-                            contentResolver.openInputStream(archiveUri)?.use { input ->
-                                ZipInputStream(input).use { zis ->
-                                    var entry = zis.nextEntry
-                                    while (entry != null) {
-                                        if (entry.name == entryPath) {
-                                            bytesCopied = zis.copyTo(output); output.flush(); found = true
-                                            break
-                                        }
-                                        zis.closeEntry()
-                                        entry = zis.nextEntry
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (!found) {
-                        CrashLogger.log("FileManager", "Zip entry not found / copy failed: $entryPath")
-                        target.delete()
-                        return@withContext false
-                    }
-                    // Read-only archive: nothing to delete from the source.
-                } else if (isTemporaryFile) {
+                if (isTemporaryFile) {
                     // Handle temporary file copying
                     val tempFile = File(musicFile.uri.path!!)
                     tempFile.inputStream().use { input ->
@@ -1001,47 +794,6 @@ class FileManager(private val context: Context) {
 
             var allSucceeded = true
             files.forEach { musicFile ->
-                if (musicFile.uri.scheme == "zip") {
-                    // Copy the entry out of the read-only archive into the target subfolder.
-                    val raw = musicFile.uri.toString().removePrefix("zip://")
-                    val archiveUri = Uri.parse(raw.substringBeforeLast('#'))
-                    val entryPath = raw.substringAfterLast('#')
-                    val safeName = resolveUniqueName(targetSubFolder, musicFile.name)
-                    val target = targetSubFolder.createFile("audio/*", safeName)
-                    if (target == null) { allSucceeded = false; return@forEach }
-                    var copied = false
-                    try {
-                        contentResolver.openOutputStream(target.uri)?.use { output ->
-                            val n = withZipFile(archiveUri) { zf ->
-                                val e = zf.getEntry(entryPath) ?: return@withZipFile null
-                                zf.getInputStream(e).use { input -> input.copyTo(output) }
-                            }
-                            if (n != null) { output.flush(); copied = true }
-                            else {
-                                contentResolver.openInputStream(archiveUri)?.use { input ->
-                                    ZipInputStream(input).use { zis ->
-                                        var entry = zis.nextEntry
-                                        while (entry != null) {
-                                            if (entry.name == entryPath) {
-                                                zis.copyTo(output); output.flush(); copied = true
-                                                break
-                                            }
-                                            zis.closeEntry()
-                                            entry = zis.nextEntry
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        CrashLogger.log("FileManager", "Error copying zip entry ${musicFile.name} to subfolder", e)
-                    }
-                    if (!copied) {
-                        CrashLogger.log("FileManager", "Zip copy failed for ${musicFile.name}")
-                        target.delete(); allSucceeded = false
-                    }
-                    return@forEach
-                }
                 val sourceFile = DocumentFile.fromSingleUri(context, musicFile.uri)
                 if (sourceFile == null || !sourceFile.exists()) {
                     allSucceeded = false

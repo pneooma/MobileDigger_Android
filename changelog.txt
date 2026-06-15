@@ -1928,3 +1928,8 @@ v12.09
 - 🌈 Spectrogram REALLY analyzes 120s now: the PCM extraction caps (not just the width math) were still 60-90s for HIGH quality — raised to 120s.
 - 🕐 Spectrogram X-axis time labels now span 0 to min(track length, 2:00), matching the analyzed window (were using full track length / a stale 4-min basis).
 - 📲 Version and UI label updated to 12.09
+
+v12.10
+- 🕐 Spectrogram X-axis time labels now show real times (0:00 .. up to 2:00) derived from the image itself — they were 0:00 because the track duration metadata was 0.
+- 🎚️ Animation Speed now affects the swipe animations (main card, playlist row like/dislike, mini-player), so the slider has a clearly visible effect.
+- 📲 Version and UI label updated to 12.10

@@ -882,7 +882,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.09",
+                        text = "v12.10",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1759,7 +1759,7 @@ fun MusicPlayerScreen(
                                                         if (abs(current) > threshold) {
                                                             val prevFile = file
                                                             scope.launch {
-                                                                mainSwipeOffset.animateTo(exit, tween(220))
+                                                                mainSwipeOffset.animateTo(exit, tween((220f / visualSettings.animationSpeed).toInt()))
                                                                 mainSwipeOffset.animateTo(0f, animationSpec)
                                                                 if (current < 0) {
                                                                     try {
@@ -4201,8 +4201,8 @@ fun MusicPlayerScreen(
                                                                         scope.launch {
                                                                             isRowDismissed = true
                                                                             if (isActiveNow) suppressMiniOnLeftSwipe = true
-                                                                            launch { rowSwipeOffset.animateTo(exit, tween(180)) }
-                                                                            delay(180)
+                                                                            launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed).toInt())) }
+                                                                            delay((180f / visualSettings.animationSpeed).toLong())
                                                                             try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
                                                                     // Hand off the rest to ViewModel so coroutine isn't cancelled when this row is removed
                                                                     viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.DISLIKE, isActiveNow)
@@ -4213,8 +4213,8 @@ fun MusicPlayerScreen(
                                                                     val exit = 520f
                                                                     scope.launch {
                                                                         isRowDismissed = true
-                                                                        launch { rowSwipeOffset.animateTo(exit, tween(180)) }
-                                                                        delay(180)
+                                                                        launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed).toInt())) }
+                                                                        delay((180f / visualSettings.animationSpeed).toLong())
                                                                         try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
                                                                         // Hand off to ViewModel (stable scope) after removal
                                                                         viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.LIKE, false)
@@ -4832,7 +4832,7 @@ fun MusicPlayerScreen(
                                                     val prevFile = file
                                                     scope.launch {
                                                         // 1) Animate out fully
-                                                        miniSwipeOffset.animateTo(exit, tween(220))
+                                                        miniSwipeOffset.animateTo(exit, tween((220f / visualSettings.animationSpeed).toInt()))
                                                         // 2) Animate back
                                                         miniSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
                                                         // 3) Then sequence next/sort

@@ -579,9 +579,12 @@ fun SpectrogramPopupScreen(
                         .padding(horizontal = 30.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // X-axis spans the ACTUAL analyzed window: 0 .. min(trackDuration, 120s),
-                    // matching the 120s (2 min) analysis cap so labels line up with the image.
-                    val analyzedDurationSeconds = minOf(actualDuration / 1000f, 120f)
+                    // Derive the span from the spectrogram bitmap itself (10 px per second),
+                    // so the axis matches the image even when the file's duration metadata is
+                    // 0 — playlist entries are created with duration=0 and metadata extraction
+                    // can fail for content/SAF/zip URIs, which made every label read "0:00".
+                    val analyzedDurationSeconds = spectrogramBitmap?.let { it.width / 10f }
+                        ?: if (actualDuration > 0) minOf(actualDuration / 1000f, 120f) else 120f
                     val timeLabels = listOf(
                         formatTime(0f),
                         formatTime(analyzedDurationSeconds * 0.25f),
@@ -822,7 +825,9 @@ private fun generateComprehensiveSpectrogramImage(
 
     // X-axis time labels
     axisLabelPaint.textAlign = android.graphics.Paint.Align.CENTER
-    val analyzedDurationSeconds = minOf(duration / 1000f, 120f)
+    // Match the actual rendered span (bitmap width / 10 px-per-sec) so labels are correct
+    // even when the duration metadata is missing.
+    val analyzedDurationSeconds = spectrogramBitmap.width / 10f
     val timeLabels = listOf(
         formatTime(0f),
         formatTime(analyzedDurationSeconds * 0.25f),

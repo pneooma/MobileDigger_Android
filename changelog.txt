@@ -1952,3 +1952,10 @@ v12.14
 - 🎛️ New Bitrate sort (ascending/descending) in the Sort menu.
 - 🔴 Filter icon now shows a marker dot when a sort/filter is active.
 - 📲 Version and UI label updated to 12.14
+
+v12.15
+- 🗜️ Large ZIP archives now work: scanning/extraction use random access (central directory) instead of streaming through the whole file, so a multi-GB zip lists ALL its songs and any of them plays/sorts (was showing only one file).
+- 🌈 Spectrogram can now actually finish the 120s (2 min) analysis (raised the generation + PCM-read timeouts that were cutting it short).
+- ⚡ Multi-select Reject/Like no longer blocks the UI with a full-screen spinner — it runs in the background (also dropped the per-file delay).
+- ➖ Removed the Bitrate sort.
+- 📲 Version and UI label updated to 12.15

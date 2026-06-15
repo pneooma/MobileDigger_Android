@@ -53,7 +53,7 @@ enum class PlaylistTab {
 }
 
 enum class SortField {
-    NAME, FILE_SIZE, DATE_ADDED, DURATION, EXTENSION, SUBFOLDER, BITRATE, RANDOM
+    NAME, FILE_SIZE, DATE_ADDED, DURATION, EXTENSION, SUBFOLDER, RANDOM
 }
 
 data class SortOrder(
@@ -420,7 +420,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 SortField.DURATION -> if (sort.ascending) result.sortedBy { it.duration } else result.sortedByDescending { it.duration }
                 SortField.EXTENSION -> if (sort.ascending) result.sortedBy { it.name.substringAfterLast('.', "").lowercase() } else result.sortedByDescending { it.name.substringAfterLast('.', "").lowercase() }
                 SortField.SUBFOLDER -> if (sort.ascending) result.sortedBy { (it.subfolder ?: "").lowercase() } else result.sortedByDescending { (it.subfolder ?: "").lowercase() }
-                SortField.BITRATE -> if (sort.ascending) result.sortedBy { it.bitrate } else result.sortedByDescending { it.bitrate }
                 SortField.RANDOM -> result.shuffled()
             }
         }
@@ -2639,7 +2638,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "🔒 Acquired file operation mutex for bulk operation")
                 logMemoryStatus("BulkOperationStart")
                 try {
-                    _isLoading.value = true
+                    // NOTE: do NOT set _isLoading here — it swaps the whole playlist for a
+                    // blocking full-screen spinner. The work already runs on Dispatchers.IO;
+                    // keep the UI usable and just show a status message.
                     _errorMessage.value = "Processing ${selected.size} files..."
                     CrashLogger.log("MusicViewModel", "📊 Starting bulk operation: ${selected.size} files")
                     
@@ -2659,8 +2660,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     for ((i, file) in selectedFiles.withIndex()) {
                         CrashLogger.log("MusicViewModel", "🔄 Processing file ${i + 1}/${selectedFiles.size}: ${file.name} (${file.uri})")
                         try {
-                            // Add small delay between operations to prevent file system conflicts
-                            delay(200)
+                            // No artificial delay — ops are serialized by the mutex and the
+                            // loop is sequential; the delay only kept the UI blocked longer.
                             val success = fileManager.sortFile(file, action)
                             CrashLogger.log("MusicViewModel", "📁 File operation result: success=$success for ${file.name}")
 
@@ -2744,14 +2745,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         // Clear selection
                         _selectedIndices.value = emptySet()
                         _isMultiSelectionMode.value = false
-                        _isLoading.value = false
-                        CrashLogger.log("MusicViewModel", "🧹 Cleared selection and loading state")
+                        CrashLogger.log("MusicViewModel", "🧹 Cleared selection")
                     }
                     
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         _errorMessage.value = "Error sorting selected files: ${e.message}"
-                        _isLoading.value = false
                         CrashLogger.log("MusicViewModel", "💥 CRITICAL ERROR in sortSelectedFiles", e)
                         
                         // Log detailed exception information

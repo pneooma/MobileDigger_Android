@@ -886,7 +886,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.14",
+                        text = "v12.15",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -993,7 +993,6 @@ fun MusicPlayerScreen(
                         DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Duration"); if (sortOrder?.field == SortField.DURATION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DURATION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.DURATION, asc) })
                         DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Extension"); if (sortOrder?.field == SortField.EXTENSION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.EXTENSION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.EXTENSION, asc) })
                         DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Subfolder"); if (sortOrder?.field == SortField.SUBFOLDER) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.SUBFOLDER) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.SUBFOLDER, asc) })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Bitrate"); if (sortOrder?.field == SortField.BITRATE) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.BITRATE) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.BITRATE, asc) })
                         DropdownMenuItem(text = { Text("Shuffle") }, onClick = { viewModel.setSortOrder(SortField.RANDOM, true) })
                         HorizontalDivider()
                         DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossless Only"); if (losslessOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLosslessOnly() })

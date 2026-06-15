@@ -370,6 +370,13 @@ class FileManager(private val context: Context) {
      * Use extractZipEntry() to extract individual files on demand.
      */
     suspend fun scanZipForMusicFiles(zipUri: Uri): List<MusicFile> = withContext(Dispatchers.IO) {
+        // Fast path: random access via the central directory (lists ALL entries instantly,
+        // even for multi-GB archives). ZipInputStream had to read/skip every entry's payload
+        // sequentially, which on a 2GB zip was so slow it often errored partway and returned
+        // only the first entry.
+        scanZipViaZipFile(zipUri)?.let { return@withContext it }
+
+        // Fallback: sequential ZipInputStream (providers without a seekable fd).
         val musicFiles = mutableListOf<MusicFile>()
         try {
             contentResolver.openInputStream(zipUri)?.use { inputStream ->
@@ -397,7 +404,45 @@ class FileManager(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            CrashLogger.log("FileManager", "Error scanning ZIP archive", e)
+            CrashLogger.log("FileManager", "Error scanning ZIP archive (sequential)", e)
+        }
+        musicFiles
+    }
+
+    /** Open a java.util.zip.ZipFile over a content uri's backing fd (/proc/self/fd/<fd>) for
+     *  random access. Returns null if the provider has no seekable fd (caller falls back). */
+    private inline fun <T> withZipFile(zipUri: Uri, block: (java.util.zip.ZipFile) -> T): T? {
+        var pfd: android.os.ParcelFileDescriptor? = null
+        return try {
+            pfd = contentResolver.openFileDescriptor(zipUri, "r") ?: return null
+            java.util.zip.ZipFile(File("/proc/self/fd/${pfd.fd}")).use { zf -> block(zf) }
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "ZipFile random-access unavailable, will fall back", e)
+            null
+        } finally {
+            try { pfd?.close() } catch (_: Exception) {}
+        }
+    }
+
+    private fun scanZipViaZipFile(zipUri: Uri): List<MusicFile>? = withZipFile(zipUri) { zf ->
+        val musicFiles = mutableListOf<MusicFile>()
+        val entries = zf.entries()
+        while (entries.hasMoreElements()) {
+            val entry = entries.nextElement()
+            if (entry.isDirectory) continue
+            val name = entry.name.substringAfterLast('/')
+            if (isMusicFile(name) && !isHiddenOrTrashed(name)) {
+                val subfolder = entry.name.substringBeforeLast('/', "").ifEmpty { null }
+                musicFiles.add(
+                    MusicFile(
+                        uri = Uri.parse("zip://${zipUri}#${entry.name}"),
+                        name = name,
+                        duration = 0L,
+                        size = entry.size.coerceAtLeast(0L),
+                        subfolder = subfolder
+                    )
+                )
+            }
         }
         musicFiles
     }
@@ -428,6 +473,21 @@ class FileManager(private val context: Context) {
 
             pruneZipCache(cacheDir)
 
+            // Fast path: seek directly to the entry via the central directory.
+            val viaRandom = withZipFile(zipUri) { zf ->
+                val entry = zf.getEntry(entryPath) ?: return@withZipFile null
+                zf.getInputStream(entry).use { input ->
+                    FileOutputStream(outFile).use { fos -> input.copyTo(fos) }
+                }
+                Uri.fromFile(outFile)
+            }
+            if (viaRandom != null) {
+                outFile.setLastModified(System.currentTimeMillis())
+                pruneZipCache(cacheDir)
+                return@withContext viaRandom
+            }
+
+            // Fallback: sequential ZipInputStream.
             contentResolver.openInputStream(zipUri)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zis ->
                     var entry = zis.nextEntry
@@ -569,20 +629,27 @@ class FileManager(private val context: Context) {
                     val archiveUri = Uri.parse(raw.substringBeforeLast('#'))
                     val entryPath = raw.substringAfterLast('#')
                     var found = false
-                    contentResolver.openInputStream(archiveUri)?.use { input ->
-                        ZipInputStream(input).use { zis ->
-                            var entry = zis.nextEntry
-                            while (entry != null) {
-                                if (entry.name == entryPath) {
-                                    contentResolver.openOutputStream(target.uri)?.use { output ->
-                                        bytesCopied = zis.copyTo(output)
-                                        output.flush()
-                                        found = true
+                    contentResolver.openOutputStream(target.uri)?.use { output ->
+                        // Fast path: random access via central directory.
+                        val n = withZipFile(archiveUri) { zf ->
+                            val e = zf.getEntry(entryPath) ?: return@withZipFile null
+                            zf.getInputStream(e).use { input -> input.copyTo(output) }
+                        }
+                        if (n != null) { bytesCopied = n; output.flush(); found = true }
+                        else {
+                            // Fallback: sequential.
+                            contentResolver.openInputStream(archiveUri)?.use { input ->
+                                ZipInputStream(input).use { zis ->
+                                    var entry = zis.nextEntry
+                                    while (entry != null) {
+                                        if (entry.name == entryPath) {
+                                            bytesCopied = zis.copyTo(output); output.flush(); found = true
+                                            break
+                                        }
+                                        zis.closeEntry()
+                                        entry = zis.nextEntry
                                     }
-                                    break
                                 }
-                                zis.closeEntry()
-                                entry = zis.nextEntry
                             }
                         }
                     }
@@ -944,18 +1011,25 @@ class FileManager(private val context: Context) {
                     if (target == null) { allSucceeded = false; return@forEach }
                     var copied = false
                     try {
-                        contentResolver.openInputStream(archiveUri)?.use { input ->
-                            ZipInputStream(input).use { zis ->
-                                var entry = zis.nextEntry
-                                while (entry != null) {
-                                    if (entry.name == entryPath) {
-                                        contentResolver.openOutputStream(target.uri)?.use { output ->
-                                            zis.copyTo(output); output.flush(); copied = true
+                        contentResolver.openOutputStream(target.uri)?.use { output ->
+                            val n = withZipFile(archiveUri) { zf ->
+                                val e = zf.getEntry(entryPath) ?: return@withZipFile null
+                                zf.getInputStream(e).use { input -> input.copyTo(output) }
+                            }
+                            if (n != null) { output.flush(); copied = true }
+                            else {
+                                contentResolver.openInputStream(archiveUri)?.use { input ->
+                                    ZipInputStream(input).use { zis ->
+                                        var entry = zis.nextEntry
+                                        while (entry != null) {
+                                            if (entry.name == entryPath) {
+                                                zis.copyTo(output); output.flush(); copied = true
+                                                break
+                                            }
+                                            zis.closeEntry()
+                                            entry = zis.nextEntry
                                         }
-                                        break
                                     }
-                                    zis.closeEntry()
-                                    entry = zis.nextEntry
                                 }
                             }
                         }

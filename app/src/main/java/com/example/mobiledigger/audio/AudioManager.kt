@@ -1457,7 +1457,7 @@ class AudioManager(private val context: Context) {
                 _spectrogramProgress.value = 0f
                 
                 val spectrogram = try {
-                    withTimeout(60000) { // 60 second timeout
+                    withTimeout(180000) { // 3 min timeout — covers the 120s (2 min) HIGH-quality analysis
                         withContext(Dispatchers.IO) {
                             generateSpectrogramInternal(fileForSpectrogram ?: musicFile)
                         }
@@ -2293,7 +2293,7 @@ class AudioManager(private val context: Context) {
             }
             
             var loopCount = 0
-            val maxTime = 15000L // Reduced timeout to 15 seconds for better UX
+            val maxTime = 60000L // allow reading up to ~2 min of PCM for the spectrogram
             while (totalSamples < maxSamples && loopCount < 5000 && (System.currentTimeMillis() - startTime) < maxTime) {
                 val byteBuffer = java.nio.ByteBuffer.allocateDirect(bufferSize)
                 val sampleSize = extractor.readSampleData(byteBuffer, 0)
@@ -2364,7 +2364,7 @@ class AudioManager(private val context: Context) {
             var totalSamples = 0
             var frameCount = 0
             val maxFrames = 1000 // Limit frames to prevent long processing
-            val maxTime = 10000L // 10 second timeout for compressed formats
+            val maxTime = 60000L // allow up to ~2 min of compressed audio for the spectrogram
             
             // Sample every Nth frame for efficiency
             val sampleInterval = when (spectrogramQuality) {

@@ -2586,140 +2586,89 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             return
         }
 
-        // INSTANT feedback: leave multi-select mode immediately and start fading the chosen
-        // rows out (the same removingUris animation single-file sorts use), so the user sees
-        // the files being moved. The file I/O then continues in the background — no blocking
-        // full-screen spinner (which used to swap the whole playlist out and freeze the UI).
         val selectedUris = selectedFiles.map { it.uri }.toSet()
+        val tab = _currentPlaylistTab.value
+
+        // Exit multi-select and OPTIMISTICALLY remove the rows from the list RIGHT NOW. That
+        // makes the LazyColumn fade + collapse them out (via animateItem) so the user actually
+        // watches the files leave — instead of an invisible-but-still-spaced empty row. The
+        // file I/O runs in the background under the mutex; any file that fails to move is put
+        // back afterwards. No blocking full-screen spinner.
         _selectedIndices.value = emptySet()
         _isMultiSelectionMode.value = false
-        _removingUris.value = _removingUris.value + selectedUris
+
+        val playingUri = _currentPlayingFile.value?.uri
+        val rawBefore = when (tab) {
+            PlaylistTab.TODO -> _musicFiles.value
+            PlaylistTab.LIKED -> _likedFiles.value
+            PlaylistTab.REJECTED -> _rejectedFiles.value
+        }
+        val remaining = rawBefore.filterNot { it.uri in selectedUris }
+        when (tab) {
+            PlaylistTab.TODO -> _musicFiles.value = remaining
+            PlaylistTab.LIKED -> _likedFiles.value = remaining
+            PlaylistTab.REJECTED -> _rejectedFiles.value = remaining
+        }
+        // Keep the index pointing at the still-playing file when it survives; else clamp.
+        val newIdx = if (playingUri != null) remaining.indexOfFirst { it.uri == playingUri } else -1
+        _currentIndex.value = when {
+            newIdx != -1 -> newIdx
+            remaining.isEmpty() -> 0
+            else -> _currentIndex.value.coerceIn(0, remaining.size - 1)
+        }
+        CrashLogger.log("MusicViewModel", "🗂️ Optimistically removed ${selectedUris.size} rows; ${remaining.size} remain")
 
         viewModelScope.launch(Dispatchers.IO) {
-            // Use mutex to prevent concurrent file operations
             fileOperationMutex.withLock {
-                CrashLogger.log("MusicViewModel", "🔒 Acquired file operation mutex for bulk operation")
-                logMemoryStatus("BulkOperationStart")
-                try {
-                    _errorMessage.value = "Processing ${selectedFiles.size} files..."
-                    CrashLogger.log("MusicViewModel", "📊 Starting bulk operation: ${selectedFiles.size} files")
-                    val successfullySortedFiles = mutableListOf<MusicFile>()
-                    val failedFiles = mutableListOf<MusicFile>()
-
-                    // Process files one by one with proper error handling
-                    for ((i, file) in selectedFiles.withIndex()) {
-                        CrashLogger.log("MusicViewModel", "🔄 Processing file ${i + 1}/${selectedFiles.size}: ${file.name} (${file.uri})")
-                        try {
-                            // No artificial delay — ops are serialized by the mutex and the
-                            // loop is sequential; the delay only kept the UI blocked longer.
-                            val success = fileManager.sortFile(file, action)
-                            CrashLogger.log("MusicViewModel", "📁 File operation result: success=$success for ${file.name}")
-
-                            if (success) {
-                                successfullySortedFiles.add(file)
-                                CrashLogger.log("MusicViewModel", "✅ Successfully sorted: ${file.name}")
-                            } else {
-                                failedFiles.add(file)
-                                CrashLogger.log("MusicViewModel", "❌ Failed to sort: ${file.name}")
-                            }
-
-                            // Monitor memory after each file operation
-                            logMemoryStatus("AfterFile${i + 1}")
-                        } catch (e: Exception) {
+                _errorMessage.value = "Processing ${selectedFiles.size} files..."
+                val failedFiles = mutableListOf<MusicFile>()
+                var successCount = 0
+                for (file in selectedFiles) {
+                    try {
+                        if (fileManager.sortFile(file, action)) {
+                            successCount++
+                        } else {
                             failedFiles.add(file)
-                            CrashLogger.log("MusicViewModel", "💥 Exception sorting ${file.name}", e)
+                            CrashLogger.log("MusicViewModel", "❌ Failed to sort: ${file.name}")
                         }
+                    } catch (e: Exception) {
+                        failedFiles.add(file)
+                        CrashLogger.log("MusicViewModel", "💥 Exception sorting ${file.name}", e)
                     }
-                    
-                    CrashLogger.log("MusicViewModel", "📊 Bulk operation completed: success=${successfullySortedFiles.size}, failed=${failedFiles.size}")
-                    logMemoryStatus("BulkOperationEnd")
-                    
-                    // Update UI on main thread
-                    withContext(Dispatchers.Main) {
-                        CrashLogger.log("MusicViewModel", "🔄 Updating UI on main thread")
-                        val successCount = successfullySortedFiles.size
-                        val failCount = failedFiles.size
-                        
-                        if (successCount > 0) {
-                            _errorMessage.value = "Successfully sorted $successCount files to ${if (action == SortAction.LIKE) "Liked" else "Rejected"}"
-                            CrashLogger.log("MusicViewModel", "✅ UI update: $successCount files sorted successfully")
-                            
-                            // Remove successfully sorted files from the raw tab list by
-                            // identity (URI). Indexing by the display indices here would
-                            // remove the wrong rows (and could drop filtered-out files).
-                            val removedUris = successfullySortedFiles.map { it.uri }.toSet()
-                            val rawFiles = when (_currentPlaylistTab.value) {
-                                PlaylistTab.TODO -> _musicFiles.value
-                                PlaylistTab.LIKED -> _likedFiles.value
-                                PlaylistTab.REJECTED -> _rejectedFiles.value
-                            }
-                            val updatedFiles = rawFiles.filterNot { it.uri in removedUris }
+                }
+                CrashLogger.log("MusicViewModel", "📊 Bulk sort done: success=$successCount, failed=${failedFiles.size}")
 
-                            CrashLogger.log("MusicViewModel", "📊 Updated files count: ${updatedFiles.size} (was ${rawFiles.size})")
-                            
-                            // Update the correct playlist
-                            when (_currentPlaylistTab.value) {
-                                PlaylistTab.TODO -> {
-                                    _musicFiles.value = updatedFiles
-                                    CrashLogger.log("MusicViewModel", "📝 Updated TODO playlist: ${updatedFiles.size} files")
-                                }
-                                PlaylistTab.LIKED -> {
-                                    _likedFiles.value = updatedFiles
-                                    CrashLogger.log("MusicViewModel", "📝 Updated LIKED playlist: ${updatedFiles.size} files")
-                                }
-                                PlaylistTab.REJECTED -> {
-                                    _rejectedFiles.value = updatedFiles
-                                    CrashLogger.log("MusicViewModel", "📝 Updated REJECTED playlist: ${updatedFiles.size} files")
-                                }
-                            }
-                            
-                            // Adjust current index if needed
-                            if (_currentIndex.value >= updatedFiles.size && updatedFiles.isNotEmpty()) {
-                                _currentIndex.value = updatedFiles.size - 1
-                                CrashLogger.log("MusicViewModel", "🔧 Adjusted current index to: ${_currentIndex.value}")
-                                loadCurrentFile()
-                            } else if (updatedFiles.isEmpty()) {
-                                _currentIndex.value = 0
-                                stopPlayback()
-                                _errorMessage.value = "All files sorted! Select another folder to continue."
-                                CrashLogger.log("MusicViewModel", "🏁 All files sorted, showing delete prompt")
-                                showDeleteRejectedPrompt()
+                withContext(Dispatchers.Main) {
+                    if (failedFiles.isNotEmpty()) {
+                        // Put back the files that did NOT actually move (rare — usually a
+                        // permission issue). Appended; exact original order isn't worth
+                        // preserving for a failure case.
+                        val failedUris = failedFiles.map { it.uri }.toSet()
+                        val cur = when (tab) {
+                            PlaylistTab.TODO -> _musicFiles.value
+                            PlaylistTab.LIKED -> _likedFiles.value
+                            PlaylistTab.REJECTED -> _rejectedFiles.value
+                        }
+                        val toReadd = selectedFiles.filter { it.uri in failedUris && cur.none { c -> c.uri == it.uri } }
+                        if (toReadd.isNotEmpty()) {
+                            val restored = cur + toReadd
+                            when (tab) {
+                                PlaylistTab.TODO -> _musicFiles.value = restored
+                                PlaylistTab.LIKED -> _likedFiles.value = restored
+                                PlaylistTab.REJECTED -> _rejectedFiles.value = restored
                             }
                         }
-                        
-                        if (failCount > 0) {
-                            _errorMessage.value = "Sorted $successCount files, failed $failCount files. Check folder permissions."
-                            CrashLogger.log("MusicViewModel", "⚠️ Some files failed: $failCount failures")
-                        }
-                        
-                        // Multi-select was already exited at the start; just stop the
-                        // fade-out animation for everything we processed (failed files, not
-                        // removed from the list, will fade back in) and refresh the tabs.
-                        _removingUris.value = _removingUris.value - selectedUris
-                        refreshAllPlaylists()
-                        CrashLogger.log("MusicViewModel", "🧹 Bulk sort done; cleared removing animation")
+                        _errorMessage.value = "Sorted $successCount, failed ${failedFiles.size}. Check folder permissions."
+                    } else {
+                        _errorMessage.value = "Sorted $successCount files to ${if (action == SortAction.LIKE) "Liked" else "Rejected"}"
                     }
-                    
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Error sorting selected files: ${e.message}"
-                        CrashLogger.log("MusicViewModel", "💥 CRITICAL ERROR in sortSelectedFiles", e)
-                        // Stop the fade-out so the rows reappear instead of vanishing silently.
-                        _removingUris.value = _removingUris.value - selectedUris
-                        
-                        // Log detailed exception information
-                        CrashLogger.log("MusicViewModel", "💥 Exception type: ${e.javaClass.simpleName}")
-                        CrashLogger.log("MusicViewModel", "💥 Exception message: ${e.message}")
-                        CrashLogger.log("MusicViewModel", "💥 Exception cause: ${e.cause}")
-                        e.stackTrace.forEach { stackElement ->
-                            CrashLogger.log("MusicViewModel", "💥 Stack: ${stackElement.className}.${stackElement.methodName}:${stackElement.lineNumber}")
-                        }
-                        
-                        logMemoryStatus("ExceptionCaught")
+
+                    // If the TODO list is now empty and nothing failed, offer to clear rejected.
+                    if (tab == PlaylistTab.TODO && _musicFiles.value.isEmpty()) {
+                        stopPlayback()
+                        showDeleteRejectedPrompt()
                     }
-                } finally {
-                    CrashLogger.log("MusicViewModel", "🔓 Releasing file operation mutex")
-                    logMemoryStatus("FinallyBlock")
+                    refreshAllPlaylists()
                 }
             }
         }

@@ -1991,3 +1991,7 @@ v12.22
 - 📐 Spectrogram card now wraps its content instead of always stretching to the full screen height — the empty dark area below the warning (the card "overflowing" into the lower part of the screen) is gone. The card caps to the screen and scrolls only if the content is taller.
 - ✅ Multi-select Reject/Like now gives instant feedback: it exits multi-select mode immediately and fades the selected rows out as they're moved (same animation single-file sort uses), instead of silently doing the work in the background with no visible change. Failed files fade back in. Still no blocking spinner.
 - 📲 Version and UI label updated to 12.22
+
+v12.23
+- ✅ Multi-select Reject/Like now removes the chosen rows from the list immediately, so they fade out and the list collapses (animateItem) right away — no more invisible empty gaps where the files used to be. The actual file move still happens in the background; any file that fails to move is put back into the list.
+- 📲 Version and UI label updated to 12.23

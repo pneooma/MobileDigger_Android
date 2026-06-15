@@ -259,10 +259,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 updateNotification()
                 return@launch
             }
-            // Do NOT increment index here. After removing the current row,
-            // the next file shifts into the same index. Only clamp if out of bounds.
-            if (_currentIndex.value >= files.size) {
-                _currentIndex.value = (files.size - 1).coerceAtLeast(0)
+            // Robust advance. Normally removeFromCurrentListByUri() has already pulled the
+            // just-actioned file out, so the next file shifted into _currentIndex and we
+            // simply clamp. But if the audible file is somehow still in the list (a stale
+            // index / desync), advance PAST it by URI so we never re-load the same track
+            // (which manifested as the player "restarting" the current track).
+            val playingUri = _currentPlayingFile.value?.uri
+            val stillPresent = if (playingUri != null) files.indexOfFirst { it.uri == playingUri } else -1
+            _currentIndex.value = if (stillPresent != -1) {
+                (stillPresent + 1) % files.size
+            } else {
+                _currentIndex.value.coerceIn(0, files.size - 1)
             }
             loadCurrentFile()
             // Start new file at 0 volume then fade in

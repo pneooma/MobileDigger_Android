@@ -1971,3 +1971,8 @@ v12.17
 v12.18
 - 🧹 Code-fix guide (Tier 1 + Tier 2) applied: scoped internal broadcasts with setPackage (latent targetSdk-34 crash fix); removed unused permissions (MANAGE/WRITE_EXTERNAL_STORAGE, BLUETOOTH, BLUETOOTH_ADMIN, ACCESS_WIFI_STATE) + the WRITE request; allowBackup=false; removed 7 unused Gradle deps; deleted dead WaveformSettings/AnimationSpecs chain + dead helpers/logging; replaced cache-trim reflection with a real API; VLC position polling moved off the Main thread; isCurrentlyPlaying() now honest for VLC; removed a Main-thread System.gc()+sleep on the waveform path; gated verbose logging behind BuildConfig.DEBUG; version label from BuildConfig; VLC temp file now LRU-tracked + protected from mid-playback eviction.
 - 📲 Version and UI label updated to 12.18
+
+v12.19
+- 🛑 Fixed a notification echo loop introduced in 12.18: the Dislike button in the notification (and Like/Next/Previous) re-broadcast to a receiver that also listened for the same action, feeding itself. Tapping Dislike once auto-rejected MANY tracks, and an AirPods double-tap (Next) skipped tracks forever. The service no longer re-broadcasts these — the app handles each tap exactly once.
+- 🔁 Fixed the main-player swipe "restarting" the current track: swiping right (Like) now sorts the file AND advances to the next track just like swiping left (Dislike), instead of leaving the audible track playing and desyncing the playlist index. Hardened the advance logic to never re-load the same track.
+- 📲 Version and UI label updated to 12.19

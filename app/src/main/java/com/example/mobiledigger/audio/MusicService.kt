@@ -164,12 +164,16 @@ class MusicService : MediaSessionService() {
                     CrashLogger.log("MusicService", "Notification action: PLAY_PAUSE (handled by ViewModel)")
                 }
                 ACTION_NEXT -> {
-                    CrashLogger.log("MusicService", "Notification action: NEXT → move to next track")
-                    sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) })
+                    // Handled by the ViewModel's receiver (it owns the real playlist/player).
+                    // Do NOT re-broadcast: this receiver ALSO listens for ACTION_NEXT, so a
+                    // (scoped) re-broadcast feeds itself → infinite echo → skips tracks forever
+                    // (e.g. AirPods double-tap). The notification PendingIntent / MediaButton
+                    // already reaches the ViewModel directly.
+                    CrashLogger.log("MusicService", "Notification action: NEXT (handled by ViewModel)")
                 }
                 ACTION_PREVIOUS -> {
-                    CrashLogger.log("MusicService", "Notification action: PREVIOUS → move to previous track")
-                    sendBroadcast(Intent(ACTION_PREVIOUS).apply { setPackage(packageName) })
+                    // Handled by the ViewModel's receiver. Do NOT re-broadcast (echo loop).
+                    CrashLogger.log("MusicService", "Notification action: PREVIOUS (handled by ViewModel)")
                 }
                 ACTION_REWIND -> {
                     CrashLogger.log("MusicService", "Notification action: REWIND")
@@ -195,20 +199,25 @@ class MusicService : MediaSessionService() {
                     } catch (e: Exception) { CrashLogger.log("MusicService", "FORWARD failed", e) }
                 }
                 ACTION_LIKE -> {
-                    CrashLogger.log("MusicService", "Notification action: LIKE")
-                    sendBroadcast(Intent(ACTION_LIKE).apply { setPackage(packageName) })
+                    // Handled by the ViewModel's receiver. Do NOT re-broadcast: this receiver
+                    // also listens for ACTION_LIKE, so a scoped re-broadcast feeds itself →
+                    // echo loop → likes/sorts many tracks at once.
+                    CrashLogger.log("MusicService", "Notification action: LIKE (handled by ViewModel)")
                 }
                 ACTION_DISLIKE -> {
-                    CrashLogger.log("MusicService", "Notification action: DISLIKE")
-                    sendBroadcast(Intent(ACTION_DISLIKE).apply { setPackage(packageName) })
+                    // Handled by the ViewModel's receiver. Do NOT re-broadcast (echo loop →
+                    // would auto-reject many tracks from a single tap).
+                    CrashLogger.log("MusicService", "Notification action: DISLIKE (handled by ViewModel)")
                 }
                 ACTION_SPECTROGRAM -> {
-                    CrashLogger.log("MusicService", "Notification action: SPECTROGRAM")
-                    sendBroadcast(Intent(ACTION_SPECTROGRAM).apply { setPackage(packageName) })
+                    // Handled by the ViewModel/UI receiver via the original PendingIntent.
+                    // Do NOT re-broadcast (echo loop).
+                    CrashLogger.log("MusicService", "Notification action: SPECTROGRAM (handled by ViewModel)")
                 }
                 ACTION_SHARE -> {
-                    CrashLogger.log("MusicService", "Notification action: SHARE")
-                    sendBroadcast(Intent(ACTION_SHARE).apply { setPackage(packageName) })
+                    // Handled by the ViewModel/UI receiver via the original PendingIntent.
+                    // Do NOT re-broadcast (echo loop).
+                    CrashLogger.log("MusicService", "Notification action: SHARE (handled by ViewModel)")
                 }
                 ACTION_STOP -> {
                     CrashLogger.log("MusicService", "Notification action: STOP")

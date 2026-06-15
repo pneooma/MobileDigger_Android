@@ -1772,6 +1772,12 @@ fun MusicPlayerScreen(
                                                                 // like/dislike immediately, then reset for the next track.
                                                                 val exitMs = (220f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450)
                                                                 mainSwipeOffset.animateTo(exit, tween(exitMs))
+                                                                // Both directions sort the CURRENT file AND advance to the next
+                                                                // track. LIKE used to only sort (leaving the audible file playing
+                                                                // while it was removed from the list) which desynced _currentIndex
+                                                                // from _currentPlayingFile — the next swipe then re-loaded the stale
+                                                                // index and the track appeared to "restart". Removing+advancing on
+                                                                // both directions keeps index and playing file in sync.
                                                                 if (current < 0) {
                                                                     try {
                                                                         suppressMiniOnLeftSwipe = true
@@ -1780,7 +1786,11 @@ fun MusicPlayerScreen(
                                                                         prevFile?.let { viewModel.sortMusicFile(it, SortAction.DISLIKE) }
                                                                     } catch (_: Exception) { }
                                                                 } else if (current > 0) {
-                                                                    try { prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (_: Exception) { }
+                                                                    try {
+                                                                        try { prevFile?.let { viewModel.removeFromCurrentListByUri(it.uri) } } catch (_: Exception) {}
+                                                                        viewModel.playNextAfterRemoval()
+                                                                        prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) }
+                                                                    } catch (_: Exception) { }
                                                                 }
                                                                 mainSwipeOffset.snapTo(0f)
                                                             }

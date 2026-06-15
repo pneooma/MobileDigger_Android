@@ -219,7 +219,7 @@ class AudioManager(private val context: Context) {
         val height = when (spectrogramQuality) {
             SpectrogramQuality.FAST -> 128
             SpectrogramQuality.BALANCED -> 256
-            SpectrogramQuality.HIGH -> 512       // Increased for more frequency bins
+            SpectrogramQuality.HIGH -> 768       // More frequency bins (cheap: FFT already computes them)
         }
         
         val maxFrequency = when (frequencyRange) {
@@ -2908,8 +2908,9 @@ class AudioManager(private val context: Context) {
             val tColumnsEnd = android.os.SystemClock.elapsedRealtime()
             PerformanceProfiler.recordOperation("Spectrogram.ColumnsFFT", (tColumnsEnd - tColumnsStart))
             
-            // Apply smoothing to reduce artifacts
-            val smoothedData = applySmoothing(spectrogramData, width, height)
+            // Skip the 3x3 box-blur — it was the main source of the blurry look (and it
+            // cost a full-grid 9-tap pass). Render the raw FFT power for a sharp image.
+            val smoothedData = spectrogramData
             
             // Convert power to dB and create bitmap with professional color mapping
             val tBitmapStart = android.os.SystemClock.elapsedRealtime()
@@ -3072,8 +3073,10 @@ class AudioManager(private val context: Context) {
     }
     
     private fun powerToColor(power: Float, maxPower: Float): Int {
-        val powerDb = if (power > 0) 10f * log10(power / maxPower) else -120f
-        val normalizedDb = ((powerDb + 120f) / 120f).coerceIn(0f, 1f)
+        // Tighter 90 dB window (was 120) lifts contrast so harmonics stand out against a
+        // darker floor — looks sharper without any extra compute.
+        val powerDb = if (power > 0) 10f * log10(power / maxPower) else -90f
+        val normalizedDb = ((powerDb + 90f) / 90f).coerceIn(0f, 1f)
 
         val colors = intArrayOf(
             Color.BLACK,

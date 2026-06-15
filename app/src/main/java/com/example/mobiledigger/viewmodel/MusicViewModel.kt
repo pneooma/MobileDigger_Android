@@ -1870,6 +1870,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         viewModelScope.launch {
             try {
                 var notifTick = 0
+                var lastNotifiedDuration = 0L
                 while (isActive) { // Check if coroutine is still active
                     kotlinx.coroutines.delay(33) // Update every ~33ms for 120Hz displays (30fps UI updates)
 
@@ -1877,10 +1878,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         try {
                             _currentPosition.value = audioManager.getCurrentPosition()
                             _duration.value = audioManager.getDuration()
-                            // Stream the real position to the notification ~once a second so the
-                            // notification media seekbar actually advances (it lives in the
-                            // service and otherwise only got position on discrete events).
-                            if (++notifTick >= 30) {
+                            val dur = _duration.value
+                            if (dur > 0 && kotlin.math.abs(dur - lastNotifiedDuration) > 1000) {
+                                // Duration just became known (or changed for a new track) — push a
+                                // FULL notification update so the seekbar appears immediately
+                                // (it needs METADATA_KEY_DURATION). Previously the seekbar stayed
+                                // hidden on the first track until the user pressed play/pause.
+                                lastNotifiedDuration = dur
+                                notifTick = 0
+                                try { updateNotification() } catch (_: Exception) {}
+                            } else if (++notifTick >= 30) {
+                                // Otherwise stream just the position ~once a second (no re-post).
                                 notifTick = 0
                                 try { updateNotificationPosition() } catch (_: Exception) {}
                             }

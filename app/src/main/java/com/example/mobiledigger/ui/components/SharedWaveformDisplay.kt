@@ -180,8 +180,8 @@ fun SharedWaveformDisplay(
                                 waveBackgroundColor = unplayedColor
                                 waveProgressColor = playedColor
                                 waveWidth = 1f // Thin bars
-                                waveGap = 0f // No gap for continuous look
-                                waveCornerRadius = 3f // Slightly rounded corners
+                                waveGap = 1f // Small gap so the (now doubled) bars read individually
+                                waveCornerRadius = 1f // Less rounding so thin bars stay crisp, not blobby
                                 wavePaddingTop = 1
                                 wavePaddingBottom = 1
                                 

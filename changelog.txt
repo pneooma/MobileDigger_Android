@@ -1907,3 +1907,9 @@ v12.05
 - 🔔 Notification play/pause FIXED: the system media controls call the MediaSession onPlay/onPause, which were acting on an empty player; now they route to the real player like next/prev/seek.
 - 🧹 Removed the info banner entirely.
 - 📲 Version and UI label updated to 12.05
+
+v12.06
+- 🌈 Spectrogram sharper (and cheaper): removed the 3x3 blur, more frequency bins (512->768, no extra FFT), tighter 90 dB contrast, crisp nearest-neighbor scaling on screen and in the shared image.
+- 〰️ Waveform clearer: small bar gap, less corner rounding, wider amplitude range (8-98) so quiet vs loud is visible.
+- 🔔 Notification seekbar now appears on the first track without needing a play/pause press (full update fires when duration becomes known).
+- 📲 Version and UI label updated to 12.06

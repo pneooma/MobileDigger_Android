@@ -420,7 +420,9 @@ fun SpectrogramPopupScreen(
                                 bitmap = spectrogramBitmap,
                                 contentDescription = "Spectrogram",
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.FillBounds
+                                contentScale = ContentScale.FillBounds,
+                                // Crisp pixels instead of the default bilinear blur.
+                                filterQuality = androidx.compose.ui.graphics.FilterQuality.None
                             )
                         } else {
                             Box(
@@ -819,7 +821,7 @@ private fun generateComprehensiveSpectrogramImage(
     val spectrogramEndX = width - 120f
     val spectrogramWidth = spectrogramEndX - spectrogramStartX
 
-    val scaledSpectrogram = Bitmap.createScaledBitmap(spectrogramBitmap.asAndroidBitmap(), spectrogramWidth.toInt(), spectrogramHeight.toInt(), true)
+    val scaledSpectrogram = Bitmap.createScaledBitmap(spectrogramBitmap.asAndroidBitmap(), spectrogramWidth.toInt(), spectrogramHeight.toInt(), false)
     canvas.drawBitmap(scaledSpectrogram, spectrogramStartX, spectrogramTop, null)
 
     // X-axis time labels

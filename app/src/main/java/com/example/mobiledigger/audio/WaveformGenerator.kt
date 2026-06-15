@@ -637,14 +637,14 @@ class WaveformGenerator(private val context: Context) {
             if (smoothedValue > maxVal) maxVal = smoothedValue
         }
         
-        // Step 2: Compress dynamic range to reduce extremes (30-85 range for smoother look)
+        // Step 2: Normalize to a WIDE dynamic range (8-98) so quiet vs loud are visibly
+        // different — the old 30-85 window flattened the waveform and hid detail.
         val range = maxVal - minVal
-        
+
         if (range > 5) {
-            // Compress to 30-85 range (55-point range instead of 90) - IN PLACE
             for (i in smoothed.indices) {
-                val normalized = ((smoothed[i] - minVal).toFloat() / range * 55f) + 30f
-                smoothed[i] = normalized.toInt().coerceIn(30, 85)
+                val normalized = ((smoothed[i] - minVal).toFloat() / range * 90f) + 8f
+                smoothed[i] = normalized.toInt().coerceIn(8, 98)
             }
         }
         

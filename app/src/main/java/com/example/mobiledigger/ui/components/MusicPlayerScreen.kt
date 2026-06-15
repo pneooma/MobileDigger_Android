@@ -906,11 +906,19 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.01",
+                        text = "v12.02",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                // Number of files in the current playlist, right of the logo
+                Text(
+                    text = "${currentPlaylistFiles.size} files",
+                    style = labelStyle,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isMonochrome) monoColor else GreenAccent,
+                    maxLines = 1
+                )
                 Spacer(Modifier.weight(1f))
                 // Reject All button
                 if ((currentPlaylistTab == PlaylistTab.TODO && hasDestinationFolder) || isMultiSelectionMode) {

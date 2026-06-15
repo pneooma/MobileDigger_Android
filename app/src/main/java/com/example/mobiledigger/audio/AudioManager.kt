@@ -161,9 +161,11 @@ class AudioManager(private val context: Context) {
     private val minPlaybackDurationMs = 2000L // Track must play for at least 2 seconds to be considered "completed"
     
     // User preferences for spectrogram quality
-    private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.BALANCED
+    // HIGH (512 bins, 8192-pt FFT) + temporalResolution 10 px/s ≈ double the prior
+    // BALANCED/5 quality on both the frequency and time axes.
+    private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.HIGH
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
-    private var temporalResolution: Int = 5 // pixels per second
+    private var temporalResolution: Int = 10 // pixels per second
     private var isFFmpegPrepared = false
     
     // Spectrogram cache with size limit to prevent memory leaks (EXTREMELY REDUCED for memory safety)
@@ -2908,18 +2910,21 @@ class AudioManager(private val context: Context) {
             
             // Convert power to dB and create bitmap with professional color mapping
             val tBitmapStart = android.os.SystemClock.elapsedRealtime()
-            // SAFETY: Bitmap.setPixel is not thread-safe; write sequentially
+            // Fill an int buffer then write the whole bitmap in one setPixels() call —
+            // far faster than width*height individual setPixel() JNI calls (important
+            // now that the resolution is doubled).
+            val pixels = IntArray(width * height)
             var y = 0
             while (y < height) {
+                val rowOffset = y * width
                 var x = 0
                 while (x < width) {
-                    val power = smoothedData[y][x]
-                    val color = powerToColor(power, maxPower)
-                    bitmap.setPixel(x, y, color)
+                    pixels[rowOffset + x] = powerToColor(smoothedData[y][x], maxPower)
                     x++
                 }
                 y++
             }
+            bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
             val tBitmapEnd = android.os.SystemClock.elapsedRealtime()
             PerformanceProfiler.recordOperation("Spectrogram.BitmapWrite", (tBitmapEnd - tBitmapStart))
             

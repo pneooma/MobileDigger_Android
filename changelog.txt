@@ -1881,3 +1881,8 @@ v12.01
 - 📍 Mini-player: no longer shown when the current track row is visible in the playlist (now matched by row key, not a divergent index).
 - 💬 Info banner (e.g. Moved to Liked/Rejected) now shown just above the Show/Hide Playlists row.
 - 📲 Version and UI label updated to 12.01
+
+v12.02
+- 🌈 Spectrogram quality ~doubled: HIGH quality (512 freq bins, 8192-pt FFT) and temporal resolution 5→10 px/s; switched bitmap write to setPixels() so it stays fast.
+- 🔢 Header: current-playlist file count shown to the right of the MobileDigger logo, in the same row as the Show/Hide Player/Playlist buttons.
+- 📲 Version and UI label updated to 12.02

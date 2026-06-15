@@ -160,6 +160,7 @@ fun SpectrogramPopupScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 // Header with centered title and buttons on sides
@@ -493,12 +494,13 @@ fun SpectrogramPopupScreen(
                     }
                 }
 
-                // Waveform Section - Centered below spectrogram with matching width
+                // Waveform Section - directly below the spectrogram (no weight: the box used
+                // to take ALL remaining space, leaving a big gap and pushing the warning card
+                // off the bottom of the screen).
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f) // Take remaining space
-                        .padding(top = 16.dp),
+                        .padding(top = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     // Match the spectrogram container width (same as spectrogram Row)
@@ -575,8 +577,7 @@ fun SpectrogramPopupScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .offset(y = (-40).dp),
+                        .padding(horizontal = 16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     ),
@@ -940,14 +941,7 @@ private fun generateComprehensiveSpectrogramImage(
     
     val generatedWithBlockBottom = generatedYPos // This is the bottom of the "Generated With" block
 
-    // --- Centered Warning Section ---
-    val warningCardHeight = 100f
-    val spaceForWarning = height - generatedWithBlockBottom // Space from bottom of generated block to bottom of image
-    val warningYPos = generatedWithBlockBottom + (spaceForWarning - warningCardHeight) / 2
-
-    val warningCardRect = android.graphics.RectF(40f, warningYPos, width - 40f, warningYPos + warningCardHeight)
-    canvas.drawRoundRect(warningCardRect, 16f, 16f, warningCardPaint)
-    
+    // --- Centered Warning Section (word-wrapped so it fits the card width) ---
     val finalWarningTextPaint = android.graphics.Paint().apply {
         isAntiAlias = true
         textSize = 22f * 1.2f // 20% bigger
@@ -955,9 +949,40 @@ private fun generateComprehensiveSpectrogramImage(
         textAlign = android.graphics.Paint.Align.CENTER
     }
     val warningText = "The spectogram is limited to the first 120 seconds (2 minutes) of the audio due to memory considerations"
-    val textBounds = android.graphics.Rect()
-    finalWarningTextPaint.getTextBounds(warningText, 0, warningText.length, textBounds)
-    canvas.drawText(warningText, width / 2f, warningYPos + warningCardHeight / 2 + textBounds.height() / 2, finalWarningTextPaint)
+
+    // Wrap into lines that fit inside the card (card spans 40..width-40, minus inner padding).
+    val warningInnerPadding = 30f
+    val warningMaxTextWidth = (width - 80f) - (warningInnerPadding * 2)
+    val warningLines = mutableListOf<String>()
+    run {
+        var line = StringBuilder()
+        for (word in warningText.split(" ")) {
+            val candidate = if (line.isEmpty()) word else "$line $word"
+            if (finalWarningTextPaint.measureText(candidate) <= warningMaxTextWidth) {
+                line = StringBuilder(candidate)
+            } else {
+                if (line.isNotEmpty()) warningLines.add(line.toString())
+                line = StringBuilder(word)
+            }
+        }
+        if (line.isNotEmpty()) warningLines.add(line.toString())
+    }
+
+    val warningLineHeight = finalWarningTextPaint.descent() - finalWarningTextPaint.ascent()
+    val warningVerticalPadding = 28f
+    val warningCardHeight = warningLines.size * warningLineHeight + warningVerticalPadding * 2
+    val spaceForWarning = height - generatedWithBlockBottom // Space from bottom of generated block to bottom of image
+    val warningYPos = generatedWithBlockBottom + (spaceForWarning - warningCardHeight) / 2
+
+    val warningCardRect = android.graphics.RectF(40f, warningYPos, width - 40f, warningYPos + warningCardHeight)
+    canvas.drawRoundRect(warningCardRect, 16f, 16f, warningCardPaint)
+
+    // Draw each wrapped line, starting at the top padding inside the card.
+    var warningLineY = warningYPos + warningVerticalPadding - finalWarningTextPaint.ascent()
+    for (line in warningLines) {
+        canvas.drawText(line, width / 2f, warningLineY, finalWarningTextPaint)
+        warningLineY += warningLineHeight
+    }
 
     return bitmap
 }

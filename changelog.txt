@@ -1981,3 +1981,8 @@ v12.20
 - 🕒 Spectrogram time axis (x-axis) is now actually visible — the time labels were being rendered at the very bottom of the screen, below the weighted waveform + offset warning card, so they got pushed off-screen. Moved them to sit directly under the spectrogram image where they belong.
 - 🎨 Added 24 new color themes (33 total): Sunset, Forest, Rose, Crimson, Amber, Coffee, Slate, Indigo, Teal, Emerald, Sapphire, Ruby, Coral, Lime, Plum, Steel, Sand, Aqua, Berry, Charcoal, Sakura, Volcano, Arctic, Mustard — each with tuned light and dark variants. Pick them under Settings → Theme.
 - 📲 Version and UI label updated to 12.20
+
+v12.21
+- 📐 Fixed the spectrogram card overflowing the bottom of the screen: the waveform sat inside a weight(1f) box that absorbed all leftover space (big gap + waveform floating low), which pushed the warning card off the bottom edge. The waveform now sits directly under the spectrogram, and the whole card scrolls if it's taller than the screen.
+- 🔤 Fixed the shared spectrogram image: the bottom "limited to the first 120 seconds…" notice was drawn as a single line and ran off the right edge. It now word-wraps onto multiple lines and the card auto-sizes to fit.
+- 📲 Version and UI label updated to 12.21

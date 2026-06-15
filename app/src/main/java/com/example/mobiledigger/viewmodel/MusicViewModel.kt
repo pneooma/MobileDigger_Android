@@ -916,15 +916,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             pausedByAudioFocusLoss = false
             systemAudioManager.abandonAudioFocusRequest(audioFocusRequest)
         } else {
-            // Request audio focus before resuming. Previously this path (used by the UI
-            // play button, the notification, and media buttons) resumed without focus,
-            // so audio could start while another app still held focus.
-            val result = systemAudioManager.requestAudioFocus(audioFocusRequest)
-            if (result == android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                audioManager.resume()
-                _isPlaying.value = true
-                pausedByAudioFocusLoss = false
-            }
+            // Request audio focus, but resume REGARDLESS of the result (like VLC does) —
+            // gating resume on a GRANTED result made the play button do nothing whenever
+            // the focus request was denied.
+            systemAudioManager.requestAudioFocus(audioFocusRequest)
+            audioManager.resume()
+            _isPlaying.value = true
+            pausedByAudioFocusLoss = false
         }
         updateNotification()
     }
@@ -2488,6 +2486,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     fun clearSelection() {
         _selectedIndices.value = emptySet()
+    }
+
+    /**
+     * Select (or, if already all-selected, deselect) every file under the given subfolder
+     * so the user can bulk like/dislike them from the subfolder header. Operates on the
+     * displayed list indices, consistent with toggleSelection / sortSelectedFiles.
+     */
+    fun toggleSubfolderSelection(subfolderName: String) {
+        val files = currentPlaylistFiles.value
+        val indices = files.indices.filter { files[it].subfolder == subfolderName }.toSet()
+        if (indices.isEmpty()) return
+        _isMultiSelectionMode.value = true
+        val current = _selectedIndices.value
+        _selectedIndices.value = if (current.containsAll(indices)) current - indices else current + indices
     }
     
     fun moveSelectedFilesToSubfolder(subfolderName: String) {

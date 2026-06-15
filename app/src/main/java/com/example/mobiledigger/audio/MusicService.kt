@@ -58,6 +58,9 @@ class MusicService : MediaSessionService() {
     internal var audioManager: AudioManager? = null // Made internal
     private var progressUpdateHandler: Handler? = null
     private var progressUpdateRunnable: Runnable? = null
+    // True once the real media notification is showing, so re-entrant onStartCommand
+    // calls don't flash the plain "Preparing playback…" bootstrap over it.
+    @Volatile private var isForegroundActive = false
     
     // Headphone double-tap detection state
     private var lastNextTapTime: Long = 0L
@@ -154,8 +157,11 @@ class MusicService : MediaSessionService() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 ACTION_PLAY_PAUSE -> {
-                    CrashLogger.log("MusicService", "Notification action: PLAY_PAUSE")
-                    togglePlayPause()
+                    // Handled by the ViewModel's receiver, which toggles the REAL player and
+                    // then refreshes this notification. The service must NOT also toggle its
+                    // own (empty) player or re-broadcast ACTION_PLAY_PAUSE — that double-
+                    // toggled playback back to its starting state, so the button looked dead.
+                    CrashLogger.log("MusicService", "Notification action: PLAY_PAUSE (handled by ViewModel)")
                 }
                 ACTION_NEXT -> {
                     CrashLogger.log("MusicService", "Notification action: NEXT → move to next track")
@@ -374,26 +380,26 @@ class MusicService : MediaSessionService() {
                 mediaSessionCompat = MediaSessionCompat(this, "MobileDigger", mbrName, mbrIntent).apply {
                     setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
                     setCallback(object : MediaSessionCompat.Callback() {
-                        override fun onPlay() { audioManager?.resume(); player?.playWhenReady = true; isPlaying = true; updatePlaybackState(); sendNowPlayingUpdate(); updateNotification() }
-                        override fun onPause() { audioManager?.pause(); player?.playWhenReady = false; isPlaying = false; updatePlaybackState(); sendNowPlayingUpdate(); updateNotification() }
+                        override fun onPlay() { audioManager?.resume(); player?.playWhenReady = true; isPlaying = true; updatePlaybackState(); sendNowPlayingUpdate() }
+                        override fun onPause() { audioManager?.pause(); player?.playWhenReady = false; isPlaying = false; updatePlaybackState(); sendNowPlayingUpdate() }
                         override fun onStop() { audioManager?.pause(); isPlaying = false; updatePlaybackState() }
                         override fun onSkipToNext() { sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) }) }
                         override fun onSkipToPrevious() { sendBroadcast(Intent(ACTION_PREVIOUS).apply { setPackage(packageName) }) }
                         override fun onFastForward() {
                             val inc = 10_000L
                             val newPos = (currentPosition + inc).coerceAtMost(audioManager?.getDuration() ?: duration)
-                            audioManager?.seekTo(newPos); currentPosition = newPos; updatePlaybackState(); sendNowPlayingUpdate(); updateNotification()
+                            audioManager?.seekTo(newPos); currentPosition = newPos; updatePlaybackState(); sendNowPlayingUpdate()
                         }
                         override fun onRewind() {
                             val dec = 10_000L
                             val newPos = (currentPosition - dec).coerceAtLeast(0L)
-                            audioManager?.seekTo(newPos); currentPosition = newPos; updatePlaybackState(); sendNowPlayingUpdate(); updateNotification()
+                            audioManager?.seekTo(newPos); currentPosition = newPos; updatePlaybackState(); sendNowPlayingUpdate()
                         }
                         override fun onSeekTo(pos: Long) {
                             audioManager?.seekTo(pos)
                             player?.seekTo(pos)
                             currentPosition = pos
-                            updatePlaybackState(); sendNowPlayingUpdate(); updateNotification()
+                            updatePlaybackState(); sendNowPlayingUpdate()
                             // Broadcast seek to ViewModel
                             sendBroadcast(Intent("com.example.mobiledigger.ACTION_SEEK").apply {
                                 setPackage(packageName)
@@ -443,22 +449,27 @@ class MusicService : MediaSessionService() {
                 mediaSessionCompat?.let { MediaButtonReceiver.handleIntent(it, intent) }
             }
         } catch (_: Exception) {}
-        // SAFETY: immediately enter foreground with a lightweight notification to avoid FGS timeout
-        try {
-            val bootstrapNotification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_pig_headphones)
-                .setContentTitle("MobileDigger")
-                .setContentText("Preparing playback…")
-                .setOngoing(true)
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .build()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(NOTIFICATION_ID, bootstrapNotification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-            } else {
-                startForeground(NOTIFICATION_ID, bootstrapNotification)
-            }
-        } catch (_: Exception) {}
+        // SAFETY: immediately enter foreground with a lightweight notification to avoid FGS
+        // timeout — but ONLY if the media notification isn't already up, otherwise this
+        // plain notification briefly replaces the media player (a visible flash).
+        if (!isForegroundActive) {
+            try {
+                val bootstrapNotification = NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_pig_headphones)
+                    .setContentTitle("MobileDigger")
+                    .setContentText("Preparing playback…")
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .build()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(NOTIFICATION_ID, bootstrapNotification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                } else {
+                    startForeground(NOTIFICATION_ID, bootstrapNotification)
+                }
+            } catch (_: Exception) {}
+        }
         // Then post the full media notification
         createAndShowNotification()
         return START_STICKY
@@ -505,6 +516,7 @@ class MusicService : MediaSessionService() {
                 } catch (_: Exception) {}
                 notificationManager.notify(NOTIFICATION_ID, notification)
             }
+            isForegroundActive = true
             CrashLogger.log("MusicService", "Notification shown. Foreground=$playingNow")
         } catch (e: Exception) {
             CrashLogger.log("MusicService", "Failed to create or show notification", e)
@@ -517,6 +529,7 @@ class MusicService : MediaSessionService() {
 
     override fun onDestroy() {
         try {
+            isForegroundActive = false
             releaseWakeLock()
             stopProgressUpdates()
             unregisterReceiver(notificationReceiver)
@@ -613,6 +626,10 @@ class MusicService : MediaSessionService() {
             .setOngoing(actualIsPlaying)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setColor(Color.BLACK)
+            // Treat every re-post with the same id as a silent in-place update, so a
+            // track change refreshes title/art/seekbar without the notification visibly
+            // tearing down and re-appearing.
+            .setOnlyAlertOnce(true)
             // Always show confirmation on swipe; keep ongoing while playing prevents removal
             .setDeleteIntent(stopPendingIntent)
             .setContentIntent(pendingIntent)
@@ -659,6 +676,7 @@ class MusicService : MediaSessionService() {
             try { stopForeground(STOP_FOREGROUND_DETACH) } catch (_: Exception) {}
             NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, notification)
         }
+        isForegroundActive = true
         CrashLogger.log("MusicService", "updateNotification - playing=$playingNow")
     }
 
@@ -674,7 +692,8 @@ class MusicService : MediaSessionService() {
         val effectiveDuration = if (dur > 0) dur else (audioManager?.getDuration() ?: dur)
         this.isPlaying = playing // Reflect intended state from AudioManager/ViewModel
         this.currentPosition = if (position > 0) position else (audioManager?.getCurrentPosition() ?: position)
-        this.duration = effectiveDuration
+        // Don't let a transient 0 overwrite a known duration (would collapse the seekbar).
+        if (effectiveDuration > 0) this.duration = effectiveDuration
 
         try {
             // Always create a media item for the notification, even without a valid URI
@@ -705,7 +724,8 @@ class MusicService : MediaSessionService() {
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "MobileDigger")
                     .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "Music Player")
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, if (effectiveDuration > 0) effectiveDuration else -1L)
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,
+                        if (effectiveDuration > 0) effectiveDuration else (this.duration.takeIf { it > 0 } ?: -1L))
                     .build()
                 msc.setMetadata(compatMeta)
                 updatePlaybackState()
@@ -812,9 +832,9 @@ class MusicService : MediaSessionService() {
                     }
 
 
-                    // Publish playback state so system seekbar updates in real-time
+                    // Publish playback state only (seekbar extrapolates) — never re-post
+                    // the whole notification here (that flickered / re-decoded cover art).
                     updatePlaybackState()
-                    updateNotification() // Refresh notification
                     progressUpdateHandler?.postDelayed(this, 1000)
                 } else if (isPlaying) { // If AudioManager stopped but we thought we were playing
                     isPlaying = false
@@ -822,7 +842,6 @@ class MusicService : MediaSessionService() {
                          player?.playWhenReady = false
                     }
                     updatePlaybackState()
-                    updateNotification()
                 }
             }
         }
@@ -843,33 +862,32 @@ class MusicService : MediaSessionService() {
         return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds)
     }
     
+    private var cachedCoverArtUri: Uri? = null
+    private var cachedCoverArt: android.graphics.Bitmap? = null
+
     private fun extractCoverArt(musicFile: MusicFile?): android.graphics.Bitmap? {
         if (musicFile?.uri == null || musicFile.uri == Uri.EMPTY) {
-            CrashLogger.log("MusicService", "No URI for cover art extraction")
             return android.graphics.BitmapFactory.decodeResource(resources, R.drawable.ic_pig_headphones)
         }
-        
-        return try {
-            CrashLogger.log("MusicService", "Extracting cover art from: ${musicFile.uri}")
+        // Reuse the cached bitmap when the track hasn't changed — avoids opening a
+        // MediaMetadataRetriever and decoding a bitmap on every notification refresh.
+        cachedCoverArt?.let { if (musicFile.uri == cachedCoverArtUri) return it }
+
+        val result = try {
             val retriever = android.media.MediaMetadataRetriever()
             retriever.setDataSource(this, musicFile.uri)
-            
             val embeddedPicture = retriever.getEmbeddedPicture()
-            if (embeddedPicture != null && embeddedPicture.isNotEmpty()) {
-                val bitmap = android.graphics.BitmapFactory.decodeByteArray(embeddedPicture, 0, embeddedPicture.size)
-                retriever.release()
-                CrashLogger.log("MusicService", "Successfully extracted cover art: ${bitmap?.width}x${bitmap?.height}")
-                bitmap
-            } else {
-                retriever.release()
-                CrashLogger.log("MusicService", "No embedded picture found, using fallback")
-                // Fallback to app icon if no cover art found
-                android.graphics.BitmapFactory.decodeResource(resources, R.drawable.ic_pig_headphones)
-            }
+            val bmp = if (embeddedPicture != null && embeddedPicture.isNotEmpty()) {
+                android.graphics.BitmapFactory.decodeByteArray(embeddedPicture, 0, embeddedPicture.size)
+            } else null
+            retriever.release()
+            bmp ?: android.graphics.BitmapFactory.decodeResource(resources, R.drawable.ic_pig_headphones)
         } catch (e: Exception) {
             CrashLogger.log("MusicService", "Failed to extract cover art: ${e.message}", e)
-            // Fallback to app icon on error
             android.graphics.BitmapFactory.decodeResource(resources, R.drawable.ic_pig_headphones)
         }
+        cachedCoverArtUri = musicFile.uri
+        cachedCoverArt = result
+        return result
     }
 }

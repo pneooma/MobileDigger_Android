@@ -1892,3 +1892,13 @@ v12.03
 - 💬 Info banner now floats (Popup) over the top without pushing the layout up/down.
 - 🔢 Header file count: number only, half size, centered between the logo and the Reject button, adaptive so it no longer squeezes the Show/Hide Playlists button.
 - 📲 Version and UI label updated to 12.03
+
+v12.04
+- 🔔 Notification: play/pause button now works (removed a double-toggle); notification updates in place on track change (setOnlyAlertOnce, no full re-post on seek); seekbar no longer vanishes on tap; cover art cached (no re-decode each second).
+- 🎵 Resume no longer gated on audio focus (play button never dead).
+- 💬 Info banner moved to the lower part of the screen (floats above the mini-player).
+- 🔢 Header file count 20% bigger and bold.
+- ✅ Subfolder headers now have a checkbox to select all files in that subfolder for bulk like/dislike.
+- 🖼️ Spectrogram: fixed cache key so re-generating produces a fresh image (was returning the old one).
+- 〰️ Waveform quality doubled (256 -> 512 samples).
+- 📲 Version and UI label updated to 12.04

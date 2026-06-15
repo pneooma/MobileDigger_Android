@@ -866,7 +866,10 @@ fun MusicPlayerScreen(
             }
             val bannerTextColor = if (infoMessageType == "info")
                 MaterialTheme.colorScheme.onSecondaryContainer else Color.White
-            Popup(alignment = Alignment.TopCenter, offset = IntOffset(0, 8)) {
+            // Anchor to the bottom of the screen, lifted above the mini-player (~140dp tall)
+            // so it sits below where the playlist ends without covering the mini-player.
+            val bannerBottomOffsetPx = with(LocalDensity.current) { 150.dp.roundToPx() }
+            Popup(alignment = Alignment.BottomCenter, offset = IntOffset(0, -bannerBottomOffsetPx)) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -910,7 +913,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.03",
+                        text = "v12.04",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -921,7 +924,7 @@ fun MusicPlayerScreen(
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = "${currentPlaylistFiles.size}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.sp, lineHeight = 7.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.2.sp, lineHeight = 8.sp),
                     fontWeight = FontWeight.Bold,
                     color = if (isMonochrome) monoColor else GreenAccent,
                     maxLines = 1
@@ -4002,16 +4005,30 @@ fun MusicPlayerScreen(
                                             thickness = 1.dp,
                                             modifier = Modifier.padding(horizontal = 8.dp)
                                         )
-                                        Text(
-                                            text = playlistItem.subfolder,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = MaterialTheme.colorScheme.primary,
+                                        val subName = playlistItem.subfolder
+                                        val subIndices = currentPlaylistFiles.indices
+                                            .filter { currentPlaylistFiles[it].subfolder == subName }.toSet()
+                                        val allSubSelected = subIndices.isNotEmpty() && selectedIndices.containsAll(subIndices)
+                                        Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                        )
+                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = subName,
+                                                style = MaterialTheme.typography.titleMedium.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            // Select/deselect all files in this subfolder for bulk like/dislike
+                                            Checkbox(
+                                                checked = allSubSelected,
+                                                onCheckedChange = { viewModel.toggleSubfolderSelection(subName) }
+                                            )
+                                        }
                                     }
                                 }
                                 is PlaylistItem.FileItem -> {

@@ -105,9 +105,9 @@ fun rememberSharedWaveformState(
                         CrashLogger.log("WaveformGenerator", "Generating waveform for: ${currentFile.name}")
                         val generator = WaveformGenerator(context)
                         
-                        // OPTIMIZED: Balance between speed and visual quality
-                        // 256 samples = higher detail, profiling to measure speed impact
-                        val targetSampleCount = 256
+                        // Doubled (256 -> 512) for higher waveform detail. Generation is
+                        // seek-based and split across 6 threads, so the extra cost is small.
+                        val targetSampleCount = 512
                         
                         CrashLogger.log("WaveformGenerator", "Requesting $targetSampleCount samples for any duration")
                         

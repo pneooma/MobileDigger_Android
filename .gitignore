@@ -24,3 +24,9 @@ local.properties
 /platforms
 /licenses
 /cmdline-tools
+
+# VLC reference repos (provided for comparison, not part of the app)
+vlc-master.zip
+vlc-android-master.zip
+vlc-master-extracted
+vlc-android-extracted

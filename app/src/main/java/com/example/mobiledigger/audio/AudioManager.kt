@@ -1423,7 +1423,10 @@ class AudioManager(private val context: Context) {
     suspend fun generateSpectrogram(musicFile: MusicFile): ImageBitmap? {
         val startTime = android.os.SystemClock.elapsedRealtime()
         return try {
-            val cacheKey = "${musicFile.name}_${musicFile.size}"
+            // Key by URI (unique per file) + size + a quality tag. The old name+size key
+        // collided across same-named files (returned a stale image for a different file)
+        // and never invalidated after the quality bump. Bump the tag on any quality change.
+        val cacheKey = "${musicFile.uri}_${musicFile.size}_q2"
             spectrogramCache[cacheKey]?.let { cachedSpectrogram ->
                 CrashLogger.log("AudioManager", "Returning cached spectrogram for: ${musicFile.name}")
                 CrashLogger.log("AudioManager", "Cached spectrogram size: ${cachedSpectrogram.width}x${cachedSpectrogram.height}")

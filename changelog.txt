@@ -1963,3 +1963,7 @@ v12.15
 v12.16
 - 🗑️ Removed the ZIP archive READ feature entirely (opening a .zip as a music source) — it crashed on very large archives. Sharing your Liked folder as a ZIP is unaffected.
 - 📲 Version and UI label updated to 12.16
+
+v12.17
+- 🔢 Each subfolder header in the playlist now shows its track count (e.g. "MySubfolder · 12 Tracks").
+- 📲 Version and UI label updated to 12.17

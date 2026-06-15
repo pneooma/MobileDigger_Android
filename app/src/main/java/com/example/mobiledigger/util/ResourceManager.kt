@@ -160,22 +160,4 @@ object ResourceManager {
         }
     }
     
-    /**
-     * Coroutine-based delay replacement for Thread.sleep()
-     */
-    suspend fun delayWithProgress(
-        totalTimeMs: Long,
-        checkIntervalMs: Long = 50L,
-        onProgress: (Long) -> Boolean // Return true to continue, false to abort
-    ): Boolean = withContext(Dispatchers.IO) {
-        val startTime = System.currentTimeMillis()
-        
-        while (System.currentTimeMillis() - startTime < totalTimeMs) {
-            if (!onProgress(System.currentTimeMillis() - startTime)) {
-                return@withContext false
-            }
-            delay(checkIntervalMs)
-        }
-        true
-    }
 }

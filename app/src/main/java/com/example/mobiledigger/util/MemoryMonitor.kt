@@ -46,14 +46,6 @@ object MemoryMonitor {
     }
     
     /**
-     * Stop monitoring
-     */
-    fun stopMonitoring() {
-        isMonitoring = false
-        CrashLogger.log(TAG, "Memory monitoring stopped")
-    }
-    
-    /**
      * Check current memory usage
      */
     private fun checkMemory() {

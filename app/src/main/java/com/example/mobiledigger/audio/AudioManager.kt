@@ -155,7 +155,11 @@ class AudioManager(private val context: Context) {
     // Track cache files currently in active use to avoid deleting them during trimming
     private var currentFFmpegDataSourcePath: String? = null
     private var currentTempWavPath: String? = null
-    
+    private var currentVlcTempPath: String? = null
+
+    /** Temp cache paths currently in use — must NOT be deleted by cache trimming. */
+    fun getProtectedTempPaths(): Set<String> = setOfNotNull(currentFFmpegDataSourcePath, currentTempWavPath, currentVlcTempPath)
+
     // Guard against spurious completion events that fire immediately after starting playback
     private var trackStartTime = 0L
     private val minPlaybackDurationMs = 2000L // Track must play for at least 2 seconds to be considered "completed"
@@ -239,8 +243,11 @@ class AudioManager(private val context: Context) {
         object : LinkedHashMap<String, String>(maxTempCacheSize + 1, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
                 if (size > maxTempCacheSize && eldest != null) {
-                    // CRITICAL: Don't delete file if it's currently in use by FFmpegMediaPlayer!
-                    if (eldest.value == currentFFmpegDataSourcePath) {
+                    // CRITICAL: Don't delete a temp file that's currently in use by any backend
+                    // (FFmpeg, the AIFF temp WAV, or the VLC temp) — that would kill playback.
+                    if (eldest.value == currentFFmpegDataSourcePath ||
+                        eldest.value == currentVlcTempPath ||
+                        eldest.value == currentTempWavPath) {
                         CrashLogger.log("AudioManager", "⚠️ Skipping deletion of in-use temp file: ${eldest.value}")
                         return false // Don't remove it from cache
                     }
@@ -710,7 +717,12 @@ class AudioManager(private val context: Context) {
             }
             
             CrashLogger.log("AudioManager", "✅ Copied to temp file for VLC: ${tempFile.absolutePath}")
-            
+
+            // Mark this VLC temp as in-use (protected from eviction below) AND register it in
+            // the LRU cache so OLD temps get reclaimed and a VLC-failure orphan stays reclaimable.
+            currentVlcTempPath = tempFile.absolutePath
+            tempFileCache[tempFile.absolutePath] = tempFile.absolutePath
+
             // Set data source using file URI
             val fileUri = Uri.fromFile(tempFile)
             if (!vlc.setDataSource(fileUri)) {
@@ -945,6 +957,7 @@ class AudioManager(private val context: Context) {
                     CrashLogger.log("AudioManager", "🔄 Resetting FFmpegMediaPlayer state...")
                     player.reset()
                     currentFFmpegDataSourcePath = null // Mark file as no longer in use
+                    currentVlcTempPath = null // safe: stopAllPlayback runs before the next temp is created
                     CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer reset completed")
                     
                     // Additional cleanup delay
@@ -1064,7 +1077,9 @@ class AudioManager(private val context: Context) {
 
     fun isCurrentlyPlaying(): Boolean {
         return try {
-            if (isUsingFFmpeg) {
+            if (isUsingVlc) {
+                vlcBackend?.isPlaying() ?: false
+            } else if (isUsingFFmpeg) {
                 ffmpegPlayer?.isPlaying ?: false
             } else {
                 callOnMainSync { exoPlayerFallback?.isPlaying ?: false }
@@ -1114,8 +1129,10 @@ class AudioManager(private val context: Context) {
             // Also clean up temp files when clearing caches
             tempFileCache.keys.toList().forEach { key ->
                 tempFileCache.remove(key)?.let { tempPath ->
-                    // CRITICAL: Don't delete file if it's currently in use by FFmpegMediaPlayer!
-                    if (tempPath == currentFFmpegDataSourcePath) {
+                    // CRITICAL: Don't delete a temp file currently in use by any backend.
+                    if (tempPath == currentFFmpegDataSourcePath ||
+                        tempPath == currentVlcTempPath ||
+                        tempPath == currentTempWavPath) {
                         CrashLogger.log("AudioManager", "⚠️ Skipping deletion of in-use temp file: $tempPath")
                         // Put it back in the cache since it's still needed
                         tempFileCache[key] = tempPath
@@ -1347,6 +1364,7 @@ class AudioManager(private val context: Context) {
             ffmpegPlayer?.release()
             ffmpegPlayer = null
             currentFFmpegDataSourcePath = null // Clear tracking before cleanup
+            currentVlcTempPath = null
             
             vlcBackend?.release()
             vlcBackend = null

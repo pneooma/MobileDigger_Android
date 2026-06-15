@@ -26,17 +26,17 @@ class MediaButtonReceiver : BroadcastReceiver() {
                 when (keyEvent.keyCode) {
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PLAY_PAUSE")
-                        val playPauseIntent = Intent(MusicService.ACTION_PLAY_PAUSE)
+                        val playPauseIntent = Intent(MusicService.ACTION_PLAY_PAUSE).apply { setPackage(context.packageName) }
                         context.sendBroadcast(playPauseIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PLAY")
-                        val playIntent = Intent(MusicService.ACTION_PLAY_PAUSE)
+                        val playIntent = Intent(MusicService.ACTION_PLAY_PAUSE).apply { setPackage(context.packageName) }
                         context.sendBroadcast(playIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PAUSE")
-                        val pauseIntent = Intent(MusicService.ACTION_PLAY_PAUSE)
+                        val pauseIntent = Intent(MusicService.ACTION_PLAY_PAUSE).apply { setPackage(context.packageName) }
                         context.sendBroadcast(pauseIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_NEXT -> {
@@ -44,11 +44,11 @@ class MediaButtonReceiver : BroadcastReceiver() {
                         // mirroring the PLAY_PAUSE path above. Previously this was a no-op,
                         // so hardware/headphone NEXT did nothing.
                         CrashLogger.log("MediaButtonReceiver", "Media button: NEXT")
-                        context.sendBroadcast(Intent(MusicService.ACTION_NEXT))
+                        context.sendBroadcast(Intent(MusicService.ACTION_NEXT).apply { setPackage(context.packageName) })
                     }
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PREVIOUS")
-                        context.sendBroadcast(Intent(MusicService.ACTION_PREVIOUS))
+                        context.sendBroadcast(Intent(MusicService.ACTION_PREVIOUS).apply { setPackage(context.packageName) })
                     }
                     KeyEvent.KEYCODE_MEDIA_STOP -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: STOP")

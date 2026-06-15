@@ -54,29 +54,6 @@ object PerformanceProfiler {
     }
     
     /**
-     * Measure multiple iterations and log statistics
-     */
-    fun measureIterations(
-        operationName: String,
-        iterations: Int,
-        operation: () -> Unit
-    ) {
-        val times = mutableListOf<Long>()
-        
-        repeat(iterations) {
-            val start = SystemClock.elapsedRealtime()
-            operation()
-            times.add(SystemClock.elapsedRealtime() - start)
-        }
-        
-        val avg = times.average()
-        val min = times.minOrNull() ?: 0
-        val max = times.maxOrNull() ?: 0
-        
-        CrashLogger.log(TAG, "📊 $operationName ($iterations iterations): avg=${avg.toInt()}ms, min=${min}ms, max=${max}ms")
-    }
-    
-    /**
      * Track operation count and aggregate timing
      */
     private val operationStats = mutableMapOf<String, OperationStats>()
@@ -115,12 +92,5 @@ object PerformanceProfiler {
         }
     }
     
-    /**
-     * Clear all statistics
-     */
-    fun clearStats() {
-        operationStats.clear()
-        CrashLogger.log(TAG, "📊 Performance stats cleared")
-    }
 }
 

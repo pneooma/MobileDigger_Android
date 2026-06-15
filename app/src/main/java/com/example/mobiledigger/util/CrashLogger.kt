@@ -48,23 +48,6 @@ object CrashLogger {
         }.start()
     }
     
-    // Performance timing helper
-    private val timingMap = mutableMapOf<String, Long>()
-    
-    fun startTiming(key: String) {
-        synchronized(timingMap) {
-            timingMap[key] = System.currentTimeMillis()
-        }
-    }
-    
-    fun endTiming(tag: String, key: String, message: String = "") {
-        val elapsed = synchronized(timingMap) {
-            val start = timingMap.remove(key) ?: return
-            System.currentTimeMillis() - start
-        }
-        log(tag, "⏱️ $key took ${elapsed}ms ${if (message.isNotEmpty()) "- $message" else ""}")
-    }
-    
     fun log(tag: String, message: String, throwable: Throwable? = null) {
         // Delegate to UnifiedLogger
         UnifiedLogger.log(tag, message, throwable)

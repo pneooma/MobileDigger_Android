@@ -165,11 +165,11 @@ class MusicService : MediaSessionService() {
                 }
                 ACTION_NEXT -> {
                     CrashLogger.log("MusicService", "Notification action: NEXT → move to next track")
-                    sendBroadcast(Intent(ACTION_NEXT))
+                    sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) })
                 }
                 ACTION_PREVIOUS -> {
                     CrashLogger.log("MusicService", "Notification action: PREVIOUS → move to previous track")
-                    sendBroadcast(Intent(ACTION_PREVIOUS))
+                    sendBroadcast(Intent(ACTION_PREVIOUS).apply { setPackage(packageName) })
                 }
                 ACTION_REWIND -> {
                     CrashLogger.log("MusicService", "Notification action: REWIND")
@@ -196,19 +196,19 @@ class MusicService : MediaSessionService() {
                 }
                 ACTION_LIKE -> {
                     CrashLogger.log("MusicService", "Notification action: LIKE")
-                    sendBroadcast(Intent(ACTION_LIKE))
+                    sendBroadcast(Intent(ACTION_LIKE).apply { setPackage(packageName) })
                 }
                 ACTION_DISLIKE -> {
                     CrashLogger.log("MusicService", "Notification action: DISLIKE")
-                    sendBroadcast(Intent(ACTION_DISLIKE))
+                    sendBroadcast(Intent(ACTION_DISLIKE).apply { setPackage(packageName) })
                 }
                 ACTION_SPECTROGRAM -> {
                     CrashLogger.log("MusicService", "Notification action: SPECTROGRAM")
-                    sendBroadcast(Intent(ACTION_SPECTROGRAM))
+                    sendBroadcast(Intent(ACTION_SPECTROGRAM).apply { setPackage(packageName) })
                 }
                 ACTION_SHARE -> {
                     CrashLogger.log("MusicService", "Notification action: SHARE")
-                    sendBroadcast(Intent(ACTION_SHARE))
+                    sendBroadcast(Intent(ACTION_SHARE).apply { setPackage(packageName) })
                 }
                 ACTION_STOP -> {
                     CrashLogger.log("MusicService", "Notification action: STOP")
@@ -345,7 +345,7 @@ class MusicService : MediaSessionService() {
                     Handler(Looper.getMainLooper()).postDelayed({
                         try {
                             // Send broadcast to trigger next track in ViewModel
-                            sendBroadcast(Intent(ACTION_NEXT))
+                            sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) })
                             CrashLogger.log("MusicService", "Auto-skipped to next track after ExoPlayer error")
                         } catch (e: Exception) {
                             CrashLogger.log("MusicService", "Failed to auto-skip after error", e)
@@ -817,7 +817,7 @@ class MusicService : MediaSessionService() {
             updateNotification()
             
             // Inform ViewModel
-            sendBroadcast(Intent(ACTION_PLAY_PAUSE))
+            sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) })
             
             CrashLogger.log("MusicService", "Toggle play/pause - isPlaying: $isPlaying")
         } catch (e: Exception) {

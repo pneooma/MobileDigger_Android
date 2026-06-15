@@ -118,12 +118,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         .setWillPauseWhenDucked(true)
         .build()
 
-    // PHASE 3: Centralized error handling
-    private val errorHandler = com.example.mobiledigger.util.ErrorHandler.createHandler("MusicViewModel") { error ->
-        _errorMessage.value = error
-    }
-    private val fileOperationHelper = com.example.mobiledigger.util.FileOperationHelper(fileManager)
-    
     // PHASE 5: Performance profiling - moved to separate init block to avoid nested init
     private fun startPerformanceStatLogging() {
         viewModelScope.launch {
@@ -1870,7 +1864,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     private fun startPositionUpdates() {
-        viewModelScope.launch {
+        // Poll on IO: VLC's native position/duration getters aren't Main-bound, StateFlow
+        // assignment is thread-safe, and the suppress guard is @Volatile — keeps ~30Hz
+        // polling off the Main thread.
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 var notifTick = 0
                 var lastNotifiedDuration = 0L
@@ -1946,17 +1943,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             if (totalCache > preferred) {
                                 val protected = mutableSetOf<String>()
                                 // Protect active temp files used by audio pipeline
-                                try {
-                                    val p1 = javaClass.getDeclaredField("audioManager")
-                                    p1.isAccessible = true
-                                    val am = p1.get(this@MusicViewModel) as com.example.mobiledigger.audio.AudioManager
-                                    val f1 = am.javaClass.getDeclaredField("currentFFmpegDataSourcePath")
-                                    f1.isAccessible = true
-                                    (f1.get(am) as? String)?.let { protected.add(it) }
-                                    val f2 = am.javaClass.getDeclaredField("currentTempWavPath")
-                                    f2.isAccessible = true
-                                    (f2.get(am) as? String)?.let { protected.add(it) }
-                                } catch (_: Exception) { /* best-effort */ }
+                                protected.addAll(audioManager.getProtectedTempPaths())
                                 CacheManager.trimDiskCache(ctx, preferred, hard, protected)
                                 CrashLogger.log("MusicViewModel", "Disk cache trimmed. Before=${totalCache} bytes")
                             }

@@ -1967,3 +1967,7 @@ v12.16
 v12.17
 - 🔢 Each subfolder header in the playlist now shows its track count (e.g. "MySubfolder · 12 Tracks").
 - 📲 Version and UI label updated to 12.17
+
+v12.18
+- 🧹 Code-fix guide (Tier 1 + Tier 2) applied: scoped internal broadcasts with setPackage (latent targetSdk-34 crash fix); removed unused permissions (MANAGE/WRITE_EXTERNAL_STORAGE, BLUETOOTH, BLUETOOTH_ADMIN, ACCESS_WIFI_STATE) + the WRITE request; allowBackup=false; removed 7 unused Gradle deps; deleted dead WaveformSettings/AnimationSpecs chain + dead helpers/logging; replaced cache-trim reflection with a real API; VLC position polling moved off the Main thread; isCurrentlyPlaying() now honest for VLC; removed a Main-thread System.gc()+sleep on the waveform path; gated verbose logging behind BuildConfig.DEBUG; version label from BuildConfig; VLC temp file now LRU-tracked + protected from mid-playback eviction.
+- 📲 Version and UI label updated to 12.18

@@ -77,12 +77,7 @@ fun rememberSharedWaveformState(
         waveformData = null
         errorMessage = null
         isLoading = true
-        
-        // CRITICAL: Force garbage collection to free memory before processing
-        // This helps prevent crashes when switching between large AIFF files
-        System.gc()
-        Thread.sleep(50) // Give GC time to complete
-        
+
         if (currentFile != null) {
             // Check if waveform generation is enabled by user
             if (!isWaveformGenerationEnabled(context)) {
@@ -102,6 +97,9 @@ fun rememberSharedWaveformState(
                 // Use custom WaveformGenerator (pure Kotlin, no native crashes)
                 scope.launch(Dispatchers.IO) {
                     try {
+                        // Free memory before processing a (possibly large) file — moved off
+                        // the Main thread (was a System.gc()+Thread.sleep(50) UI freeze per track).
+                        System.gc()
                         CrashLogger.log("WaveformGenerator", "Generating waveform for: ${currentFile.name}")
                         val generator = WaveformGenerator(context)
                         

@@ -44,35 +44,5 @@ object ErrorHandler {
         }
     }
     
-    /**
-     * Safe execution wrapper with fallback
-     */
-    inline fun <T> runSafely(
-        tag: String,
-        fallback: T,
-        block: () -> T
-    ): T {
-        return try {
-            block()
-        } catch (e: Exception) {
-            CrashLogger.log(tag, "Exception in runSafely, using fallback", e)
-            fallback
-        }
-    }
-    
-    /**
-     * Safe execution with nullable return
-     */
-    inline fun <T> runSafelyOrNull(
-        tag: String,
-        block: () -> T
-    ): T? {
-        return try {
-            block()
-        } catch (e: Exception) {
-            CrashLogger.log(tag, "Exception in runSafelyOrNull, returning null", e)
-            null
-        }
-    }
 }
 

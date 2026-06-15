@@ -42,7 +42,6 @@ import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.ui.components.WaveformWithToggle
 import com.example.mobiledigger.ui.components.SettingsDialog
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
-import com.example.mobiledigger.utils.WaveformGenerator
 import com.example.mobiledigger.util.rememberOptimizedAnimationSpecs
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -881,7 +880,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.17",
+                        text = "v${com.example.mobiledigger.BuildConfig.VERSION_NAME}",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

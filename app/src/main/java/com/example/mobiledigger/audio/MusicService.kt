@@ -380,9 +380,14 @@ class MusicService : MediaSessionService() {
                 mediaSessionCompat = MediaSessionCompat(this, "MobileDigger", mbrName, mbrIntent).apply {
                     setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
                     setCallback(object : MediaSessionCompat.Callback() {
-                        override fun onPlay() { audioManager?.resume(); player?.playWhenReady = true; isPlaying = true; updatePlaybackState(); sendNowPlayingUpdate() }
-                        override fun onPause() { audioManager?.pause(); player?.playWhenReady = false; isPlaying = false; updatePlaybackState(); sendNowPlayingUpdate() }
-                        override fun onStop() { audioManager?.pause(); isPlaying = false; updatePlaybackState() }
+                        // Route to the REAL player in the ViewModel (the service's own
+                        // audioManager is empty). On Android 13+ the system media controls
+                        // invoke these session callbacks for play/pause, so operating on the
+                        // empty player here is exactly why the button did nothing — while
+                        // next/prev/seek worked (they already broadcast). Mirror them.
+                        override fun onPlay() { sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }) }
+                        override fun onPause() { sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }) }
+                        override fun onStop() { sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }) }
                         override fun onSkipToNext() { sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) }) }
                         override fun onSkipToPrevious() { sendBroadcast(Intent(ACTION_PREVIOUS).apply { setPackage(packageName) }) }
                         override fun onFastForward() {

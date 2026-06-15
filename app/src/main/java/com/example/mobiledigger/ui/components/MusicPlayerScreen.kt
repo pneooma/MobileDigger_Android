@@ -855,37 +855,6 @@ fun MusicPlayerScreen(
             }
         }
 
-        // Transient info/status banner (e.g. "Moved to 'Liked'/'Rejected'"). Rendered in
-        // a Popup so it floats over the content near the top WITHOUT pushing the layout
-        // down/up (it previously reflowed the whole view when it appeared/disappeared).
-        if (showInfoMessage && infoMessageText.isNotBlank()) {
-            val bannerColor = when (infoMessageType) {
-                "success" -> Color(0xFF2E7D32)
-                "error" -> Color(0xFFC62828)
-                else -> MaterialTheme.colorScheme.secondaryContainer
-            }
-            val bannerTextColor = if (infoMessageType == "info")
-                MaterialTheme.colorScheme.onSecondaryContainer else Color.White
-            // Anchor to the bottom of the screen, lifted above the mini-player (~140dp tall)
-            // so it sits below where the playlist ends without covering the mini-player.
-            val bannerBottomOffsetPx = with(LocalDensity.current) { 150.dp.roundToPx() }
-            Popup(alignment = Alignment.BottomCenter, offset = IntOffset(0, -bannerBottomOffsetPx)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .background(bannerColor, RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                        .zIndex(1f)
-                ) {
-                    Text(
-                        text = infoMessageText,
-                        color = bannerTextColor,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
 
         // Header row: [Logo] [Reject All] [Player] [Playlist]
         if (musicFiles.isNotEmpty() && !isLoading) {
@@ -913,7 +882,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.04",
+                        text = "v12.05",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

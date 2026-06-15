@@ -1902,3 +1902,8 @@ v12.04
 - 🖼️ Spectrogram: fixed cache key so re-generating produces a fresh image (was returning the old one).
 - 〰️ Waveform quality doubled (256 -> 512 samples).
 - 📲 Version and UI label updated to 12.04
+
+v12.05
+- 🔔 Notification play/pause FIXED: the system media controls call the MediaSession onPlay/onPause, which were acting on an empty player; now they route to the real player like next/prev/seek.
+- 🧹 Removed the info banner entirely.
+- 📲 Version and UI label updated to 12.05

@@ -1946,3 +1946,9 @@ v12.12
 v12.13
 - 📁 Multi-select: added a "Move" (send to folder) button next to Like/Dislike/Rename. It opens the same subfolder picker used in the player and moves all selected files to the chosen (or a new) subfolder.
 - 📲 Version and UI label updated to 12.13
+
+v12.14
+- 📦 Play & sort audio directly from a ZIP without unzipping: tapping a zip entry extracts just that song to cache and plays it (with seek); the next entry is prefetched; cache is size-capped (LRU). Like/Dislike/Move of a zip entry copies it out into your Liked/Rejected/subfolder (the archive is read-only).
+- 🎛️ New Bitrate sort (ascending/descending) in the Sort menu.
+- 🔴 Filter icon now shows a marker dot when a sort/filter is active.
+- 📲 Version and UI label updated to 12.14

@@ -387,6 +387,12 @@ class MusicService : MediaSessionService() {
                         // next/prev/seek worked (they already broadcast). Mirror them.
                         override fun onPlay() { sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }) }
                         override fun onPause() { sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }) }
+                        override fun onCustomAction(action: String?, extras: android.os.Bundle?) {
+                            when (action) {
+                                ACTION_LIKE -> sendBroadcast(Intent(ACTION_LIKE).apply { setPackage(packageName) })
+                                ACTION_DISLIKE -> sendBroadcast(Intent(ACTION_DISLIKE).apply { setPackage(packageName) })
+                            }
+                        }
                         override fun onStop() { sendBroadcast(Intent(ACTION_PLAY_PAUSE).apply { setPackage(packageName) }) }
                         override fun onSkipToNext() { sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) }) }
                         override fun onSkipToPrevious() { sendBroadcast(Intent(ACTION_PREVIOUS).apply { setPackage(packageName) }) }
@@ -757,6 +763,10 @@ class MusicService : MediaSessionService() {
                 .setActions(actions)
                 .setState(state, position, if (isPlaying) 1.0f else 0.0f, now)
                 .setBufferedPosition(buffered)
+                // Custom actions so Like/Dislike show in the Android 13+ system media
+                // controls (they aren't standard MediaSession actions).
+                .addCustomAction(PlaybackStateCompat.CustomAction.Builder(ACTION_LIKE, "Like", R.drawable.ic_yes_pill).build())
+                .addCustomAction(PlaybackStateCompat.CustomAction.Builder(ACTION_DISLIKE, "Dislike", R.drawable.ic_no_pill).build())
                 .build()
             msc.setPlaybackState(playbackState)
         }

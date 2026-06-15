@@ -1913,3 +1913,8 @@ v12.06
 - 〰️ Waveform clearer: small bar gap, less corner rounding, wider amplitude range (8-98) so quiet vs loud is visible.
 - 🔔 Notification seekbar now appears on the first track without needing a play/pause press (full update fires when duration becomes known).
 - 📲 Version and UI label updated to 12.06
+
+v12.07
+- 👍 Like/Dislike now appear in the Android 13+ system media controls (MediaSession custom actions), wired to the existing like/dislike.
+- 🌈 Spectrogram now analyzes the first 60 seconds (was 30); message updated.
+- 📲 Version and UI label updated to 12.07

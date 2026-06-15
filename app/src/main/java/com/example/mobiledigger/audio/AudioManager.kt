@@ -1561,7 +1561,7 @@ class AudioManager(private val context: Context) {
                     
                     val audioSamples = mutableListOf<Short>()
                     // Calculate how much audio we actually need for spectrogram
-                    val maxAnalysisSeconds = 30 // Cap to 30s for spectrogram conversion
+                    val maxAnalysisSeconds = 60 // Cap to 60s for spectrogram conversion
                     val maxSamples = sampleRate * maxAnalysisSeconds // Only convert what we need
                     var totalSamplesExpected = maxSamples
                     
@@ -2757,9 +2757,9 @@ class AudioManager(private val context: Context) {
             
             // Get actual audio duration for dynamic width calculation (capped)
             val audioDurationSeconds = monoData.size / sampleRate.toFloat()
-            // Cap analysis strictly to 30 seconds for spectrogram visualization
+            // Cap analysis to 60 seconds (1 minute) for spectrogram visualization
             val fileSizeMB = monoData.size * 2 / (1024 * 1024) // Rough estimate in MB
-            val maxAnalysisSeconds = 30
+            val maxAnalysisSeconds = 60
 
             CrashLogger.log("AudioManager", "File size: ~${fileSizeMB}MB, limiting analysis to ${maxAnalysisSeconds}s for memory management")
             

@@ -1933,3 +1933,8 @@ v12.10
 - 🕐 Spectrogram X-axis time labels now show real times (0:00 .. up to 2:00) derived from the image itself — they were 0:00 because the track duration metadata was 0.
 - 🎚️ Animation Speed now affects the swipe animations (main card, playlist row like/dislike, mini-player), so the slider has a clearly visible effect.
 - 📲 Version and UI label updated to 12.10
+
+v12.11
+- 🩹 Main player swipe (like/dislike) fixed: the action no longer waits on the animation, and the swipe animation is bounded (60-450ms) so a slow Animation Speed setting can no longer stall it. Same bounding applied to playlist-row and mini-player swipes.
+- 🔎 Search: pressing Enter on the keyboard now runs the search (added a Search IME action) instead of needing the search icon.
+- 📲 Version and UI label updated to 12.11

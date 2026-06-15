@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-         versionCode = 1210
-         versionName = "12.10"
+         versionCode = 1211
+         versionName = "12.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

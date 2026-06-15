@@ -55,6 +55,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Checkbox
@@ -882,7 +884,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.10",
+                        text = "v12.11",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1583,6 +1585,13 @@ fun MusicPlayerScreen(
                             }
                         },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = {
+                            if (currentSearchText.isNotBlank()) {
+                                viewModel.searchMusicImmediate(currentSearchText)
+                                searchExpanded = true
+                            }
+                        }),
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable)
@@ -1759,8 +1768,11 @@ fun MusicPlayerScreen(
                                                         if (abs(current) > threshold) {
                                                             val prevFile = file
                                                             scope.launch {
-                                                                mainSwipeOffset.animateTo(exit, tween((220f / visualSettings.animationSpeed).toInt()))
-                                                                mainSwipeOffset.animateTo(0f, animationSpec)
+                                                                // Slide the card off — speed-scaled but BOUNDED (60..450ms) so a
+                                                                // slow Animation Speed can't delay/stall the action — then fire
+                                                                // like/dislike immediately, then reset for the next track.
+                                                                val exitMs = (220f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450)
+                                                                mainSwipeOffset.animateTo(exit, tween(exitMs))
                                                                 if (current < 0) {
                                                                     try {
                                                                         suppressMiniOnLeftSwipe = true
@@ -1771,6 +1783,7 @@ fun MusicPlayerScreen(
                                                                 } else if (current > 0) {
                                                                     try { prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (_: Exception) { }
                                                                 }
+                                                                mainSwipeOffset.snapTo(0f)
                                                             }
                                                         } else {
                                                             scope.launch {
@@ -4201,8 +4214,8 @@ fun MusicPlayerScreen(
                                                                         scope.launch {
                                                                             isRowDismissed = true
                                                                             if (isActiveNow) suppressMiniOnLeftSwipe = true
-                                                                            launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed).toInt())) }
-                                                                            delay((180f / visualSettings.animationSpeed).toLong())
+                                                                            launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450))) }
+                                                                            delay((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toLong().coerceIn(60L, 450L))
                                                                             try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
                                                                     // Hand off the rest to ViewModel so coroutine isn't cancelled when this row is removed
                                                                     viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.DISLIKE, isActiveNow)
@@ -4213,8 +4226,8 @@ fun MusicPlayerScreen(
                                                                     val exit = 520f
                                                                     scope.launch {
                                                                         isRowDismissed = true
-                                                                        launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed).toInt())) }
-                                                                        delay((180f / visualSettings.animationSpeed).toLong())
+                                                                        launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450))) }
+                                                                        delay((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toLong().coerceIn(60L, 450L))
                                                                         try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
                                                                         // Hand off to ViewModel (stable scope) after removal
                                                                         viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.LIKE, false)
@@ -4832,7 +4845,7 @@ fun MusicPlayerScreen(
                                                     val prevFile = file
                                                     scope.launch {
                                                         // 1) Animate out fully
-                                                        miniSwipeOffset.animateTo(exit, tween((220f / visualSettings.animationSpeed).toInt()))
+                                                        miniSwipeOffset.animateTo(exit, tween((220f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450)))
                                                         // 2) Animate back
                                                         miniSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
                                                         // 3) Then sequence next/sort

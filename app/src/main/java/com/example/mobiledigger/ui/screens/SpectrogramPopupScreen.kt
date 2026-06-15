@@ -563,7 +563,7 @@ fun SpectrogramPopupScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "The spectogram is limited to the first 60 seconds (1 minute) of the audio due to memory considerations",
+                            text = "The spectogram is limited to the first 120 seconds (2 minutes) of the audio due to memory considerations",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             textAlign = TextAlign.Center,
@@ -950,7 +950,7 @@ private fun generateComprehensiveSpectrogramImage(
         color = onErrorContainerColor
         textAlign = android.graphics.Paint.Align.CENTER
     }
-    val warningText = "The spectogram is limited to the first 60 seconds (1 minute) of the audio due to memory considerations"
+    val warningText = "The spectogram is limited to the first 120 seconds (2 minutes) of the audio due to memory considerations"
     val textBounds = android.graphics.Rect()
     finalWarningTextPaint.getTextBounds(warningText, 0, warningText.length, textBounds)
     canvas.drawText(warningText, width / 2f, warningYPos + warningCardHeight / 2 + textBounds.height() / 2, finalWarningTextPaint)

@@ -201,6 +201,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
+
+    // After a seek, hold the target position until VLC's async seek catches up, so the
+    // position loop doesn't overwrite it with the stale (pre-seek) value and snap the
+    // seekbar back — which made seeks look like they didn't take effect.
+    @Volatile private var suppressPositionPushUntil = 0L
     
     private val _duration = MutableStateFlow(0L)
     val duration: StateFlow<Long> = _duration.asStateFlow()
@@ -1170,7 +1175,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun seekTo(position: Long) {
+        // Optimistically reflect the target immediately and suppress the position loop's
+        // overwrite for a short window so the seekbar doesn't revert before VLC catches up.
+        _currentPosition.value = position
+        suppressPositionPushUntil = android.os.SystemClock.elapsedRealtime() + 700
         audioManager.seekTo(position)
+        try { updateNotificationPosition() } catch (_: Exception) {}
     }
     
     
@@ -1876,7 +1886,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
                     if (_isPlaying.value && isActive) { // Double check we're still active
                         try {
-                            _currentPosition.value = audioManager.getCurrentPosition()
+                            val suppressed = android.os.SystemClock.elapsedRealtime() < suppressPositionPushUntil
+                            if (!suppressed) {
+                                // Skip while a recent seek is settling so we don't snap back.
+                                _currentPosition.value = audioManager.getCurrentPosition()
+                            }
                             _duration.value = audioManager.getDuration()
                             val dur = _duration.value
                             if (dur > 0 && kotlin.math.abs(dur - lastNotifiedDuration) > 1000) {
@@ -1887,7 +1901,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                 lastNotifiedDuration = dur
                                 notifTick = 0
                                 try { updateNotification() } catch (_: Exception) {}
-                            } else if (++notifTick >= 30) {
+                            } else if (!suppressed && ++notifTick >= 30) {
                                 // Otherwise stream just the position ~once a second (no re-post).
                                 notifTick = 0
                                 try { updateNotificationPosition() } catch (_: Exception) {}

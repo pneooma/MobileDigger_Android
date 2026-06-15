@@ -23,6 +23,9 @@ class VlcAudioBackend(private val context: Context) {
     private val isInitialized = AtomicBoolean(false)
     private val isPlaying = AtomicBoolean(false)
     private val isPrepared = AtomicBoolean(false)
+    // A seek requested while the player isn't seekable yet (opening/buffering) is stored
+    // here and re-applied once the player becomes seekable, so it isn't silently dropped.
+    @Volatile private var pendingSeekMs: Long = -1L
     
     // Callbacks
     private var onPreparedListener: (() -> Unit)? = null
@@ -91,6 +94,7 @@ class VlcAudioBackend(private val context: Context) {
                 }
                 MediaPlayer.Event.Playing -> {
                     isPlaying.set(true)
+                    applyPendingSeek()
                     CrashLogger.log("VlcAudioBackend", "▶️ Playing")
                 }
                 MediaPlayer.Event.Paused -> {
@@ -120,6 +124,7 @@ class VlcAudioBackend(private val context: Context) {
                     // Optional: Handle position changes for seeking
                 }
                 MediaPlayer.Event.SeekableChanged -> {
+                    applyPendingSeek()
                     CrashLogger.log("VlcAudioBackend", "🔍 Seekable changed")
                 }
                 MediaPlayer.Event.PausableChanged -> {
@@ -303,12 +308,33 @@ class VlcAudioBackend(private val context: Context) {
                 CrashLogger.log("VlcAudioBackend", "❌ VLC not initialized for seek")
                 return
             }
-            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "↔️ Seeking to ${positionMs}ms")
-            mediaPlayer?.time = positionMs
+            val mp = mediaPlayer ?: return
+            if (mp.isSeekable) {
+                mp.time = positionMs
+                pendingSeekMs = -1L
+                if (verboseLogs) CrashLogger.log("VlcAudioBackend", "↔️ Seeking to ${positionMs}ms")
+            } else {
+                // Not seekable yet — defer; applyPendingSeek() runs on Seekable/Playing events.
+                pendingSeekMs = positionMs
+                CrashLogger.log("VlcAudioBackend", "↔️ Seek deferred until seekable: ${positionMs}ms")
+            }
         } catch (e: Exception) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC seek failed", e)
             onErrorListener?.invoke("VLC seek failed: ${e.message}")
         }
+    }
+
+    private fun applyPendingSeek() {
+        val target = pendingSeekMs
+        if (target < 0L) return
+        try {
+            val mp = mediaPlayer ?: return
+            if (mp.isSeekable) {
+                mp.time = target
+                pendingSeekMs = -1L
+                CrashLogger.log("VlcAudioBackend", "↔️ Applied deferred seek: ${target}ms")
+            }
+        } catch (_: Exception) {}
     }
 
     fun getVolume(): Float {

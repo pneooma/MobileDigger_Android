@@ -1918,3 +1918,8 @@ v12.07
 - 👍 Like/Dislike now appear in the Android 13+ system media controls (MediaSession custom actions), wired to the existing like/dislike.
 - 🌈 Spectrogram now analyzes the first 60 seconds (was 30); message updated.
 - 📲 Version and UI label updated to 12.07
+
+v12.08
+- 🎚️ Notification seek reliability: optimistically hold the seek target so the bar no longer snaps back (was the main cause of needing 2-3 tries); VLC seeks issued before the player is seekable are now deferred and re-applied instead of dropped.
+- 🌈 Spectrogram now analyzes the first 120 seconds (2 minutes); message updated.
+- 📲 Version and UI label updated to 12.08

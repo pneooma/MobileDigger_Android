@@ -1942,3 +1942,7 @@ v12.11
 v12.12
 - 🎛️ New "Lossy Only (MP3, AAC…)" filter in the Sort/Filter menu, mutually exclusive with "Lossless Only". Combine with multiselect → Select All → Reject to bulk-reject all lossy files.
 - 📲 Version and UI label updated to 12.12
+
+v12.13
+- 📁 Multi-select: added a "Move" (send to folder) button next to Like/Dislike/Rename. It opens the same subfolder picker used in the player and moves all selected files to the chosen (or a new) subfolder.
+- 📲 Version and UI label updated to 12.13

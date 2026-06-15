@@ -259,6 +259,7 @@ fun MusicPlayerScreen(
     var showSubfolderManagementDialog by remember { mutableStateOf(false) } // State for subfolder management dialog
     var showSubfolderSelectionDialog by remember { mutableStateOf(false) } // State for subfolder selection dialog from playlist
     var viewModeForSubfolderDialog by remember { mutableStateOf(false) } // When true, dialog shows VIEW selector; when false, MOVE-only
+    var multiMoveMode by remember { mutableStateOf(false) } // When true, the subfolder dialog moves the multi-selected files (bulk)
     var showLikedSubfoldersViewDialog by remember { mutableStateOf(false) } // New: multi-select liked subfolders to view
     var selectedLikedSubfolders by remember { mutableStateOf(setOf<String>()) }
 
@@ -885,7 +886,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v12.12",
+                        text = "v12.13",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1018,6 +1019,9 @@ fun MusicPlayerScreen(
                     }
                     OutlinedButton(onClick = { showRenameSelectedDialog = true }, modifier = Modifier.height(26.dp), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(12.dp)); Spacer(Modifier.width(3.dp)); Text("Rename", style = msLabelStyle, maxLines = 1)
+                    }
+                    OutlinedButton(onClick = { viewModeForSubfolderDialog = false; multiMoveMode = true; showSubfolderSelectionDialog = true }, modifier = Modifier.height(26.dp), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
+                        Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(12.dp)); Spacer(Modifier.width(3.dp)); Text("Move", style = msLabelStyle, maxLines = 1)
                     }
                     OutlinedButton(onClick = { viewModel.sortSelectedFiles(SortAction.LIKE) }, modifier = Modifier.height(26.dp), contentPadding = msPad, shape = RoundedCornerShape(16.dp)) {
                         Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(12.dp), tint = YesButton); Spacer(Modifier.width(3.dp)); Text("Like", style = msLabelStyle, maxLines = 1)
@@ -4992,7 +4996,7 @@ fun MusicPlayerScreen(
     // Subfolder creation dialog
     if (showSubfolderCreateDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.hideSubfolderDialog() },
+            onDismissRequest = { viewModel.hideSubfolderDialog(); multiMoveMode = false },
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -5012,14 +5016,22 @@ fun MusicPlayerScreen(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { viewModel.createNewSubfolder() },
+                    onClick = {
+                        if (multiMoveMode) {
+                            // Bulk: create the folder (auto-created by the move) and move the selection.
+                            multiMoveMode = false
+                            val name = newSubfolderName.trim()
+                            viewModel.hideSubfolderDialog()
+                            if (name.isNotBlank()) viewModel.moveSelectedFilesToSubfolder(name)
+                        } else viewModel.createNewSubfolder()
+                    },
                     enabled = newSubfolderName.trim().isNotBlank()
                 ) {
                     Text("Create")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.hideSubfolderDialog() }) {
+                TextButton(onClick = { viewModel.hideSubfolderDialog(); multiMoveMode = false }) {
                     Text("Cancel")
                 }
             }
@@ -5135,7 +5147,7 @@ fun MusicPlayerScreen(
         }
         
         AlertDialog(
-            onDismissRequest = { showSubfolderSelectionDialog = false },
+            onDismissRequest = { showSubfolderSelectionDialog = false; multiMoveMode = false },
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor = MaterialTheme.colorScheme.onSurface,
@@ -5212,7 +5224,8 @@ fun MusicPlayerScreen(
                                     OutlinedButton(
                                         onClick = {
                                             showSubfolderSelectionDialog = false
-                                            viewModel.moveCurrentFileToSubfolder(subfolder)
+                                            if (multiMoveMode) { multiMoveMode = false; viewModel.moveSelectedFilesToSubfolder(subfolder) }
+                                            else viewModel.moveCurrentFileToSubfolder(subfolder)
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(20.dp),
@@ -5335,7 +5348,8 @@ fun MusicPlayerScreen(
                                 OutlinedButton(
                                 onClick = {
                                     showSubfolderSelectionDialog = false
-                                    viewModel.moveCurrentFileToSubfolder(subfolder)
+                                    if (multiMoveMode) { multiMoveMode = false; viewModel.moveSelectedFilesToSubfolder(subfolder) }
+                                    else viewModel.moveCurrentFileToSubfolder(subfolder)
                                 },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(20.dp),
@@ -5355,7 +5369,7 @@ fun MusicPlayerScreen(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showSubfolderSelectionDialog = false }) { Text("Close") } }
+            confirmButton = { TextButton(onClick = { showSubfolderSelectionDialog = false; multiMoveMode = false }) { Text("Close") } }
         )
     }
 

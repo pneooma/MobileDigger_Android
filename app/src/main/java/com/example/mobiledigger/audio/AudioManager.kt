@@ -2014,7 +2014,7 @@ class AudioManager(private val context: Context) {
             val maxSamples = when (spectrogramQuality) {
                 SpectrogramQuality.FAST -> 44100 * 180      // 3 minutes max for fast processing
                 SpectrogramQuality.BALANCED -> 44100 * 120   // 2 minutes max for balanced
-                SpectrogramQuality.HIGH -> 44100 * 90       // 1.5 minutes max for high quality
+                SpectrogramQuality.HIGH -> 44100 * 120       // 2 minutes max for high quality
             }
             
             if (estimatedSamples > maxSamples) {
@@ -2289,7 +2289,7 @@ class AudioManager(private val context: Context) {
             val maxSamples = when (spectrogramQuality) {
                 SpectrogramQuality.FAST -> sampleRate * 180      // 3 minutes max for fast
                 SpectrogramQuality.BALANCED -> sampleRate * 120   // 2 minutes max for balanced  
-                SpectrogramQuality.HIGH -> sampleRate * 90       // 1.5 minutes max for high quality
+                SpectrogramQuality.HIGH -> sampleRate * 120       // 2 minutes max for high quality
             }
             
             var loopCount = 0
@@ -2358,7 +2358,7 @@ class AudioManager(private val context: Context) {
             val maxSamples = when (spectrogramQuality) {
                 SpectrogramQuality.FAST -> sampleRate * 120      // 2 minutes max
                 SpectrogramQuality.BALANCED -> sampleRate * 90    // 1.5 minutes max  
-                SpectrogramQuality.HIGH -> sampleRate * 60       // 1 minute max
+                SpectrogramQuality.HIGH -> sampleRate * 120       // 2 minutes max
             }
             
             var totalSamples = 0
@@ -2551,7 +2551,7 @@ class AudioManager(private val context: Context) {
             val maxSamples = when (spectrogramQuality) {
                 SpectrogramQuality.FAST -> 44100 * 120      // 2 minutes max
                 SpectrogramQuality.BALANCED -> 44100 * 90   // 1.5 minutes max
-                SpectrogramQuality.HIGH -> 44100 * 60      // 1 minute max
+                SpectrogramQuality.HIGH -> 44100 * 120      // 2 minutes max
             }
                         
                         while (totalSamples < maxSamples) {
@@ -2650,7 +2650,7 @@ class AudioManager(private val context: Context) {
             val maxSamples = when (spectrogramQuality) {
                 SpectrogramQuality.FAST -> 44100 * 120      // 2 minutes max
                 SpectrogramQuality.BALANCED -> 44100 * 90   // 1.5 minutes max
-                SpectrogramQuality.HIGH -> 44100 * 60      // 1 minute max
+                SpectrogramQuality.HIGH -> 44100 * 120      // 2 minutes max
             }
                     
                     while (totalSamples < maxSamples) {

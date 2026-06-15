@@ -579,13 +579,9 @@ fun SpectrogramPopupScreen(
                         .padding(horizontal = 30.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Use the analyzed duration for time axis labels, skip for AIFF files
-                    val isAiffFile = musicFile?.name?.lowercase()?.endsWith(".aif") == true || musicFile?.name?.lowercase()?.endsWith(".aiff") == true
-                    val analyzedDurationSeconds = if (isAiffFile) {
-                        240f // Skip time display for AIFF files, use fixed 4 minutes
-                    } else {
-                        actualDuration / 1000f // Use actual duration for other formats
-                    }
+                    // X-axis spans the ACTUAL analyzed window: 0 .. min(trackDuration, 120s),
+                    // matching the 120s (2 min) analysis cap so labels line up with the image.
+                    val analyzedDurationSeconds = minOf(actualDuration / 1000f, 120f)
                     val timeLabels = listOf(
                         formatTime(0f),
                         formatTime(analyzedDurationSeconds * 0.25f),
@@ -826,7 +822,7 @@ private fun generateComprehensiveSpectrogramImage(
 
     // X-axis time labels
     axisLabelPaint.textAlign = android.graphics.Paint.Align.CENTER
-    val analyzedDurationSeconds = minOf(duration / 1000f, 240f)
+    val analyzedDurationSeconds = minOf(duration / 1000f, 120f)
     val timeLabels = listOf(
         formatTime(0f),
         formatTime(analyzedDurationSeconds * 0.25f),

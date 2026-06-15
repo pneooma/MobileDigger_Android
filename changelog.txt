@@ -1923,3 +1923,8 @@ v12.08
 - 🎚️ Notification seek reliability: optimistically hold the seek target so the bar no longer snaps back (was the main cause of needing 2-3 tries); VLC seeks issued before the player is seekable are now deferred and re-applied instead of dropped.
 - 🌈 Spectrogram now analyzes the first 120 seconds (2 minutes); message updated.
 - 📲 Version and UI label updated to 12.08
+
+v12.09
+- 🌈 Spectrogram REALLY analyzes 120s now: the PCM extraction caps (not just the width math) were still 60-90s for HIGH quality — raised to 120s.
+- 🕐 Spectrogram X-axis time labels now span 0 to min(track length, 2:00), matching the analyzed window (were using full track length / a stale 4-min basis).
+- 📲 Version and UI label updated to 12.09

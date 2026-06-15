@@ -43,7 +43,6 @@ import java.io.File
 import java.io.FileOutputStream
 import com.example.mobiledigger.audio.AudioManager
 import com.example.mobiledigger.model.MusicFile
-import com.example.mobiledigger.ui.components.SpectrogramView
 import androidx.compose.ui.viewinterop.AndroidView
 import com.masoudss.lib.WaveformSeekBar
 import android.graphics.Typeface

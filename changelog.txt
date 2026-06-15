@@ -1863,3 +1863,12 @@ v10.22
 - Added try-catch blocks to all like/dislike button handlers and swipe gestures.
 - Enhanced stability for multi-file operations with reduced delays.
 - Incremented build version to 8.71.
+
+v12.00
+- 🧹 Cleanup: removed ~19 dead/orphaned source files (dead spectrogram stack, unused repositories, duplicate managers, dead waveform views).
+- 🐛 Fix: multi-select like/reject/rename/move now act on the correct files when a sort or lossless filter is active (was using stale raw-list indices).
+- 🐛 Fix: subfolder move no longer deletes a source file when the copy fails (data-loss fix) and rolls back instead of duplicating.
+- 🐛 Fix: serialized background vs direct file-move paths to avoid races.
+- 🎵 Audio: wake lock now holds during real playback (background audio no longer drops on CPU sleep); audio focus requested on resume; notification rewind/forward/close actions and hardware NEXT/PREVIOUS now wired.
+- 🎚️ Settings: mini-player waveform height now honored; new waveform color picker; transient info banner now actually renders.
+- 📲 Version and UI label updated to 12.00

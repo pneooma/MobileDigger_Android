@@ -580,8 +580,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                                 continue
                             }
                             
-                            val success = fileManager.sortFile(operation.file, operation.action)
-                            
+                            // Serialize against the direct sort paths (sortMusicFile /
+                            // sortAtIndex / sortSelectedFiles), which all hold this mutex.
+                            // Without it a queued move and a direct move can run at the
+                            // same time and collide on the destination folder (duplicate
+                            // unique-name resolution, concurrent createFile/delete).
+                            val success = fileOperationMutex.withLock {
+                                fileManager.sortFile(operation.file, operation.action)
+                            }
+
                             if (success) {
                                 CrashLogger.log("FileOperationWorker", "Successfully moved: ${operation.file.name}")
                             } else {
@@ -906,13 +913,22 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         if (_isPlaying.value) {
             audioManager.pause()
             _isPlaying.value = false
+            pausedByAudioFocusLoss = false
+            systemAudioManager.abandonAudioFocusRequest(audioFocusRequest)
         } else {
-            audioManager.resume()
-            _isPlaying.value = true
+            // Request audio focus before resuming. Previously this path (used by the UI
+            // play button, the notification, and media buttons) resumed without focus,
+            // so audio could start while another app still held focus.
+            val result = systemAudioManager.requestAudioFocus(audioFocusRequest)
+            if (result == android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                audioManager.resume()
+                _isPlaying.value = true
+                pausedByAudioFocusLoss = false
+            }
         }
         updateNotification()
     }
-    
+
     fun next() {
         CrashLogger.log("MusicViewModel", "🔄 NEXT() called - starting next track")
         viewModelScope.launch {
@@ -1132,20 +1148,26 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     fun jumpTo(index: Int) {
-        val files = when (_currentPlaylistTab.value) {
+        // `index` is a position in the displayed (filtered + sorted) list. Resolve the
+        // target file there, then translate to the raw-list index that _currentIndex and
+        // next()/previous()/loadCurrentFile() operate on.
+        val displayFiles = currentPlaylistFiles.value
+        val target = displayFiles.getOrNull(index)
+        if (target == null) {
+            _errorMessage.value = "Invalid index: $index (playlist has ${displayFiles.size} files)"
+            return
+        }
+        val rawFiles = when (_currentPlaylistTab.value) {
             PlaylistTab.TODO -> _musicFiles.value
             PlaylistTab.LIKED -> _likedFiles.value
             PlaylistTab.REJECTED -> _rejectedFiles.value
         }
-        if (files.isEmpty()) {
-            _errorMessage.value = "No files in current playlist to jump to"
+        val rawIndex = rawFiles.indexOfFirst { it.uri == target.uri }
+        if (rawIndex < 0) {
+            _errorMessage.value = "Could not locate selected file"
             return
         }
-        if (index !in files.indices) {
-            _errorMessage.value = "Invalid index: $index (playlist has ${files.size} files)"
-            return
-        }
-        _currentIndex.value = index
+        _currentIndex.value = rawIndex
         loadCurrentFile()
     }
     
@@ -1345,18 +1367,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     fun sortAtIndex(index: Int, action: SortAction) {
-        // This function now delegates to sortMusicFile with error handling
-        val files = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
-        }
-        
+        // `index` is a row in the displayed (filtered + sorted) list, which is what the
+        // UI builds it from. Resolve the file there so the correct row is actioned.
+        val files = currentPlaylistFiles.value
+
         if (index !in files.indices) {
             _errorMessage.value = "Invalid index for sorting: $index"
             return
         }
-        
+
         val fileToSort = files[index]
         
         // Debug logging
@@ -2440,7 +2459,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     fun selectAll() {
         if (!_isMultiSelectionMode.value) return
-        _selectedIndices.value = _musicFiles.value.indices.toSet()
+        // Select every row in the CURRENTLY DISPLAYED list (respects the active tab,
+        // sort and lossless filter) — not just the raw TODO list.
+        _selectedIndices.value = currentPlaylistFiles.value.indices.toSet()
     }
     
     fun clearSelection() {
@@ -2450,7 +2471,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun moveSelectedFilesToSubfolder(subfolderName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val selected = _selectedIndices.value.toList()
-            val filesToMove = selected.mapNotNull { index -> _musicFiles.value.getOrNull(index) }
+            val filesToMove = selected.mapNotNull { index -> currentPlaylistFiles.value.getOrNull(index) }
 
             if (filesToMove.isNotEmpty()) {
                 val success = fileManager.moveFilesToSubfolder(filesToMove, subfolderName)
@@ -2515,55 +2536,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     _errorMessage.value = "Processing ${selected.size} files..."
                     CrashLogger.log("MusicViewModel", "📊 Starting bulk operation: ${selected.size} files")
                     
-                    val currentIndex = _currentIndex.value
-                    val musicFiles = _musicFiles.value
-                    CrashLogger.log("MusicViewModel", "🔍 Current state: index=$currentIndex, totalFiles=${musicFiles.size}")
-                    
-                    // Get current playlist based on current tab
-                    val currentFiles = when (_currentPlaylistTab.value) {
-                        PlaylistTab.TODO -> _musicFiles.value
-                        PlaylistTab.LIKED -> _likedFiles.value
-                        PlaylistTab.REJECTED -> _rejectedFiles.value
-                    }
-                    CrashLogger.log("MusicViewModel", "🔍 Current playlist: ${_currentPlaylistTab.value}, files=${currentFiles.size}")
-                    
-                    // Sort indices in descending order to avoid index shifting issues
-                    val sortedIndices = selected.sortedDescending()
-                    CrashLogger.log("MusicViewModel", "🔍 Sorted indices (desc): $sortedIndices")
+                    // Resolve the selected files from the CURRENTLY DISPLAYED list
+                    // (filtered + sorted) — exactly the list the UI built the selection
+                    // indices against. Indexing the raw tab list here would action the
+                    // WRONG files whenever a sort or the lossless filter is active.
+                    val displayFiles = currentPlaylistFiles.value
+                    CrashLogger.log("MusicViewModel", "🔍 Current playlist: ${_currentPlaylistTab.value}, displayed=${displayFiles.size}")
+
+                    val selectedFiles = selected.sorted().mapNotNull { displayFiles.getOrNull(it) }
+                    CrashLogger.log("MusicViewModel", "🔍 Resolved ${selectedFiles.size} files from ${selected.size} selected indices")
                     val successfullySortedFiles = mutableListOf<MusicFile>()
                     val failedFiles = mutableListOf<MusicFile>()
-                    
+
                     // Process files one by one with proper error handling
-                    for ((i, index) in sortedIndices.withIndex()) {
-                        CrashLogger.log("MusicViewModel", "🔄 Processing file $i/${sortedIndices.size}: index=$index")
-                        
-                        if (index in currentFiles.indices) {
-                            val file = currentFiles[index]
-                            CrashLogger.log("MusicViewModel", "📁 Processing file: ${file.name} (${file.uri})")
-                            try {
-                                // Add small delay between operations to prevent file system conflicts
-                                delay(200)
-                                CrashLogger.log("MusicViewModel", "⏱️ Delay completed, starting file operation")
-                                
-                                val success = fileManager.sortFile(file, action)
-                                CrashLogger.log("MusicViewModel", "📁 File operation result: success=$success for ${file.name}")
-                                
-                                if (success) {
-                                    successfullySortedFiles.add(file)
-                                    CrashLogger.log("MusicViewModel", "✅ Successfully sorted: ${file.name}")
-                                } else {
-                                    failedFiles.add(file)
-                                    CrashLogger.log("MusicViewModel", "❌ Failed to sort: ${file.name}")
-                                }
-                                
-                                // Monitor memory after each file operation
-                                logMemoryStatus("AfterFile${i + 1}")
-                            } catch (e: Exception) {
+                    for ((i, file) in selectedFiles.withIndex()) {
+                        CrashLogger.log("MusicViewModel", "🔄 Processing file ${i + 1}/${selectedFiles.size}: ${file.name} (${file.uri})")
+                        try {
+                            // Add small delay between operations to prevent file system conflicts
+                            delay(200)
+                            val success = fileManager.sortFile(file, action)
+                            CrashLogger.log("MusicViewModel", "📁 File operation result: success=$success for ${file.name}")
+
+                            if (success) {
+                                successfullySortedFiles.add(file)
+                                CrashLogger.log("MusicViewModel", "✅ Successfully sorted: ${file.name}")
+                            } else {
                                 failedFiles.add(file)
-                                CrashLogger.log("MusicViewModel", "💥 Exception sorting ${file.name}", e)
+                                CrashLogger.log("MusicViewModel", "❌ Failed to sort: ${file.name}")
                             }
-                        } else {
-                            CrashLogger.log("MusicViewModel", "⚠️ Index $index out of bounds (max: ${currentFiles.size - 1})")
+
+                            // Monitor memory after each file operation
+                            logMemoryStatus("AfterFile${i + 1}")
+                        } catch (e: Exception) {
+                            failedFiles.add(file)
+                            CrashLogger.log("MusicViewModel", "💥 Exception sorting ${file.name}", e)
                         }
                     }
                     
@@ -2580,23 +2586,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             _errorMessage.value = "Successfully sorted $successCount files to ${if (action == SortAction.LIKE) "Liked" else "Rejected"}"
                             CrashLogger.log("MusicViewModel", "✅ UI update: $successCount files sorted successfully")
                             
-                            // Remove successfully sorted files from current playlist
-                            val updatedFiles = currentFiles.toMutableList()
-                            val indicesToRemove = sortedIndices.filter { index ->
-                                index in currentFiles.indices && 
-                                successfullySortedFiles.any { it.uri == currentFiles[index].uri }
-                            }.sortedDescending()
-                            
-                            CrashLogger.log("MusicViewModel", "🔍 Indices to remove: $indicesToRemove")
-                            
-                            indicesToRemove.forEach { index ->
-                                if (index < updatedFiles.size) {
-                                    val removedFile = updatedFiles.removeAt(index)
-                                    CrashLogger.log("MusicViewModel", "🗑️ Removed file at index $index: ${removedFile.name}")
-                                }
+                            // Remove successfully sorted files from the raw tab list by
+                            // identity (URI). Indexing by the display indices here would
+                            // remove the wrong rows (and could drop filtered-out files).
+                            val removedUris = successfullySortedFiles.map { it.uri }.toSet()
+                            val rawFiles = when (_currentPlaylistTab.value) {
+                                PlaylistTab.TODO -> _musicFiles.value
+                                PlaylistTab.LIKED -> _likedFiles.value
+                                PlaylistTab.REJECTED -> _rejectedFiles.value
                             }
-                            
-                            CrashLogger.log("MusicViewModel", "📊 Updated files count: ${updatedFiles.size} (was ${currentFiles.size})")
+                            val updatedFiles = rawFiles.filterNot { it.uri in removedUris }
+
+                            CrashLogger.log("MusicViewModel", "📊 Updated files count: ${updatedFiles.size} (was ${rawFiles.size})")
                             
                             // Update the correct playlist
                             when (_currentPlaylistTab.value) {
@@ -2704,21 +2705,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     withContext(Dispatchers.Main) { _errorMessage.value = "No files selected" }
                     return@launch
                 }
-                val currentFiles = when (_currentPlaylistTab.value) {
-                    PlaylistTab.TODO -> _musicFiles.value
-                    PlaylistTab.LIKED -> _likedFiles.value
-                    PlaylistTab.REJECTED -> _rejectedFiles.value
-                }
+                // Resolve selected files from the displayed (filtered + sorted) list,
+                // then write results back to the raw tab list by identity (URI) so the
+                // right files are renamed regardless of active sort/filter.
+                val displayFiles = currentPlaylistFiles.value
+                val filesToRename = indices.sorted().mapNotNull { displayFiles.getOrNull(it) }
                 var success = 0
-                val updatedFiles = currentFiles.toMutableList()
-                indices.forEach { idx ->
-                    val mf = currentFiles.getOrNull(idx) ?: return@forEach
+                val renames = mutableMapOf<android.net.Uri, MusicFile>()
+                filesToRename.forEach { mf ->
                     val base = mf.name.substringBeforeLast('.', mf.name)
                     val newBase = applyCaseTransform(base, mode)
                     val renamed = fileManager.renameFile(mf, newBase)
                     if (renamed != null) {
                         success++
-                        updatedFiles[idx] = renamed
+                        renames[mf.uri] = renamed
                         if (_currentPlayingFile.value?.uri == mf.uri) {
                             _currentPlayingFile.value = renamed
                         }
@@ -2726,9 +2726,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 }
                 withContext(Dispatchers.Main) {
                     when (_currentPlaylistTab.value) {
-                        PlaylistTab.TODO -> _musicFiles.value = updatedFiles
-                        PlaylistTab.LIKED -> _likedFiles.value = updatedFiles
-                        PlaylistTab.REJECTED -> _rejectedFiles.value = updatedFiles
+                        PlaylistTab.TODO -> _musicFiles.value = _musicFiles.value.map { renames[it.uri] ?: it }
+                        PlaylistTab.LIKED -> _likedFiles.value = _likedFiles.value.map { renames[it.uri] ?: it }
+                        PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.map { renames[it.uri] ?: it }
                     }
                     _selectedIndices.value = emptySet()
                     _isMultiSelectionMode.value = false

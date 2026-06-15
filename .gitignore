@@ -10,7 +10,17 @@ logs/*.txt
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/app/build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+# Large binaries — these bloated .git history previously (old APKs in commits)
+*.apk
+*.aab
+# Stray Android SDK copies / license files dumped into the project root
+/build-tools
+/platform-tools
+/platforms
+/licenses
+/cmdline-tools

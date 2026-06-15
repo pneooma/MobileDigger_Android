@@ -1,6 +1,8 @@
 package com.example.mobiledigger.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -240,6 +243,49 @@ private fun VisualTab(
     }
     CompactSlider("Row Height", settings.rowWaveformHeight, 30f..200f) {
         onUpdate(settings.copy(rowWaveformHeight = it))
+    }
+
+    Spacer(Modifier.height(12.dp))
+    HorizontalDivider()
+    Spacer(Modifier.height(8.dp))
+
+    // Waveform color (0 = Default / per-song color)
+    Text("Waveform Color", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(4.dp))
+    val waveformColorOptions = listOf(
+        "Default" to 0,
+        "Pink" to Color(0xFFFF6EC7).toArgb(),
+        "Red" to Color(0xFFE53935).toArgb(),
+        "Orange" to Color(0xFFFB8C00).toArgb(),
+        "Yellow" to Color(0xFFFDD835).toArgb(),
+        "Green" to Color(0xFF43A047).toArgb(),
+        "Cyan" to Color(0xFF00ACC1).toArgb(),
+        "Blue" to Color(0xFF1E88E5).toArgb(),
+        "Purple" to Color(0xFF8E24AA).toArgb(),
+        "White" to Color(0xFFFFFFFF).toArgb()
+    )
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        waveformColorOptions.forEach { (label, argb) ->
+            val isSelected = settings.waveformColor == argb
+            val swatchColor = if (argb == 0) MaterialTheme.colorScheme.primary else Color(argb)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(swatchColor, CircleShape)
+                        .border(
+                            androidx.compose.foundation.BorderStroke(
+                                if (isSelected) 3.dp else 1.dp,
+                                if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
+                            ),
+                            CircleShape
+                        )
+                        .clickable { onUpdate(settings.copy(waveformColor = argb)) }
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(label, fontSize = 8.sp, maxLines = 1)
+            }
+        }
     }
 
     Spacer(Modifier.height(12.dp))

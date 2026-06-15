@@ -71,6 +71,35 @@ class AudioManager(private val context: Context) {
     private var isUsingVlc = false
     private var lastGcTimestampMs: Long = 0L
 
+    // Partial wake lock so playback survives CPU sleep during background playback.
+    // The real player lives in this (:main) process; previously nothing here held a
+    // wake lock, so background audio could stop when the device dozed.
+    private var wakeLock: android.os.PowerManager.WakeLock? = null
+
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+                wakeLock = pm.newWakeLock(
+                    android.os.PowerManager.PARTIAL_WAKE_LOCK,
+                    "MobileDigger:Playback"
+                ).apply { setReferenceCounted(false) }
+            }
+            // Long safety timeout (3h) so a missed release can never pin the CPU forever.
+            wakeLock?.takeIf { !it.isHeld }?.acquire(3 * 60 * 60 * 1000L)
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "acquireWakeLock failed", e)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.takeIf { it.isHeld }?.release()
+        } catch (e: Exception) {
+            CrashLogger.log("AudioManager", "releaseWakeLock failed", e)
+        }
+    }
+
     fun isVlcActive(): Boolean = isUsingVlc
     fun isRecentGc(windowMs: Long = 2000L): Boolean = (System.currentTimeMillis() - lastGcTimestampMs) < windowMs
     
@@ -537,7 +566,10 @@ class AudioManager(private val context: Context) {
                 }
             
             CrashLogger.log("AudioManager", "📁 File URI: $uri")
-            
+
+            // Hold a wake lock for the duration of playback (released on pause/stop).
+            acquireWakeLock()
+
             // CRITICAL: Always stop all playback first to ensure clean state
             CrashLogger.log("AudioManager", "🧹 Ensuring clean state before playback...")
             stopAllPlayback()
@@ -873,6 +905,8 @@ class AudioManager(private val context: Context) {
             }
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "Pause error", e)
+        } finally {
+            releaseWakeLock()
         }
     }
     
@@ -950,6 +984,7 @@ class AudioManager(private val context: Context) {
     
     fun resume() {
         try {
+            acquireWakeLock()
             if (isUsingVlc) {
                 vlcBackend?.start()
             } else if (isUsingFFmpeg) {
@@ -1008,6 +1043,7 @@ class AudioManager(private val context: Context) {
     fun stop() {
         stopAllPlayback()
         releasePreloadedPlayer() // Also release the preloaded player when stopping
+        releaseWakeLock()
     }
     
     fun seekTo(position: Long) {
@@ -1294,6 +1330,7 @@ class AudioManager(private val context: Context) {
     
     fun release() {
         try {
+            releaseWakeLock()
             // CRITICAL: Unregister broadcast receiver to prevent memory leak
             broadcastReceiver?.let { receiver ->
                 try {

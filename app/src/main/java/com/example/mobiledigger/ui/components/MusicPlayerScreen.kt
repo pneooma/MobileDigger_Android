@@ -42,7 +42,6 @@ import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.ui.components.WaveformWithToggle
 import com.example.mobiledigger.ui.components.SettingsDialog
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
-import com.example.mobiledigger.ui.components.ScrollableWaveformView
 import com.example.mobiledigger.utils.WaveformGenerator
 import com.example.mobiledigger.util.rememberOptimizedAnimationSpecs
 import androidx.compose.material.icons.Icons
@@ -811,6 +810,31 @@ fun MusicPlayerScreen(
                 bottom = paddingValues.calculateBottomPadding() / 2
             )
         ) {
+        // Transient info/status banner driven by showInfoMessage(). The state was set
+        // all over the screen but never rendered, so these messages were invisible.
+        if (showInfoMessage && infoMessageText.isNotBlank()) {
+            val bannerColor = when (infoMessageType) {
+                "success" -> Color(0xFF2E7D32)
+                "error" -> Color(0xFFC62828)
+                else -> MaterialTheme.colorScheme.secondaryContainer
+            }
+            val bannerTextColor = if (infoMessageType == "info")
+                MaterialTheme.colorScheme.onSecondaryContainer else Color.White
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(bannerColor, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = infoMessageText,
+                    color = bannerTextColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
         // Compute destination launcher and selection flags early (used by header)
         val destLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocumentTree()
@@ -882,7 +906,7 @@ fun MusicPlayerScreen(
                         color = if (isMonochrome) monoColor else GreenAccent
                     )
                     Text(
-                        text = "v11.09",
+                        text = "v12.00",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -4923,7 +4947,7 @@ fun MusicPlayerScreen(
                                             viewModel.seekTo(seekPosition)
                                         },
                                         songUri = file.uri.toString(),
-                                        waveformHeight = 36,
+                                        waveformHeight = visualSettings.miniWaveformHeight.toInt(),
                                         currentPosition = currentPosition,
                                         totalDuration = duration,
                                         fileName = file.name,

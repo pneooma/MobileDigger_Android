@@ -556,7 +556,14 @@ class FileManager(private val context: Context) {
                     }
 
                     if (!sourceFile.delete()) {
-                        CrashLogger.log("FileManager", "Could not delete source file: ${sourceFile.uri}")
+                        // Copy succeeded but the original could not be removed. Returning
+                        // success here would DUPLICATE the file (it now exists in both the
+                        // source and destination) while the UI reports a clean move and
+                        // drops the row. Roll back the copy and report failure so the
+                        // library stays consistent.
+                        CrashLogger.log("FileManager", "Could not delete source file after copy; rolling back move: ${sourceFile.uri}")
+                        target.delete()
+                        return@withContext false
                     }
                 }
 
@@ -854,24 +861,53 @@ class FileManager(private val context: Context) {
             }
             targetSubFolder ?: return@withContext false
 
+            var allSucceeded = true
             files.forEach { musicFile ->
                 val sourceFile = DocumentFile.fromSingleUri(context, musicFile.uri)
-                if (sourceFile != null && sourceFile.exists()) {
-                    val desiredName = sourceFile.name ?: musicFile.name
-                    val safeName = resolveUniqueName(targetSubFolder, desiredName)
-                    val target = targetSubFolder.createFile(sourceFile.type ?: "audio/*", safeName)
+                if (sourceFile == null || !sourceFile.exists()) {
+                    allSucceeded = false
+                    return@forEach
+                }
+                val desiredName = sourceFile.name ?: musicFile.name
+                val safeName = resolveUniqueName(targetSubFolder, desiredName)
+                val target = targetSubFolder.createFile(sourceFile.type ?: "audio/*", safeName)
+                if (target == null) {
+                    allSucceeded = false
+                    return@forEach
+                }
 
-                    if (target != null) {
-                        contentResolver.openInputStream(sourceFile.uri)?.use { input ->
-                            contentResolver.openOutputStream(target.uri)?.use { output ->
-                                input.copyTo(output)
-                            }
+                // Verify the copy actually happened BEFORE deleting the original.
+                // Previously the source was deleted unconditionally — if either stream
+                // was null the file was lost without ever being copied (data loss).
+                var copied = false
+                try {
+                    contentResolver.openInputStream(sourceFile.uri)?.use { input ->
+                        contentResolver.openOutputStream(target.uri)?.use { output ->
+                            input.copyTo(output)
+                            output.flush()
+                            copied = true
                         }
-                        sourceFile.delete()
                     }
+                } catch (e: Exception) {
+                    CrashLogger.log("FileManager", "Error copying ${musicFile.name} to subfolder", e)
+                }
+
+                if (copied) {
+                    if (!sourceFile.delete()) {
+                        // Copy ok but original couldn't be removed: drop the copy to
+                        // avoid a duplicate and report failure for this file.
+                        CrashLogger.log("FileManager", "Could not delete source after copy; rolling back: ${sourceFile.uri}")
+                        target.delete()
+                        allSucceeded = false
+                    }
+                } else {
+                    // Copy failed: remove the empty/partial target, keep the original.
+                    CrashLogger.log("FileManager", "Copy failed for ${musicFile.name}; original kept")
+                    target.delete()
+                    allSucceeded = false
                 }
             }
-            true
+            allSucceeded
         } catch (e: Exception) {
             CrashLogger.log("FileManager", "Error moving files to subfolder", e)
             false

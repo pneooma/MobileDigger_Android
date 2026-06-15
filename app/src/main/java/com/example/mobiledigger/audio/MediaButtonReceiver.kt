@@ -40,12 +40,15 @@ class MediaButtonReceiver : BroadcastReceiver() {
                         context.sendBroadcast(pauseIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_NEXT -> {
-                        // Defer handling to MediaSession (MusicService) for consistency
-                        CrashLogger.log("MediaButtonReceiver", "Forwarding NEXT to MediaSession via player command")
+                        // Route to the real player (the ViewModel handles ACTION_NEXT),
+                        // mirroring the PLAY_PAUSE path above. Previously this was a no-op,
+                        // so hardware/headphone NEXT did nothing.
+                        CrashLogger.log("MediaButtonReceiver", "Media button: NEXT")
+                        context.sendBroadcast(Intent(MusicService.ACTION_NEXT))
                     }
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
-                        // Defer handling to MediaSession (MusicService) for consistency
-                        CrashLogger.log("MediaButtonReceiver", "Forwarding PREVIOUS to MediaSession via player command")
+                        CrashLogger.log("MediaButtonReceiver", "Media button: PREVIOUS")
+                        context.sendBroadcast(Intent(MusicService.ACTION_PREVIOUS))
                     }
                     KeyEvent.KEYCODE_MEDIA_STOP -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: STOP")

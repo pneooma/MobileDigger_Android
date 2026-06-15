@@ -407,6 +407,14 @@ class MusicService : MediaSessionService() {
             addAction(ACTION_SPECTROGRAM)
             addAction(ACTION_SHARE)
             addAction(ACTION_UPDATE_NOTIFICATION)
+            // These actions were handled in onReceive() but never registered, so the
+            // rewind/forward buttons, the swipe-to-dismiss STOP intent, and the
+            // close-confirmation flow were all silently dead.
+            addAction(ACTION_REWIND)
+            addAction(ACTION_FORWARD)
+            addAction(ACTION_STOP)
+            addAction(ACTION_CONFIRM_CLOSE)
+            addAction(ACTION_CANCEL_CLOSE)
         }
         registerReceiver(notificationReceiver, filter, RECEIVER_NOT_EXPORTED)
         startProgressUpdates() // Start progress updates linked to AudioManager

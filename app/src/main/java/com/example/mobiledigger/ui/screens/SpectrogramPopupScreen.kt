@@ -38,6 +38,7 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -142,6 +143,7 @@ fun SpectrogramPopupScreen(
     spectrogramProgress: Float = 0f
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -150,16 +152,20 @@ fun SpectrogramPopupScreen(
             usePlatformDefaultWidth = false
         )
     ) {
+        // The card wraps its content (and only scrolls/caps if the content is taller than
+        // the screen). Using fillMaxSize made the card always stretch to the full screen
+        // height, leaving a big empty area below the warning ("overflowing" into the bottom).
         Surface(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .heightIn(max = (configuration.screenHeightDp - 24).dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {

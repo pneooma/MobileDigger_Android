@@ -1986,3 +1986,8 @@ v12.21
 - 📐 Fixed the spectrogram card overflowing the bottom of the screen: the waveform sat inside a weight(1f) box that absorbed all leftover space (big gap + waveform floating low), which pushed the warning card off the bottom edge. The waveform now sits directly under the spectrogram, and the whole card scrolls if it's taller than the screen.
 - 🔤 Fixed the shared spectrogram image: the bottom "limited to the first 120 seconds…" notice was drawn as a single line and ran off the right edge. It now word-wraps onto multiple lines and the card auto-sizes to fit.
 - 📲 Version and UI label updated to 12.21
+
+v12.22
+- 📐 Spectrogram card now wraps its content instead of always stretching to the full screen height — the empty dark area below the warning (the card "overflowing" into the lower part of the screen) is gone. The card caps to the screen and scrolls only if the content is taller.
+- ✅ Multi-select Reject/Like now gives instant feedback: it exits multi-select mode immediately and fades the selected rows out as they're moved (same animation single-file sort uses), instead of silently doing the work in the background with no visible change. Failed files fade back in. Still no blocking spinner.
+- 📲 Version and UI label updated to 12.22

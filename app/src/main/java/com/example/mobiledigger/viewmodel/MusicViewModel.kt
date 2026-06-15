@@ -2569,35 +2569,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun sortSelectedFiles(action: SortAction) {
         val selected = _selectedIndices.value
         CrashLogger.log("MusicViewModel", "🔍 sortSelectedFiles called with action=$action, selectedCount=${selected.size}")
-        CrashLogger.log("MusicViewModel", "🔍 Selected indices: $selected")
-        
+
         if (selected.isEmpty()) {
             _errorMessage.value = "No files selected"
-            CrashLogger.log("MusicViewModel", "❌ No files selected for sorting")
             return
         }
-        
+
+        // Resolve the selected files from the CURRENTLY DISPLAYED list (filtered + sorted)
+        // — exactly the list the UI built the selection indices against. Snapshot it NOW on
+        // the main thread, before we clear the selection below. Indexing the raw tab list
+        // would action the WRONG files whenever a sort or the lossless filter is active.
+        val displayFiles = currentPlaylistFiles.value
+        val selectedFiles = selected.sorted().mapNotNull { displayFiles.getOrNull(it) }
+        if (selectedFiles.isEmpty()) {
+            _errorMessage.value = "No files selected"
+            return
+        }
+
+        // INSTANT feedback: leave multi-select mode immediately and start fading the chosen
+        // rows out (the same removingUris animation single-file sorts use), so the user sees
+        // the files being moved. The file I/O then continues in the background — no blocking
+        // full-screen spinner (which used to swap the whole playlist out and freeze the UI).
+        val selectedUris = selectedFiles.map { it.uri }.toSet()
+        _selectedIndices.value = emptySet()
+        _isMultiSelectionMode.value = false
+        _removingUris.value = _removingUris.value + selectedUris
+
         viewModelScope.launch(Dispatchers.IO) {
             // Use mutex to prevent concurrent file operations
             fileOperationMutex.withLock {
                 CrashLogger.log("MusicViewModel", "🔒 Acquired file operation mutex for bulk operation")
                 logMemoryStatus("BulkOperationStart")
                 try {
-                    // NOTE: do NOT set _isLoading here — it swaps the whole playlist for a
-                    // blocking full-screen spinner. The work already runs on Dispatchers.IO;
-                    // keep the UI usable and just show a status message.
-                    _errorMessage.value = "Processing ${selected.size} files..."
-                    CrashLogger.log("MusicViewModel", "📊 Starting bulk operation: ${selected.size} files")
-                    
-                    // Resolve the selected files from the CURRENTLY DISPLAYED list
-                    // (filtered + sorted) — exactly the list the UI built the selection
-                    // indices against. Indexing the raw tab list here would action the
-                    // WRONG files whenever a sort or the lossless filter is active.
-                    val displayFiles = currentPlaylistFiles.value
-                    CrashLogger.log("MusicViewModel", "🔍 Current playlist: ${_currentPlaylistTab.value}, displayed=${displayFiles.size}")
-
-                    val selectedFiles = selected.sorted().mapNotNull { displayFiles.getOrNull(it) }
-                    CrashLogger.log("MusicViewModel", "🔍 Resolved ${selectedFiles.size} files from ${selected.size} selected indices")
+                    _errorMessage.value = "Processing ${selectedFiles.size} files..."
+                    CrashLogger.log("MusicViewModel", "📊 Starting bulk operation: ${selectedFiles.size} files")
                     val successfullySortedFiles = mutableListOf<MusicFile>()
                     val failedFiles = mutableListOf<MusicFile>()
 
@@ -2687,16 +2692,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             CrashLogger.log("MusicViewModel", "⚠️ Some files failed: $failCount failures")
                         }
                         
-                        // Clear selection
-                        _selectedIndices.value = emptySet()
-                        _isMultiSelectionMode.value = false
-                        CrashLogger.log("MusicViewModel", "🧹 Cleared selection")
+                        // Multi-select was already exited at the start; just stop the
+                        // fade-out animation for everything we processed (failed files, not
+                        // removed from the list, will fade back in) and refresh the tabs.
+                        _removingUris.value = _removingUris.value - selectedUris
+                        refreshAllPlaylists()
+                        CrashLogger.log("MusicViewModel", "🧹 Bulk sort done; cleared removing animation")
                     }
                     
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         _errorMessage.value = "Error sorting selected files: ${e.message}"
                         CrashLogger.log("MusicViewModel", "💥 CRITICAL ERROR in sortSelectedFiles", e)
+                        // Stop the fade-out so the rows reappear instead of vanishing silently.
+                        _removingUris.value = _removingUris.value - selectedUris
                         
                         // Log detailed exception information
                         CrashLogger.log("MusicViewModel", "💥 Exception type: ${e.javaClass.simpleName}")

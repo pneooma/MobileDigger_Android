@@ -1976,3 +1976,8 @@ v12.19
 - 🛑 Fixed a notification echo loop introduced in 12.18: the Dislike button in the notification (and Like/Next/Previous) re-broadcast to a receiver that also listened for the same action, feeding itself. Tapping Dislike once auto-rejected MANY tracks, and an AirPods double-tap (Next) skipped tracks forever. The service no longer re-broadcasts these — the app handles each tap exactly once.
 - 🔁 Fixed the main-player swipe "restarting" the current track: swiping right (Like) now sorts the file AND advances to the next track just like swiping left (Dislike), instead of leaving the audible track playing and desyncing the playlist index. Hardened the advance logic to never re-load the same track.
 - 📲 Version and UI label updated to 12.19
+
+v12.20
+- 🕒 Spectrogram time axis (x-axis) is now actually visible — the time labels were being rendered at the very bottom of the screen, below the weighted waveform + offset warning card, so they got pushed off-screen. Moved them to sit directly under the spectrogram image where they belong.
+- 🎨 Added 24 new color themes (33 total): Sunset, Forest, Rose, Crimson, Amber, Coffee, Slate, Indigo, Teal, Emerald, Sapphire, Ruby, Coral, Lime, Plum, Steel, Sand, Aqua, Berry, Charcoal, Sakura, Volcano, Arctic, Mustard — each with tuned light and dark variants. Pick them under Settings → Theme.
+- 📲 Version and UI label updated to 12.20

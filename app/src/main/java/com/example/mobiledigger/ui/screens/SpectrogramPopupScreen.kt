@@ -459,7 +459,40 @@ fun SpectrogramPopupScreen(
                         }
                     }
                 }
-                
+
+                // X-axis time labels — placed DIRECTLY under the spectrogram image so they're
+                // always visible. (They used to live at the very bottom, after the weight(1f)
+                // waveform + offset warning card, where they were pushed off the screen.)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 30.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Derive the span from the spectrogram bitmap itself (10 px per second),
+                    // so the axis matches the image even when the file's duration metadata is
+                    // 0 — playlist entries are created with duration=0 and metadata extraction
+                    // can fail for content/SAF/zip URIs, which made every label read "0:00".
+                    val analyzedDurationSeconds = spectrogramBitmap?.let { it.width / 10f }
+                        ?: if (actualDuration > 0) minOf(actualDuration / 1000f, 120f) else 120f
+                    val timeLabels = listOf(
+                        formatTime(0f),
+                        formatTime(analyzedDurationSeconds * 0.25f),
+                        formatTime(analyzedDurationSeconds * 0.5f),
+                        formatTime(analyzedDurationSeconds * 0.75f),
+                        formatTime(analyzedDurationSeconds)
+                    )
+                    timeLabels.forEach { label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
                 // Waveform Section - Centered below spectrogram with matching width
                 Box(
                     modifier = Modifier
@@ -572,36 +605,6 @@ fun SpectrogramPopupScreen(
                     }
                 }
                 
-                // X-axis time labels (bottom) - outside the image
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Derive the span from the spectrogram bitmap itself (10 px per second),
-                    // so the axis matches the image even when the file's duration metadata is
-                    // 0 — playlist entries are created with duration=0 and metadata extraction
-                    // can fail for content/SAF/zip URIs, which made every label read "0:00".
-                    val analyzedDurationSeconds = spectrogramBitmap?.let { it.width / 10f }
-                        ?: if (actualDuration > 0) minOf(actualDuration / 1000f, 120f) else 120f
-                    val timeLabels = listOf(
-                        formatTime(0f),
-                        formatTime(analyzedDurationSeconds * 0.25f),
-                        formatTime(analyzedDurationSeconds * 0.5f),
-                        formatTime(analyzedDurationSeconds * 0.75f),
-                        formatTime(analyzedDurationSeconds)
-                    )
-                    timeLabels.forEach { label ->
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
         }
     }

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MobileDigger — Dig your crates. Keep the gems.</title>
+<meta name="description" content="MobileDigger is a fast music-triage tool for DJs and diggers. Sort huge folders of tracks into Liked and Rejected with a swipe — with spectrogram analysis, background playback, and 33 themes.">
+<meta name="author" content="groovy's child">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="keywords" content="DJ, music, crate digging, audio triage, spectrogram, FLAC, MP3, Android music player, lossless">
+<!-- Open Graph / social share -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="MobileDigger — Dig your crates. Keep the gems.">
+<meta property="og:description" content="Fast one-swipe music triage for DJs & diggers: Like/Reject huge folders, spectrogram quality checks, background playback, 33 themes.">
+<meta property="og:image" content="screenshots/player.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MobileDigger — Dig your crates. Keep the gems.">
+<meta name="twitter:description" content="Fast one-swipe music triage for DJs & diggers.">
+<meta name="twitter:image" content="screenshots/player.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2310B981'/><stop offset='1' stop-color='%232196F3'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(%23g)'/><circle cx='32' cy='32' r='13' fill='none' stroke='white' stroke-width='4'/><circle cx='32' cy='32' r='3.4' fill='white'/></svg>">
+<!-- vendored (offline) library styles -->
+<link rel="stylesheet" href="lib/lenis.css">
+<link rel="stylesheet" href="lib/swiper-bundle.min.css">
+<link rel="stylesheet" href="lib/glightbox.min.css">
+<style>
+  /* self-hosted fonts (offline) */
+  @font-face{font-family:'Space Grotesk';src:url('fonts/space-grotesk-700.woff2') format('woff2');font-weight:700;font-display:swap}
+  @font-face{font-family:'Space Grotesk';src:url('fonts/space-grotesk-500.woff2') format('woff2');font-weight:500;font-display:swap}
+  @font-face{font-family:'Inter';src:url('fonts/inter-400.woff2') format('woff2');font-weight:400;font-display:swap}
+  @font-face{font-family:'Inter';src:url('fonts/inter-600.woff2') format('woff2');font-weight:600;font-display:swap}
+  @font-face{font-family:'Inter';src:url('fonts/inter-700.woff2') format('woff2');font-weight:700;font-display:swap}
+  :root{
+    --green:#10B981; --blue:#2196F3; --like:#4CAF50; --dislike:#EF4444;
+    --pink:#E91E63; --orange:#FF8C00;
+    --bg:#0A0A0A; --bg2:#111314; --surf:#17191B; --surf2:#1E2124;
+    --line:#2A2E31; --txt:#E9ECEE; --mut:#9AA3A8; --mut2:#6B7479;
+    --radius:18px; --maxw:1180px;
+    --grad:linear-gradient(135deg,#10B981 0%,#2196F3 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:radial-gradient(1200px 700px at 80% -10%,rgba(16,185,129,.10),transparent 60%),
+               radial-gradient(900px 600px at -10% 10%,rgba(33,150,243,.10),transparent 55%),
+               var(--bg);
+    color:var(--txt);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4,.brand,.hero h1,.dl h2,.shead h2{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:-.5px}
+  img.zoomable{cursor:zoom-in}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  .accent{color:var(--green)}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+  /* NAV */
+  header.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+    background:rgba(10,10,10,.72);border-bottom:1px solid var(--line)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.2px;font-size:18px}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--grad);
+    display:grid;place-items:center;font-size:18px;box-shadow:0 6px 20px rgba(16,185,129,.35)}
+  .tabs{display:flex;gap:4px;align-items:center}
+  .tab-btn{padding:9px 15px;border-radius:11px;color:var(--mut);font-weight:600;font-size:14.5px;
+    background:transparent;border:0;cursor:pointer;transition:.18s}
+  .tab-btn:hover{color:var(--txt);background:var(--surf)}
+  .tab-btn.active{color:#fff;background:var(--surf2)}
+  .nav-cta{background:var(--grad);color:#04150F;font-weight:800;padding:9px 16px;border-radius:11px;font-size:14px}
+  .menu-toggle{display:none;background:none;border:0;color:var(--txt);font-size:24px;cursor:pointer}
+
+  section.tabview{display:none;animation:fade .35s ease}
+  section.tabview.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* HERO */
+  .hero{padding:74px 0 40px;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--green);
+    background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.3);padding:6px 13px;border-radius:999px;letter-spacing:.4px}
+  .hero h1{font-size:clamp(38px,6vw,62px);line-height:1.04;font-weight:850;margin:18px 0 14px;letter-spacing:-1px}
+  .hero p.lead{font-size:19px;color:var(--mut);max-width:540px}
+  .cta-row{display:flex;gap:13px;flex-wrap:wrap;margin-top:28px}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:14px 22px;border-radius:13px;font-weight:800;font-size:15px;cursor:pointer;border:0;transition:.18s}
+  .btn-primary{background:var(--grad);color:#04150F;box-shadow:0 10px 30px rgba(16,185,129,.30)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(16,185,129,.42)}
+  .btn-ghost{background:var(--surf);color:var(--txt);border:1px solid var(--line)}
+  .btn-ghost:hover{background:var(--surf2);transform:translateY(-2px)}
+  .hero-stats{display:flex;gap:30px;margin-top:34px;flex-wrap:wrap}
+  .hero-stats .s b{display:block;font-size:26px;font-weight:850;color:#fff}
+  .hero-stats .s span{font-size:13px;color:var(--mut2);font-weight:600}
+
+  /* PHONE FRAME */
+  .phone{position:relative;justify-self:center;width:300px;aspect-ratio:1080/2334;border-radius:42px;
+    background:#000;border:2px solid #2c2f33;padding:9px;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 6px rgba(255,255,255,.02);
+    transform:rotate(1.2deg)}
+  .phone img,.phone .shot-ph{width:100%;height:100%;border-radius:34px;object-fit:contain;display:block;background:#000;cursor:zoom-in}
+
+  /* generic screenshot styling + graceful placeholder */
+  .shot{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surf)}
+  .shot img{display:block;width:100%;height:auto}
+  img.miss{display:none}
+  .shot.is-missing{aspect-ratio:1080/2424;display:grid;place-items:center}
+  .shot.is-missing::after{content:"📷  screenshot pending";color:var(--mut2);font-size:13px;font-weight:600}
+
+  /* SECTION HEADS */
+  .shead{text-align:center;max-width:680px;margin:0 auto 46px}
+  .shead .pill{margin-bottom:14px}
+  .shead h2{font-size:clamp(28px,4vw,42px);font-weight:850;letter-spacing:-.5px;margin-bottom:12px}
+  .shead p{color:var(--mut);font-size:17px}
+  .block{padding:72px 0;border-top:1px solid var(--line)}
+
+  /* FEATURE GRID */
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .fcard{background:linear-gradient(180deg,var(--surf),var(--bg2));border:1px solid var(--line);
+    border-radius:var(--radius);padding:26px;transition:.2s}
+  .fcard:hover{transform:translateY(-4px);border-color:#3a4045;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+  .fcard .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:23px;margin-bottom:16px;background:rgba(16,185,129,.12)}
+  .fcard h3{font-size:18px;font-weight:800;margin-bottom:7px}
+  .fcard p{color:var(--mut);font-size:14.5px}
+
+  /* SPLIT showcase */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin:0 auto;max-width:1000px}
+  .split.rev .txtcol{order:2}
+  .split + .split{margin-top:60px;padding-top:60px;border-top:1px dashed var(--line)}
+  .split .txtcol h3{font-size:26px;font-weight:850;margin-bottom:14px;letter-spacing:-.4px}
+  .split .txtcol p{color:var(--mut);font-size:16px;margin-bottom:14px}
+  .ticks{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .ticks li{display:flex;gap:11px;align-items:flex-start;font-size:15px;color:var(--txt)}
+  .ticks li::before{content:"✓";color:var(--green);font-weight:900;margin-top:1px}
+  .split .phone{transform:none;width:270px}
+
+  /* HOWTO */
+  .howto-layout{display:grid;grid-template-columns:230px 1fr;gap:40px;align-items:start}
+  .toc{position:sticky;top:84px;background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .toc a{display:block;padding:8px 11px;border-radius:9px;color:var(--mut);font-size:14px;font-weight:600;transition:.15s}
+  .toc a:hover{background:var(--surf2);color:var(--txt)}
+  .step{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:28px 30px;margin-bottom:22px;scroll-margin-top:84px}
+  .step h3{font-size:21px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:12px}
+  .step .num{width:30px;height:30px;border-radius:9px;background:var(--grad);color:#04150F;display:grid;place-items:center;font-weight:900;font-size:15px;flex:none}
+  .step p{color:var(--mut);margin:10px 0}
+  .step ol,.step ul{color:var(--txt);margin:12px 0 4px;padding-left:22px}
+  .step li{margin-bottom:8px}
+  .step .shotrow{display:flex;gap:14px;margin-top:18px;flex-wrap:wrap}
+  .step .shotrow .shot{width:200px;flex:none}
+  kbd{background:var(--surf2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+  .tip{display:flex;gap:11px;background:rgba(33,150,243,.08);border:1px solid rgba(33,150,243,.3);border-radius:12px;padding:13px 15px;margin-top:16px;font-size:14.5px}
+  .tip b{color:var(--blue)}
+  .warn{background:rgba(233,30,99,.08);border-color:rgba(233,30,99,.35)}
+  .warn b{color:var(--pink)}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--surf2);border:1px solid var(--line);color:var(--mut)}
+
+  /* GALLERY */
+  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+  .gal figure{background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .gal figcaption{padding:11px 14px;font-size:13px;color:var(--mut);font-weight:600;border-top:1px solid var(--line)}
+
+  /* swipe demo legend */
+  .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+  .legend .l{display:flex;align-items:center;gap:9px;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px}
+  .dot{width:11px;height:11px;border-radius:99px}
+
+  /* VIDEO */
+  .videowrap{max-width:360px;margin:0 auto;border-radius:32px;overflow:hidden;border:3px solid #2c2f33;box-shadow:0 40px 90px rgba(0,0,0,.6);background:#000}
+  .videowrap video{display:block;width:100%;height:auto}
+
+  /* UI GUIDE */
+  .uirow{display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:center;margin:0 auto 56px;max-width:1000px}
+  .uirow.rev .uishot{order:2}
+  .uishot{border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--surf);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .uishot img{display:block;width:100%}
+  .uilist{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .uilist li{display:flex;gap:13px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 15px}
+  .uilist .b{flex:none;width:30px;height:30px;border-radius:8px;background:var(--grad);color:#04150F;display:grid;place-items:center;font-weight:900;font-size:14px}
+  .uilist h4{font-size:15px;margin-bottom:2px;font-weight:800}
+  .uilist p{color:var(--mut);font-size:13.5px;margin:0}
+  @media(max-width:760px){.uirow,.uirow.rev{grid-template-columns:1fr}.uirow.rev .uishot{order:0}.uishot{max-width:300px;margin:0 auto}}
+
+  /* GALLERY COVERFLOW */
+  .galSwiper{padding:24px 0 56px;max-width:1120px;margin:0 auto;overflow:hidden}
+  .galSwiper .swiper-slide{width:296px;transition:.3s}
+  .galSwiper .swiper-slide a{display:block;border-radius:28px;overflow:hidden;border:2px solid #2c2f33;background:#000;box-shadow:0 30px 70px rgba(0,0,0,.55);cursor:zoom-in}
+  .galSwiper .swiper-slide img{display:block;width:100%;height:auto}
+  .galSwiper .swiper-slide:not(.swiper-slide-active){opacity:.55}
+  .galSwiper .slide-cap{text-align:center;color:var(--mut);font-size:13.5px;font-weight:600;margin-top:16px;opacity:0;transition:.35s}
+  .galSwiper .swiper-slide-active .slide-cap{opacity:1}
+  .galSwiper .swiper-button-next,.galSwiper .swiper-button-prev{color:var(--green)}
+  .galSwiper .swiper-button-next:after,.galSwiper .swiper-button-prev:after{font-size:24px;font-weight:900}
+  .galSwiper .swiper-pagination-bullet{background:var(--mut);opacity:.45}
+  .galSwiper .swiper-pagination-bullet-active{background:var(--green);opacity:1}
+
+  /* DOWNLOAD */
+  .dl{max-width:760px;margin:0 auto;text-align:center;background:linear-gradient(180deg,var(--surf),var(--bg2));
+    border:1px solid var(--line);border-radius:26px;padding:54px 30px}
+  .dl h2{font-size:34px;font-weight:850;margin-bottom:10px}
+  .dl p{color:var(--mut);font-size:17px;margin-bottom:26px}
+  .specs{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:30px;color:var(--mut2);font-size:13.5px;font-weight:600}
+  .specs span{color:var(--txt)}
+
+  footer{border-top:1px solid var(--line);padding:38px 0;color:var(--mut2);font-size:13.5px;text-align:center}
+  footer .brand{justify-content:center;margin-bottom:10px}
+
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr;text-align:center}
+    .hero .phone{order:-1}
+    .cta-row,.hero-stats{justify-content:center}
+    .fgrid{grid-template-columns:1fr 1fr}
+    .split{grid-template-columns:1fr;gap:26px}
+    .split.rev .txtcol{order:0}
+    .split .phone{margin:0 auto}
+    .howto-layout{grid-template-columns:1fr}
+    .toc{position:static;display:flex;flex-wrap:wrap;gap:6px}
+    .toc a{font-size:13px}
+    .tabs{display:none;position:absolute;top:64px;left:0;right:0;flex-direction:column;background:var(--bg2);border-bottom:1px solid var(--line);padding:10px}
+    .tabs.open{display:flex}
+    .menu-toggle{display:block}
+    .nav-cta{display:none}
+  }
+  @media(max-width:560px){.fgrid{grid-template-columns:1fr}}
+
+  /* print-only elements, hidden on screen */
+  #pdf-contents,.pdf-poster,.pdf-playbadge,.pdf-vidnote,.pdf-vidlink{display:none}
+
+  /* ---- PRINT / PDF EXPORT: compact DARK document, all tabs unfolded ---- */
+  @page{ margin:7mm; }
+  @media print{
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;box-shadow:none !important}
+    /* CRITICAL: non-active tabs use animation:fade (opacity 0->1). A static print
+       snapshot freezes them at opacity 0 => 20 blank pages. Force them visible. */
+    .tabview{display:block !important;animation:none !important;opacity:1 !important}
+    header.nav,.menu-toggle{display:none !important}
+    body{background:#0A0A0A !important}
+    .grad-text{-webkit-text-fill-color:#34d399 !important;color:#34d399 !important;background:none !important}
+    /* compact spacing, continuous flow */
+    .block{padding:9px 0 !important}
+    .wrap{padding:0 14px}
+    h2{font-size:21px !important} h3{font-size:16px !important}
+    .shead{margin:0 auto 12px !important;max-width:760px} .shead h2{margin-bottom:5px} .shead p{font-size:12.5px}
+    .pill{padding:4px 10px;font-size:11px}
+    .hero{padding:4px 0 10px !important;gap:20px}
+    .hero h1{font-size:38px !important;margin:8px 0 8px;line-height:1.03}
+    .hero p.lead{font-size:13.5px} .hero-stats{margin-top:12px;gap:16px} .hero-stats .s b{font-size:20px} .cta-row{margin-top:12px}
+    .fcard{padding:12px !important} .fcard:hover{transform:none !important} .fcard .ic{width:32px;height:32px;font-size:16px;margin-bottom:7px} .fcard h3{font-size:14.5px;margin-bottom:4px} .fcard p{font-size:12px}
+    .fgrid{gap:9px}
+    .split{gap:22px;margin:0 auto 16px !important;padding-top:14px !important} .split+.split{margin-top:16px;padding-top:16px}
+    .split .txtcol h3{font-size:18px;margin-bottom:7px} .split .txtcol p{font-size:12.5px;margin-bottom:7px} .ticks{gap:6px} .ticks li{font-size:12px}
+    .step{padding:11px 15px !important;margin-bottom:9px !important} .step h3{font-size:16px;margin-bottom:3px} .step p,.step li{font-size:12px;margin:4px 0} .step ol,.step ul{margin:7px 0 2px}
+    .step .shotrow{gap:9px;margin-top:10px} .step .shotrow .shot{width:138px}
+    .uirow{gap:22px;margin:0 auto 18px !important} .uilist{gap:7px} .uilist li{padding:8px 11px} .uilist .b{width:26px;height:26px;font-size:12px} .uilist h4{font-size:13px} .uilist p{font-size:11.5px}
+    .tip{padding:9px 12px;font-size:12px;margin-top:9px}
+    a[href]{text-decoration:none;color:inherit}
+    .phone{transform:none !important;width:165px !important;border-color:#3a4046 !important}
+    /* gallery coverflow -> inline-block grid (CSS grid + print can silently drop content) */
+    .galSwiper{overflow:visible !important;padding:0 !important}
+    .galSwiper .swiper-wrapper{display:block !important;transform:none !important;width:auto !important;height:auto !important;font-size:0;text-align:center}
+    .galSwiper .swiper-slide{display:inline-block !important;width:18.2% !important;margin:0 .7% 9px !important;vertical-align:top;transform:none !important;opacity:1 !important}
+    .galSwiper .swiper-slide a{border-color:#2c2f33 !important;border-radius:12px}
+    .galSwiper .slide-cap{opacity:1 !important;margin-top:5px;color:var(--mut) !important;font-size:9.5px}
+    .galSwiper .swiper-button-next,.galSwiper .swiper-button-prev,.swiper-pagination{display:none !important}
+    .howto-layout{grid-template-columns:1fr !important;gap:0 !important} .toc{display:none !important}
+    .dl{padding:22px 20px !important} .dl h2{font-size:24px} .specs{margin-top:16px}
+    /* avoid splitting small blocks / images; let long steps flow */
+    .fcard,.uilist li,.tip,.shot,.uishot,figure,.galSwiper .swiper-slide,.legend,.split,.uirow,.phone{break-inside:avoid}
+    /* video -> poster (the mp4 is embedded in the PDF AND the poster links to it) */
+    video{display:none !important}
+    .videowrap{aspect-ratio:auto !important;max-width:240px;margin:0 auto;position:relative}
+    .pdf-vidlink{display:block !important;position:relative}
+    .pdf-poster{display:block !important;width:100%}
+    .pdf-playbadge{display:grid !important;position:absolute;inset:0;place-items:center;font-size:38px;color:#fff}
+    .pdf-vidnote{display:block !important;text-align:center;color:var(--mut);font-size:11.5px;font-weight:600;margin-top:8px}
+    /* clickable Contents page (dark) — placed AFTER the app overview */
+    #pdf-contents{display:block !important;break-before:page;break-after:page;padding:24px 18px}
+    .pc-head{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+    .pc-logo{width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#10B981,#2196F3);display:grid;place-items:center;font-size:25px}
+    .pc-title{font-family:'Space Grotesk';font-size:26px;font-weight:800;color:#fff}
+    .pc-sub{color:var(--mut);font-weight:600;font-size:12.5px}
+    .pc-h{font-size:17px;margin-bottom:11px;color:#fff;font-family:'Space Grotesk'}
+    .pc-list{font-size:13.5px;line-height:1.8;color:#E9ECEE;padding-left:20px;margin:0}
+    .pc-list>li{margin-bottom:2px}
+    .pc-list a{color:#34d399;font-weight:700}
+    .pc-list ol{padding-left:18px;font-size:12px;line-height:1.65;margin:2px 0}
+    .pc-list ol a{color:#6db8f0;font-weight:600}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="logo">🎛️</span> MobileDigger</div>
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="features">Features</button>
+      <button class="tab-btn" data-tab="uiguide">UI Guide</button>
+      <button class="tab-btn" data-tab="howto">How-To</button>
+      <button class="tab-btn" data-tab="gallery">Gallery</button>
+      <button class="tab-btn" data-tab="download">Download</button>
+    </nav>
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <a class="nav-cta" data-tab="download" href="#">Get the app</a>
+  </div>
+</header>
+
+<!-- ================= OVERVIEW ================= -->
+<section class="tabview active" id="overview">
+  <div class="wrap hero">
+    <div>
+      <span class="pill">🎧 FOR DJs &amp; CRATE DIGGERS</span>
+      <h1>Dig your crates.<br><span class="grad-text">Keep the gems.</span></h1>
+      <p class="lead">MobileDigger turns the painful job of sorting thousands of downloaded tracks into a fast, one-thumb workflow. Listen, swipe to <b style="color:var(--like)">Like</b> or <b style="color:var(--dislike)">Reject</b>, and every file is filed into the right folder automatically.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary" data-tab="download">⬇ Download APK</button>
+        <button class="btn btn-ghost" data-tab="howto">📖 How it works</button>
+      </div>
+      <div class="hero-stats">
+        <div class="s"><b>1-swipe</b><span>SORT EACH TRACK</span></div>
+        <div class="s"><b>33</b><span>COLOR THEMES</span></div>
+        <div class="s"><b>8+</b><span>AUDIO FORMATS</span></div>
+        <div class="s"><b>2 min</b><span>SPECTROGRAM</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <img src="screenshots/player.png" alt="MobileDigger main player" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')">
+    </div>
+  </div>
+
+  <!-- Demo video -->
+  <div class="block">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">▶ WATCH IT WORK</span>
+        <h2>60 seconds of digging</h2>
+        <p>Swipe to sort, send to folders, analyse with the spectrogram, and restyle on the fly — every tap is highlighted.</p>
+      </div>
+      <div class="videowrap">
+        <video controls playsinline muted preload="metadata" poster="video/poster.jpg">
+          <source src="video/demo-web.mp4" type="video/mp4">
+          Your browser doesn't support embedded video. <a href="video/demo-web.mp4">Download the demo</a>.
+        </video>
+        <a class="pdf-vidlink" href="file:///Users/alinflorescu/Desktop/MobileDigger%20Source%20codes/MobileDigger%20copy/MobileDigger-User-Guide/video/demo-web.mp4">
+          <img class="pdf-poster" src="video/poster.jpg" alt="MobileDigger demo video">
+          <div class="pdf-playbadge">▶</div>
+        </a>
+      </div>
+      <p class="pdf-vidnote">▶ Click the poster to play the 60-second demo (works when this PDF stays in the guide folder). The video is also embedded inside this PDF as an attachment.</p>
+    </div>
+  </div>
+
+  <!-- Quick value props -->
+  <div class="block">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">WHY MOBILEDIGGER</span>
+        <h2>Built for speed, made for ears</h2>
+        <p>Everything a digger needs to triage a massive download folder — and nothing that slows you down.</p>
+      </div>
+      <div class="fgrid">
+        <div class="fcard"><div class="ic">👈👉</div><h3>Swipe to sort</h3><p>Swipe the player left to reject or right to like. The file moves to the matching folder and the next track plays instantly.</p></div>
+        <div class="fcard"><div class="ic">📊</div><h3>Spectrogram analysis</h3><p>Spot fake "lossless" files in seconds — see the frequency cutoff of a transcoded MP3 versus a real FLAC.</p></div>
+        <div class="fcard"><div class="ic">🎚️</div><h3>Multi-format engine</h3><p>MP3, WAV, FLAC, AIFF, AAC, OGG, M4A and more — three audio backends pick the right one automatically.</p></div>
+        <div class="fcard"><div class="ic">🔔</div><h3>Background &amp; lock-screen</h3><p>Keeps playing in the background. Like, reject, skip and seek right from the notification or your AirPods.</p></div>
+        <div class="fcard"><div class="ic">🗂️</div><h3>Folders &amp; multi-select</h3><p>Group into subfolders, batch-move, and reject a whole crate at once with instant visual feedback.</p></div>
+        <div class="fcard"><div class="ic">🎨</div><h3>33 themes &amp; fonts</h3><p>Light &amp; dark variants, bundled fonts, adjustable waveforms and animation speed. Make it yours.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow strip -->
+  <div class="block">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">THE WORKFLOW</span>
+        <h2>From messy download folder to a sorted collection</h2>
+      </div>
+      <div class="fgrid">
+        <div class="fcard"><div class="ic">①</div><h3>Point it at a folder</h3><p>Pick your source folder of unsorted music and a destination where <span class="accent">Liked</span> and <span class="accent">Rejected</span> folders will be created.</p></div>
+        <div class="fcard"><div class="ic">②</div><h3>Listen &amp; decide</h3><p>Each track loads and plays. Use the waveform to scrub, or open the spectrogram to check the quality.</p></div>
+        <div class="fcard"><div class="ic">③</div><h3>Like or Reject</h3><p>Swipe or tap. The file is physically moved and the next one plays — no menus, no waiting.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Clickable Contents page (print/PDF only) — placed after the app overview so page 1 is the app -->
+<aside id="pdf-contents">
+  <div class="pc-head">
+    <div class="pc-logo">🎛️</div>
+    <div><div class="pc-title">MobileDigger</div><div class="pc-sub">The Complete Guide · groovy's child</div></div>
+  </div>
+  <h2 class="pc-h">Contents — click any line to jump</h2>
+  <ol class="pc-list">
+    <li><a href="#overview">Overview &amp; demo video</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#uiguide">UI Guide — every button explained</a></li>
+    <li><a href="#howto">How-To Guide</a>
+      <ol>
+        <li><a href="#h-start">Getting started</a></li>
+        <li><a href="#h-play">Playing &amp; the player</a></li>
+        <li><a href="#h-mini">The mini-player</a></li>
+        <li><a href="#h-sort">Liking &amp; rejecting</a></li>
+        <li><a href="#h-reject">Reject Listened &amp; Undo</a></li>
+        <li><a href="#h-rename">Renaming files</a></li>
+        <li><a href="#h-tabs">Tabs &amp; the workflow</a></li>
+        <li><a href="#h-folders">Subfolders &amp; moving</a></li>
+        <li><a href="#h-multi">Multi-select</a></li>
+        <li><a href="#h-find">Search, sort &amp; filters</a></li>
+        <li><a href="#h-spek">Spectrogram</a></li>
+        <li><a href="#h-notif">Notification &amp; headset</a></li>
+        <li><a href="#h-share">Sharing</a></li>
+        <li><a href="#h-clean">Cleaning up</a></li>
+        <li><a href="#h-look">Themes &amp; settings</a></li>
+      </ol>
+    </li>
+    <li><a href="#gallery">Screenshot Gallery</a></li>
+    <li><a href="#download">Download</a></li>
+  </ol>
+</aside>
+
+<!-- ================= FEATURES ================= -->
+<section class="tabview" id="features">
+  <div class="block" style="border-top:0">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">EVERY FEATURE</span>
+        <h2>Powerful where it counts</h2>
+        <p>A deep look at what MobileDigger does — and how each piece helps you dig faster.</p>
+      </div>
+
+      <div class="split">
+        <div class="txtcol">
+          <span class="chip">CORE</span>
+          <h3>Swipe-to-sort triage</h3>
+          <p>The fastest way to clear a crate. The player card follows your finger and tints green or red to preview the action.</p>
+          <ul class="ticks">
+            <li><b>Swipe right → Like</b> — moves the file to <em>Liked</em> and advances</li>
+            <li><b>Swipe left → Reject</b> — moves it to <em>Rejected</em> and advances</li>
+            <li>Buttons too: 👎 Dislike, ↩ Undo, ❤ Like</li>
+            <li>Works on the main player <em>and</em> the floating mini-player</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/player.png" alt="Player swipe" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+      <div class="split rev">
+        <div class="txtcol">
+          <span class="chip">ANALYSIS</span>
+          <h3>Spectrogram &amp; waveform</h3>
+          <p>Don't trust the file extension — trust your eyes. The spectrogram maps frequency, time and loudness so a transcoded MP3's cutoff is obvious.</p>
+          <ul class="ticks">
+            <li>Frequency (kHz), time, and dB axes</li>
+            <li>First 2 minutes analyzed, colour = intensity</li>
+            <li>Tap-and-drag waveform to seek anywhere</li>
+            <li>Export the whole analysis as a shareable image</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/spectrogram.png" alt="Spectrogram" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+      <div class="split">
+        <div class="txtcol">
+          <span class="chip">ORGANIZE</span>
+          <h3>Tabs, subfolders &amp; multi-select</h3>
+          <p>Three tabs — <span class="accent">To&nbsp;Do</span>, <span class="accent">Liked</span>, <span class="accent">Rejected</span> — keep your piles clean. Group likes into named subfolders and act on many tracks at once.</p>
+          <ul class="ticks">
+            <li>Subfolder headers show "<em>Name · N Tracks</em>" with select-all</li>
+            <li>Multi-select Like / Reject / Move / Rename</li>
+            <li>Rows fade &amp; collapse instantly as files move</li>
+            <li>Move or batch-move into any subfolder</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/multiselect.png" alt="Multi-select" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+      <div class="split rev">
+        <div class="txtcol">
+          <span class="chip">FIND</span>
+          <h3>Search, sort &amp; quality filters</h3>
+          <p>Find any track across all three tabs, sort six ways, or filter to just the formats you care about.</p>
+          <ul class="ticks">
+            <li>Search by name across To&nbsp;Do / Liked / Rejected</li>
+            <li>Sort by name, size, date, duration, type, subfolder or shuffle</li>
+            <li><b>Lossless only</b> or <b>Lossy (MP3/AAC) only</b> filters</li>
+            <li>A red dot marks when a filter is active</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/filters.png" alt="Filters" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+      <div class="split">
+        <div class="txtcol">
+          <span class="chip">EVERYWHERE</span>
+          <h3>Background &amp; notification player</h3>
+          <p>Lock your phone and keep digging. Full media controls live in the notification, lock screen, and on your Bluetooth headset.</p>
+          <ul class="ticks">
+            <li>Play/pause, next, previous &amp; a seek bar</li>
+            <li>Like &amp; Reject right from the notification</li>
+            <li>AirPods: double-tap to skip, single to pause</li>
+            <li>Album art &amp; live progress</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/notification.png" alt="Notification player" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+      <div class="split rev">
+        <div class="txtcol">
+          <span class="chip">PERSONALIZE</span>
+          <h3>33 themes, fonts &amp; visuals</h3>
+          <p>Make MobileDigger yours with a deep settings panel — every theme has tuned light and dark variants.</p>
+          <ul class="ticks">
+            <li>33 colour themes + 11 bundled fonts</li>
+            <li>Adjustable waveform height &amp; colour</li>
+            <li>Animation style &amp; speed control</li>
+            <li>Behaviour toggles: auto-play, auto-scan, labels</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/settings-themes.png" alt="Themes" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+      <div class="split">
+        <div class="txtcol">
+          <span class="chip">SHARE</span>
+          <h3>Share tracks, lists &amp; analysis</h3>
+          <p>Send a gem to a friend or export your finds — sharing targets WhatsApp first, with a normal share sheet fallback.</p>
+          <ul class="ticks">
+            <li>Share a single track (zipped, so WhatsApp accepts it)</li>
+            <li>Share your whole <em>Liked</em> folder as one ZIP</li>
+            <li>Export the Liked list as a clean TXT</li>
+            <li>Share the spectrogram analysis as an image</li>
+          </ul>
+        </div>
+        <div class="phone"><img src="screenshots/tabs.png" alt="Sharing" onerror="this.classList.add('miss');this.parentNode.classList.add('shot','is-missing')"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= UI GUIDE ================= -->
+<section class="tabview" id="uiguide">
+  <div class="block" style="border-top:0">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">UI EXPLAINED</span>
+        <h2>Every button, explained</h2>
+        <p>A guided tour of the interface — exactly what each control does and where to push.</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="uirow">
+        <div class="uishot"><img src="screenshots/annotate-toolbar.png" alt="Toolbar annotated" onerror="this.parentNode.style.display='none'"></div>
+        <div>
+          <h3 style="font-size:23px;font-weight:850;margin-bottom:14px">The toolbar &amp; header</h3>
+          <ul class="uilist">
+            <li><span class="b">1</span><div><h4>Home</h4><p>Open the Source / Destination selection &amp; recent folders.</p></div></li>
+            <li><span class="b">2</span><div><h4>Settings</h4><p>Themes, fonts, dark mode, waveforms, animations, behaviour.</p></div></li>
+            <li><span class="b">3</span><div><h4>Search</h4><p>Find a track by name across To&nbsp;Do, Liked &amp; Rejected.</p></div></li>
+            <li><span class="b">4</span><div><h4>Rescan</h4><p>Reload the current source folder from disk.</p></div></li>
+            <li><span class="b">5</span><div><h4>Sort &amp; Filter</h4><p>Sort 7 ways + Lossless/Lossy filters. A red dot = filter active.</p></div></li>
+            <li><span class="b">6</span><div><h4>Rename</h4><p>Rename the current track (with Title/UPPER/lower case options).</p></div></li>
+            <li><span class="b">7</span><div><h4>Multi-Select</h4><p>Turn on batch mode to act on many tracks at once.</p></div></li>
+            <li><span class="b">8</span><div><h4>Spectrogram (SpeK)</h4><p>Open the frequency analysis of the current track.</p></div></li>
+          </ul>
+          <div class="tip" style="margin-top:18px"><span>🟠</span><div><b style="color:var(--orange)">Reject Listened</b> (the "Reject N" pill in the header): one tap bins <em>every track you've played but never liked or rejected</em> — a fast way to clear everything you auditioned and skipped. The header also has <b>Hide/Show Main Player</b> and <b>Hide/Show Playlists</b> to reshape the layout.</div></div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="uirow rev">
+        <div class="uishot"><img src="screenshots/annotate-actions.png" alt="Action buttons annotated" onerror="this.parentNode.style.display='none'"></div>
+        <div>
+          <h3 style="font-size:23px;font-weight:850;margin-bottom:14px">The player action buttons</h3>
+          <ul class="uilist">
+            <li><span class="b" style="background:var(--dislike);color:#fff">1</span><div><h4>Dislike 👎</h4><p>Reject the current track — moves it to the <em>Rejected</em> folder and skips to the next one.</p></div></li>
+            <li><span class="b" style="background:var(--like);color:#fff">2</span><div><h4>Like ❤</h4><p>Keep the current track — moves it to the <em>Liked</em> folder.</p></div></li>
+            <li><span class="b" style="background:var(--blue);color:#fff">3</span><div><h4>Send to folder 📁</h4><p>File the track into a named subfolder, or create a new one.</p></div></li>
+          </ul>
+          <p style="color:var(--mut);font-size:14px;margin-top:14px">Also in this row: <b>⏮ Previous</b>, <b>▶⏸ Play/Pause</b>, <b>⏭ Next</b>, <b>↩ Undo</b> (reverse the last sort), and <b>Share</b>. The bar above shows <kbd>duration · bitrate · size</kbd> and a <b>Show/Hide Wave</b> toggle.</p>
+        </div>
+      </div>
+
+      <!-- Swipe -->
+      <div class="uirow">
+        <div class="uishot"><img src="screenshots/annotate-swipe.png" alt="Swipe gestures annotated" onerror="this.parentNode.style.display='none'"></div>
+        <div>
+          <h3 style="font-size:23px;font-weight:850;margin-bottom:14px">Swipe gestures (the fast way)</h3>
+          <ul class="uilist">
+            <li><span class="b" style="background:var(--like);color:#fff">→</span><div><h4>Swipe the card RIGHT = Like</h4><p>The card tints green, slides away, the file moves to Liked, and the next track plays.</p></div></li>
+            <li><span class="b" style="background:var(--dislike);color:#fff">←</span><div><h4>Swipe the card LEFT = Reject</h4><p>The card tints red, slides away, the file moves to Rejected, and the next track plays.</p></div></li>
+          </ul>
+          <div class="tip" style="margin-top:16px"><span>💡</span><div>Swiping works on both the <b>main player</b> and the <b>mini-player</b>, and on the <b>currently-playing row</b> in the list. Tap-and-drag the <b>waveform</b> to seek.</div></div>
+        </div>
+      </div>
+
+      <!-- Tabs + rows + mini -->
+      <div class="fgrid" style="margin-top:30px">
+        <div class="fcard"><div class="ic" style="background:rgba(33,150,243,.14)">🗂️</div><h3>The three tabs</h3><p><b>To&nbsp;Do</b> (blue) is your queue, <b>Liked</b> (green) and <b>Rejected</b> (pink) are your sorted piles — each shows a live count, and each has a "Delete All" option.</p></div>
+        <div class="fcard"><div class="ic">📄</div><h3>Playlist rows</h3><p>Each row shows the file name (with type). A <b>red ✓</b> marks a track you played but haven't sorted yet. The <b>playing row</b> is highlighted with extra controls (play/pause, like, move, share, time).</p></div>
+        <div class="fcard"><div class="ic">🎵</div><h3>Mini-player</h3><p>A floating controller that appears when the playing track scrolls off-screen or the main player is hidden — full transport + like/dislike + a compact waveform.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW-TO ================= -->
+<section class="tabview" id="howto">
+  <div class="block" style="border-top:0">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">HOW-TO GUIDE</span>
+        <h2>Everything, step by step</h2>
+        <p>New to MobileDigger? Start at the top. Each section is a quick, practical how-to.</p>
+      </div>
+
+      <div class="howto-layout">
+        <nav class="toc">
+          <a href="#h-start">1 · Getting started</a>
+          <a href="#h-play">2 · Playing &amp; the player</a>
+          <a href="#h-mini">★ · The mini-player</a>
+          <a href="#h-sort">3 · Liking &amp; rejecting</a>
+          <a href="#h-reject">★ · Reject Listened &amp; Undo</a>
+          <a href="#h-rename">★ · Renaming files</a>
+          <a href="#h-tabs">4 · Tabs &amp; the workflow</a>
+          <a href="#h-folders">5 · Subfolders &amp; moving</a>
+          <a href="#h-multi">6 · Multi-select</a>
+          <a href="#h-find">7 · Search, sort &amp; filters</a>
+          <a href="#h-spek">8 · Spectrogram</a>
+          <a href="#h-notif">9 · Notification &amp; headset</a>
+          <a href="#h-share">10 · Sharing</a>
+          <a href="#h-clean">11 · Cleaning up</a>
+          <a href="#h-look">12 · Themes &amp; settings</a>
+          <a href="#h-gestures">⚡ Gesture cheat-sheet</a>
+        </nav>
+
+        <div class="howto-body">
+
+          <div class="step" id="h-start">
+            <h3><span class="num">1</span> Getting started</h3>
+            <p>MobileDigger sorts a folder of music into <b>Liked</b> and <b>Rejected</b> piles. First, tell it where your music is and where sorted files should go.</p>
+            <ol>
+              <li>Tap <b>Source</b> and pick the folder of unsorted music (it scans that folder <em>and</em> its subfolders).</li>
+              <li>Tap <b>Destination</b> and pick where sorted files should land — the app creates <kbd>Liked</kbd> and <kbd>Rejected</kbd> subfolders there.</li>
+              <li>Your tracks load into the <b>To&nbsp;Do</b> tab, ready to triage.</li>
+              <li>Use <b>Rescan</b> to reload the last source, or pick from your <b>Recent Sources</b> list.</li>
+            </ol>
+            <div class="tip warn"><span>⚠️</span><div><b>Heads up:</b> your Destination must not be <em>inside</em> your Source folder (sorted files would get re-scanned). The app warns you if so. You also need a Destination set before you can Like/Reject.</div></div>
+            <div class="shotrow">
+              <div class="shot"><img src="screenshots/source-select.png" alt="Selecting source" onerror="this.parentNode.classList.add('is-missing')"></div>
+            </div>
+          </div>
+
+          <div class="step" id="h-play">
+            <h3><span class="num">2</span> Playing &amp; the player</h3>
+            <p>Tap any track in the list to play it. The big <b>player card</b> at the top shows the current track and its controls.</p>
+            <ul>
+              <li><b>⏮ / ▶⏸ / ⏭</b> — previous, play/pause, next.</li>
+              <li><b>Waveform</b> — tap or drag it to seek to any point. Toggle it with <em>Show/Hide Wave</em>.</li>
+              <li>Top line shows <kbd>duration</kbd> · <kbd>bitrate</kbd> · <kbd>file size</kbd>.</li>
+              <li>A <b>mini-player</b> appears at the bottom when the playing track scrolls out of view, so you always keep controls.</li>
+            </ul>
+            <div class="tip"><span>💡</span><div><b>Formats:</b> MP3, WAV, FLAC, AIFF, AAC, OGG, M4A and more all play — the app picks the right audio engine automatically.</div></div>
+            <div class="shotrow">
+              <div class="shot"><img src="screenshots/player.png" alt="Player" onerror="this.parentNode.classList.add('is-missing')"></div>
+              <div class="shot"><img src="screenshots/playlist.png" alt="Playlist" onerror="this.parentNode.classList.add('is-missing')"></div>
+            </div>
+          </div>
+
+          <div class="step" id="h-mini">
+            <h3><span class="num">🎵</span> The mini-player</h3>
+            <p>A floating player that keeps your controls handy when the big player isn't in view.</p>
+            <ul>
+              <li><b>When it appears:</b> automatically when the playing track scrolls off-screen, or whenever you hide the main player.</li>
+              <li><b>Controls:</b> previous / play-pause / next, plus <b>Dislike 👎</b> and <b>Like ❤</b>, a <b>SpeK</b> spectrogram toggle, and a compact, seekable waveform.</li>
+              <li><b>Swipe it</b> — left to reject, right to like — exactly like the big player.</li>
+              <li><b>Close it</b> with the ✕; it stays hidden until the track changes.</li>
+            </ul>
+            <div class="tip"><span>⚙️</span><div><b>Settings:</b> toggle it with <b>Enable Mini Player</b>, and set its waveform size with the <b>Mini Height</b> slider — both under <b>Settings → Visual</b>.</div></div>
+            <div class="shotrow">
+              <div class="shot"><img src="screenshots/view-playlists-only.png" alt="Mini-player in context" onerror="this.parentNode.classList.add('is-missing')"></div>
+              <div class="shot"><img src="screenshots/miniplayer.png" alt="Mini-player close-up" onerror="this.parentNode.classList.add('is-missing')"></div>
+            </div>
+          </div>
+
+          <div class="step" id="h-sort">
+            <h3><span class="num">3</span> Liking &amp; rejecting</h3>
+            <p>This is the heart of the app. Two ways to sort the current track:</p>
+            <ol>
+              <li><b>Swipe the player</b> — right to <span style="color:var(--like)"><b>Like</b></span> (card tints green), left to <span style="color:var(--dislike)"><b>Reject</b></span> (tints red). Both move the file and jump to the next track.</li>
+              <li><b>Tap the buttons</b> — 👎 Dislike, ↩ Undo, ❤ Like.</li>
+            </ol>
+            <div class="tip"><span>💡</span><div><b>Button vs swipe:</b> the <b>Dislike button</b> auto-advances, but the <b>Like button</b> keeps you on the track (press Next yourself). <b>Swiping</b> in either direction always advances. Made a mistake? Tap <b>Undo</b>.</div></div>
+            <div class="legend">
+              <div class="l"><span class="dot" style="background:var(--like)"></span> Swipe right · Like</div>
+              <div class="l"><span class="dot" style="background:var(--dislike)"></span> Swipe left · Reject</div>
+              <div class="l"><span class="dot" style="background:var(--blue)"></span> Undo last action</div>
+            </div>
+          </div>
+
+          <div class="step" id="h-reject">
+            <h3><span class="num" style="background:var(--orange);color:#fff">↩</span> Reject Listened &amp; Undo</h3>
+            <ul>
+              <li><b>Reject Listened</b> — the orange <b>"Reject N"</b> pill in the header bins every track you've <em>played but never liked or rejected</em>. Great after auditioning a stack and skipping the duds: one tap clears them all to Rejected.</li>
+              <li><b>Undo</b> — the <b>↩</b> button on the player reverses your last sort and restores the file to where it came from.</li>
+            </ul>
+            <div class="shotrow"><div class="shot"><img src="screenshots/annotate-toolbar.png" alt="Reject Listened button" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-rename">
+            <h3><span class="num">✎</span> Renaming files</h3>
+            <ul>
+              <li><b>The current track:</b> tap the <b>Rename</b> (pencil) icon in the toolbar.</li>
+              <li><b>Any track:</b> long-press its row → <b>"Rename This File"</b>.</li>
+              <li><b>A whole multi-selection:</b> in multi-select, tap <b>Rename</b> (applies a case style to all).</li>
+            </ul>
+            <p>Every rename offers case styles: <b>All Words With Capital Letter</b>, <b>ALL LETTERS UP</b>, or <b>all letters small</b>. The file extension is always preserved.</p>
+            <div class="shotrow"><div class="shot"><img src="screenshots/rename.png" alt="Rename dialog" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-tabs">
+            <h3><span class="num">4</span> Tabs &amp; the workflow</h3>
+            <p>Three tabs organise your session:</p>
+            <ul>
+              <li><b>To&nbsp;Do</b> — your unsorted queue.</li>
+              <li><b>Liked</b> — tracks you kept (in the <kbd>Liked</kbd> folder + any subfolders).</li>
+              <li><b>Rejected</b> — tracks you discarded.</li>
+            </ul>
+            <p>Liking or rejecting physically moves the file and shifts it between tabs. You can re-sort from inside any tab, and <b>Undo</b> restores the most recent move.</p>
+            <div class="shotrow"><div class="shot"><img src="screenshots/tabs.png" alt="Tabs" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-folders">
+            <h3><span class="num">5</span> Subfolders &amp; moving</h3>
+            <p>Keep your likes tidy by filing them into named subfolders (e.g. <em>Techno</em>, <em>Disco</em>).</p>
+            <ol>
+              <li>On the playing track, tap the <b>folder</b> button to open <em>Move to Subfolder</em>.</li>
+              <li>Pick an existing subfolder, or <b>Create new subfolder</b>.</li>
+              <li>In the <b>Liked</b> tab, subfolders appear as headers — "<em>Name · N&nbsp;Tracks</em>" — and you can filter the view to specific subfolders.</li>
+            </ol>
+            <div class="shotrow"><div class="shot"><img src="screenshots/move-dialog.png" alt="Move dialog" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-multi">
+            <h3><span class="num">6</span> Multi-select (batch actions)</h3>
+            <p>Act on many tracks at once.</p>
+            <ol>
+              <li>Enter multi-select via the <b>Select</b> icon, a <b>long-press</b> on a row, or a <b>subfolder header checkbox</b>.</li>
+              <li>Tap rows to check them, or use <b>Select All</b>.</li>
+              <li>Use the action bar: <b>Reject</b>, <b>Like</b>, <b>Move</b>, or <b>Rename</b>.</li>
+            </ol>
+            <div class="tip"><span>💡</span><div>When you Reject or Like a selection, the rows <b>fade out and collapse immediately</b> while the files move in the background — no blocking spinner. Any file that can't move is put back.</div></div>
+            <div class="shotrow"><div class="shot"><img src="screenshots/multiselect.png" alt="Multi-select" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-find">
+            <h3><span class="num">7</span> Search, sort &amp; filters</h3>
+            <ul>
+              <li><b>Search</b> — tap the search icon, type, then press <kbd>Enter</kbd> or the magnifier. It searches names across all three tabs. Tap a result to jump to it.</li>
+              <li><b>Sort</b> — open the sort menu: Name, File Size, Date Added, Duration, Extension, Subfolder, or Shuffle. Tap again to flip direction.</li>
+              <li><b>Quality filters</b> — <b>Lossless Only</b> or <b>Lossy Only (MP3/AAC…)</b>. A <b>red dot</b> on the sort icon means a filter/sort is active.</li>
+              <li><b>Clear Sort &amp; Filter</b> resets everything.</li>
+            </ul>
+            <div class="shotrow">
+              <div class="shot"><img src="screenshots/search.png" alt="Search" onerror="this.parentNode.classList.add('is-missing')"></div>
+              <div class="shot"><img src="screenshots/filters.png" alt="Filters" onerror="this.parentNode.classList.add('is-missing')"></div>
+            </div>
+          </div>
+
+          <div class="step" id="h-spek">
+            <h3><span class="num">8</span> Spectrogram analysis</h3>
+            <p>Check a track's real quality before you keep it.</p>
+            <ol>
+              <li>Tap the <b>spectrogram</b> button on the player (or "Generate Spectrogram").</li>
+              <li>Read the image: <b>up</b> = frequency (kHz), <b>across</b> = time, <b>colour</b> = loudness. A hard horizontal cutoff = a transcoded/lossy file.</li>
+              <li>It analyses the first <b>2 minutes</b>. The waveform sits right below.</li>
+              <li>Tap the <b>share</b> icon to export the whole analysis as an image.</li>
+            </ol>
+            <div class="shotrow"><div class="shot"><img src="screenshots/spectrogram.png" alt="Spectrogram" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-notif">
+            <h3><span class="num">9</span> Notification &amp; headset</h3>
+            <p>You don't need the app open to keep working.</p>
+            <ul>
+              <li><b>Notification / lock screen:</b> previous, Like, play/pause, Reject, next, plus a seek bar.</li>
+              <li><b>Bluetooth / AirPods:</b> single-press = play/pause, <b>double-tap = next</b>, triple = previous.</li>
+              <li>Playback continues in the background; swiping the notification away asks before stopping.</li>
+            </ul>
+            <div class="shotrow"><div class="shot"><img src="screenshots/notification.png" alt="Notification" onerror="this.parentNode.classList.add('is-missing')"></div></div>
+          </div>
+
+          <div class="step" id="h-share">
+            <h3><span class="num">10</span> Sharing</h3>
+            <ul>
+              <li><b>One track</b> — the Share button zips the file (so WhatsApp accepts it) and sends it.</li>
+              <li><b>Whole Liked folder</b> — export every liked track as a single dated ZIP (with progress + cancel).</li>
+              <li><b>Liked list</b> — export a clean numbered TXT of your finds.</li>
+              <li><b>Spectrogram</b> — share the analysis image.</li>
+            </ul>
+          </div>
+
+          <div class="step" id="h-clean">
+            <h3><span class="num">11</span> Cleaning up</h3>
+            <p>When you've sorted everything, free up space.</p>
+            <ul>
+              <li>Use <b>Delete Rejected</b> to permanently remove everything in the Rejected folder (with a live progress bar).</li>
+              <li>When the To&nbsp;Do list empties, the app offers to delete the Rejected pile for you.</li>
+            </ul>
+            <div class="tip warn"><span>⚠️</span><div><b>Permanent:</b> deleting rejected files removes them from storage — there's no trash/undo for this.</div></div>
+          </div>
+
+          <div class="step" id="h-look">
+            <h3><span class="num">12</span> Themes &amp; settings</h3>
+            <p>Open <b>Settings</b> to personalise everything.</p>
+            <ul>
+              <li><b>Theme</b> — choose from 33 themes (each with light &amp; dark variants).</li>
+              <li><b>Dark Mode</b> toggle; <b>Font</b> picker (11 bundled fonts).</li>
+              <li><b>Visual</b> tab — waveform heights &amp; colour, animation style &amp; speed, mini-player toggle.</li>
+              <li><b>Behaviour</b> — auto-play first track, auto-scan last source on start, toolbar labels.</li>
+            </ul>
+            <div class="tip warn"><span>⚠️</span><div><b>Themes look like they do nothing?</b> Turn <b>"Enable Theme" ON</b> (i.e. turn <b>Dynamic Color OFF</b>). On Android 12+, dynamic colour pulls from your wallpaper and overrides the chosen theme.</div></div>
+            <div class="shotrow">
+              <div class="shot"><img src="screenshots/settings-general.png" alt="Settings general" onerror="this.parentNode.classList.add('is-missing')"></div>
+              <div class="shot"><img src="screenshots/settings-themes.png" alt="Theme picker" onerror="this.parentNode.classList.add('is-missing')"></div>
+              <div class="shot"><img src="screenshots/settings-visual.png" alt="Visual settings" onerror="this.parentNode.classList.add('is-missing')"></div>
+            </div>
+          </div>
+
+          <div class="step" id="h-gestures">
+            <h3><span class="num">⚡</span> Gesture cheat-sheet</h3>
+            <ul>
+              <li><b>Swipe player right</b> → Like &amp; advance</li>
+              <li><b>Swipe player left</b> → Reject &amp; advance</li>
+              <li><b>Tap &amp; drag waveform</b> → seek</li>
+              <li><b>Long-press a row</b> → rename or enter multi-select</li>
+              <li><b>Tap a row</b> → play that track</li>
+              <li><b>Double-tap AirPods</b> → next track</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GALLERY ================= -->
+<section class="tabview" id="gallery">
+  <div class="block" style="border-top:0">
+    <div class="wrap">
+      <div class="shead">
+        <span class="pill">SCREENSHOTS</span>
+        <h2>See it in action</h2>
+        <p>Real screens from the app — <b>click any shot to zoom in at full resolution</b>.</p>
+      </div>
+      <div class="swiper galSwiper">
+        <div class="swiper-wrapper" id="galGrid"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DOWNLOAD ================= -->
+<section class="tabview" id="download">
+  <div class="block" style="border-top:0">
+    <div class="wrap">
+      <div class="dl">
+        <span class="pill">DOWNLOAD</span>
+        <h2 style="margin-top:14px">Get MobileDigger</h2>
+        <p>Sideload the latest debug build — it installs on any Android 12+ device, any CPU.</p>
+        <button class="btn btn-primary" style="font-size:17px;padding:16px 28px">⬇ MobileDigger v12.23 (APK)</button>
+        <div class="specs">
+          <div>Android <span>12+</span></div>
+          <div>Size <span>~290 MB</span></div>
+          <div>All ABIs <span>arm64 · arm · x86 · x86_64</span></div>
+          <div>Build <span>v12.23</span></div>
+        </div>
+        <p style="margin-top:26px;font-size:13.5px;color:var(--mut2)">To install: copy the APK to your phone and open it. You may need to allow "install from unknown sources" for your file manager.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="logo">🎛️</span> MobileDigger</div>
+    <div>Made for diggers · <span class="accent">groovy's child</span></div>
+    <div style="margin-top:8px">© 2026 MobileDigger. Dig responsibly.</div>
+  </div>
+</footer>
+
+<!-- vendored (offline) libraries -->
+<script src="lib/gsap.min.js"></script>
+<script src="lib/ScrollTrigger.min.js"></script>
+<script src="lib/lenis.min.js"></script>
+<script src="lib/swiper-bundle.min.js"></script>
+<script src="lib/glightbox.min.js"></script>
+<script src="lib/lucide.min.js"></script>
+<script>
+  // ---- Tab switching ----
+  const tabs = document.querySelectorAll('[data-tab]');
+  const views = document.querySelectorAll('.tabview');
+  const PDF_MODE = location.search.indexOf('pdf')>-1;   // ?pdf=1 → static, print-ready render
+  function showTab(id){
+    if(!document.getElementById(id)) return;
+    views.forEach(v=>v.classList.toggle('active', v.id===id));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));
+    window.scrollTo({top:0,behavior:'instant'});
+    document.getElementById('tabs').classList.remove('open');
+    try{history.replaceState(null,'','#'+id);}catch(e){}
+  }
+  tabs.forEach(t=>t.addEventListener('click',e=>{
+    const id=t.dataset.tab; if(!id) return;
+    e.preventDefault(); showTab(id);
+  }));
+  // deep-link: open the tab named in the URL hash on load
+  const _h=(location.hash||'').replace('#','');
+  if(_h) showTab(_h);
+  window.addEventListener('hashchange',()=>showTab((location.hash||'').replace('#','')));
+  document.getElementById('menuToggle').addEventListener('click',()=>{
+    document.getElementById('tabs').classList.toggle('open');
+  });
+
+  // ---- Gallery: build from a manifest, skipping missing images ----
+  const SHOTS = [
+    ['source-select.png','Select source &amp; destination'],
+    ['player.png','Main player'],
+    ['tabs.png','To&nbsp;Do · Liked · Rejected tabs'],
+    ['spectrogram.png','Spectrogram analysis'],
+    ['multiselect.png','Multi-select mode'],
+    ['move-dialog.png','Move to subfolder'],
+    ['rename.png','Rename (with case options)'],
+    ['filters.png','Sort &amp; quality filters'],
+    ['search.png','Search'],
+    ['settings-general.png','Settings · General'],
+    ['settings-themes.png','Theme picker (33 themes)'],
+    ['settings-visual.png','Settings · Visual'],
+    ['settings-about.png','Settings · About / gestures'],
+    ['notification.png','Notification player'],
+    ['miniplayer.png','Mini-player'],
+    ['view-both-visible.png','Layout · player + playlists'],
+    ['view-player-only.png','Layout · player only'],
+    ['view-playlists-only.png','Layout · playlists + mini-player'],
+    ['view-both-hidden.png','Layout · compact view']
+  ];
+  const grid = document.getElementById('galGrid');
+  SHOTS.forEach(([file,cap])=>{
+    const slide=document.createElement('div'); slide.className='swiper-slide';
+    const a=document.createElement('a'); a.href='screenshots/'+file; a.className='glightbox';
+    a.setAttribute('data-gallery','gal'); a.setAttribute('data-title',cap.replace(/&[a-z]+;/g,' '));
+    const img=new Image(); img.src='screenshots/'+file; img.alt=cap; img.loading=PDF_MODE?'eager':'lazy'; img.className='zoomable';
+    img.onerror=()=>slide.remove();
+    a.appendChild(img); slide.appendChild(a);
+    const c=document.createElement('div'); c.className='slide-cap'; c.innerHTML=cap; slide.appendChild(c);
+    grid.appendChild(slide);
+  });
+
+  // ---- Click-to-zoom (GLightbox) on EVERY screenshot site-wide ----
+  document.querySelectorAll('img').forEach(img=>{
+    const src=img.getAttribute('src')||'';
+    if(!src.startsWith('screenshots/')) return;
+    if(img.closest('a')) return;            // gallery slides already wrapped
+    const a=document.createElement('a');
+    a.href=src; a.className='glightbox'; a.setAttribute('data-gallery','site'); a.setAttribute('data-title',img.alt||'');
+    img.classList.add('zoomable');
+    img.parentNode.insertBefore(a,img); a.appendChild(img);
+  });
+  let _lb=null;
+  if(typeof GLightbox!=='undefined'){
+    _lb=GLightbox({selector:'.glightbox',touchNavigation:true,loop:true,zoomable:true,openEffect:'zoom',closeEffect:'fade'});
+  }
+
+  // ---- Swiper coverflow gallery (init on first show; it's in a hidden tab) ----
+  let _gal=null;
+  function initGallery(){
+    if(typeof Swiper==='undefined'||_gal) return;
+    _gal=new Swiper('.galSwiper',{
+      effect:'coverflow',grabCursor:true,centeredSlides:true,slidesPerView:'auto',loop:true,
+      coverflowEffect:{rotate:6,stretch:0,depth:280,modifier:1.5,slideShadows:false},
+      navigation:{nextEl:'.swiper-button-next',prevEl:'.swiper-button-prev'},
+      pagination:{el:'.swiper-pagination',clickable:true},keyboard:{enabled:true}
+    });
+  }
+
+  // ---- Lenis smooth scroll, synced with GSAP ----
+  let lenis=null;
+  if(typeof Lenis!=='undefined' && !PDF_MODE){
+    lenis=new Lenis({duration:1.1,smoothWheel:true});
+    (function raf(t){lenis.raf(t);requestAnimationFrame(raf);})();
+    if(typeof ScrollTrigger!=='undefined') lenis.on('scroll',ScrollTrigger.update);
+  }
+
+  // ---- GSAP reveals ----
+  // Reveals animate TRANSFORM only (never opacity) so content can never get stuck hidden.
+  function animateTab(id){
+    if(typeof gsap==='undefined'||!id) return;
+    const els=document.querySelectorAll(`#${id} .shead, #${id} .fcard, #${id} .split, #${id} .step, #${id} .uirow, #${id} .videowrap, #${id} .dl, #${id} .galSwiper, #${id} .legend`);
+    if(!els.length) return;
+    gsap.killTweensOf(els);
+    gsap.fromTo(els,{y:24},{y:0,duration:.6,stagger:.05,ease:'power2.out',overwrite:'auto',clearProps:'transform'});
+  }
+  if(typeof gsap!=='undefined' && !PDF_MODE){
+    gsap.fromTo('#overview .hero > div:first-child > *',{y:22},{y:0,duration:.7,stagger:.07,ease:'power3.out',clearProps:'transform'});
+    gsap.fromTo('#overview .phone',{y:28,rotate:6},{y:0,rotate:1.2,duration:.9,ease:'power3.out',clearProps:'transform'});
+  }
+
+  // ---- wrap tab switching to add reveals + gallery init (existing listeners call showTab) ----
+  const _origShowTab=showTab;
+  showTab=function(id){
+    _origShowTab(id);
+    if(lenis) lenis.scrollTo(0,{immediate:true});
+    requestAnimationFrame(()=>{ animateTab(id); if(id==='gallery'){ initGallery(); if(_gal) _gal.update(); } });
+  };
+  if((location.hash||'').includes('gallery') && !PDF_MODE) initGallery();
+  if(!PDF_MODE) animateTab((location.hash||'').replace('#','')||'overview');
+  if(typeof lucide!=='undefined'){ try{lucide.createIcons();}catch(e){} }
+  if(PDF_MODE){ document.querySelectorAll('img').forEach(i=>i.loading='eager'); }
+</script>
+</body>
+</html>

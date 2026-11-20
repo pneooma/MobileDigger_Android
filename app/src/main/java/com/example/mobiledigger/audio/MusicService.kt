@@ -178,23 +178,27 @@ class MusicService : MediaSessionService() {
                 ACTION_REWIND -> {
                     CrashLogger.log("MusicService", "Notification action: REWIND")
                     try {
-                        val decrement = 10_000L
-                        val newPos = (currentPosition - decrement).coerceAtLeast(0L)
-                        mediaSessionCompat?.controller?.transportControls?.rewind()
-                        audioManager?.seekTo(newPos)
+                        // Seek the REAL player via the ViewModel's ACTION_SEEK receiver —
+                        // this service's audioManager plays nothing, so seeking it was a no-op.
+                        val newPos = (currentPosition - 10_000L).coerceAtLeast(0L)
                         currentPosition = newPos
+                        sendBroadcast(Intent("com.example.mobiledigger.ACTION_SEEK").apply {
+                            setPackage(packageName)
+                            putExtra("position", newPos)
+                        })
                         updateNotification()
                     } catch (e: Exception) { CrashLogger.log("MusicService", "REWIND failed", e) }
                 }
                 ACTION_FORWARD -> {
                     CrashLogger.log("MusicService", "Notification action: FORWARD")
                     try {
-                        val increment = 10_000L
-                        val dur = if (duration > 0) duration else (audioManager?.getDuration() ?: 0L)
-                        val newPos = (currentPosition + increment).coerceAtMost(dur)
-                        mediaSessionCompat?.controller?.transportControls?.fastForward()
-                        audioManager?.seekTo(newPos)
+                        val dur = duration
+                        val newPos = if (dur > 0) (currentPosition + 10_000L).coerceAtMost(dur) else currentPosition + 10_000L
                         currentPosition = newPos
+                        sendBroadcast(Intent("com.example.mobiledigger.ACTION_SEEK").apply {
+                            setPackage(packageName)
+                            putExtra("position", newPos)
+                        })
                         updateNotification()
                     } catch (e: Exception) { CrashLogger.log("MusicService", "FORWARD failed", e) }
                 }
@@ -274,8 +278,11 @@ class MusicService : MediaSessionService() {
         notificationManager = getSystemService(NotificationManager::class.java)
         createNotificationChannel()
 
+        // NOTE: deliberately NOT initialized. The real playback AudioManager lives in the
+        // ViewModel; initialize() here spun up a SECOND full LibVLC + FFmpegMediaPlayer +
+        // ExoPlayer stack that never played anything — pure memory/CPU waste. All uses in
+        // this service null-check or fall back to the state broadcast from the ViewModel.
         audioManager = AudioManager(this)
-        audioManager?.initialize()
 
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
@@ -406,14 +413,21 @@ class MusicService : MediaSessionService() {
                         override fun onSkipToNext() { sendBroadcast(Intent(ACTION_NEXT).apply { setPackage(packageName) }) }
                         override fun onSkipToPrevious() { sendBroadcast(Intent(ACTION_PREVIOUS).apply { setPackage(packageName) }) }
                         override fun onFastForward() {
-                            val inc = 10_000L
-                            val newPos = (currentPosition + inc).coerceAtMost(audioManager?.getDuration() ?: duration)
-                            audioManager?.seekTo(newPos); currentPosition = newPos; updatePlaybackState(); sendNowPlayingUpdate()
+                            // Seek the REAL player (ViewModel) — the service's audioManager is empty.
+                            val newPos = if (duration > 0) (currentPosition + 10_000L).coerceAtMost(duration) else currentPosition + 10_000L
+                            currentPosition = newPos
+                            sendBroadcast(Intent("com.example.mobiledigger.ACTION_SEEK").apply {
+                                setPackage(packageName); putExtra("position", newPos)
+                            })
+                            updatePlaybackState(); sendNowPlayingUpdate()
                         }
                         override fun onRewind() {
-                            val dec = 10_000L
-                            val newPos = (currentPosition - dec).coerceAtLeast(0L)
-                            audioManager?.seekTo(newPos); currentPosition = newPos; updatePlaybackState(); sendNowPlayingUpdate()
+                            val newPos = (currentPosition - 10_000L).coerceAtLeast(0L)
+                            currentPosition = newPos
+                            sendBroadcast(Intent("com.example.mobiledigger.ACTION_SEEK").apply {
+                                setPackage(packageName); putExtra("position", newPos)
+                            })
+                            updatePlaybackState(); sendNowPlayingUpdate()
                         }
                         override fun onSeekTo(pos: Long) {
                             audioManager?.seekTo(pos)
@@ -469,12 +483,15 @@ class MusicService : MediaSessionService() {
                 mediaSessionCompat?.let { MediaButtonReceiver.handleIntent(it, intent) }
             }
         } catch (_: Exception) {}
-        // SAFETY: immediately enter foreground with a lightweight notification to avoid FGS
-        // timeout — but ONLY if the media notification isn't already up, otherwise this
-        // plain notification briefly replaces the media player (a visible flash).
-        if (!isForegroundActive) {
-            try {
-                val bootstrapNotification = NotificationCompat.Builder(this, CHANNEL_ID)
+        // SAFETY: ALWAYS call startForeground() here. Every startForegroundService() from
+        // the ViewModel delivers a new onStartCommand, and Android kills the whole app
+        // (ForegroundServiceDidNotStartInTimeException) if ANY of them isn't answered by
+        // a startForeground() call — the old isForegroundActive guard skipped it when the
+        // notification was already up, which crashed the app when idle (not playing).
+        // Using the real media notification means re-posting it causes no visible flash.
+        try {
+            val fgNotification = try { createNotification() } catch (_: Exception) {
+                NotificationCompat.Builder(this, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_pig_headphones)
                     .setContentTitle("MobileDigger")
                     .setContentText("Preparing playback…")
@@ -483,12 +500,14 @@ class MusicService : MediaSessionService() {
                     .setCategory(NotificationCompat.CATEGORY_SERVICE)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .build()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(NOTIFICATION_ID, bootstrapNotification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-                } else {
-                    startForeground(NOTIFICATION_ID, bootstrapNotification)
-                }
-            } catch (_: Exception) {}
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, fgNotification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+            } else {
+                startForeground(NOTIFICATION_ID, fgNotification)
+            }
+        } catch (e: Exception) {
+            CrashLogger.log("MusicService", "startForeground in onStartCommand failed", e)
         }
         // Then post the full media notification
         createAndShowNotification()

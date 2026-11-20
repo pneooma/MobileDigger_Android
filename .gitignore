@@ -30,3 +30,5 @@ vlc-master.zip
 vlc-android-master.zip
 vlc-master-extracted
 vlc-android-extracted
+.kotlin/
+*.zip

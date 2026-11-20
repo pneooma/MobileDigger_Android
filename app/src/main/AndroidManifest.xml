@@ -27,6 +27,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round_glasses"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.MobileDigger">
         <activity
             android:name=".MainActivity"
@@ -125,6 +126,17 @@
             android:exported="false"
             android:grantUriPermissions="true"
             android:attributionTags="file_provider">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        <!-- Shares files to WhatsApp & co. with a generic MIME type so they go as
+             documents (original file, no zipping, no re-encoding). -->
+        <provider
+            android:name=".file.GenericShareProvider"
+            android:authorities="${applicationId}.genericshare"
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />

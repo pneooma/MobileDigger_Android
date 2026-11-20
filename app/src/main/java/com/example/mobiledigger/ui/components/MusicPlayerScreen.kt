@@ -12,6 +12,8 @@ import androidx.compose.foundation.background
 import androidx.compose.animation.core.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.ui.draw.scale
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
@@ -144,6 +146,7 @@ private fun formatFileSize(sizeBytes: Long): String {
 sealed class PlaylistItem {
     data class HeaderItem(val subfolder: String) : PlaylistItem()
     data class FileItem(val file: com.example.mobiledigger.model.MusicFile) : PlaylistItem()
+    data class ArchiveRowItem(val archive: com.example.mobiledigger.file.archives.ArchiveItem) : PlaylistItem()
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class) // Combined annotations
@@ -814,7 +817,14 @@ fun MusicPlayerScreen(
         ) { uri ->
             uri?.let { viewModel.selectDestinationFolder(it) }
         }
-        val hasSourceFolder = musicFiles.isNotEmpty() // This can be false
+        val archiveItems by viewModel.archives.collectAsState()
+        val unpackProgress by viewModel.unpackProgress.collectAsState()
+        val unpackPending by viewModel.unpackPending.collectAsState()
+        val unpackDone by viewModel.unpackDone.collectAsState()
+        // Archive contents popup (preview + pick files + keep/delete)
+        var openArchive by remember { mutableStateOf<com.example.mobiledigger.file.archives.ArchiveItem?>(null) }
+        // Archives count as "something loaded": a folder holding only archives must not fall back to the welcome page
+        val hasSourceFolder = musicFiles.isNotEmpty() || archiveItems.isNotEmpty()
         val hasDestinationFolder = viewModel.destinationFolder.collectAsState().value != null // This can be false
         val bothFoldersSelected = hasSourceFolder && hasDestinationFolder
 
@@ -825,6 +835,128 @@ fun MusicPlayerScreen(
                 playedButNotActioned.count { it != currentUri }
             } else {
                 playedButNotActioned.size
+            }
+        }
+
+        // Network drives (SMB / WebDAV / MobileDigger server)
+        var showDrivesDialog by remember { mutableStateOf(false) }
+        val savedDrives by viewModel.drives.collectAsState()
+        val activeDriveId by viewModel.activeDriveId.collectAsState()
+        val activeDrive = savedDrives.firstOrNull { it.id == activeDriveId }
+        LaunchedEffect(Unit) { viewModel.refreshDrives() }
+        if (showDrivesDialog) {
+            com.example.mobiledigger.ui.screens.NetworkDrivesDialog(viewModel) { showDrivesDialog = false }
+        }
+
+        // Permanent-deletion progress bar (rejected playlist cleanup) + subtle done flash
+        val isDeletingFiles by viewModel.isDeletingFiles.collectAsState()
+        val deletionProgress by viewModel.deletionProgress.collectAsState()
+        var showDeleteDone by remember { mutableStateOf(false) }
+        LaunchedEffect(isDeletingFiles) {
+            if (!isDeletingFiles && deletionProgress >= 1f) {
+                showDeleteDone = true
+                kotlinx.coroutines.delay(2200)
+                showDeleteDone = false
+            }
+        }
+        AnimatedVisibility(
+            visible = isDeletingFiles || showDeleteDone,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDeletingFiles)
+                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f)
+                    else Color(0xFF2E7D32).copy(alpha = 0.25f)
+                )
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                ) {
+                    if (isDeletingFiles) {
+                        Text("🗑 Deleting rejected files… ${(deletionProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(10.dp))
+                        val animProg by animateFloatAsState(deletionProgress, label = "delProg")
+                        LinearProgressIndicator(
+                            progress = { animProg },
+                            modifier = Modifier.weight(1f).height(5.dp),
+                            color = MaterialTheme.colorScheme.error,
+                            trackColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                        )
+                    } else {
+                        Text("✓ All rejected files deleted",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                    }
+                }
+            }
+        }
+
+        openArchive?.let { a ->
+            val ro = a.driveId != null && savedDrives.any {
+                it.id == a.driveId && it.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && it.writeShare.isBlank()
+            }
+            ArchiveContentsDialog(
+                archive = a,
+                readOnly = ro,
+                loader = { viewModel.listArchive(a) },
+                onExtract = { include, deleteAfter -> viewModel.unpackArchive(a, include, deleteAfter); openArchive = null },
+                onDismiss = { openArchive = null }
+            )
+        }
+
+        // Archive unpacking: same slim banner as the rejected-files deletion, so the list stays usable
+        AnimatedVisibility(
+            visible = unpackProgress != null || unpackDone != null,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            val up = unpackProgress
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (up != null) Color(0xFFF59E0B).copy(alpha = 0.22f) else Color(0xFF2E7D32).copy(alpha = 0.25f)
+                )
+            ) {
+                if (up != null) {
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "📦 Unpacking ${up.name}",
+                                style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("${(up.fraction * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        val animUnpack by animateFloatAsState(up.fraction, label = "unpackProg")
+                        LinearProgressIndicator(
+                            progress = { animUnpack },
+                            modifier = Modifier.fillMaxWidth().height(5.dp),
+                            color = Color(0xFFF59E0B),
+                            trackColor = Color(0xFFF59E0B).copy(alpha = 0.2f)
+                        )
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            up.step + if (up.queued > 0) "  ·  ${up.queued} more queued" else "",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                } else {
+                    Text(
+                        unpackDone ?: "", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2E7D32), maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                    )
+                }
             }
         }
 
@@ -855,7 +987,8 @@ fun MusicPlayerScreen(
 
 
         // Header row: [Logo] [Reject All] [Player] [Playlist]
-        if (musicFiles.isNotEmpty() && !isLoading) {
+        // (also when only archives are loaded, so the app stays controllable)
+        if (hasSourceFolder && !isLoading) {
             val labelStyle = MaterialTheme.typography.labelSmall
             var showBulkSendDialog by remember { mutableStateOf(false) }
             val hdrBtnHeight = 29.dp
@@ -993,6 +1126,11 @@ fun MusicPlayerScreen(
                         DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossy Only (MP3, AAC…)"); if (lossyOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLossyOnly() })
                         HorizontalDivider()
                         DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly(); if (lossyOnly) viewModel.toggleLossyOnly() })
+                        DropdownMenuItem(
+                            text = { Text(if (activeDrive != null) "Network drive: ${activeDrive.name}" else "Network drives…") },
+                            leadingIcon = { Icon(Icons.Default.Router, contentDescription = null) },
+                            onClick = { filterMenuExpanded = false; showDrivesDialog = true }
+                        )
                     }
                 }
                 ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })
@@ -1321,208 +1459,38 @@ fun MusicPlayerScreen(
                     )
                 }
             }
-        } else if (!hasSourceFolder) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { folderLauncher.launch(null) }
-                    .padding(horizontal = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                ),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Folder,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Tap to select source folder with music files",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
         }
         
             
             Spacer(modifier = Modifier.height(6.dp))
             
             // Folder selection buttons - minimize after selection
-            if (!hasSourceFolder) { // Show folder selection when no music files are loaded
-                // Full size buttons when not both selected - organized in two rows
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // First row: Source and Destination folders
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ElevatedButton(
-                        onClick = { folderLauncher.launch(null) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = if (hasSourceFolder) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (hasSourceFolder) "✓ Source" else "Source")
-                    }
-                    
-
-                    ElevatedButton(
-                        onClick = { destLauncher.launch(null) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = if (hasDestinationFolder) MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.secondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondary
-                        )
-                    ) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (hasDestinationFolder) "✓ Destination" else "Destination")
-                    }
+            if (!hasSourceFolder && !isLoading) { // Hide while loading so the hero/buttons don't stack behind the loading card
+                val recentSources by viewModel.recentSourceUris.collectAsState()
+                val recentDestinations by viewModel.recentDestinationUris.collectAsState()
+                // recentSources is a StateFlow, so this recomposes once the saved folders have loaded
+                val lastSource = remember(recentSources) { viewModel.preferences.getSourceRootUri() ?: recentSources.firstOrNull() }
+                val destName = viewModel.destinationFolder.collectAsState().value?.let { d ->
+                    d.name ?: folderLabel(d.uri.toString())
                 }
-
-                    // Second row: Rescan button
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val lastSource = viewModel.preferences.getSourceRootUri()
-                        val lastFolderName = lastSource?.let { uri ->
-                            kotlin.runCatching { android.net.Uri.parse(uri).path ?: uri }.getOrNull()?.let { path ->
-                                path.trim('/').split('/').lastOrNull() ?: path
-                            }
-                        } ?: "(none)"
-                        ElevatedButton(
-                            onClick = { viewModel.rescanSourceFolder() },
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                containerColor = Color(0xFF2E7D32),
-                                contentColor = Color.White
-                            ),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Rescan\n$lastFolderName", fontSize = 11.sp, lineHeight = 13.sp, textAlign = TextAlign.Center)
-                        }
-                    }
-                    // Recent Sources list
-                    val recentSources by viewModel.recentSourceUris.collectAsState()
-                    if (recentSources.isNotEmpty()) {
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            "Recent Sources",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                        )
-                        recentSources.take(10).forEach { uriString ->
-                            val label = kotlin.runCatching { android.net.Uri.parse(uriString).path ?: uriString }.getOrNull()?.let { p ->
-                                val parts = p.trim('/').split('/')
-                                val tail = parts.takeLast(2)
-                                if (tail.isNotEmpty()) tail.joinToString("/") else p
-                            } ?: uriString
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Folder,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(horizontal = 8.dp)
-                                )
-                                OutlinedButton(
-                                    onClick = { viewModel.setSourceFolderPreference(android.net.Uri.parse(uriString)) },
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                    modifier = Modifier.height(28.dp)
-                                ) {
-                                    Text("Load", style = MaterialTheme.typography.labelSmall)
-                                }
-                                IconButton(
-                                    onClick = { viewModel.removeRecentSource(uriString) },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = "Remove",
-                                        modifier = Modifier.size(14.dp),
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-                    }
-                }
-                }
-                    // Recent Destinations list
-                    val recentDestinations by viewModel.recentDestinationUris.collectAsState()
-                    if (recentDestinations.isNotEmpty()) {
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            "Recent Destinations",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                        )
-                        recentDestinations.take(5).forEach { uriString ->
-                            val label = kotlin.runCatching { android.net.Uri.parse(uriString).path ?: uriString }.getOrNull()?.let { p ->
-                                val parts = p.trim('/').split('/')
-                                val tail = parts.takeLast(2)
-                                if (tail.isNotEmpty()) tail.joinToString("/") else p
-                            } ?: uriString
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(text = label, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-                                OutlinedButton(
-                                    onClick = { viewModel.selectDestinationFolder(android.net.Uri.parse(uriString)) },
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                    modifier = Modifier.height(28.dp)
-                                ) { Text("Set", style = MaterialTheme.typography.labelSmall) }
-                                IconButton(onClick = { viewModel.removeRecentDestination(uriString) }, modifier = Modifier.size(28.dp)) {
-                                    Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.error)
-                                }
-                            }
-                        }
-                    }
+                WelcomePanel(
+                    lastSource = lastSource,
+                    destinationName = destName,
+                    activeDriveName = activeDrive?.name,
+                    savedDriveCount = savedDrives.size,
+                    recentSources = recentSources,
+                    recentDestinations = recentDestinations,
+                    onPickSource = { folderLauncher.launch(null) },
+                    onPickDestination = { destLauncher.launch(null) },
+                    onResume = { viewModel.resumeLastSources() },
+                    onOpenDrives = { showDrivesDialog = true },
+                    onLoadRecent = { viewModel.setSourceFolderPreference(android.net.Uri.parse(it)) },
+                    onRemoveRecent = { viewModel.removeRecentSource(it) },
+                    onSetDestination = { viewModel.selectDestinationFolder(android.net.Uri.parse(it)) },
+                    onRemoveDestination = { viewModel.removeRecentDestination(it) },
+                    sourceMode = viewModel.sourceMode.collectAsState().value,
+                    onSourceMode = { viewModel.setSourceMode(it) }
+                )
             } else {
                 // When both not selected, show full-size buttons (kept below header)
             }
@@ -1651,21 +1619,57 @@ fun MusicPlayerScreen(
 
             
             if (isLoading) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator()
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Loading music files...",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    var elapsedSec by remember { mutableStateOf(0) }
+                    LaunchedEffect(Unit) {
+                        while (true) { kotlinx.coroutines.delay(1000); elapsedSec++ }
+                    }
+                    val loadAnim = rememberInfiniteTransition(label = "load")
+                    val pulse by loadAnim.animateFloat(
+                        initialValue = 0.85f, targetValue = 1.15f,
+                        animationSpec = infiniteRepeatable(tween(600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                        label = "pulse"
+                    )
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .background(Brush.verticalGradient(listOf(GreenAccent.copy(alpha = 0.12f), Color.Transparent)))
+                                .padding(horizontal = 36.dp, vertical = 28.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(84.dp),
+                                    strokeWidth = 3.dp,
+                                    color = GreenAccent
+                                )
+                                Icon(
+                                    Icons.Default.MusicNote, contentDescription = null,
+                                    modifier = Modifier.size(38.dp).scale(pulse),
+                                    tint = GreenAccent
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Text("Loading your music…", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (elapsedSec < 1) "Scanning folders" else "Scanning folders · ${elapsedSec}s",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                            LinearProgressIndicator(
+                                modifier = Modifier.width(180.dp).height(5.dp),
+                                color = GreenAccent,
+                                trackColor = GreenAccent.copy(alpha = 0.18f)
+                            )
+                        }
+                    }
+                }
             } else {
                 val listState = rememberLazyListState()
                 // Optimized scroll detection - minimize recomposition frequency
@@ -3731,7 +3735,7 @@ fun MusicPlayerScreen(
                         }
                         
                         // Show helpful message when no files, but still allow app usage
-                        if (currentPlaylistFiles.isEmpty()) {
+                        if (currentPlaylistFiles.isEmpty() && !(currentPlaylistTab == PlaylistTab.TODO && musicFiles.isEmpty())) {
                             item {
                                 Card(
                                     modifier = Modifier
@@ -3779,175 +3783,8 @@ fun MusicPlayerScreen(
                                 }
                             }
                             
-                            // MobileDigger Instructions Card - show when app starts (no files loaded)
-                            if (musicFiles.isEmpty() && likedFiles.isEmpty() && rejectedFiles.isEmpty()) {
-                                item {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                        .height(400.dp), // Fixed height for scrollable content
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surface // Use theme background
-                                    )
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(20.dp)
-                                    ) {
-                                        Text(
-                                            text = "Must Know about MobileDigger Application",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            color = MaterialTheme.colorScheme.onSurface, // Use theme contrast text
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        
-                                        // Scrollable content
-                                        LazyColumn(
-                                            modifier = Modifier.fillMaxSize(),
-                                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            item {
-                                                Text(
-                                                    text = "GETTING STARTED:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Select Source Folder: Tap the \"Source\" button to choose where your music files are stored\n" +
-                                                            "• Select Destination Folder: Tap the \"Destination\" button to choose where sorted files will be moved\n" +
-                                                            "• Rescan Source: Use the large green \"Rescan Source\" button to load music files from your last selected source folder.",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "WORKFLOW:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Swipe left or right on the main player or miniplayer for like/dislike a song\n" +
-                                                            "• Controls like play, next, like/dislike are available in the notifications area also. The playback works in the background too\n" +
-                                                            "• Play Music: Tap any song in the playlist to start playing\n" +
-                                                            "• Like Songs: Tap the ❤️ button to move songs to your \"Liked\" playlist\n" +
-                                                            "• Reject Songs: Tap the 👎 button to move songs to your \"Rejected\" playlist\n" +
-                                                            "• Rate Songs: Use the ⭐ star rating system (1-5 stars) to rate your music\n" +
-                                                            "• This tag will be visible in the song's metadata, in the comments line\n" +
-                                                            "• Search: Use the search icon in the header to find specific songs",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "PLAYLIST NAVIGATION:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• To Do: Your main playlist with unsorted music files\n" +
-                                                            "  * Subfolder selection from the root source folder\n" +
-                                                            "• Liked: Songs you've marked as favorites\n" +
-                                                            "• Rejected: Songs you don't want to keep",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "SPECTROGRAM ANALYSIS:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Generate visual spectrograms of your music files\n" +
-                                                            "• Share spectrogram reports with detailed audio analysis",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "FILE ORGANIZATION:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Automatic file sorting into liked/rejected folders\n" +
-                                                            "• Multi-select mode for batch operations. Accessible from the \"Actions\" menu in top right corner\n" +
-                                                            "• ZIP creation for sharing liked songs",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "CUSTOMIZATION:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Adjustable waveform heights (main and mini waveforms)\n" +
-                                                            "• Multiple themes and color schemes\n" +
-                                                            "• Haptic feedback controls",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "SEARCH & FILTER:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Real-time search across all playlists\n" +
-                                                            "• Search by filename, artist, or song title\n" +
-                                                            "• Click to play a song from the search results\n" +
-                                                            "• Auto-focus search with keyboard support",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                            
-                                            item {
-                                                Text(
-                                                    text = "SHARING OPTIONS:",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface, // Theme contrast text
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "• Share liked songs as ZIP archive\n" +
-                                                            "  * This will zip and share the entire Liked Folder\n" +
-                                                            "• Export liked songs list as TXT file\n" +
-                                                            "• Share spectrogram analysis reports",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Theme text with slight transparency
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            }
+                            // (The old "Must Know" card is replaced by the welcome page.)
+
                         }
                         
                         // Conditionally display search results or current playlist files (reverted to original)
@@ -3957,19 +3794,25 @@ fun MusicPlayerScreen(
                         val groupedItems: List<PlaylistItem> = if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
                             // Group by subfolder, handle null subfolders
                             val grouped = currentPlaylistFiles.groupBy { it.subfolder }
-                            // Create flat list with headers: [Header, File, File, Header, File, ...]
+                            // Archives sit inside their own folder (To Do only); folders holding only
+                            // archives get a header too, so they no longer look empty.
+                            val archivesByFolder = if (currentPlaylistTab == PlaylistTab.TODO)
+                                archiveItems.groupBy { it.folder?.takeIf { f -> f.isNotBlank() } } else emptyMap()
+                            // Create flat list with headers: [Header, Archive, File, File, Header, ...]
                             buildList {
-                                // Files without subfolder first
+                                // Root folder first
+                                archivesByFolder[null]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
                                 grouped[null]?.let { files ->
                                     addAll(files.map { PlaylistItem.FileItem(it) })
                                 }
-                                // Then files grouped by subfolder
-                                grouped.entries
-                                    .filter { it.key != null }
-                                    .sortedBy { it.key }
-                                    .forEach { (subfolder, files) ->
-                                        add(PlaylistItem.HeaderItem(subfolder!!))
-                                        addAll(files.map { PlaylistItem.FileItem(it) })
+                                // Then each subfolder: header, its archives, its tracks
+                                (grouped.keys.filterNotNull() + archivesByFolder.keys.filterNotNull())
+                                    .distinct()
+                                    .sorted()
+                                    .forEach { subfolder ->
+                                        add(PlaylistItem.HeaderItem(subfolder))
+                                        archivesByFolder[subfolder]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
+                                        grouped[subfolder]?.let { files -> addAll(files.map { PlaylistItem.FileItem(it) }) }
                                     }
                             }
                         } else {
@@ -3984,6 +3827,7 @@ fun MusicPlayerScreen(
                                 when (item) {
                                     is PlaylistItem.HeaderItem -> "header_${item.subfolder}"
                                     is PlaylistItem.FileItem -> "${item.file.uri}_${item.file.subfolder ?: ""}"
+                                    is PlaylistItem.ArchiveRowItem -> "archive_${item.archive.uri}"
                                 }
                             }
                         ) { index, playlistItem ->
@@ -4006,8 +3850,10 @@ fun MusicPlayerScreen(
                                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            val archCount = archiveItems.count { it.folder == subName }
                                             Text(
-                                                text = "$subName  ·  ${subIndices.size} Tracks",
+                                                text = "$subName  ·  ${subIndices.size} Tracks" +
+                                                    if (archCount > 0 && currentPlaylistTab == PlaylistTab.TODO) "  ·  $archCount archive${if (archCount == 1) "" else "s"}" else "",
                                                 style = MaterialTheme.typography.titleMedium.copy(
                                                     fontWeight = FontWeight.Bold
                                                 ),
@@ -4021,6 +3867,23 @@ fun MusicPlayerScreen(
                                             )
                                         }
                                     }
+                                }
+                                is PlaylistItem.ArchiveRowItem -> {
+                                    val a = playlistItem.archive
+                                    val ro = a.driveId != null && savedDrives.any {
+                                        it.id == a.driveId && it.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && it.writeShare.isBlank()
+                                    }
+                                    ArchiveRow(
+                                        archive = a,
+                                        readOnly = ro,
+                                        state = when {
+                                            unpackProgress?.name == a.name && a.uri in unpackPending -> "Unpacking ${((unpackProgress?.fraction ?: 0f) * 100).toInt()}%"
+                                            a.uri in unpackPending -> "Queued"
+                                            else -> null
+                                        },
+                                        onOpen = { openArchive = a },
+                                        onDelete = { viewModel.deleteArchive(a) }
+                                    )
                                 }
                                 is PlaylistItem.FileItem -> {
                                     val item = playlistItem.file

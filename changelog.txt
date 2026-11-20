@@ -1995,3 +1995,67 @@ v12.22
 v12.23
 - ✅ Multi-select Reject/Like now removes the chosen rows from the list immediately, so they fade out and the list collapses (animateItem) right away — no more invisible empty gaps where the files used to be. The actual file move still happens in the background; any file that fails to move is put back into the list.
 - 📲 Version and UI label updated to 12.23
+
+v13.005 (2026-11-16) — CHECKPOINT (see CHECKPOINT-2026-11-16.md for full detail)
+- v13.001: Pi network source (stream from Pi HDD), cleartext HTTP enabled
+- v13.002: Pi folder browser; loading animation; home screen revamp; deletion progress bar; FGS crash fix
+- v13.003: Spectrogram time axis fixed (real sample rate/channels, channel-aware caps)
+- v13.004: OOM fix for large WAV spectrograms; crash-proof logger
+- v13.005: New "Crate Finder" adaptive app icon
+- Pre-13: playback bug sweep, bit-perfect-leaning audio path, 16 KB page-size compliance (libvlc 3.7.7, Kotlin 2.2.10, FFmpeg natives dropped)
+
+v13.009 (2026-11-17)
+- 🎧 MP3 spectrograms work again: removed the MP3 → temp-WAV conversion that hung on "Converting MP3 to WAV" (it buffered ~10M boxed samples and stalled in GC). All formats are now decoded straight to mono PCM by the new SpectrogramDecoder (MediaCodec for MP3/FLAC/M4A/OGG, with proper buffer timeouts and float/24/32-bit decoder output support).
+- 🟥 AIFF spectrograms fixed (were solid red): the old reader treated the whole file (headers included) as 16-bit big-endian, so 24-bit AIFFs became white noise. New real AIFF/AIFF-C parser (COMM/SSND chunks, 8/16/24/32-bit, sowt little-endian, fl32/fl64) and a proper WAV parser (incl. WAVE_FORMAT_EXTENSIBLE and float). Time axis is also correct for AIFF now (MediaExtractor couldn't read AIFF so it guessed 44.1 kHz stereo).
+- ⏱ Spectrogram now covers the first 3 minutes (180 s) of every file (was 2 min). Memory stays low: mono primitive buffer (~16 MB @ 44.1 kHz).
+- 🧹 Removed ~1,000 lines of dead/fake extraction code (synthetic "representative" samples and fake fallback spectrograms that could show made-up images).
+- ✅ Unit tests for the WAV/AIFF parser (11 formats, real ffmpeg fixtures).
+- 📲 Version 13.009
+
+v13.010 (2026-11-17)
+- 📤 WhatsApp share no longer zips: the current track is sent as the ORIGINAL file, as a WhatsApp document. New GenericShareProvider reports every shared file as application/octet-stream (WhatsApp reads the type from the provider, not the Intent — the old audio/* type made it treat tracks as media). Exact filename/extension kept; works for Pi (http) tracks too; the "WhatsApp not installed" fallback chooser now shows all apps.
+- 📲 Version 13.010
+
+v13.011 (2026-11-17)
+- 📎 WhatsApp share keeps the real extension: files arrived as ".bin" because WhatsApp maps application/octet-stream → bin. Shared files now use a generic vendor type (application/vnd.mobiledigger.file) that has no extension mapping, so WhatsApp still sends a plain document but keeps the original name (e.g. Track.aiff / Track.mp3).
+- 📲 Version 13.011
+
+v13.012 (2026-11-17)
+- 🖼 Redesigned shared spectrogram card: dark studio layout, track title + format/duration/size, chips for real sample rate / bit depth / channels / bitrate, stat tiles (frequency cutoff, bandwidth, analyzed span), spectrogram with real kHz + time gridlines, dB colour bar, dashed cutoff marker, whole-track waveform with the analyzed part highlighted. Height fits content (no more empty 2400 px canvas).
+- 📏 Honest axes: the frequency labels were hard-coded ("22k…2k, 1k, 20") on a LINEAR scale — now real linear labels from the actual top frequency, on screen and on the card. The meaningless "0…−60 dB" column became a dB colour legend. Spectrogram no longer draws above Nyquist.
+- 🔎 New: frequency-cutoff estimate (brick-wall detection, e.g. ≈16 kHz on 128 kbps MP3s) shown on screen and on the card. Real bit depth/channels from the decoder (bit depth used to be guessed from the extension).
+- 📲 Version 13.012
+
+v13.013 (2026-11-17)
+- ⏱ Spectrogram now spans exactly 3:00 (last FFT column was dropped → showed 2:59).
+- 🔤 Share card axis labels use the regular sans font (monospace looked spaced out); bottom frequency label reads "0".
+- 📲 Version 13.013
+
+v13.014 (2026-11-17)
+- 🎛 In-app spectrogram window redesigned to match the share card: dark studio panel, full track title, format/duration/size line, chips (sample rate, bit depth or lossy codec, channels, bitrate), Cutoff / Bandwidth / Analyzed tiles, spectrogram with real kHz + time gridlines, dashed cutoff marker and dB colour bar, whole-track waveform with the analyzed part highlighted, progress bar while analyzing. Share button disabled until the spectrogram is ready.
+- 🏷 Song title is always shown in full — in the app (no line limit) and on the shared card (font steps down for long names, then wraps; never cut with "…").
+- 📲 Version 13.014
+
+v13.015 – v13.019 (2026-11-17)
+- 🌐 Network drives (was "Pi"): save any number of drives — SMB shared folders (Windows/Mac/NAS/router), WebDAV (Synology, QNAP, TrueNAS, Nextcloud) and the MobileDigger/Pi server. Add/edit/remove, "Test connection" with plain-language errors, folder browser with breadcrumbs. The old Pi settings were moved over automatically.
+- 🔁 Local streaming relay (DriveProxy, 127.0.0.1): every network file plays, seeks, gets a spectrogram and shares through one http door; passwords never appear in file URIs. Side effect: the Pi password is now also sent while streaming (it used to be listing-only).
+- ✍️ Pi made read/write: "Write access" for MobileDigger servers uses the SMB share on the same machine (Pi: share "music", guest). Reading still uses the server.
+- 🗑 Rejecting a network track deletes it from the drive; if the drive can't, the app says so and the file stays.
+- 📦 Archives (.zip/.7z/.rar) are listed inside their own folders in To Do (folders with only archives no longer look empty). Unpack = extract into a folder named after the archive, next to it, then delete the archive. Delete = remove without extracting. Works on the phone and on SMB/WebDAV/Pi (with write access). RAR5 and password-protected archives give a clear message.
+- 🏠 New welcome page: hero, "Pick up where you left off", phone / network tiles, destination card, recent folders. Old "Must Know" card and "How it works" removed.
+- 🎚 "Load from: Phone · Network · Both" choice when both are set up.
+- 📱 Network drive dialog fits short screens (buttons scroll above the navigation bar).
+- ✅ Tests: SMB client against a real SMB server (list, unicode names, ranged reads, write/mkdir/delete, wrong password), archive extractor (ZIP/7z/RAR, junk files, path-escape blocked, password ZIP). Verified on the phone: WebDAV + SMB connect/browse/load, playback + seek through the relay, spectrogram (128k MP3 cutoff ≈16.8 kHz detected), unpack + delete archive on SMB, reject = delete on SMB, Pi write access test.
+
+v13.020 – v13.022 (2026-11-17)
+- 📦 Archives on the Pi now show: with Write access on, MobileDigger servers are listed through their SMB share (the library server only reports audio, so zip/rar/7z were invisible and archive-only folders looked empty). Audio still streams from the server; archives are read over SMB.
+- 👀 Archive preview popup (tap an archive or Unpack): scrollable list of everything inside, grouped by folder, with sizes; pick files (all ticked by default, "Audio only" shortcut); choose to delete or keep the archive afterwards. ZIP/7z are read in place (only the table of contents for the preview: a 30 MB zip took 258 bytes), so big archives on the Pi open instantly; extracting a subset reads only those files.
+- ⏳ Unpacking runs in the background like the rejected-files deletion: slim banner with %, current file and "N more queued"; rows show "Queued"/"Unpacking x%"; keep selecting, playing and queueing meanwhile.
+- 🎯 After unpacking, only the new folder is added to To Do (no full reload, playback keeps going); the archive row disappears (or stays, if kept).
+- 📲 Version 13.022
+
+v13.023 (2026-11-18)
+- 🎨 Spectrogram window and shared card follow the app theme (background, panels, text, accent from the selected theme, light or dark). The spectrogram heat colours stay standard; the cutoff marker stays amber.
+
+v13.024 (2026-11-20)
+- 🏠 Home button fixed: with archives in the list, Home left an empty full-screen list with no controls (the archive list wasn't cleared, so the app thought something was still loaded). Home now clears archives too and returns to the welcome page. The top row (Reject N, Hide Main Player, Show Playlists) now also shows when a folder holds only archives.

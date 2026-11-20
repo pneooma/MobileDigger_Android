@@ -1,0 +1,265 @@
+package com.example.mobiledigger.ui.components
+
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.mobiledigger.R
+
+private val Accent = Color(0xFF10B981)
+private val Night = Color(0xFF0B1117)
+
+/** Readable tail of a SAF tree URI: "primary:Music/To triage" → "Music/To triage". */
+fun folderLabel(uriString: String?): String? {
+    if (uriString.isNullOrBlank()) return null
+    val path = runCatching { android.net.Uri.parse(uriString).path }.getOrNull() ?: uriString
+    val afterColon = path.substringAfterLast(':', path)
+    return afterColon.trim('/').split('/').takeLast(2).joinToString("/").ifBlank { "Phone storage" }
+}
+
+@Composable
+fun WelcomePanel(
+    lastSource: String?,
+    destinationName: String?,
+    activeDriveName: String?,
+    savedDriveCount: Int,
+    recentSources: List<String>,
+    recentDestinations: List<String>,
+    onPickSource: () -> Unit,
+    onPickDestination: () -> Unit,
+    onResume: () -> Unit,
+    onOpenDrives: () -> Unit,
+    onLoadRecent: (String) -> Unit,
+    onRemoveRecent: (String) -> Unit,
+    onSetDestination: (String) -> Unit,
+    onRemoveDestination: (String) -> Unit,
+    sourceMode: String = "BOTH",
+    onSourceMode: (String) -> Unit = {}
+) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Hero()
+
+        // Quick resume
+        val lastLabel = folderLabel(lastSource)
+        if (lastLabel != null || activeDriveName != null) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
+                    .background(Brush.horizontalGradient(listOf(Accent, Color(0xFF0EA5A0))))
+                    .clickable(onClick = onResume)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.PlayArrow, null, tint = Color.White)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Pick up where you left off", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(
+                        listOfNotNull(
+                            lastLabel?.takeIf { sourceMode != "NETWORK" || activeDriveName == null },
+                            activeDriveName?.let { "$it (network)" }?.takeIf { sourceMode != "PHONE" || lastLabel == null }
+                        ).joinToString(" + "),
+                        color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Color.White)
+            }
+        }
+
+        // Step 1
+        StepLabel(1, "Where's your music?")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SourceTile(
+                icon = Icons.Default.PhoneAndroid, title = "On this phone", subtitle = "Pick a folder",
+                selected = false, modifier = Modifier.weight(1f), onClick = onPickSource
+            )
+            SourceTile(
+                icon = Icons.Default.Router, title = "Network drive",
+                subtitle = when {
+                    activeDriveName != null -> activeDriveName
+                    savedDriveCount > 0 -> "$savedDriveCount saved"
+                    else -> "NAS, PC or Pi"
+                },
+                selected = activeDriveName != null, modifier = Modifier.weight(1f), onClick = onOpenDrives
+            )
+        }
+
+        // Both a phone folder and a network drive are set up: let the user pick what to load
+        if (lastLabel != null && activeDriveName != null) {
+            LoadFromChooser(sourceMode, onSourceMode)
+        }
+
+        // Step 2
+        StepLabel(2, "Where do sorted tracks go?")
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
+                .border(
+                    1.dp,
+                    if (destinationName != null) Accent.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outlineVariant,
+                    RoundedCornerShape(20.dp)
+                )
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .clickable(onClick = onPickDestination)
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconBubble(if (destinationName != null) Icons.Default.CheckCircle else Icons.Default.CreateNewFolder, destinationName != null)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(destinationName ?: "Choose a folder", fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    if (destinationName != null) "Liked and Rejected folders live here" else "The app makes Liked and Rejected folders inside it",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(if (destinationName != null) "Change" else "Pick", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+        }
+
+        // Recent folders
+        if (recentSources.isNotEmpty() || recentDestinations.isNotEmpty()) {
+            Text("Recent", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp))
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow)
+            ) {
+                recentSources.take(6).forEach { uri ->
+                    RecentRow(Icons.Default.LibraryMusic, folderLabel(uri) ?: uri, "Music folder", "Load",
+                        onAction = { onLoadRecent(uri) }, onRemove = { onRemoveRecent(uri) })
+                }
+                recentDestinations.take(3).forEach { uri ->
+                    RecentRow(Icons.Default.Inventory2, folderLabel(uri) ?: uri, "Sorted tracks", "Use",
+                        onAction = { onSetDestination(uri) }, onRemove = { onRemoveDestination(uri) })
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun Hero() {
+    val t = rememberInfiniteTransition(label = "hero")
+    val glow by t.animateFloat(0.25f, 0.55f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
+    val bob by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "bob")
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
+            .background(Night)
+            .background(Brush.radialGradient(listOf(Accent.copy(alpha = glow), Color.Transparent), radius = 700f))
+            .padding(horizontal = 20.dp, vertical = 22.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(72.dp).scale(bob).clip(RoundedCornerShape(20.dp))) {
+                Image(painterResource(R.drawable.icon_crate_bg), null, Modifier.fillMaxSize().scale(1.35f))
+                Image(painterResource(R.drawable.icon_crate_fg), null, Modifier.fillMaxSize().scale(1.35f))
+            }
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text("MOBILEDIGGER", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+                Text("Let's dig.", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 34.sp)
+                Text("Listen. Keep the gems. Bin the rest.", color = Color.White.copy(alpha = 0.75f), fontSize = 14.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepLabel(n: Int, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp, top = 2.dp)) {
+        Box(Modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
+            Text("$n", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun IconBubble(icon: ImageVector, active: Boolean) {
+    Box(
+        Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+            .background(if (active) Accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.secondaryContainer),
+        contentAlignment = Alignment.Center
+    ) { Icon(icon, null, tint = if (active) Accent else MaterialTheme.colorScheme.onSecondaryContainer) }
+}
+
+@Composable
+private fun SourceTile(icon: ImageVector, title: String, subtitle: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Column(
+        modifier.clip(RoundedCornerShape(20.dp))
+            .border(if (selected) 1.5.dp else 1.dp, if (selected) Accent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .clickable(onClick = onClick)
+            .padding(14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBubble(icon, selected)
+            Spacer(Modifier.weight(1f))
+            if (selected) Icon(Icons.Default.CheckCircle, null, tint = Accent, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun RecentRow(icon: ImageVector, label: String, kind: String, action: String, onAction: () -> Unit, onRemove: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onAction).padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(kind, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        TextButton(onClick = onAction, contentPadding = PaddingValues(horizontal = 10.dp)) { Text(action) }
+        IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
+            Icon(Icons.Default.Close, "Remove from recent", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoadFromChooser(mode: String, onMode: (String) -> Unit) {
+    val options = listOf("PHONE" to "Phone", "NETWORK" to "Network", "BOTH" to "Both")
+    Column(Modifier.fillMaxWidth()) {
+        Text("Load from", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp))
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            options.forEachIndexed { i, (key, label) ->
+                SegmentedButton(
+                    selected = mode == key,
+                    onClick = { onMode(key) },
+                    shape = SegmentedButtonDefaults.itemShape(i, options.size)
+                ) { Text(label) }
+            }
+        }
+    }
+}

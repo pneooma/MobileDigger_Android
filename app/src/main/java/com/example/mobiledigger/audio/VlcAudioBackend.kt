@@ -40,10 +40,16 @@ class VlcAudioBackend(private val context: Context) {
         try {
             CrashLogger.log("VlcAudioBackend", "🔄 Initializing libVLC with minimal options...")
             
-            // Minimal VLC options for maximum compatibility
+            // Minimal VLC options tuned for audio fidelity:
+            // --no-audio-time-stretch: never apply time-stretch DSP to samples
+            // --audio-replay-gain-mode=none: no replay-gain scaling (unity gain)
+            // Software volume stays at 100 (unity) outside explicit fades, so decoded
+            // samples pass to AudioTrack unmodified. (-vvv verbose logging removed —
+            // it burned CPU on every audio buffer.)
             val options = arrayListOf(
-                "--no-video",           // Disable video processing
-                "-vvv"                  // Verbose logging for debugging
+                "--no-video",                     // Disable video processing
+                "--no-audio-time-stretch",        // No tempo/pitch DSP
+                "--audio-replay-gain-mode=none"   // No replay-gain volume scaling
             )
             
             CrashLogger.log("VlcAudioBackend", "🔄 Creating LibVLC instance...")

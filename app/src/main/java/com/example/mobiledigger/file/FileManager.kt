@@ -24,6 +24,7 @@ class FileManager(private val context: Context) {
     private var selectedFolderPath: String? = null  // For direct file access
     private val musicExtensions = setOf("mp3", "wav", "flac", "aac", "ogg", "m4a", "aif", "aiff")
     private val contentResolver: ContentResolver = context.contentResolver
+    private val preferencesManager = PreferencesManager(context)
 
     
     fun setSelectedFolder(uri: Uri) {
@@ -115,11 +116,15 @@ class FileManager(private val context: Context) {
     
     suspend fun loadMusicFiles(): List<MusicFile> = withContext(Dispatchers.IO) {
         val musicFiles = mutableListOf<MusicFile>()
+        synchronized(scanArchives) { scanArchives.clear() }
         
         try {
-            CrashLogger.log("FileManager", "Starting loadMusicFiles")
+            val mode = preferencesManager.getSourceMode()
+            CrashLogger.log("FileManager", "Starting loadMusicFiles (load from: $mode)")
             
-            if (selectedFolderPath != null) {
+            if (mode == "NETWORK") {
+                CrashLogger.log("FileManager", "Phone folder skipped: loading the network drive only")
+            } else if (selectedFolderPath != null) {
                 // Direct file system access
                 val folder = File(selectedFolderPath!!)
                 CrashLogger.log("FileManager", "Direct folder access: $selectedFolderPath, exists: ${folder.exists()}, canRead: ${folder.canRead()}")
@@ -145,12 +150,117 @@ class FileManager(private val context: Context) {
                     CrashLogger.log("FileManager", "No folder selected (neither direct nor SAF)")
                 }
             }
+
+            // Active network drive (SMB / WebDAV / MobileDigger server) — additive with local files
+            if (mode != "PHONE") try {
+                musicFiles.addAll(loadActiveDriveFiles())
+            } catch (e: Exception) {
+                CrashLogger.log("FileManager", "Network drive load failed", e)
+                lastDriveError = e.message
+            }
         } catch (e: Exception) {
             com.example.mobiledigger.util.CrashLogger.log("FileManager", "Error loading music files", e)
         }
         
-        CrashLogger.log("FileManager", "loadMusicFiles completed with ${musicFiles.size} files")
+        lastArchives = synchronized(scanArchives) { scanArchives.toList() }
+        CrashLogger.log("FileManager", "loadMusicFiles completed with ${musicFiles.size} files, ${lastArchives.size} archives")
         musicFiles
+    }
+
+    /** Archives (.zip/.rar/.7z) found by the last loadMusicFiles(). */
+    @Volatile var lastArchives: List<com.example.mobiledigger.file.archives.ArchiveItem> = emptyList()
+    private val scanArchives = mutableListOf<com.example.mobiledigger.file.archives.ArchiveItem>()
+
+    /** Set by the ViewModel: plain-language notes about network-drive actions (e.g. a failed delete). */
+    @Volatile var onDriveNotice: ((String) -> Unit)? = null
+
+    /** Last network-drive error, for the UI (null when the last load worked). */
+    @Volatile var lastDriveError: String? = null
+
+    /**
+     * Tracks (and nested archives) inside ONE freshly unpacked phone folder, for a partial
+     * To Do update instead of a full rescan. [subfolderPath] = its path relative to the source root.
+     */
+    suspend fun scanSingleFolder(
+        folderDocUri: Uri, subfolderPath: String
+    ): Pair<List<MusicFile>, List<com.example.mobiledigger.file.archives.ArchiveItem>> = withContext(Dispatchers.IO) {
+        val before = synchronized(scanArchives) { scanArchives.size }
+        val tracks = scanForMusicFiles(folderDocUri, true, subfolderPath)
+        val nested = synchronized(scanArchives) {
+            val added = scanArchives.subList(before, scanArchives.size).toList()
+            repeat(added.size) { scanArchives.removeAt(scanArchives.size - 1) }
+            added
+        }
+        tracks to nested
+    }
+
+    /** Same as [scanSingleFolder] for a folder on a saved network drive. */
+    fun listDriveFolder(
+        driveId: String, path: String
+    ): Pair<List<MusicFile>, List<com.example.mobiledigger.file.archives.ArchiveItem>> {
+        val drive = com.example.mobiledigger.file.drives.DriveStore(context).get(driveId) ?: return emptyList<MusicFile>() to emptyList()
+        com.example.mobiledigger.file.drives.DriveProxy.ensureStarted(context)
+        val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+        try {
+            val archives = mutableListOf<Pair<String, com.example.mobiledigger.file.drives.RemoteEntry>>()
+            val found = com.example.mobiledigger.file.drives.DriveClients.listAudioRecursive(client, path, archives = archives)
+            val tracks = found.map { (folder, e) ->
+                MusicFile(
+                    uri = com.example.mobiledigger.file.drives.DriveProxy.uriFor(drive.id, e.path),
+                    name = e.name, size = e.size, duration = 0L, subfolder = folder.takeIf { it.isNotEmpty() }
+                )
+            }
+            val nested = archives.map { (folder, e) ->
+                com.example.mobiledigger.file.archives.ArchiveItem(
+                    uri = com.example.mobiledigger.file.drives.DriveProxy.uriFor(drive.id, e.path),
+                    name = e.name, size = e.size, folder = folder.takeIf { it.isNotEmpty() },
+                    driveId = drive.id, drivePath = e.path, driveFolder = folder
+                )
+            }
+            return tracks to nested
+        } finally {
+            runCatching { client.close() }
+        }
+    }
+
+    /** Lists the active drive's folder (recursively) as MusicFiles served by the local DriveProxy. */
+    fun loadActiveDriveFiles(): List<MusicFile> {
+        lastDriveError = null
+        val store = com.example.mobiledigger.file.drives.DriveStore(context)
+        val drive = store.active() ?: return emptyList()
+        com.example.mobiledigger.file.drives.DriveProxy.ensureStarted(context)
+        com.example.mobiledigger.file.drives.DriveProxy.invalidate(drive.id)
+        val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+        try {
+            val archives = mutableListOf<Pair<String, com.example.mobiledigger.file.drives.RemoteEntry>>()
+            val found = com.example.mobiledigger.file.drives.DriveClients.listAudioRecursive(client, drive.folder, archives = archives)
+            synchronized(scanArchives) {
+                archives.forEach { (folder, e) ->
+                    scanArchives.add(
+                        com.example.mobiledigger.file.archives.ArchiveItem(
+                            uri = com.example.mobiledigger.file.drives.DriveProxy.uriFor(drive.id, e.path),
+                            name = e.name, size = e.size, folder = folder.takeIf { it.isNotEmpty() },
+                            driveId = drive.id, drivePath = e.path, driveFolder = folder
+                        )
+                    )
+                }
+            }
+            CrashLogger.log("FileManager", "Loaded ${found.size} files from drive '${drive.name}' (${drive.type})")
+            return found.map { (folder, entry) ->
+                MusicFile(
+                    uri = com.example.mobiledigger.file.drives.DriveProxy.uriFor(drive.id, entry.path),
+                    name = entry.name,
+                    size = entry.size,
+                    duration = 0L,
+                    subfolder = folder.takeIf { it.isNotEmpty() }
+                )
+            }
+        } catch (e: Exception) {
+            lastDriveError = e.message
+            throw e
+        } finally {
+            runCatching { client.close() }
+        }
     }
 
     // Read-only listing of a user-picked cloud/local folder without changing current source
@@ -225,6 +335,20 @@ class FileManager(private val context: Context) {
 
                     // Check both file extension and MIME type for audio files
                     val extension = displayName.substringAfterLast('.', "").lowercase()
+                    if (isSource && extension in com.example.mobiledigger.file.drives.DriveClients.ARCHIVE_EXTENSIONS) {
+                        val size = runCatching {
+                            cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE))
+                        }.getOrDefault(0L)
+                        synchronized(scanArchives) {
+                            scanArchives.add(
+                                com.example.mobiledigger.file.archives.ArchiveItem(
+                                    uri = childUri, name = displayName, size = size,
+                                    folder = subfolderPath, parentDocUri = directoryUri
+                                )
+                            )
+                        }
+                        continue
+                    }
                     val isAudioByExtension = extension in musicExtensions
                     val isAudioByMimeType = mimeType?.startsWith("audio/") == true
                     val isAiffMimeType = mimeType == "audio/aiff" || mimeType == "audio/x-aiff" || mimeType?.contains("aiff") == true
@@ -371,8 +495,44 @@ class FileManager(private val context: Context) {
         return lowered.contains(".trashed") || lowered.startsWith('.') || lowered.startsWith("._") || lowered.contains("/.trash")
     }
     
+    /**
+     * Rejecting a track that lives on a network drive deletes it from the drive.
+     * If the drive refuses (read-only Pi server, permissions, offline) the user is told and the
+     * file stays on the drive; it still leaves the To Do list.
+     */
+    private fun deleteFromDrive(musicFile: MusicFile, driveId: String, path: String) {
+        val drive = com.example.mobiledigger.file.drives.DriveStore(context).get(driveId)
+        if (drive == null) {
+            onDriveNotice?.invoke("${musicFile.name} wasn't deleted: its network drive is no longer saved.")
+            return
+        }
+        val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+        try {
+            client.delete(path)
+            CrashLogger.log("FileManager", "Deleted ${musicFile.name} from drive '${drive.name}'")
+            onDriveNotice?.invoke("Deleted ${musicFile.name} from ${drive.name}")
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Could not delete ${musicFile.name} from '${drive.name}'", e)
+            onDriveNotice?.invoke("Couldn't delete ${musicFile.name} from ${drive.name}. ${e.message ?: ""} It's still on the drive.".trim())
+        } finally {
+            runCatching { client.close() }
+        }
+    }
+
     suspend fun sortFile(musicFile: MusicFile, action: SortAction): Boolean {
         return withContext(Dispatchers.IO) {
+            // Remote (Pi) files live on the server — no filesystem move is possible.
+            // Report success so the UI playlists still update.
+            val scheme = musicFile.uri.scheme
+            com.example.mobiledigger.file.drives.DriveProxy.parse(musicFile.uri)?.let { (driveId, path) ->
+                if (action == SortAction.DISLIKE) deleteFromDrive(musicFile, driveId, path)
+                // Liking a network track keeps it where it is on the drive.
+                return@withContext true
+            }
+            if (scheme == "http" || scheme == "https") {
+                CrashLogger.log("FileManager", "Skipping filesystem sort for remote file: ${musicFile.name}")
+                return@withContext true
+            }
             try {
                 CrashLogger.log("FileManager", "🔍 Starting sort operation for: ${musicFile.name} with action: $action")
                 CrashLogger.log("FileManager", "🔍 File URI: ${musicFile.uri}")
@@ -794,6 +954,11 @@ class FileManager(private val context: Context) {
 
             var allSucceeded = true
             files.forEach { musicFile ->
+                // Remote (Pi) files can't be moved on the local filesystem — skip.
+                if (musicFile.uri.scheme == "http" || musicFile.uri.scheme == "https") {
+                    CrashLogger.log("FileManager", "Skipping subfolder move for remote file: ${musicFile.name}")
+                    return@forEach
+                }
                 val sourceFile = DocumentFile.fromSingleUri(context, musicFile.uri)
                 if (sourceFile == null || !sourceFile.exists()) {
                     allSucceeded = false
@@ -851,6 +1016,12 @@ class FileManager(private val context: Context) {
             val dot = oldName.lastIndexOf('.')
             val ext = if (dot > 0) oldName.substring(dot) else ""
             val newName = if (ext.isNotEmpty()) "$newBaseName$ext" else newBaseName
+
+            // Remote (Pi) files can't be renamed from the app.
+            if (musicFile.uri.scheme == "http" || musicFile.uri.scheme == "https") {
+                CrashLogger.log("FileManager", "Skipping rename for remote file: ${musicFile.name}")
+                return@withContext null
+            }
 
             return@withContext if (musicFile.uri.scheme == "file") {
                 val oldFile = java.io.File(musicFile.uri.path ?: return@withContext null)

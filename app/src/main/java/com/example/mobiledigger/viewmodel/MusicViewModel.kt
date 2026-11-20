@@ -25,6 +25,7 @@ import com.example.mobiledigger.file.FileManager
 import com.example.mobiledigger.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -473,6 +474,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     val playedButNotActioned: StateFlow<Set<Uri>> = _playedButNotActioned.asStateFlow()
     
     init {
+        // Plain-language notes from network-drive actions (e.g. a delete the drive refused)
+        fileManager.onDriveNotice = { msg -> _errorMessage.value = msg }
         try {
             // Initialize crash logger
             CrashLogger.setDestinationFolder(application, null) // Will be set when destination is selected
@@ -593,7 +596,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         is FileOperation.Move -> {
                             CrashLogger.log("FileOperationWorker", "Processing move: ${operation.file.name} -> ${operation.action}")
                             
-                            if (!fileManager.isDestinationSelected()) {
+                            if (!fileManager.isDestinationSelected() && !com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(operation.file.uri)) {
                                 CrashLogger.log("FileOperationWorker", "No destination folder selected, skipping move")
                                 continue
                             }
@@ -699,6 +702,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
     
     fun selectFolder(uri: Uri) {
+        // Picking a phone folder while set to "network only" means: show me this folder.
+        if (preferences.getSourceMode() == "NETWORK") setSourceMode("PHONE")
         viewModelScope.launch {
             try {
                 _isLoading.value = true
@@ -731,6 +736,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "FileManager.loadMusicFiles completed with ${files.size} files")
                 
                 _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
+                _archives.value = fileManager.lastArchives
                 CrashLogger.log("MusicViewModel", "Updated musicFiles state")
                 
                 // Skip duration extraction to improve performance
@@ -850,6 +856,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _musicFiles.value = emptyList()
                 _likedFiles.value = emptyList()
                 _rejectedFiles.value = emptyList()
+                // Archives count as "something loaded" on the main screen: if they stay, the
+                // welcome page never comes back and the empty list fills the screen.
+                _archives.value = emptyList()
+                _unpackDone.value = null
                 _currentIndex.value = 0
                 _currentPlaylistTab.value = PlaylistTab.TODO
                 
@@ -1196,7 +1206,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         viewModelScope.launch(Dispatchers.Main) {
             try {
                 // 1. Queue the file operation in background (non-blocking)
-                if (fileManager.isDestinationSelected()) {
+                if (fileManager.isDestinationSelected() || com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(fileToSort.uri)) {
                     fileOperationChannel.send(FileOperation.Move(fileToSort, action))
                     CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
                 } else {
@@ -1249,7 +1259,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         // Remove from played-but-not-actioned when action is taken
         _playedButNotActioned.value = _playedButNotActioned.value - file.uri
         
-        if (!fileManager.isDestinationSelected()) {
+        if (!fileManager.isDestinationSelected() && !com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(file.uri)) {
             _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting." // More specific message
             CrashLogger.log("MusicViewModel", "❌ No destination folder selected")
             return
@@ -1394,7 +1404,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             fileOperationMutex.withLock {
                 try {
                     // Queue the file operation in background (non-blocking)
-                    if (fileManager.isDestinationSelected()) {
+                    if (fileManager.isDestinationSelected() || com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(fileToSort.uri)) {
                         fileOperationChannel.send(FileOperation.Move(fileToSort, action))
                         CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
                     } else {
@@ -2031,6 +2041,271 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
     
     // Method to rescan the current source folder
+    // ----- Network drives (SMB / WebDAV / MobileDigger server) -----
+    private val driveStore by lazy { com.example.mobiledigger.file.drives.DriveStore(context) }
+    private val _drives = MutableStateFlow<List<com.example.mobiledigger.file.drives.NetworkDrive>>(emptyList())
+    val drives: StateFlow<List<com.example.mobiledigger.file.drives.NetworkDrive>> = _drives.asStateFlow()
+    private val _activeDriveId = MutableStateFlow<String?>(null)
+    val activeDriveId: StateFlow<String?> = _activeDriveId.asStateFlow()
+
+    data class DriveBrowseState(
+        val driveId: String? = null,
+        val path: String = "",
+        val dirs: List<com.example.mobiledigger.file.drives.RemoteEntry> = emptyList(),
+        val audioCount: Int = 0,
+        val loading: Boolean = false,
+        val error: String? = null
+    )
+    private val _driveBrowse = MutableStateFlow(DriveBrowseState())
+    val driveBrowse: StateFlow<DriveBrowseState> = _driveBrowse.asStateFlow()
+
+    fun refreshDrives() {
+        _drives.value = driveStore.all()
+        _activeDriveId.value = driveStore.activeId()
+    }
+
+    fun saveDrive(drive: com.example.mobiledigger.file.drives.NetworkDrive) {
+        driveStore.save(drive)
+        com.example.mobiledigger.file.drives.DriveProxy.invalidate(drive.id)
+        refreshDrives()
+    }
+
+    fun deleteDrive(id: String) {
+        val wasActive = driveStore.activeId() == id
+        driveStore.delete(id)
+        com.example.mobiledigger.file.drives.DriveProxy.invalidate(id)
+        refreshDrives()
+        if (wasActive) dropNetworkFiles()
+    }
+
+    /** Tries to list the drive's top folder. Returns null on success, or a readable error. */
+    suspend fun testDrive(drive: com.example.mobiledigger.file.drives.NetworkDrive): String? =
+        withContext(Dispatchers.IO) {
+            val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+            try {
+                client.list("")
+                if (drive.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && drive.writeShare.isNotBlank()) {
+                    // Check the SMB share used for writing, too
+                    val host = runCatching { java.net.URI(if ("://" in drive.address) drive.address else "http://${drive.address}").host }.getOrNull()
+                        ?: drive.address.substringBefore(':')
+                    val smb = com.example.mobiledigger.file.drives.SmbDriveClient(
+                        drive.copy(type = com.example.mobiledigger.file.drives.DriveType.SMB, address = host,
+                            share = drive.writeShare, username = drive.writeUser, password = drive.writePassword)
+                    )
+                    try { smb.list("") } catch (e: Exception) {
+                        return@withContext "The server works, but write access failed: ${e.message}"
+                    } finally { runCatching { smb.close() } }
+                }
+                null
+            } catch (e: Exception) { e.message ?: "Couldn't connect" }
+            finally { runCatching { client.close() } }
+        }
+
+    private var browseClient: Pair<com.example.mobiledigger.file.drives.NetworkDrive, com.example.mobiledigger.file.drives.DriveClient>? = null
+
+    /** One folder level of [drive] for the folder picker. */
+    fun browseDrive(drive: com.example.mobiledigger.file.drives.NetworkDrive, path: String) {
+        _driveBrowse.value = _driveBrowse.value.copy(driveId = drive.id, loading = true, error = null)
+        viewModelScope.launch(Dispatchers.IO) {
+            val client = browseClient?.takeIf { it.first == drive }?.second ?: run {
+                browseClient?.second?.let { runCatching { it.close() } }
+                com.example.mobiledigger.file.drives.DriveClients.create(drive).also { browseClient = drive to it }
+            }
+            _driveBrowse.value = try {
+                val entries = client.list(path)
+                DriveBrowseState(
+                    driveId = drive.id,
+                    path = path.trim('/'),
+                    dirs = entries.filter { it.isDir }.sortedBy { it.name.lowercase() },
+                    audioCount = entries.count { !it.isDir && com.example.mobiledigger.file.drives.DriveClients.isAudio(it.name) }
+                )
+            } catch (e: Exception) {
+                runCatching { client.close() }; browseClient = null
+                _driveBrowse.value.copy(loading = false, error = e.message ?: "Couldn't open this folder")
+            }
+        }
+    }
+
+    /** Makes [drive] the active source and loads [folder] (recursively). */
+    fun loadDrive(drive: com.example.mobiledigger.file.drives.NetworkDrive, folder: String) {
+        // Loading a drive while set to "phone only" means: show me this drive.
+        if (preferences.getSourceMode() == "PHONE") setSourceMode("NETWORK")
+        val updated = drive.copy(folder = folder.trim('/'))
+        driveStore.save(updated)
+        driveStore.setActive(updated.id)
+        com.example.mobiledigger.file.drives.DriveProxy.invalidate(updated.id)
+        refreshDrives()
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val fresh = fileManager.loadMusicFiles()
+                _musicFiles.value = fresh
+                _archives.value = fileManager.lastArchives
+                val err = fileManager.lastDriveError
+                _errorMessage.value = when {
+                    err != null -> "${updated.name}: $err"
+                    fresh.none { com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(it.uri) } ->
+                        "No music found in ${updated.name}${if (updated.folder.isNotEmpty()) "/" + updated.folder else ""}"
+                    else -> null
+                }
+                CrashLogger.log("MusicViewModel", "Drive '${updated.name}' loaded, ${fresh.size} files total")
+            } catch (e: Exception) {
+                handleError("loadDrive", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // ----- What a load includes: phone folder, network drive, or both -----
+    private val _sourceMode = MutableStateFlow(preferences.getSourceMode())
+    val sourceMode: StateFlow<String> = _sourceMode.asStateFlow()
+    fun setSourceMode(mode: String) {
+        preferences.setSourceMode(mode)
+        _sourceMode.value = mode
+    }
+
+    /** "Pick up where you left off": reloads whatever the Phone/Network/Both choice says. */
+    fun resumeLastSources() {
+        val mode = preferences.getSourceMode()
+        val hasPhone = preferences.getSourceRootUri() != null
+        val drive = driveStore.active()
+        when {
+            mode != "NETWORK" && hasPhone -> rescanSourceFolder() // also adds the drive when mode is BOTH
+            drive != null -> loadDrive(drive, drive.folder)
+            hasPhone -> rescanSourceFolder()
+        }
+    }
+
+    // ----- Archives (.zip / .rar / .7z) found in the loaded folders -----
+    private val _archives = MutableStateFlow<List<com.example.mobiledigger.file.archives.ArchiveItem>>(emptyList())
+    val archives: StateFlow<List<com.example.mobiledigger.file.archives.ArchiveItem>> = _archives.asStateFlow()
+    /** Live progress of the archive being unpacked (null when idle). */
+    data class UnpackProgress(val name: String, val fraction: Float, val step: String, val queued: Int)
+    private val _unpackProgress = MutableStateFlow<UnpackProgress?>(null)
+    val unpackProgress: StateFlow<UnpackProgress?> = _unpackProgress.asStateFlow()
+    /** Archives waiting or being unpacked (their rows show "Queued" / a percentage). */
+    private val _unpackPending = MutableStateFlow<Set<Uri>>(emptySet())
+    val unpackPending: StateFlow<Set<Uri>> = _unpackPending.asStateFlow()
+    /** Short "done" line shown in the progress banner for a moment after each archive. */
+    private val _unpackDone = MutableStateFlow<String?>(null)
+    val unpackDone: StateFlow<String?> = _unpackDone.asStateFlow()
+
+    data class UnpackRequest(
+        val item: com.example.mobiledigger.file.archives.ArchiveItem,
+        /** Entry paths to extract; null = everything. */
+        val include: Set<String>? = null,
+        val deleteArchive: Boolean = true
+    )
+    private val unpackQueue = kotlinx.coroutines.channels.Channel<UnpackRequest>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+
+    /** Contents of an archive for the preview popup (only reads its table of contents). */
+    suspend fun listArchive(item: com.example.mobiledigger.file.archives.ArchiveItem): Result<List<com.example.mobiledigger.file.archives.ArchiveEntry>> =
+        withContext(Dispatchers.IO) {
+            runCatching { com.example.mobiledigger.file.archives.ArchiveUnpacker(context).list(item) }
+        }
+
+    /** Queue one archive with the user's choices from the preview popup. */
+    fun unpackArchive(item: com.example.mobiledigger.file.archives.ArchiveItem, include: Set<String>?, deleteArchive: Boolean) {
+        if (item.uri in _unpackPending.value) return
+        _unpackPending.value = _unpackPending.value + item.uri
+        unpackQueue.trySend(UnpackRequest(item, include, deleteArchive))
+        if (unpackWorker == null) unpackWorker = viewModelScope.launch(Dispatchers.IO) { runUnpackQueue() }
+    }
+    private var unpackWorker: kotlinx.coroutines.Job? = null
+
+    /**
+     * Queues archives for unpacking. They're done one at a time in the background while the
+     * user keeps working; after each one only that folder is added to To Do (no full reload,
+     * playback keeps going).
+     */
+    fun unpackArchives(items: List<com.example.mobiledigger.file.archives.ArchiveItem>) {
+        val fresh = items.filter { it.uri !in _unpackPending.value }
+        if (fresh.isEmpty()) return
+        _unpackPending.value = _unpackPending.value + fresh.map { it.uri }
+        fresh.forEach { unpackQueue.trySend(UnpackRequest(it)) }
+        if (unpackWorker == null) unpackWorker = viewModelScope.launch(Dispatchers.IO) { runUnpackQueue() }
+    }
+
+    /** Deletes an archive without unpacking it (phone folder or writable network drive). */
+    fun deleteArchive(item: com.example.mobiledigger.file.archives.ArchiveItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val problem: String? = try {
+                if (item.isRemote) {
+                    val drive = driveStore.get(item.driveId) ?: throw Exception("its network drive is no longer saved")
+                    val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+                    try { client.delete(item.drivePath!!) } finally { runCatching { client.close() } }
+                } else {
+                    if (!android.provider.DocumentsContract.deleteDocument(context.contentResolver, item.uri)) throw Exception("the phone refused")
+                }
+                null
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Delete archive failed: ${item.name}", e)
+                e.message ?: "unknown error"
+            }
+            if (problem == null) {
+                _archives.value = _archives.value.filterNot { it.uri == item.uri }
+                _errorMessage.value = "Deleted ${item.name}"
+            } else {
+                _errorMessage.value = "Couldn't delete ${item.name}: $problem"
+            }
+        }
+    }
+
+    /** Lives as long as the ViewModel; handles queued archives one by one. */
+    private suspend fun runUnpackQueue() {
+        val unpacker = com.example.mobiledigger.file.archives.ArchiveUnpacker(context)
+        for (req in unpackQueue) {
+            val item = req.item
+            val queuedAfter = (_unpackPending.value.size - 1).coerceAtLeast(0)
+            _unpackProgress.value = UnpackProgress(item.name, 0f, "Starting", queuedAfter)
+            try {
+                val out = unpacker.unpack(item, req.include, req.deleteArchive) { f, step ->
+                    _unpackProgress.value = UnpackProgress(item.name, f, step, (_unpackPending.value.size - 1).coerceAtLeast(0))
+                }
+                // Partial update: just the new folder
+                val (tracks, nested) = if (item.isRemote) fileManager.listDriveFolder(item.driveId!!, out.newFolderPath)
+                    else out.newFolderUri?.let { fileManager.scanSingleFolder(it, out.newFolderPath) } ?: (emptyList<com.example.mobiledigger.model.MusicFile>() to emptyList())
+                val known = _musicFiles.value.map { it.uri }.toHashSet()
+                val newTracks = tracks.filter { it.uri !in known }.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
+                withContext(Dispatchers.Main) {
+                    _musicFiles.value = _musicFiles.value + newTracks // appended: indices of what's playing stay valid
+                    _archives.value = _archives.value.filterNot { out.archiveDeleted && it.uri == item.uri } +
+                        nested.filterNot { n -> _archives.value.any { it.uri == n.uri } }
+                }
+                _unpackDone.value = "✓ ${item.name}: ${newTracks.size} track${if (newTracks.size == 1) "" else "s"} added to “${out.folderName}”"
+                if (req.deleteArchive && !out.archiveDeleted) _errorMessage.value = "${item.name} was unpacked, but the archive couldn't be deleted (${out.deleteProblem})."
+                CrashLogger.log("MusicViewModel", "Unpacked ${item.name}: ${out.files} files, ${newTracks.size} new tracks in '${out.newFolderPath}'")
+            } catch (e: Exception) {
+                CrashLogger.log("MusicViewModel", "Unpack failed: ${item.name}", e)
+                _errorMessage.value = "${item.name}: ${e.message ?: "couldn't be unpacked"}"
+            } finally {
+                _unpackPending.value = _unpackPending.value - item.uri
+            }
+            if (_unpackPending.value.isEmpty()) {
+                _unpackProgress.value = null
+                val shown = _unpackDone.value
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(2500)
+                    if (_unpackProgress.value == null && _unpackDone.value == shown) _unpackDone.value = null
+                }
+            }
+        }
+    }
+
+    /** Stops using any network drive as a source (the saved drives stay). */
+    fun disconnectDrive() {
+        driveStore.setActive(null)
+        refreshDrives()
+        dropNetworkFiles()
+    }
+
+    private fun dropNetworkFiles() {
+        _musicFiles.value = _musicFiles.value.filterNot { com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(it.uri) }
+        _archives.value = _archives.value.filterNot { it.isRemote }
+        CrashLogger.log("MusicViewModel", "Network drive source cleared")
+    }
+
     fun rescanSourceFolder() {
         val savedUri = preferences.getSourceRootUri()
         if (savedUri != null) {
@@ -2137,73 +2412,81 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
 
 
+    /**
+     * Shares the current track to WhatsApp as a plain document — the ORIGINAL file, no zip.
+     * The file is copied (keeping its exact name) into cache/shared_music and exposed via
+     * GenericShareProvider, which reports application/octet-stream so WhatsApp sends it as
+     * a document instead of treating it as audio media.
+     */
     fun shareToWhatsApp() {
         val currentFile = _currentPlayingFile.value
-        if (currentFile != null) {
-            viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    val originalName = currentFile.name
-                    CrashLogger.log("MusicViewModel", "Starting ZIP share for: $originalName")
+        if (currentFile == null) {
+            _errorMessage.value = "No song selected to share"
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val originalName = currentFile.name
+                    .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+                    .ifBlank { "track" }
+                CrashLogger.log("MusicViewModel", "Starting generic document share for: $originalName")
 
-                    // 1) Prepare ZIP container in cache
-                    val cacheDir = File(context.cacheDir, "shared_zips")
-                    if (!cacheDir.exists()) cacheDir.mkdirs()
-                    val zipFileName = "${originalName.substringBeforeLast('.')}.zip"
-                    val zipFile = File(cacheDir, zipFileName)
+                // 1) Fresh per-share folder (keeps the exact filename, avoids clobbering a
+                //    copy WhatsApp may still be reading); drop older shares.
+                val shareRoot = File(context.cacheDir, "shared_music")
+                shareRoot.listFiles()?.forEach { it.deleteRecursively() }
+                val shareDir = File(shareRoot, System.currentTimeMillis().toString()).apply { mkdirs() }
+                val outFile = File(shareDir, originalName)
 
-                    // 2) Create ZIP with the original file inside
-                    ZipOutputStream(FileOutputStream(zipFile)).use { zipOut ->
-                        val entry = ZipEntry(originalName)
-                        zipOut.putNextEntry(entry)
-                        context.contentResolver.openInputStream(currentFile.uri)?.use { input ->
-                            input.copyTo(zipOut)
-                        }
-                        zipOut.closeEntry()
+                // 2) Copy the original bytes (content://, file:// or a network drive via the local DriveProxy)
+                val scheme = currentFile.uri.scheme?.lowercase()
+                val input = if (scheme == "http" || scheme == "https") {
+                    val conn = java.net.URL(currentFile.uri.toString()).openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 10_000
+                    conn.readTimeout = 30_000
+                    conn.inputStream
+                } else {
+                    context.contentResolver.openInputStream(currentFile.uri)
+                } ?: throw java.io.IOException("Cannot open $originalName")
+                input.use { inp -> FileOutputStream(outFile).use { out -> inp.copyTo(out, 1 shl 16) } }
+                CrashLogger.log("MusicViewModel", "Share copy ready: ${outFile.absolutePath} (${outFile.length()} bytes)")
+
+                // 3) URI whose ContentResolver type is application/octet-stream
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    com.example.mobiledigger.file.GenericShareProvider.authority(context.packageName),
+                    outFile
+                )
+
+                withContext(Dispatchers.Main) {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = com.example.mobiledigger.file.GenericShareProvider.GENERIC_MIME
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_TITLE, originalName)
+                        setPackage("com.whatsapp")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-                    CrashLogger.log("MusicViewModel", "ZIP created: ${zipFile.absolutePath}")
-
-                    // 3) Get URI via FileProvider
-                    val zipUri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        zipFile
-                    )
-
-                    withContext(Dispatchers.Main) {
-                        // 4) Share as a document (ZIP)
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "application/zip"
-                            putExtra(Intent.EXTRA_STREAM, zipUri)
-                            putExtra(Intent.EXTRA_SUBJECT, zipFileName)
-                            putExtra(Intent.EXTRA_TEXT, "Audio file attached: $originalName")
-                            setPackage("com.whatsapp")
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                        try {
-                            context.startActivity(shareIntent)
-                            CrashLogger.log("MusicViewModel", "WhatsApp ZIP share intent started")
-                        } catch (e: Exception) {
-                            CrashLogger.log("MusicViewModel", "WhatsApp not found, using chooser", e)
-                            val chooser = Intent.createChooser(shareIntent, "Share audio")
-                            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(chooser)
-                        }
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Failed to share: ${e.message}"
-                        CrashLogger.log("MusicViewModel", "ZIP share failed", e)
+                    try {
+                        context.startActivity(shareIntent)
+                        CrashLogger.log("MusicViewModel", "WhatsApp document share intent started")
+                    } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "WhatsApp not found, using chooser", e)
+                        shareIntent.setPackage(null)
+                        val chooser = Intent.createChooser(shareIntent, "Share audio")
+                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(chooser)
                     }
                 }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _errorMessage.value = "Failed to share: ${e.message}"
+                    CrashLogger.log("MusicViewModel", "Generic share failed", e)
+                }
             }
-        } else {
-            _errorMessage.value = "No song selected to share"
         }
     }
 
-
-    
     private fun ensureMusicServiceStarted() {
         val serviceIntent = Intent(context, MusicService::class.java)
         try {

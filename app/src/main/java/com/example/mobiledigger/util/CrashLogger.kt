@@ -87,7 +87,9 @@ object CrashLogger {
         Thread {
             val batch = drainPending()
             if (batch.isEmpty()) return@Thread
-            try { writeToInternalFile(batch) } catch (e: Exception) { android.util.Log.e("CrashLogger", "Internal write failed", e) }
+            // Throwable, not Exception: an OutOfMemoryError here previously killed the
+            // whole app from a background logging thread.
+            try { writeToInternalFile(batch) } catch (e: Throwable) { android.util.Log.e("CrashLogger", "Internal write failed", e) }
             // Disabled external writes to avoid creating files in user storage
             // try { writeToPublicDownloads(batch) } catch (e: Exception) { android.util.Log.e("CrashLogger", "Public write failed", e) }
             // try { writeToDestinationFile(batch) } catch (e: Exception) { android.util.Log.e("CrashLogger", "Destination write failed", e) }
@@ -126,11 +128,12 @@ object CrashLogger {
         try {
             logFile.appendText(batch.joinToString("\n") + "\n")
             if (logFile.length() > MAX_FILE_BYTES) {
-                // Overwrite with in-memory tail
-                val tail = synchronized(lock) { memoryLogs.joinToString("\n") + "\n" }
+                // Overwrite with a BOUNDED in-memory tail (joining everything once
+                // attempted a 93MB string and OOMed).
+                val tail = synchronized(lock) { memoryLogs.toList().takeLast(2000).joinToString("\n") + "\n" }
                 logFile.writeText(tail)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             android.util.Log.e("CrashLogger", "Failed to write to internal log file", e)
         }
     }

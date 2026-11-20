@@ -27,6 +27,10 @@ class PreferencesManager(context: Context) {
         prefs.edit().putBoolean(KEY_AUTO_CREATE_SUBFOLDERS, value).apply()
     }
 
+    /** What a load includes: "PHONE", "NETWORK" or "BOTH" (default, the old behaviour). */
+    fun getSourceMode(): String = prefs.getString("source_mode", "BOTH") ?: "BOTH"
+    fun setSourceMode(mode: String) { prefs.edit().putString("source_mode", mode).apply() }
+
     fun getSourceRootUri(): String? = prefs.getString(KEY_SOURCE_ROOT_URI, null)
     fun setSourceRootUri(uri: String?) { prefs.edit().putString(KEY_SOURCE_ROOT_URI, uri).apply() }
     

@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-         versionCode = 1223
-         versionName = "12.23"
+         versionCode = 13024
+         versionName = "13.024"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -75,12 +75,17 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.2")
     
-    // Audio processing - FFmpegMediaPlayer for AIFF support
+    // Audio processing - FFmpegMediaPlayer classes kept for the (optional) AIFF fallback.
+    // The -native artifact is intentionally NOT bundled: its .so files are not 16 KB
+    // page-aligned (Android 16 / Play Store requirement) and the project is dead.
+    // Without it FFmpegMediaPlayer construction fails gracefully and VLC handles AIFF.
     implementation("com.github.wseemann:FFmpegMediaPlayer-core:1.0.5")
-    implementation("com.github.wseemann:FFmpegMediaPlayer-native:1.0.5")
-    
-    // libVLC for robust audio playback (including AIFF)
-    implementation("org.videolan.android:libvlc-all:3.6.0")
+
+    // libVLC for robust audio playback (including AIFF). 3.7.7 ships 16 KB-aligned libs.
+    implementation("org.videolan.android:libvlc-all:3.7.7")
+
+    // Force the 16 KB-aligned native lib (older transitive versions were 4 KB-aligned)
+    implementation("androidx.graphics:graphics-path:1.0.1")
     
     // Media3 for modern media playback
     implementation("androidx.media3:media3-exoplayer:1.3.1")
@@ -99,6 +104,17 @@ dependencies {
     
     // Audio waveform processing and display
     implementation("com.github.massoudss:waveformSeekBar:5.0.2")
+
+    // Network drives: WebDAV (OkHttp: needs PROPFIND) and SMB (smbj + BouncyCastle lightweight API,
+    // because Android's stripped "BC" JCA provider lacks MD4 for NTLM).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.hierynomus:smbj:0.13.0")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+
+    // Archives in music folders: ZIP + 7z (commons-compress, xz for LZMA2) and RAR 4 (junrar)
+    implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("org.tukaani:xz:1.10")
+    implementation("com.github.junrar:junrar:7.5.5")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

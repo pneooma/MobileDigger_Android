@@ -1,5 +1,7 @@
 package com.example.mobiledigger.ui.components
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,12 +11,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,7 +46,6 @@ fun SettingsDialog(
     val settings by visualSettingsManager.settings
     var currentSettings by remember { mutableStateOf(settings) }
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("General", "Visual", "About")
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -51,73 +59,148 @@ fun SettingsDialog(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
                 .fillMaxHeight(0.88f),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Title
-                Text(
-                    "Settings",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp, 12.dp, 16.dp, 0.dp),
-                    textAlign = TextAlign.Center
-                )
-
-                // Tab row
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary
-                ) {
-                    tabs.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            text = { Text(title, fontSize = 13.sp, maxLines = 1) }
-                        )
-                    }
-                }
-
-                // Tab content
-                Column(
+                // Header: title + close
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)
                 ) {
-                    Spacer(Modifier.height(8.dp))
-
-                    when (selectedTab) {
-                        0 -> GeneralTab(currentSettings, themeManager) { currentSettings = it }
-                        1 -> VisualTab(currentSettings) { currentSettings = it }
-                        2 -> AboutTab()
+                    Icon(
+                        Icons.Default.Settings, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Settings",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-
-                    Spacer(Modifier.height(8.dp))
                 }
 
+                // Pill tabs with icons
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            RoundedCornerShape(50)
+                        )
+                        .padding(4.dp)
+                ) {
+                    PillTab("General", Icons.Default.Tune, selectedTab == 0, Modifier.weight(1f)) { selectedTab = 0 }
+                    PillTab("Visual", Icons.Default.Palette, selectedTab == 1, Modifier.weight(1f)) { selectedTab = 1 }
+                    PillTab("About", Icons.Default.Info, selectedTab == 2, Modifier.weight(1f)) { selectedTab = 2 }
+                }
+
+                // Tab content with crossfade
+                Crossfade(targetState = selectedTab, label = "settingsTab", modifier = Modifier.weight(1f)) { tab ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 14.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Spacer(Modifier.height(6.dp))
+                        when (tab) {
+                            0 -> GeneralTab(currentSettings, themeManager) { currentSettings = it }
+                            1 -> VisualTab(currentSettings) { currentSettings = it }
+                            2 -> AboutTab()
+                        }
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 // Bottom buttons
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     TextButton(onClick = { currentSettings = VisualSettings() }) {
-                        Text("Reset", fontSize = 12.sp)
+                        Text("Reset", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
                     }
                     Row {
                         TextButton(onClick = onDismiss) { Text("Cancel", fontSize = 12.sp) }
                         Spacer(Modifier.width(6.dp))
-                        Button(onClick = {
-                            visualSettingsManager.updateSettings(currentSettings)
-                            onDismiss()
-                        }) { Text("Apply", fontSize = 12.sp) }
+                        Button(
+                            onClick = {
+                                visualSettingsManager.updateSettings(currentSettings)
+                                onDismiss()
+                            },
+                            shape = RoundedCornerShape(50),
+                            contentPadding = PaddingValues(horizontal = 22.dp, vertical = 6.dp)
+                        ) { Text("Apply", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PillTab(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val bg by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.primary else Color.Transparent, label = "pillBg"
+    )
+    val fg by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "pillFg"
+    )
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .background(bg, RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(5.dp))
+        Text(label, fontSize = 12.sp, color = fg,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, maxLines = 1)
+    }
+}
+
+/** Grouped section card — gives settings the modern "grouped list" look. */
+@Composable
+private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Text(
+        title,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 6.dp, top = 10.dp, bottom = 4.dp)
+    )
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), content = content)
     }
 }
 
@@ -127,101 +210,95 @@ private fun GeneralTab(
     themeManager: ThemeManager,
     onUpdate: (VisualSettings) -> Unit
 ) {
-    // Dark Mode
-    SettingsSwitch("Dark Mode", themeManager.isDarkMode.value) {
-        themeManager.toggleDarkMode()
-    }
+    SectionCard("Appearance") {
+        SettingsSwitch("Dark Mode", themeManager.isDarkMode.value) {
+            themeManager.toggleDarkMode()
+        }
+        SettingsSwitch("Enable Theme", !themeManager.useDynamicColor.value) {
+            themeManager.toggleDynamicColor()
+        }
 
-    // Enable Theme
-    SettingsSwitch("Enable Theme", !themeManager.useDynamicColor.value) {
-        themeManager.toggleDynamicColor()
-    }
-
-    // Theme selector
-    val selectedTheme by themeManager.selectedTheme
-    var showThemePicker by remember { mutableStateOf(false) }
-    Button(
-        onClick = { showThemePicker = !showThemePicker },
-        modifier = Modifier.fillMaxWidth().height(36.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        contentPadding = PaddingValues(horizontal = 12.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(14.dp).background(selectedTheme.primary, CircleShape))
-            Spacer(Modifier.width(8.dp))
-            Text("Theme: ${selectedTheme.name}", fontSize = 13.sp)
-            Spacer(Modifier.weight(1f))
-            Text(if (showThemePicker) "▲" else "▼", fontSize = 12.sp)
+        // Theme selector
+        val selectedTheme by themeManager.selectedTheme
+        var showThemePicker by remember { mutableStateOf(false) }
+        Button(
+            onClick = { showThemePicker = !showThemePicker },
+            modifier = Modifier.fillMaxWidth().height(36.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(14.dp).background(selectedTheme.primary, CircleShape))
+                Spacer(Modifier.width(8.dp))
+                Text("Theme: ${selectedTheme.name}", fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.weight(1f))
+                Text(if (showThemePicker) "▲" else "▼", fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if (showThemePicker) {
+            Spacer(Modifier.height(4.dp))
+            val themes = themeManager.availableThemes
+            themes.chunked(3).forEach { row ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    row.forEach { theme ->
+                        val isSel = theme.name == selectedTheme.name
+                        OutlinedButton(
+                            onClick = { themeManager.selectTheme(theme.name) },
+                            modifier = Modifier.weight(1f).height(30.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                if (isSel) 2.dp else 1.dp,
+                                if (isSel) theme.primary else MaterialTheme.colorScheme.outline
+                            ),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                        ) {
+                            Box(Modifier.size(10.dp).background(theme.primary, CircleShape))
+                            Spacer(Modifier.width(4.dp))
+                            Text(theme.name, fontSize = 9.sp, maxLines = 1, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal)
+                        }
+                    }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
         }
     }
-    if (showThemePicker) {
-        val themes = themeManager.availableThemes
-        themes.chunked(3).forEach { row ->
+
+    SectionCard("Behavior") {
+        SettingsSwitch("Auto-play first track after selecting source", settings.autoPlayFirstAfterSelect) {
+            onUpdate(settings.copy(autoPlayFirstAfterSelect = it))
+        }
+        SettingsSwitch("Auto-scan last source on start", settings.autoScanLastSourceOnStart) {
+            onUpdate(settings.copy(autoScanLastSourceOnStart = it))
+        }
+        SettingsSwitch("Show toolbar icon labels", settings.showToolbarLabels) {
+            onUpdate(settings.copy(showToolbarLabels = it))
+        }
+    }
+
+    SectionCard("Font") {
+        val fontNames = appFontFamilies.keys.toList()
+        fontNames.chunked(3).forEach { rowFonts ->
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                row.forEach { theme ->
-                    val isSel = theme.name == selectedTheme.name
+                rowFonts.forEach { fontName ->
+                    val isSelected = fontName == settings.fontFamily
                     OutlinedButton(
-                        onClick = { themeManager.selectTheme(theme.name) },
+                        onClick = { onUpdate(settings.copy(fontFamily = fontName)) },
                         modifier = Modifier.weight(1f).height(30.dp),
+                        shape = RoundedCornerShape(10.dp),
                         border = androidx.compose.foundation.BorderStroke(
-                            if (isSel) 2.dp else 1.dp,
-                            if (isSel) theme.primary else MaterialTheme.colorScheme.outline
+                            if (isSelected) 2.dp else 1.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                         ),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                     ) {
-                        Box(Modifier.size(10.dp).background(theme.primary, CircleShape))
-                        Spacer(Modifier.width(4.dp))
-                        Text(theme.name, fontSize = 9.sp, maxLines = 1, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal)
+                        Text(fontName, fontSize = 9.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
                     }
                 }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                repeat(3 - rowFonts.size) { Spacer(Modifier.weight(1f)) }
             }
-        }
-    }
-
-    Spacer(Modifier.height(8.dp))
-    HorizontalDivider()
-    Spacer(Modifier.height(8.dp))
-
-    // Behavior
-    Text("Behavior", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(4.dp))
-
-    SettingsSwitch("Auto-play first track after selecting source", settings.autoPlayFirstAfterSelect) {
-        onUpdate(settings.copy(autoPlayFirstAfterSelect = it))
-    }
-    SettingsSwitch("Auto-scan last source on start", settings.autoScanLastSourceOnStart) {
-        onUpdate(settings.copy(autoScanLastSourceOnStart = it))
-    }
-    SettingsSwitch("Show toolbar icon labels", settings.showToolbarLabels) {
-        onUpdate(settings.copy(showToolbarLabels = it))
-    }
-
-    Spacer(Modifier.height(8.dp))
-    HorizontalDivider()
-    Spacer(Modifier.height(8.dp))
-
-    // Font family
-    Text("Font", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(4.dp))
-    val fontNames = appFontFamilies.keys.toList()
-    fontNames.chunked(3).forEach { rowFonts ->
-        Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            rowFonts.forEach { fontName ->
-                val isSelected = fontName == settings.fontFamily
-                OutlinedButton(
-                    onClick = { onUpdate(settings.copy(fontFamily = fontName)) },
-                    modifier = Modifier.weight(1f).height(30.dp),
-                    border = androidx.compose.foundation.BorderStroke(
-                        if (isSelected) 2.dp else 1.dp,
-                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                    ),
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                ) {
-                    Text(fontName, fontSize = 9.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
-                }
-            }
-            repeat(3 - rowFonts.size) { Spacer(Modifier.weight(1f)) }
         }
     }
 }
@@ -231,142 +308,152 @@ private fun VisualTab(
     settings: VisualSettings,
     onUpdate: (VisualSettings) -> Unit
 ) {
-    // Waveform Heights
-    Text("Waveform", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(4.dp))
-
-    CompactSlider("Main Height", settings.waveformHeight, 40f..225f) {
-        onUpdate(settings.copy(waveformHeight = it))
-    }
-    CompactSlider("Mini Height", settings.miniWaveformHeight, 30f..195f) {
-        onUpdate(settings.copy(miniWaveformHeight = it))
-    }
-    CompactSlider("Row Height", settings.rowWaveformHeight, 30f..200f) {
-        onUpdate(settings.copy(rowWaveformHeight = it))
+    SectionCard("Waveform") {
+        CompactSlider("Main Height", settings.waveformHeight, 40f..225f) {
+            onUpdate(settings.copy(waveformHeight = it))
+        }
+        CompactSlider("Mini Height", settings.miniWaveformHeight, 30f..195f) {
+            onUpdate(settings.copy(miniWaveformHeight = it))
+        }
+        CompactSlider("Row Height", settings.rowWaveformHeight, 30f..200f) {
+            onUpdate(settings.copy(rowWaveformHeight = it))
+        }
     }
 
-    Spacer(Modifier.height(12.dp))
-    HorizontalDivider()
-    Spacer(Modifier.height(8.dp))
-
-    // Waveform color (0 = Default / per-song color)
-    Text("Waveform Color", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(4.dp))
-    val waveformColorOptions = listOf(
-        "Default" to 0,
-        "Pink" to Color(0xFFFF6EC7).toArgb(),
-        "Red" to Color(0xFFE53935).toArgb(),
-        "Orange" to Color(0xFFFB8C00).toArgb(),
-        "Yellow" to Color(0xFFFDD835).toArgb(),
-        "Green" to Color(0xFF43A047).toArgb(),
-        "Cyan" to Color(0xFF00ACC1).toArgb(),
-        "Blue" to Color(0xFF1E88E5).toArgb(),
-        "Purple" to Color(0xFF8E24AA).toArgb(),
-        "White" to Color(0xFFFFFFFF).toArgb()
-    )
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        waveformColorOptions.forEach { (label, argb) ->
-            val isSelected = settings.waveformColor == argb
-            val swatchColor = if (argb == 0) MaterialTheme.colorScheme.primary else Color(argb)
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(swatchColor, CircleShape)
-                        .border(
-                            androidx.compose.foundation.BorderStroke(
-                                if (isSelected) 3.dp else 1.dp,
-                                if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
-                            ),
-                            CircleShape
-                        )
-                        .clickable { onUpdate(settings.copy(waveformColor = argb)) }
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(label, fontSize = 8.sp, maxLines = 1)
+    SectionCard("Waveform Color") {
+        val waveformColorOptions = listOf(
+            "Default" to 0,
+            "Pink" to Color(0xFFFF6EC7).toArgb(),
+            "Red" to Color(0xFFE53935).toArgb(),
+            "Orange" to Color(0xFFFB8C00).toArgb(),
+            "Yellow" to Color(0xFFFDD835).toArgb(),
+            "Green" to Color(0xFF43A047).toArgb(),
+            "Cyan" to Color(0xFF00ACC1).toArgb(),
+            "Blue" to Color(0xFF1E88E5).toArgb(),
+            "Purple" to Color(0xFF8E24AA).toArgb(),
+            "White" to Color(0xFFFFFFFF).toArgb()
+        )
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            waveformColorOptions.forEach { (label, argb) ->
+                val isSelected = settings.waveformColor == argb
+                val swatchColor = if (argb == 0) MaterialTheme.colorScheme.primary else Color(argb)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(swatchColor, CircleShape)
+                            .border(
+                                androidx.compose.foundation.BorderStroke(
+                                    if (isSelected) 3.dp else 1.dp,
+                                    if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
+                                ),
+                                CircleShape
+                            )
+                            .clickable { onUpdate(settings.copy(waveformColor = argb)) }
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(label, fontSize = 8.sp, maxLines = 1)
+                }
             }
         }
     }
 
-    Spacer(Modifier.height(12.dp))
-    HorizontalDivider()
-    Spacer(Modifier.height(8.dp))
-
-    // Animations
-    Text("Animations", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(4.dp))
-
-    SettingsSwitch("Enable Animations", settings.enableAnimations) {
-        onUpdate(settings.copy(enableAnimations = it))
-    }
-
-    // Waveform animation type
-    Text("Waveform Show/Hide Animation:", style = MaterialTheme.typography.bodySmall)
-    Spacer(Modifier.height(4.dp))
-    val animTypes = WaveformAnimationType.entries
-    val animLabels = mapOf(
-        WaveformAnimationType.EXPAND to "Expand",
-        WaveformAnimationType.SLIDE_UP to "Slide Up",
-        WaveformAnimationType.SLIDE_DOWN to "Slide Down",
-        WaveformAnimationType.FADE to "Fade",
-        WaveformAnimationType.SCALE to "Scale",
-        WaveformAnimationType.RANDOM to "Random",
-        WaveformAnimationType.NONE to "None"
-    )
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        animTypes.forEach { type ->
-            val isSelected = type == settings.waveformAnimationType
-            OutlinedButton(
-                onClick = { onUpdate(settings.copy(waveformAnimationType = type)) },
-                modifier = Modifier.height(28.dp),
-                border = androidx.compose.foundation.BorderStroke(
-                    if (isSelected) 2.dp else 1.dp,
-                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                ),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-            ) {
-                Text(
-                    animLabels[type] ?: type.name,
-                    fontSize = 10.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                )
+    SectionCard("Animations") {
+        SettingsSwitch("Enable Animations", settings.enableAnimations) {
+            onUpdate(settings.copy(enableAnimations = it))
+        }
+        Text("Waveform Show/Hide Animation", style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(4.dp))
+        val animTypes = WaveformAnimationType.entries
+        val animLabels = mapOf(
+            WaveformAnimationType.EXPAND to "Expand",
+            WaveformAnimationType.SLIDE_UP to "Slide Up",
+            WaveformAnimationType.SLIDE_DOWN to "Slide Down",
+            WaveformAnimationType.FADE to "Fade",
+            WaveformAnimationType.SCALE to "Scale",
+            WaveformAnimationType.RANDOM to "Random",
+            WaveformAnimationType.NONE to "None"
+        )
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            animTypes.forEach { type ->
+                val isSelected = type == settings.waveformAnimationType
+                OutlinedButton(
+                    onClick = { onUpdate(settings.copy(waveformAnimationType = type)) },
+                    modifier = Modifier.height(28.dp),
+                    shape = RoundedCornerShape(50),
+                    border = androidx.compose.foundation.BorderStroke(
+                        if (isSelected) 2.dp else 1.dp,
+                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        animLabels[type] ?: type.name,
+                        fontSize = 10.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
             }
+        }
+        Spacer(Modifier.height(6.dp))
+        CompactSlider("Animation Speed", settings.animationSpeed, 0.05f..3.0f) {
+            onUpdate(settings.copy(animationSpeed = it))
         }
     }
 
-    Spacer(Modifier.height(8.dp))
-
-    CompactSlider("Animation Speed", settings.animationSpeed, 0.05f..3.0f) {
-        onUpdate(settings.copy(animationSpeed = it))
-    }
-
-    Spacer(Modifier.height(12.dp))
-    HorizontalDivider()
-    Spacer(Modifier.height(8.dp))
-
-    // Mini Player
-    Text("Mini Player", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(4.dp))
-    SettingsSwitch("Enable Mini Player", settings.enableMiniPlayer) {
-        onUpdate(settings.copy(enableMiniPlayer = it))
+    SectionCard("Mini Player") {
+        SettingsSwitch("Enable Mini Player", settings.enableMiniPlayer) {
+            onUpdate(settings.copy(enableMiniPlayer = it))
+        }
     }
 }
 
 @Composable
 private fun AboutTab() {
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(12.dp))
     Text("MobileDigger", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-    Spacer(Modifier.height(8.dp))
-    Text("groovy's child", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Spacer(Modifier.height(16.dp))
-    HorizontalDivider()
-    Spacer(Modifier.height(16.dp))
-    Text("Gestures", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    Text("v${com.example.mobiledigger.BuildConfig.VERSION_NAME} · groovy's child", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.height(4.dp))
-    Text("• Swipe card left to reject", style = MaterialTheme.typography.bodySmall)
-    Text("• Swipe card right to like", style = MaterialTheme.typography.bodySmall)
-    Text("• Tap and drag waveform to seek", style = MaterialTheme.typography.bodySmall)
-    Text("• Long-press filename to rename", style = MaterialTheme.typography.bodySmall)
+
+    SectionCard("What it does") {
+        Text(
+            "Dig through your music fast: listen, like or reject, and every decision is sorted into folders for you. Made for clearing big download piles and finding the gems.",
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
+    SectionCard("Features") {
+        Text("• Plays MP3, WAV, FLAC, AAC, OGG, M4A, AIFF", style = MaterialTheme.typography.bodySmall)
+        Text("• Like / dislike triage with automatic file sorting", style = MaterialTheme.typography.bodySmall)
+        Text("• Waveform seeking and spectrogram quality check", style = MaterialTheme.typography.bodySmall)
+        Text("• Streams from a Raspberry Pi library over Wi-Fi", style = MaterialTheme.typography.bodySmall)
+        Text("• Full controls on lock screen and headphones", style = MaterialTheme.typography.bodySmall)
+        Text("• Rename, search, sort, filter and bulk actions", style = MaterialTheme.typography.bodySmall)
+    }
+
+    SectionCard("Gestures") {
+        Text("• Swipe a track left to reject, right to like", style = MaterialTheme.typography.bodySmall)
+        Text("• Tap or drag the waveform to seek", style = MaterialTheme.typography.bodySmall)
+        Text("• Long-press the filename to rename", style = MaterialTheme.typography.bodySmall)
+        Text("• Headphones: next = dislike, previous = like", style = MaterialTheme.typography.bodySmall)
+    }
+
+    SectionCard("Good to know") {
+        Text("• Pick a Source folder to dig and a Destination for the sorted results", style = MaterialTheme.typography.bodySmall)
+        Text("• Pi tracks stream in place — files never move on the Pi", style = MaterialTheme.typography.bodySmall)
+        Text("• Deleting from Rejected is permanent", style = MaterialTheme.typography.bodySmall)
+        Text("• Everything stays on your device — no accounts, no tracking", style = MaterialTheme.typography.bodySmall)
+    }
+
+    Spacer(Modifier.height(6.dp))
+    Text(
+        "Built with libVLC · Media3 · Jetpack Compose",
+        style = MaterialTheme.typography.labelSmall,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 @Composable

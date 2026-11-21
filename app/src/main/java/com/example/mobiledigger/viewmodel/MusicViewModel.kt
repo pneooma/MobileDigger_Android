@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import com.example.mobiledigger.audio.MediaLibrary
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -157,6 +159,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_PLAY_PAUSE")
                     playPause()
                 }
+                MusicService.ACTION_PLAY_ITEM -> {
+                    val tab = intent.getStringExtra(MusicService.EXTRA_TAB)
+                    val uri = intent.getStringExtra(MusicService.EXTRA_URI)
+                    if (tab != null && uri != null) playFromCar(tab, uri)
+                }
+                MusicService.ACTION_PLAY -> { if (!_isPlaying.value) playPause() else updateNotification() }
+                MusicService.ACTION_PAUSE -> { if (_isPlaying.value) playPause() else updateNotification() }
                 MusicService.ACTION_NEXT -> {
                     CrashLogger.log("MusicViewModel", "📡 BROADCAST_RECEIVER - ACTION_NEXT")
                     next()
@@ -518,6 +527,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     ensureMusicServiceStarted()
                     withContext(Dispatchers.Main) {
                         registerNotificationReceiver()
+                        publishLibraryForCar()
                     }
                     // Force notification update after service starts
                     delay(1000) // Wait 1 second for service to initialize
@@ -1456,19 +1466,56 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             return
         }
         
-        // Move each file to rejected using background queue
-        viewModelScope.launch {
-            filesToReject.forEach { file ->
-                CrashLogger.log("MusicViewModel", "Moving file to rejected: ${file.name}")
-                sortMusicFile(file, SortAction.DISLIKE)
-                delay(100) // Small delay to ensure sequential processing
+        if (!fileManager.isDestinationSelected() && filesToReject.any { !com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(it.uri) }) {
+            _errorMessage.value = "Please select a destination folder before rejecting."
+            return
+        }
+
+        // Remove ALL the rows in one go (one quick collapse, not one animation per track),
+        // then move the files in the background with a progress bar. Failures come back.
+        val rejectUris = filesToReject.map { it.uri }.toSet()
+        val playingUri = _currentPlayingFile.value?.uri
+        val remaining = _musicFiles.value.filterNot { it.uri in rejectUris }
+        _musicFiles.value = remaining
+        val newIdx = if (playingUri != null) remaining.indexOfFirst { it.uri == playingUri } else -1
+        _currentIndex.value = when {
+            newIdx != -1 -> newIdx
+            remaining.isEmpty() -> 0
+            else -> _currentIndex.value.coerceIn(0, remaining.size - 1)
+        }
+        _playedButNotActioned.value = _playedButNotActioned.value - urisToReject
+        _rejectListenedProgress.value = 0 to filesToReject.size
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val failed = mutableListOf<MusicFile>()
+            fileOperationMutex.withLock {
+                filesToReject.forEachIndexed { i, file ->
+                    val ok = try { fileManager.sortFile(file, SortAction.DISLIKE) } catch (e: Exception) {
+                        CrashLogger.log("MusicViewModel", "Reject listened failed: ${file.name}", e); false
+                    }
+                    if (!ok) failed += file
+                    _rejectListenedProgress.value = (i + 1) to filesToReject.size
+                }
             }
-            
-            // Clear the rejected URIs from the played-but-not-actioned list
-            _playedButNotActioned.value = _playedButNotActioned.value - urisToReject
-            CrashLogger.log("MusicViewModel", "Completed moving files, remaining tracked: ${_playedButNotActioned.value.size}")
+            withContext(Dispatchers.Main) {
+                if (failed.isNotEmpty()) {
+                    val cur = _musicFiles.value
+                    _musicFiles.value = cur + failed.filter { f -> cur.none { it.uri == f.uri } }
+                    _errorMessage.value = "Rejected ${filesToReject.size - failed.size}, ${failed.size} couldn't be moved."
+                } else {
+                    _errorMessage.value = "Rejected ${filesToReject.size} listened track${if (filesToReject.size == 1) "" else "s"}"
+                }
+                loadRejectedFiles()
+                CrashLogger.log("MusicViewModel", "Reject listened: ${filesToReject.size - failed.size} moved, ${failed.size} failed")
+            }
+            kotlinx.coroutines.delay(1500)
+            _rejectListenedProgress.value = null
         }
     }
+
+    /** (done, total) while "Reject listened" moves files in the background; null when idle. */
+    private val _rejectListenedProgress = MutableStateFlow<Pair<Int, Int>?>(null)
+    val rejectListenedProgress: StateFlow<Pair<Int, Int>?> = _rejectListenedProgress.asStateFlow()
 
     fun undoLastAction() {
         val last = _sortResults.value.lastOrNull() ?: return
@@ -1871,7 +1918,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
 
     
+    // Stopping the player fires a "track completed" event; it must not start the next track.
+    private var ignoreCompletionUntil = 0L
+
     private fun stopPlayback() {
+        ignoreCompletionUntil = System.currentTimeMillis() + 1000
         audioManager.stop()
         _isPlaying.value = false
         _currentPosition.value = 0L
@@ -2195,8 +2246,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         val item: com.example.mobiledigger.file.archives.ArchiveItem,
         /** Entry paths to extract; null = everything. */
         val include: Set<String>? = null,
-        val deleteArchive: Boolean = true
+        val deleteArchive: Boolean = true,
+        /** Stop "generation" when queued; a Stop bumps it so older requests are skipped. */
+        val gen: Int = 0
     )
+    @Volatile private var unpackGen = 0
+
+    /** Stops the archive being unpacked and drops everything queued. Archives stay as they were. */
+    fun stopUnpacking() {
+        if (_unpackPending.value.isEmpty()) return
+        unpackGen++
+        while (unpackQueue.tryReceive().isSuccess) { /* drain */ }
+        _unpackPending.value = emptySet()
+        _unpackProgress.value = _unpackProgress.value?.copy(step = "Stopping…")
+    }
     private val unpackQueue = kotlinx.coroutines.channels.Channel<UnpackRequest>(kotlinx.coroutines.channels.Channel.UNLIMITED)
 
     /** Contents of an archive for the preview popup (only reads its table of contents). */
@@ -2209,7 +2272,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun unpackArchive(item: com.example.mobiledigger.file.archives.ArchiveItem, include: Set<String>?, deleteArchive: Boolean) {
         if (item.uri in _unpackPending.value) return
         _unpackPending.value = _unpackPending.value + item.uri
-        unpackQueue.trySend(UnpackRequest(item, include, deleteArchive))
+        unpackQueue.trySend(UnpackRequest(item, include, deleteArchive, unpackGen))
         if (unpackWorker == null) unpackWorker = viewModelScope.launch(Dispatchers.IO) { runUnpackQueue() }
     }
     private var unpackWorker: kotlinx.coroutines.Job? = null
@@ -2223,7 +2286,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         val fresh = items.filter { it.uri !in _unpackPending.value }
         if (fresh.isEmpty()) return
         _unpackPending.value = _unpackPending.value + fresh.map { it.uri }
-        fresh.forEach { unpackQueue.trySend(UnpackRequest(it)) }
+        fresh.forEach { unpackQueue.trySend(UnpackRequest(it, gen = unpackGen)) }
         if (unpackWorker == null) unpackWorker = viewModelScope.launch(Dispatchers.IO) { runUnpackQueue() }
     }
 
@@ -2257,10 +2320,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         val unpacker = com.example.mobiledigger.file.archives.ArchiveUnpacker(context)
         for (req in unpackQueue) {
             val item = req.item
+            if (req.gen != unpackGen) continue // stopped before it started
             val queuedAfter = (_unpackPending.value.size - 1).coerceAtLeast(0)
             _unpackProgress.value = UnpackProgress(item.name, 0f, "Starting", queuedAfter)
             try {
-                val out = unpacker.unpack(item, req.include, req.deleteArchive) { f, step ->
+                val out = unpacker.unpack(item, req.include, req.deleteArchive, isCancelled = { req.gen != unpackGen }) { f, step ->
                     _unpackProgress.value = UnpackProgress(item.name, f, step, (_unpackPending.value.size - 1).coerceAtLeast(0))
                 }
                 // Partial update: just the new folder
@@ -2276,6 +2340,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _unpackDone.value = "✓ ${item.name}: ${newTracks.size} track${if (newTracks.size == 1) "" else "s"} added to “${out.folderName}”"
                 if (req.deleteArchive && !out.archiveDeleted) _errorMessage.value = "${item.name} was unpacked, but the archive couldn't be deleted (${out.deleteProblem})."
                 CrashLogger.log("MusicViewModel", "Unpacked ${item.name}: ${out.files} files, ${newTracks.size} new tracks in '${out.newFolderPath}'")
+            } catch (e: java.util.concurrent.CancellationException) {
+                CrashLogger.log("MusicViewModel", "Unpack stopped: ${item.name}")
+                _unpackDone.value = null
+                _errorMessage.value = "Unpacking stopped. ${item.name} is unchanged."
             } catch (e: Exception) {
                 CrashLogger.log("MusicViewModel", "Unpack failed: ${item.name}", e)
                 _errorMessage.value = "${item.name}: ${e.message ?: "couldn't be unpacked"}"
@@ -2488,6 +2556,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     private fun ensureMusicServiceStarted() {
+        // Starting it again on every update was pointless and, from the background, Android 12+
+        // refuses it ("Playback service failed to start" popped up while the phone was locked).
+        if (MusicService.isRunning) return
         val serviceIntent = Intent(context, MusicService::class.java)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -2498,14 +2569,45 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             CrashLogger.log("MusicViewModel", "MusicService started successfully.")
         } catch (e: Exception) {
             CrashLogger.log("MusicViewModel", "Failed to start MusicService.", e)
-            _errorMessage.value = "Playback service failed to start."
         }
     }
     
+    /** A track picked in the car's list (Bluetooth browsing / "Now playing" queue). */
+    private fun playFromCar(tabName: String, uri: String) {
+        val tab = runCatching { PlaylistTab.valueOf(tabName) }.getOrNull() ?: return
+        val list = when (tab) {
+            PlaylistTab.TODO -> _musicFiles.value
+            PlaylistTab.LIKED -> _likedFiles.value
+            PlaylistTab.REJECTED -> _rejectedFiles.value
+        }
+        val file = list.firstOrNull { it.uri.toString() == uri } ?: return
+        CrashLogger.log("MusicViewModel", "Car picked ${file.name} from $tab")
+        playFile(file.copy(sourcePlaylist = tab))
+    }
+
+    /** Keeps the car's track list (MediaLibrary) in step with the playlists. */
+    private fun publishLibraryForCar() {
+        viewModelScope.launch {
+            combine(_musicFiles, _likedFiles, _rejectedFiles, _currentPlaylistTab, _currentPlayingFile) { todo, liked, rejected, tab, playing ->
+                fun conv(l: List<MusicFile>) = l.map { MediaLibrary.Track(it.uri.toString(), it.name) }
+                Triple(
+                    mapOf(MediaLibrary.TODO to conv(todo), MediaLibrary.LIKED to conv(liked), MediaLibrary.REJECTED to conv(rejected)),
+                    tab.name,
+                    playing?.uri?.toString()
+                )
+            }
+                .debounce(400)
+                .collect { (lists, tab, cur) -> MediaLibrary.update(lists, tab, cur) }
+        }
+    }
+
     private fun registerNotificationReceiver() {
         try {
             val filter = IntentFilter().apply {
                 addAction(MusicService.ACTION_PLAY_PAUSE)
+                addAction(MusicService.ACTION_PLAY)
+                addAction(MusicService.ACTION_PLAY_ITEM)
+                addAction(MusicService.ACTION_PAUSE)
                 addAction(MusicService.ACTION_NEXT)
                 addAction(MusicService.ACTION_PREVIOUS)
                 addAction(MusicService.ACTION_LIKE)
@@ -2523,16 +2625,21 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         try {
             ensureMusicServiceStarted()
             
-            val currentFiles = when (_currentPlaylistTab.value) {
-                PlaylistTab.TODO -> _musicFiles.value
-                PlaylistTab.LIKED -> _likedFiles.value
-                PlaylistTab.REJECTED -> _rejectedFiles.value
+            // The track that is actually PLAYING — not whatever sits at the current index of the
+            // tab on screen (switching tabs or sorting used to put the wrong title on the notification).
+            val currentFile = _currentPlayingFile.value ?: run {
+                val currentFiles = when (_currentPlaylistTab.value) {
+                    PlaylistTab.TODO -> _musicFiles.value
+                    PlaylistTab.LIKED -> _likedFiles.value
+                    PlaylistTab.REJECTED -> _rejectedFiles.value
+                }
+                currentFiles.getOrNull(_currentIndex.value)
             }
-            val currentFile = currentFiles.getOrNull(_currentIndex.value)
             val title = currentFile?.name ?: "MobileDigger"
             
             val intent = Intent(MusicService.ACTION_UPDATE_NOTIFICATION).apply { setPackage(context.packageName) }
             intent.putExtra(MusicService.EXTRA_TITLE, title)
+            currentFile?.uri?.let { intent.putExtra(MusicService.EXTRA_URI, it.toString()) }
             intent.putExtra(MusicService.EXTRA_IS_PLAYING, _isPlaying.value)
             intent.putExtra(MusicService.EXTRA_CURRENT_POSITION, _currentPosition.value)
             intent.putExtra(MusicService.EXTRA_DURATION, _duration.value)
@@ -2758,16 +2865,73 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _isMultiSelectionMode.value = !_isMultiSelectionMode.value
         if (!_isMultiSelectionMode.value) {
             _selectedIndices.value = emptySet()
+            _selectedArchives.value = emptySet()
+        }
+    }
+
+    // ----- Multi-select for archives (unpack / delete in bulk) -----
+    private val _selectedArchives = MutableStateFlow<Set<Uri>>(emptySet())
+    val selectedArchives: StateFlow<Set<Uri>> = _selectedArchives.asStateFlow()
+
+    fun toggleArchiveSelection(uri: Uri) {
+        if (_selectedIndices.value.isNotEmpty()) { tracksFirstHint(); return }
+        _isMultiSelectionMode.value = true
+        val cur = _selectedArchives.value
+        _selectedArchives.value = if (uri in cur) cur - uri else cur + uri
+    }
+
+    private fun takeSelectedArchives(): List<com.example.mobiledigger.file.archives.ArchiveItem> {
+        val sel = _selectedArchives.value
+        val list = _archives.value.filter { it.uri in sel }
+        _selectedArchives.value = emptySet()
+        if (_selectedIndices.value.isEmpty()) _isMultiSelectionMode.value = false
+        return list
+    }
+
+    /** Unpacks every selected archive (all files, archive deleted afterwards). */
+    fun unpackSelectedArchives() = unpackArchives(takeSelectedArchives())
+
+    /** Deletes every selected archive without unpacking. */
+    fun deleteSelectedArchives() {
+        val list = takeSelectedArchives()
+        if (list.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            var ok = 0
+            val failed = mutableListOf<String>()
+            for (item in list) {
+                try {
+                    if (item.isRemote) {
+                        val drive = driveStore.get(item.driveId) ?: throw Exception("drive no longer saved")
+                        val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+                        try { client.delete(item.drivePath!!) } finally { runCatching { client.close() } }
+                    } else if (!android.provider.DocumentsContract.deleteDocument(context.contentResolver, item.uri)) {
+                        throw Exception("the phone refused")
+                    }
+                    ok++
+                    _archives.value = _archives.value.filterNot { it.uri == item.uri }
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Bulk delete archive failed: ${item.name}", e)
+                    failed += item.name
+                }
+            }
+            _errorMessage.value = "Deleted $ok archive${if (ok == 1) "" else "s"}" +
+                if (failed.isNotEmpty()) ". ${failed.size} couldn't be deleted: ${failed.take(3).joinToString()}" else ""
         }
     }
 
     fun enableMultiSelectionMode(index: Int) {
+        if (_selectedArchives.value.isNotEmpty()) { archivesFirstHint(); return }
         _isMultiSelectionMode.value = true
         toggleSelection(index)
     }
+
+    // Tracks and archives can't be selected together (different actions)
+    private fun archivesFirstHint() { _errorMessage.value = "You're selecting archives. Unpack, delete or clear them first." }
+    private fun tracksFirstHint() { _errorMessage.value = "You're selecting tracks. Finish or clear them first." }
     
     fun toggleSelection(index: Int) {
         if (!_isMultiSelectionMode.value) return
+        if (_selectedArchives.value.isNotEmpty()) { archivesFirstHint(); return }
         val currentSelected = _selectedIndices.value.toMutableSet()
         if (currentSelected.contains(index)) {
             currentSelected.remove(index)
@@ -2779,6 +2943,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     fun selectAll() {
         if (!_isMultiSelectionMode.value) return
+        if (_selectedArchives.value.isNotEmpty()) { archivesFirstHint(); return }
         // Select every row in the CURRENTLY DISPLAYED list (respects the active tab,
         // sort and lossless filter) — not just the raw TODO list.
         _selectedIndices.value = currentPlaylistFiles.value.indices.toSet()
@@ -2796,10 +2961,25 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun toggleSubfolderSelection(subfolderName: String) {
         val files = currentPlaylistFiles.value
         val indices = files.indices.filter { files[it].subfolder == subfolderName }.toSet()
-        if (indices.isEmpty()) return
-        _isMultiSelectionMode.value = true
-        val current = _selectedIndices.value
-        _selectedIndices.value = if (current.containsAll(indices)) current - indices else current + indices
+        // Archives in that folder are part of the folder too (To Do tab only)
+        val archUris = if (_currentPlaylistTab.value == PlaylistTab.TODO)
+            _archives.value.filter { it.folder == subfolderName }.map { it.uri }.toSet() else emptySet()
+        if (indices.isEmpty() && archUris.isEmpty()) return
+        // One kind at a time: keep selecting what's already being selected; otherwise tracks,
+        // or archives when the folder holds only archives.
+        val archiveMode = _selectedArchives.value.isNotEmpty() ||
+            (_selectedIndices.value.isEmpty() && indices.isEmpty())
+        if (archiveMode) {
+            if (archUris.isEmpty()) { archivesFirstHint(); return }
+            _isMultiSelectionMode.value = true
+            val cur = _selectedArchives.value
+            _selectedArchives.value = if (cur.containsAll(archUris)) cur - archUris else cur + archUris
+        } else {
+            if (indices.isEmpty()) { tracksFirstHint(); return }
+            _isMultiSelectionMode.value = true
+            val current = _selectedIndices.value
+            _selectedIndices.value = if (current.containsAll(indices)) current - indices else current + indices
+        }
     }
     
     fun moveSelectedFilesToSubfolder(subfolderName: String) {
@@ -3399,6 +3579,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             return
         }
         
+        if (currentTime < ignoreCompletionUntil) {
+            CrashLogger.log("MusicViewModel", "Completion after stopPlayback() ignored")
+            return
+        }
         lastCompletionTime = currentTime
         CrashLogger.log("MusicViewModel", "Track completed, playing next.")
         
@@ -3945,6 +4129,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 _errorMessage.value = null
                 
                 CrashLogger.log("MusicViewModel", "Handling external audio file: $audioUri")
+
+                // The sending app's permission can expire (e.g. WhatsApp) — don't add a dead "Unknown" row
+                val readable = withContext(Dispatchers.IO) {
+                    runCatching { context.contentResolver.openFileDescriptor(audioUri, "r")?.use { true } ?: false }.getOrDefault(false)
+                }
+                if (!readable) {
+                    _isLoading.value = false
+                    _errorMessage.value = "Couldn't open that file any more. Open it again from the app that sent it."
+                    return@launch
+                }
                 
                 // Manual-only policy: do not auto-trigger spectrogram or analysis here
                 

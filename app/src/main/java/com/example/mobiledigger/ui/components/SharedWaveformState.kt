@@ -125,6 +125,8 @@ fun rememberSharedWaveformState(
                             CrashLogger.log("WaveformGenerator", "📊 UI State - Min: $min, Max: $max, Avg: $avg")
                             CrashLogger.log("WaveformGenerator", "📊 UI State - First 10: ${samples.take(10).joinToString()}")
                             
+                            // Let the notification use it as cover art for tracks without one
+                            com.example.mobiledigger.audio.WaveformShare.put(currentFile.uri.toString(), samples)
                             withContext(Dispatchers.Main) {
                                 waveformData = samples
                                 isLoading = false

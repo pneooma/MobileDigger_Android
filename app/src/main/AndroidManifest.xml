@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -17,6 +18,10 @@
     <!-- Remove Wear OS declaration as it's causing lint issues -->
     
 
+
+    <!-- Live spectrum (Visualizer) needs RECORD_AUDIO by Android rule; nothing is recorded. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:name=".MobileDiggerApplication"
@@ -96,17 +101,16 @@
 
         
         <!-- Media session service for audio playback -->
+        <!-- Exported so the car (Bluetooth AVRCP browsing) can list tracks; onGetRoot only lets
+             Bluetooth / system / Android Auto in. -->
         <service
             android:name=".audio.MusicService"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             android:attributionTags="music_service">
             <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
-            <meta-data
-                android:name="androidx.media3.session.MediaSessionService.AUTO_START_PLAYBACK_ON_PREPARE"
-                android:value="true" />
         </service>
         
         <!-- Media button receiver for handling hardware media buttons -->
@@ -130,6 +134,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <!-- Copies/moves folders from network drives to the phone in the background -->
+        <service
+            android:name=".file.transfer.TransferService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <!-- Shares files to WhatsApp & co. with a generic MIME type so they go as
              documents (original file, no zipping, no re-encoding). -->
         <provider

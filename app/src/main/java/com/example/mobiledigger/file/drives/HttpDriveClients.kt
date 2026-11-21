@@ -81,17 +81,28 @@ class MobileDiggerServerClient(private val drive: NetworkDrive) : DriveClient {
     }
 
     /**
-     * With write access set up, list through the SMB share: the library server only reports
-     * audio files, so archives (.zip/.rar/.7z) were invisible and archive-only folders looked
-     * empty. Same library root, same relative paths. Falls back to the server if SMB fails.
+     * Folders and tracks come from the library server: it has the REAL names. Samba can't show
+     * names it considers invalid (e.g. a folder ending in a space) and invents 8.3 names like
+     * "BVFMH7~K" for them; the server knows no such path, so every track in there failed (404).
+     * The server only reports audio, so archives (.zip/.rar/.7z) are added from the SMB share
+     * when write access is set up. If the server is down, SMB is used for everything.
      */
     override fun list(path: String): List<RemoteEntry> {
-        writer?.let { smb ->
-            try { return smb.list(rel(path)) } catch (e: Exception) {
-                com.example.mobiledigger.util.CrashLogger.log("MobileDiggerServerClient", "SMB listing failed, using the server", e)
-            }
+        val smb = writer
+        val fromServer = try { serverList(path) } catch (e: Exception) {
+            if (smb == null) throw e
+            com.example.mobiledigger.util.CrashLogger.log("MobileDiggerServerClient", "Server listing failed, using SMB", e)
+            return smb.list(rel(path))
         }
-        return serverList(path)
+        if (smb == null) return fromServer
+        val archives = try {
+            smb.list(rel(path)).filter { !it.isDir && DriveClients.isArchive(it.name) }
+        } catch (e: Exception) {
+            com.example.mobiledigger.util.CrashLogger.log("MobileDiggerServerClient", "SMB archive listing failed for $path", e)
+            emptyList()
+        }
+        val known = fromServer.mapTo(HashSet()) { it.name }
+        return fromServer + archives.filter { it.name !in known }
     }
 
     private fun serverList(path: String): List<RemoteEntry> = try {
@@ -156,6 +167,7 @@ class MobileDiggerServerClient(private val drive: NetworkDrive) : DriveClient {
     )
     private fun rel(path: String) = if (path.startsWith("/library/files/")) path.removePrefix("/library/files/") else path.trim('/')
     override fun delete(path: String) = w().delete(rel(path))
+    override fun deleteFolder(path: String) = w().deleteFolder(rel(path))
     override fun mkdirs(path: String) = w().mkdirs(rel(path))
     override fun write(path: String, input: java.io.InputStream, length: Long) = w().write(rel(path), input, length)
     override fun close() { runCatching { if (drive.writeShare.isNotBlank()) writer?.close() } }
@@ -235,6 +247,14 @@ class WebDavClient(private val drive: NetworkDrive) : DriveClient {
         Http.client.newCall(req(path).delete().build()).execute().use { resp ->
             if (!resp.isSuccessful && resp.code != 404) Http.fail(resp, "Delete")
         }
+    } catch (e: Exception) { throw Http.friendly(e, drive.address) }
+
+    override fun deleteFolder(path: String) = try {
+        val url = req(path).build().url.toString().let { if (it.endsWith("/")) it else "$it/" }
+        val r = Request.Builder().url(url)
+            .apply { if (drive.username.isNotBlank()) header("Authorization", Credentials.basic(drive.username, drive.password)) }
+            .delete().build()
+        Http.client.newCall(r).execute().use { resp -> if (!resp.isSuccessful && resp.code != 404) Http.fail(resp, "Delete folder") }
     } catch (e: Exception) { throw Http.friendly(e, drive.address) }
 
     override fun mkdirs(path: String) {

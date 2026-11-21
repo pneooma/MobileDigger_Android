@@ -18,7 +18,9 @@ data class SpectrogramInfo(
     /** Frequency of a brick-wall drop (typical of lossy encoding/upsampling), or null if none. */
     val cutoffHz: Int?,
     /** Highest frequency that still has meaningful energy (≈ "bandwidth"). */
-    val bandwidthHz: Int
+    val bandwidthHz: Int,
+    /** How many seconds were asked for (the track may be shorter). */
+    val requestedSeconds: Int = 180
 )
 
 object SpectrumStats {

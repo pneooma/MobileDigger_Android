@@ -23,6 +23,8 @@ class MobileDiggerApplication : Application() {
     
     override fun onCreate() {
         super.onCreate()
+        // Restore an unfinished network-drive copy/move as "paused" (user can Continue or Abort)
+        com.example.mobiledigger.file.transfer.TransferManager.init(this)
         
         createNotificationChannels()
         // Initialize unified logging system

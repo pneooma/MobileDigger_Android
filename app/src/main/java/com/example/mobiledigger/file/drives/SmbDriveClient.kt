@@ -115,6 +115,8 @@ class SmbDriveClient(private val drive: NetworkDrive) : DriveClient {
 
     override fun delete(path: String) = retrying { sh -> sh.rm(smbPath(path)) }
 
+    override fun deleteFolder(path: String) = retrying { sh -> sh.rmdir(smbPath(path), true) }
+
     override fun mkdirs(path: String) = retrying { sh ->
         var cur = ""
         for (seg in path.trim('/').split('/').filter { it.isNotEmpty() }) {

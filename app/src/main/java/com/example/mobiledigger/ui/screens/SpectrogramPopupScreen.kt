@@ -159,7 +159,9 @@ fun SpectrogramPopupScreen(
     conversionProgress: Float = 0f,
     isGeneratingSpectrogram: Boolean = false,
     spectrogramProgress: Float = 0f,
-    spectrogramInfo: com.example.mobiledigger.audio.SpectrogramInfo? = null
+    spectrogramInfo: com.example.mobiledigger.audio.SpectrogramInfo? = null,
+    /** Re-analyse the first N seconds (longer span / whole track). */
+    onAnalyze: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     // Metadata lookup once per file (was re-run on every recomposition, on the main thread).
@@ -282,7 +284,7 @@ fun SpectrogramPopupScreen(
                     SpekTile(
                         label = "ANALYZED",
                         value = formatClock(analyzed),
-                        note = if (actualDuration > 0) "of ${formatClock(actualDuration / 1000f)}" else "max 3 min",
+                        note = if (actualDuration > 0) "of ${formatClock(actualDuration / 1000f)}" else "from the start",
                         color = SpekText,
                         modifier = Modifier.weight(1f)
                     )
@@ -316,45 +318,129 @@ fun SpectrogramPopupScreen(
                     }
                 }
 
-                // ---- waveform (whole track, analyzed span highlighted)
-                if (waveformData != null && waveformData.isNotEmpty()) {
+                // ---- longer analysis (after the default 3 min)
+                val requested = info?.requestedSeconds ?: AudioManager.SPECTROGRAM_MAX_SECONDS
+                val trackSeconds = (actualDuration / 1000f)
+                val moreToAnalyze = !isLoading && spectrogramBitmap != null && info != null &&
+                    if (actualDuration > 0) analyzed + 2 < trackSeconds else analyzed >= requested - 1
+                if (moreToAnalyze && requested < AudioManager.SPECTROGRAM_LIMIT_SECONDS) {
                     Spacer(Modifier.height(10.dp))
-                    val fraction = if (actualDuration > 0) (analyzed * 1000f / actualDuration).coerceIn(0f, 1f) else 1f
-                    Column(
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val plus = (requested + 180).coerceAtMost(AudioManager.SPECTROGRAM_LIMIT_SECONDS)
+                        val showPlus = actualDuration <= 0 || plus < trackSeconds - 2
+                        if (showPlus) {
+                            OutlinedButton(
+                                onClick = { onAnalyze(plus) },
+                                modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, SpekStroke)
+                            ) { Text("+3 min (to ${formatClock(plus.toFloat())})", color = SpekText, fontSize = 13.sp, maxLines = 1) }
+                        }
+                        if (actualDuration > 0) {
+                            val whole = (kotlin.math.ceil(trackSeconds).toInt() + 2).coerceAtMost(AudioManager.SPECTROGRAM_LIMIT_SECONDS)
+                            Button(
+                                onClick = { onAnalyze(whole) },
+                                modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SpekAccent)
+                            ) {
+                                Text(
+                                    if (trackSeconds > AudioManager.SPECTROGRAM_LIMIT_SECONDS) "First 60 min" else "Whole track (${formatClock(trackSeconds)})",
+                                    fontSize = 13.sp, maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // ---- waveform of the ANALYSED span, drawn over exactly the same x-range as the
+                // spectrogram plot (same panel padding + left/right axis gutters), so every
+                // moment lines up vertically with the spectrogram above.
+                if (waveformData != null && waveformData.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    val fraction = if (actualDuration > 0) (analyzed * 1000f / actualDuration).coerceIn(0.01f, 1f) else 1f
+                    val waveOn = SpekAccent
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(18.dp))
                             .background(SpekPanel)
                             .border(1.dp, SpekStroke, RoundedCornerShape(18.dp))
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
-                        val waveOn = SpekAccent
-                        val waveOff = Color(spekColorsFromTheme().waveOff)
-                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxWidth().height(64.dp)) {
-                            val step = 3.dp.toPx()
-                            val bars = (size.width / step).toInt().coerceAtLeast(1)
+                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxWidth().height(84.dp).padding(10.dp)) {
+                            val l = with(density) { 30.dp.toPx() }
+                            val r = size.width - with(density) { 34.dp.toPx() }
+                            val w = (r - l).coerceAtLeast(1f)
+                            val end = (waveformData.size * fraction).toInt().coerceIn(1, waveformData.size)
+                            val step = 2.dp.toPx()
+                            val bars = (w / step).toInt().coerceAtLeast(1)
                             val peak = (waveformData.maxOrNull() ?: 1).coerceAtLeast(1).toFloat()
-                            val per = waveformData.size.toFloat() / bars
+                            val per = end.toFloat() / bars
                             val mid = size.height / 2
                             for (i in 0 until bars) {
-                                val s = (i * per).toInt()
-                                val e = ((i + 1) * per).toInt().coerceIn(s + 1, waveformData.size)
+                                val s0 = (i * per).toInt()
+                                val e0 = ((i + 1) * per).toInt().coerceIn(s0 + 1, end)
                                 var m = 0
-                                for (k in s until e) if (waveformData[k] > m) m = waveformData[k]
-                                val a = (m / peak) * mid
-                                val x = i * step + step / 2
+                                for (k in s0 until e0) if (waveformData[k] > m) m = waveformData[k]
+                                val amp = (m / peak) * mid
+                                val x = l + i * step + step / 2
                                 drawLine(
-                                    color = if (i.toFloat() / bars <= fraction) waveOn else waveOff,
-                                    start = androidx.compose.ui.geometry.Offset(x, mid - a),
-                                    end = androidx.compose.ui.geometry.Offset(x, mid + a),
-                                    strokeWidth = step * 0.6f
+                                    color = waveOn,
+                                    start = androidx.compose.ui.geometry.Offset(x, mid - amp),
+                                    end = androidx.compose.ui.geometry.Offset(x, mid + amp),
+                                    strokeWidth = step * 0.7f
                                 )
                             }
                         }
+                    }
+                    Text(
+                        "Waveform of ${formatClock(0f)}–${formatClock(analyzed)}" + if (wholeTrack) " (whole track)" else "",
+                        color = SpekMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = 40.dp, top = 4.dp)
+                    )
+                    // Whole-track overview with a pointer at how far the spectrogram reaches
+                    if (!wholeTrack && actualDuration > 0) {
+                        val overviewOff = Color(spekColorsFromTheme().waveOff)
+                        val pointer = SpekText
                         Spacer(Modifier.height(6.dp))
+                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 10.dp)) {
+                            val l = with(density) { 30.dp.toPx() }
+                            val r = size.width - with(density) { 34.dp.toPx() }
+                            val w = (r - l).coerceAtLeast(1f)
+                            val barH = with(density) { 22.dp.toPx() }
+                            val mid = barH / 2
+                            val step = 2.dp.toPx()
+                            val bars = (w / step).toInt().coerceAtLeast(1)
+                            val peak = (waveformData.maxOrNull() ?: 1).coerceAtLeast(1).toFloat()
+                            val per = waveformData.size.toFloat() / bars
+                            for (i in 0 until bars) {
+                                val s0 = (i * per).toInt()
+                                val e0 = ((i + 1) * per).toInt().coerceIn(s0 + 1, waveformData.size)
+                                var m = 0
+                                for (k in s0 until e0) if (waveformData[k] > m) m = waveformData[k]
+                                val amp = (m / peak) * mid
+                                val x = l + i * step + step / 2
+                                drawLine(
+                                    color = if (i.toFloat() / bars <= fraction) waveOn else overviewOff,
+                                    start = androidx.compose.ui.geometry.Offset(x, mid - amp),
+                                    end = androidx.compose.ui.geometry.Offset(x, mid + amp),
+                                    strokeWidth = step * 0.7f
+                                )
+                            }
+                            // pointer: line through the strip + a ▲ under it
+                            val px = l + w * fraction
+                            drawLine(pointer, androidx.compose.ui.geometry.Offset(px, 0f), androidx.compose.ui.geometry.Offset(px, barH), strokeWidth = 2.dp.toPx())
+                            val tri = androidx.compose.ui.graphics.Path().apply {
+                                moveTo(px, barH + 2.dp.toPx())
+                                lineTo(px - 6.dp.toPx(), barH + 11.dp.toPx())
+                                lineTo(px + 6.dp.toPx(), barH + 11.dp.toPx())
+                                close()
+                            }
+                            drawPath(tri, pointer)
+                        }
                         Text(
-                            if (wholeTrack) "whole track analyzed" else "▲ analyzed: first ${formatClock(analyzed)}",
-                            color = SpekMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium
+                            "▲ Spectrogram shows the first ${formatClock(analyzed)} of ${formatClock(actualDuration / 1000f)}",
+                            color = SpekMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(start = 40.dp)
                         )
                     }
                 }
@@ -363,7 +449,7 @@ fun SpectrogramPopupScreen(
                 Spacer(Modifier.height(10.dp))
                 Text(
                     "Linear frequency scale · $SPEK_DB_RANGE dB range · " +
-                        if (wholeTrack) "whole track analyzed" else "first ${formatClock(analyzed)} analyzed (max ${AudioManager.SPECTROGRAM_MAX_SECONDS / 60} min)",
+                        if (wholeTrack) "whole track analyzed" else "first ${formatClock(analyzed)} analyzed",
                     color = SpekMuted, fontSize = 11.sp, lineHeight = 15.sp
                 )
             }
@@ -441,7 +527,7 @@ private fun SpekPlot(
         }
 
         label.textAlign = android.graphics.Paint.Align.CENTER
-        val step = when { analyzed > 150 -> 30; analyzed > 60 -> 20; analyzed > 20 -> 10; else -> 5 }
+        val step = timeStepFor(analyzed)
         val ty = b + with(density) { 13.dp.toPx() }
         var s = 0
         val endLabelW = label.measureText(formatClock(analyzed))
@@ -533,12 +619,13 @@ fun SpectrogramPopupDialog(
     val spectrogramProgress by audioManager.spectrogramProgress.collectAsState()
     
     // Generate spectrogram when dialog opens
-    LaunchedEffect(musicFile?.uri) {
+    var analyzeSeconds by remember(musicFile?.uri) { mutableStateOf(AudioManager.SPECTROGRAM_MAX_SECONDS) }
+    LaunchedEffect(musicFile?.uri, analyzeSeconds) {
         if (musicFile != null) {
             CrashLogger.log("Debug", "SpectrogramPopupDialog: Starting spectrogram generation for ${musicFile.name}")
             isLoading = true
             try {
-                val bitmap = audioManager.generateSpectrogram(musicFile)
+                val bitmap = audioManager.generateSpectrogram(musicFile, analyzeSeconds)
                 CrashLogger.log("Debug", "SpectrogramPopupDialog: Received bitmap: ${bitmap != null}")
                 spectrogramBitmap = bitmap
                 spectrogramInfo = audioManager.getSpectrogramInfo(musicFile)
@@ -669,6 +756,7 @@ fun SpectrogramPopupDialog(
         conversionProgress = conversionProgress,
         isGeneratingSpectrogram = isGeneratingSpectrogram,
         spectrogramProgress = spectrogramProgress,
-        spectrogramInfo = spectrogramInfo
+        spectrogramInfo = spectrogramInfo,
+        onAnalyze = { analyzeSeconds = it }
     )
 }

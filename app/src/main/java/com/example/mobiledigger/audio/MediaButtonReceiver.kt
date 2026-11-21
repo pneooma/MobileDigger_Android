@@ -31,12 +31,12 @@ class MediaButtonReceiver : BroadcastReceiver() {
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PLAY")
-                        val playIntent = Intent(MusicService.ACTION_PLAY_PAUSE).apply { setPackage(context.packageName) }
+                        val playIntent = Intent(MusicService.ACTION_PLAY).apply { setPackage(context.packageName) }
                         context.sendBroadcast(playIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                         CrashLogger.log("MediaButtonReceiver", "Media button: PAUSE")
-                        val pauseIntent = Intent(MusicService.ACTION_PLAY_PAUSE).apply { setPackage(context.packageName) }
+                        val pauseIntent = Intent(MusicService.ACTION_PAUSE).apply { setPackage(context.packageName) }
                         context.sendBroadcast(pauseIntent)
                     }
                     KeyEvent.KEYCODE_MEDIA_NEXT -> {
@@ -51,10 +51,9 @@ class MediaButtonReceiver : BroadcastReceiver() {
                         context.sendBroadcast(Intent(MusicService.ACTION_PREVIOUS).apply { setPackage(context.packageName) })
                     }
                     KeyEvent.KEYCODE_MEDIA_STOP -> {
-                        // Map to pause (same as MediaSessionCompat.onStop). The old unscoped
-                        // Intent("STOP") matched no receiver and was undeliverable anyway.
+                        // Stop = pause (never a toggle, which could start the music)
                         CrashLogger.log("MediaButtonReceiver", "Media button: STOP")
-                        context.sendBroadcast(Intent(MusicService.ACTION_PLAY_PAUSE).apply { setPackage(context.packageName) })
+                        context.sendBroadcast(Intent(MusicService.ACTION_PAUSE).apply { setPackage(context.packageName) })
                     }
                 }
             }

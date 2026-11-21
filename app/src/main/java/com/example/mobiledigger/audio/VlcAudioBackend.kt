@@ -26,6 +26,19 @@ class VlcAudioBackend(private val context: Context) {
     // A seek requested while the player isn't seekable yet (opening/buffering) is stored
     // here and re-applied once the player becomes seekable, so it isn't silently dropped.
     @Volatile private var pendingSeekMs: Long = -1L
+
+    // Fast-skip guard. VLC reports "seekable" before a freshly opened file is really playing;
+    // a seek in that window (e.g. tapping the waveform right after skipping) makes VLC report
+    // EndReached at once, which used to skip to the NEXT track. Seeks wait for the first time
+    // tick (or 500 ms), and an EndReached far from the real end is treated as a glitch.
+    @Volatile private var lengthMs = -1L
+    @Volatile private var lastTimeMs = 0L
+    @Volatile private var lastSeekTarget = -1L
+    @Volatile private var mediaSetAt = 0L
+    @Volatile private var settled = false
+    @Volatile private var recoveries = 0
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val settleRunnable = Runnable { settled = true; applyPendingSeek() }
     
     // Callbacks
     private var onPreparedListener: (() -> Unit)? = null
@@ -49,7 +62,11 @@ class VlcAudioBackend(private val context: Context) {
             val options = arrayListOf(
                 "--no-video",                     // Disable video processing
                 "--no-audio-time-stretch",        // No tempo/pitch DSP
-                "--audio-replay-gain-mode=none"   // No replay-gain volume scaling
+                "--audio-replay-gain-mode=none",  // No replay-gain volume scaling
+                // One fixed audio session (AudioTrack output) so the 24-band equalizer and the
+                // live spectrum (AudioFx) can attach to MobileDigger's sound only.
+                "--aout=android_audiotrack",
+                "--audiotrack-session-id=${AudioFx.sessionId(context)}"
             )
             
             CrashLogger.log("VlcAudioBackend", "🔄 Creating LibVLC instance...")
@@ -100,7 +117,9 @@ class VlcAudioBackend(private val context: Context) {
                 }
                 MediaPlayer.Event.Playing -> {
                     isPlaying.set(true)
-                    applyPendingSeek()
+                    // Don't seek yet: wait for the first time tick, at most 500 ms
+                    mainHandler.removeCallbacks(settleRunnable)
+                    if (!settled) mainHandler.postDelayed(settleRunnable, 500) else applyPendingSeek()
                     CrashLogger.log("VlcAudioBackend", "▶️ Playing")
                 }
                 MediaPlayer.Event.Paused -> {
@@ -113,8 +132,21 @@ class VlcAudioBackend(private val context: Context) {
                 }
                 MediaPlayer.Event.EndReached -> {
                     isPlaying.set(false)
-                    CrashLogger.log("VlcAudioBackend", "🏁 End reached")
-                    onCompletionListener?.invoke()
+                    val pos = maxOf(lastTimeMs, lastSeekTarget)
+                    val sinceOpen = android.os.SystemClock.elapsedRealtime() - mediaSetAt
+                    val spurious = (lengthMs > 10_000 && pos < lengthMs - 5_000) || (lengthMs <= 0 && sinceOpen < 2_000)
+                    if (spurious && recoveries < 2) {
+                        // Not a real end: carry on with the same track where the user wanted to be
+                        recoveries++
+                        val resumeAt = if (lastSeekTarget >= 0) lastSeekTarget else lastTimeMs
+                        CrashLogger.log("VlcAudioBackend", "🏁 End reached at ${pos}ms of ${lengthMs}ms — glitch, resuming at ${resumeAt}ms (not skipping)")
+                        settled = false
+                        pendingSeekMs = if (resumeAt > 1000) resumeAt else -1L
+                        mainHandler.post { runCatching { mediaPlayer?.play() } }
+                    } else {
+                        CrashLogger.log("VlcAudioBackend", "🏁 End reached")
+                        onCompletionListener?.invoke()
+                    }
                 }
                 MediaPlayer.Event.EncounteredError -> {
                     isPlaying.set(false)
@@ -124,13 +156,21 @@ class VlcAudioBackend(private val context: Context) {
                     onErrorListener?.invoke(error)
                 }
                 MediaPlayer.Event.TimeChanged -> {
-                    // Optional: Handle time changes for progress tracking
+                    val t = event.timeChanged
+                    if (t > 0) {
+                        lastTimeMs = t
+                        if (!settled) {
+                            settled = true
+                            mainHandler.removeCallbacks(settleRunnable)
+                            applyPendingSeek()
+                        }
+                    }
                 }
                 MediaPlayer.Event.PositionChanged -> {
                     // Optional: Handle position changes for seeking
                 }
                 MediaPlayer.Event.SeekableChanged -> {
-                    applyPendingSeek()
+                    if (settled) applyPendingSeek()
                     CrashLogger.log("VlcAudioBackend", "🔍 Seekable changed")
                 }
                 MediaPlayer.Event.PausableChanged -> {
@@ -138,6 +178,7 @@ class VlcAudioBackend(private val context: Context) {
                 }
                 MediaPlayer.Event.LengthChanged -> {
                     val length = event.lengthChanged
+                    if (length > 0) lengthMs = length
                     CrashLogger.log("VlcAudioBackend", "📏 Length changed: ${length}ms")
                 }
                 MediaPlayer.Event.Vout -> {
@@ -169,6 +210,16 @@ class VlcAudioBackend(private val context: Context) {
             
             CrashLogger.log("VlcAudioBackend", "🔄 Setting VLC data source: $uri")
             
+            // New track: reset the fast-skip guard
+            mainHandler.removeCallbacks(settleRunnable)
+            settled = false
+            lengthMs = -1L
+            lastTimeMs = 0L
+            lastSeekTarget = -1L
+            pendingSeekMs = -1L
+            recoveries = 0
+            mediaSetAt = android.os.SystemClock.elapsedRealtime()
+
             val media = Media(libVLC, uri)
             mediaPlayer?.media = media
             media.release() // Release the Media object after setting
@@ -315,14 +366,15 @@ class VlcAudioBackend(private val context: Context) {
                 return
             }
             val mp = mediaPlayer ?: return
-            if (mp.isSeekable) {
+            lastSeekTarget = positionMs
+            if (mp.isSeekable && settled) {
                 mp.time = positionMs
                 pendingSeekMs = -1L
                 if (verboseLogs) CrashLogger.log("VlcAudioBackend", "↔️ Seeking to ${positionMs}ms")
             } else {
-                // Not seekable yet — defer; applyPendingSeek() runs on Seekable/Playing events.
+                // Track still opening — defer; applied on the first time tick (or after 500 ms).
                 pendingSeekMs = positionMs
-                CrashLogger.log("VlcAudioBackend", "↔️ Seek deferred until seekable: ${positionMs}ms")
+                CrashLogger.log("VlcAudioBackend", "↔️ Seek deferred until the track is playing: ${positionMs}ms")
             }
         } catch (e: Exception) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC seek failed", e)
@@ -335,7 +387,7 @@ class VlcAudioBackend(private val context: Context) {
         if (target < 0L) return
         try {
             val mp = mediaPlayer ?: return
-            if (mp.isSeekable) {
+            if (mp.isSeekable && settled) {
                 mp.time = target
                 pendingSeekMs = -1L
                 CrashLogger.log("VlcAudioBackend", "↔️ Applied deferred seek: ${target}ms")

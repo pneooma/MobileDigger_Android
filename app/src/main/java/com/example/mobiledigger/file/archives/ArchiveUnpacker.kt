@@ -84,6 +84,7 @@ class ArchiveUnpacker(private val context: Context) {
         item: ArchiveItem,
         include: Set<String>? = null,
         deleteArchive: Boolean = true,
+        isCancelled: () -> Boolean = { false },
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ): UnpackOutcome {
         val client = clientFor(item)
@@ -99,10 +100,31 @@ class ArchiveUnpacker(private val context: Context) {
             val sink = if (client != null) DriveSink(client, item.driveFolder ?: "", base)
                 else SafSink(item.parentDocUri ?: throw ArchiveException("Can't find the folder this archive is in"), base)
             onProgress(0f, "Opening the archive")
-            val count = withChannel(item, client) { ch ->
-                ArchiveExtractor.extract(ch, ArchiveExtractor.typeOf(item.name), sink, tmp, include) { done, total, rel ->
-                    onProgress(0.95f * (done.toFloat() / total.coerceAtLeast(1)), rel.substringAfterLast('/'))
+            val count = try {
+                withChannel(item, client) { ch ->
+                    ArchiveExtractor.extract(ch, ArchiveExtractor.typeOf(item.name), { rel, input, size ->
+                        if (isCancelled()) throw java.util.concurrent.CancellationException("stopped")
+                        // Check while copying too, so Stop reacts mid-way through a big file
+                        val guarded = object : java.io.FilterInputStream(input) {
+                            override fun read(b: ByteArray, off: Int, len: Int): Int {
+                                if (isCancelled()) throw java.util.concurrent.CancellationException("stopped")
+                                return super.read(b, off, len)
+                            }
+                        }
+                        sink.file(rel, guarded, size)
+                    }, tmp, include) { done, total, rel ->
+                        if (isCancelled()) throw java.util.concurrent.CancellationException("stopped")
+                        onProgress(0.95f * (done.toFloat() / total.coerceAtLeast(1)), rel.substringAfterLast('/'))
+                    }
                 }
+            } catch (e: Throwable) {
+                // Stopped or failed half way: remove the half-filled new folder. The archive is untouched.
+                runCatching {
+                    if (sink is SafSink) DocumentsContract.deleteDocument(cr, sink.rootUri)
+                    else (sink as DriveSink).removeAll()
+                }.onFailure { CrashLogger.log("ArchiveUnpacker", "Couldn't clean up after a stopped unpack", it) }
+                if (e is ArchiveException && e.cause is java.util.concurrent.CancellationException) throw e.cause!!
+                throw e
             }
             if (count == 0) throw ArchiveException("Nothing was extracted from ${item.name}")
 
@@ -176,6 +198,8 @@ class ArchiveUnpacker(private val context: Context) {
             client.mkdirs(root)
             made.add(root)
         }
+
+        fun removeAll() = client.deleteFolder(root)
 
         override fun file(relPath: String, input: InputStream, size: Long) {
             val full = "$root/$relPath"

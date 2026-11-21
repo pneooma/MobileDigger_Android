@@ -21,13 +21,61 @@ import java.nio.ByteOrder
  * [bitsPerSample] is null for lossy formats (MP3/AAC/OGG have no bit depth).
  */
 class DecodedAudio(
+    /** All samples in collect mode; empty when they were streamed to a [MonoSink]. */
     val mono: ShortArray,
     val sampleRate: Int,
     val channels: Int = 1,
     val bitsPerSample: Int? = null,
     val isFloat: Boolean = false,
-    val codec: String = ""
+    val codec: String = "",
+    val frames: Long = mono.size.toLong()
 )
+
+/** Receives decoded mono samples block by block (streaming mode). */
+interface MonoSink {
+    /** Called once, before the first block, with the real output sample rate. */
+    fun begin(sampleRate: Int) {}
+    fun accept(block: ShortArray, count: Int)
+}
+
+/** Collects everything into one array (the classic, whole-buffer mode). */
+class CollectSink(initialCapacity: Int) : MonoSink {
+    private var data = ShortArray(initialCapacity.coerceAtLeast(1024))
+    var size = 0
+        private set
+    override fun accept(block: ShortArray, count: Int) {
+        if (size + count > data.size) data = data.copyOf(maxOf(data.size * 2, size + count))
+        System.arraycopy(block, 0, data, size, count)
+        size += count
+    }
+    fun toArray(): ShortArray = if (size == data.size) data else data.copyOf(size)
+}
+
+/** Buffered writer in front of a [MonoSink], stopping at [capFrames]. */
+class MonoOut(var sampleRate: Int, var capFrames: Long, private val sink: MonoSink) {
+    private val block = ShortArray(32768)
+    private var n = 0
+    private var begun = false
+    var frames = 0L
+        private set
+    val isFull: Boolean get() = frames >= capFrames
+
+    /** Adds one sample (clamped to 16 bit). Returns false once the cap is reached. */
+    fun put(v: Int): Boolean {
+        if (frames >= capFrames) return false
+        block[n++] = (if (v > 32767) 32767 else if (v < -32768) -32768 else v).toShort()
+        frames++
+        if (n == block.size) flush()
+        return true
+    }
+
+    fun flush() {
+        if (n == 0) return
+        if (!begun) { sink.begin(sampleRate); begun = true }
+        sink.accept(block, n)
+        n = 0
+    }
+}
 
 /**
  * Decodes the first [maxSeconds] of an audio file to mono PCM for spectrogram analysis.
@@ -48,18 +96,33 @@ class SpectrogramDecoder(
 ) {
     private val tag = "SpectrogramDecoder"
 
-    fun decode(uri: Uri, deadlineMs: Long, onProgress: (Float) -> Unit = {}): DecodedAudio? {
+    /**
+     * Decodes up to [seconds]. With a [sink] the samples are streamed to it block by block and
+     * the returned [DecodedAudio] carries only the format (mono is empty); without one they are
+     * collected into [DecodedAudio.mono].
+     */
+    fun decode(
+        uri: Uri, deadlineMs: Long, seconds: Int = maxSeconds, sink: MonoSink? = null,
+        onProgress: (Float) -> Unit = {}
+    ): DecodedAudio? {
         val t0 = SystemClock.elapsedRealtime()
+        // A sink that failed half way can't be replayed, so in streaming mode remember whether
+        // the direct parser already pushed data before falling back.
+        var pushed = false
+        val guarded = sink?.let { s -> object : MonoSink {
+            override fun begin(sampleRate: Int) = s.begin(sampleRate)
+            override fun accept(block: ShortArray, count: Int) { pushed = true; s.accept(block, count) }
+        } }
         val direct = try {
-            decodePcmContainer(uri, deadlineMs, onProgress)
+            decodePcmContainer(uri, deadlineMs, seconds, guarded, onProgress)
         } catch (e: Exception) {
             CrashLogger.log(tag, "Direct PCM parse failed, falling back to MediaCodec", e)
             null
         }
-        val result = direct ?: decodeWithMediaCodec(uri, deadlineMs, onProgress)
+        val result = direct ?: if (pushed) null else decodeWithMediaCodec(uri, deadlineMs, seconds, sink, onProgress)
         CrashLogger.log(
             tag,
-            "Decoded ${result?.mono?.size ?: 0} mono samples @ ${result?.sampleRate} Hz " +
+            "Decoded ${result?.frames ?: 0} mono samples @ ${result?.sampleRate} Hz " +
                 "(${if (direct != null) "direct" else "MediaCodec"}) in ${SystemClock.elapsedRealtime() - t0}ms"
         )
         return result
@@ -86,14 +149,15 @@ class SpectrogramDecoder(
 
     // ---------------------------------------------------------------- WAV / AIFF
 
-    private fun decodePcmContainer(uri: Uri, deadlineMs: Long, onProgress: (Float) -> Unit): DecodedAudio? {
+    private fun decodePcmContainer(uri: Uri, deadlineMs: Long, seconds: Int, sink: MonoSink?, onProgress: (Float) -> Unit): DecodedAudio? {
         val raw = openStream(uri) ?: return null
-        return raw.use { PcmContainerReader(maxSeconds).read(it, deadlineMs, onProgress) }
+        val reader = PcmContainerReader(seconds)
+        return raw.use { if (sink == null) reader.read(it, deadlineMs, onProgress) else reader.stream(it, deadlineMs, sink, onProgress) }
     }
 
     // ---------------------------------------------------------------- MediaCodec
 
-    private fun decodeWithMediaCodec(uri: Uri, deadlineMs: Long, onProgress: (Float) -> Unit): DecodedAudio? {
+    private fun decodeWithMediaCodec(uri: Uri, deadlineMs: Long, seconds: Int, sink: MonoSink?, onProgress: (Float) -> Unit): DecodedAudio? {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
         try {
@@ -123,16 +187,16 @@ class SpectrogramDecoder(
             codec.configure(trackFormat, null, null, 0)
             codec.start()
 
-            var out = ShortArray(sampleRate * maxSeconds)
-            var written = 0
-            var lastReport = 0
+            val collect = if (sink == null) CollectSink(sampleRate * minOf(seconds, 200)) else null
+            val out = MonoOut(sampleRate, sampleRate.toLong() * seconds, sink ?: collect!!)
+            var lastReport = 0L
             val info = MediaCodec.BufferInfo()
             var inputDone = false
             var outputDone = false
 
-            while (!outputDone && written < out.size) {
+            while (!outputDone && !out.isFull) {
                 if (SystemClock.elapsedRealtime() > deadlineMs) {
-                    CrashLogger.log(tag, "MediaCodec decode hit deadline at $written samples")
+                    CrashLogger.log(tag, "MediaCodec decode hit deadline at ${out.frames} samples")
                     break
                 }
                 if (!inputDone) {
@@ -156,13 +220,13 @@ class SpectrogramDecoder(
                         ob.position(info.offset)
                         ob.limit(info.offset + info.size)
                         ob.order(ByteOrder.nativeOrder())
-                        written = downmixInto(ob, encoding, channels, out, written)
+                        downmixInto(ob, encoding, channels, out)
                     }
                     codec.releaseOutputBuffer(outIdx, false)
                     if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) outputDone = true
-                    if (written - lastReport > sampleRate * 5) {
-                        lastReport = written
-                        onProgress(written.toFloat() / out.size)
+                    if (out.frames - lastReport > sampleRate * 5L) {
+                        lastReport = out.frames
+                        onProgress(out.frames.toFloat() / out.capFrames)
                     }
                 } else if (outIdx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     val of = codec.outputFormat
@@ -170,15 +234,17 @@ class SpectrogramDecoder(
                     if (of.containsKey(MediaFormat.KEY_PCM_ENCODING)) encoding = of.getInteger(MediaFormat.KEY_PCM_ENCODING)
                     if (of.containsKey(MediaFormat.KEY_SAMPLE_RATE)) {
                         val newRate = of.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                        if (newRate != sampleRate && written == 0) {
+                        if (newRate != sampleRate && out.frames == 0L) {
                             sampleRate = newRate
-                            out = ShortArray(sampleRate * maxSeconds)
+                            out.sampleRate = newRate
+                            out.capFrames = newRate.toLong() * seconds
                         }
                     }
                     CrashLogger.log(tag, "Decoder output format: ${sampleRate}Hz ${channels}ch enc=$encoding")
                 }
             }
-            if (written == 0) return null
+            out.flush()
+            if (out.frames == 0L) return null
             val lossless = mime.contains("flac") || mime.contains("raw") || mime.contains("alac") || mime.contains("wav")
             val bits = if (!lossless) null else when {
                 trackFormat.containsKey("bits-per-sample") -> trackFormat.getInteger("bits-per-sample")
@@ -188,8 +254,8 @@ class SpectrogramDecoder(
                 else -> 16
             }
             val codec = mime.substringAfter("audio/").uppercase().replace("MPEG", "MP3").replace("MP4A-LATM", "AAC")
-            return DecodedAudio(if (written == out.size) out else out.copyOf(written), sampleRate,
-                trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT), bits, false, codec)
+            return DecodedAudio(collect?.toArray() ?: ShortArray(0), sampleRate,
+                trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT), bits, false, codec, out.frames)
         } catch (e: Exception) {
             CrashLogger.log(tag, "MediaCodec decode failed", e)
             return null
@@ -200,34 +266,30 @@ class SpectrogramDecoder(
         }
     }
 
-    /** Downmixes one decoder output buffer into [out] starting at [start]; returns new write index. */
-    private fun downmixInto(ob: java.nio.ByteBuffer, encoding: Int, channels: Int, out: ShortArray, start: Int): Int {
-        var w = start
+    /** Downmixes one decoder output buffer into [out]. */
+    private fun downmixInto(ob: java.nio.ByteBuffer, encoding: Int, channels: Int, out: MonoOut) {
         when (encoding) {
             AudioFormat.ENCODING_PCM_FLOAT -> {
                 val fb = ob.asFloatBuffer()
                 val frames = fb.remaining() / channels
                 for (f in 0 until frames) {
-                    if (w >= out.size) break
                     var sum = 0f
                     for (c in 0 until channels) sum += fb.get()
-                    out[w++] = (sum / channels * 32767f).toInt().coerceIn(-32768, 32767).toShort()
+                    if (!out.put((sum / channels * 32767f).toInt())) return
                 }
             }
             AudioFormat.ENCODING_PCM_32BIT -> {
                 val ib = ob.asIntBuffer()
                 val frames = ib.remaining() / channels
                 for (f in 0 until frames) {
-                    if (w >= out.size) break
                     var sum = 0L
                     for (c in 0 until channels) sum += ib.get()
-                    out[w++] = ((sum / channels) shr 16).toInt().toShort()
+                    if (!out.put(((sum / channels) shr 16).toInt())) return
                 }
             }
             AudioFormat.ENCODING_PCM_24BIT_PACKED -> {
                 val frames = ob.remaining() / (3 * channels)
                 for (f in 0 until frames) {
-                    if (w >= out.size) break
                     var sum = 0
                     for (c in 0 until channels) {
                         val b0 = ob.get().toInt() and 0xFF
@@ -235,30 +297,27 @@ class SpectrogramDecoder(
                         val b2 = ob.get().toInt()
                         sum += (b2 shl 16) or (b1 shl 8) or b0
                     }
-                    out[w++] = ((sum / channels) shr 8).toShort()
+                    if (!out.put((sum / channels) shr 8)) return
                 }
             }
             AudioFormat.ENCODING_PCM_8BIT -> {
                 val frames = ob.remaining() / channels
                 for (f in 0 until frames) {
-                    if (w >= out.size) break
                     var sum = 0
                     for (c in 0 until channels) sum += (ob.get().toInt() and 0xFF) - 128
-                    out[w++] = ((sum / channels) shl 8).toShort()
+                    if (!out.put((sum / channels) shl 8)) return
                 }
             }
             else -> { // 16-bit
                 val sb = ob.asShortBuffer()
                 val frames = sb.remaining() / channels
                 for (f in 0 until frames) {
-                    if (w >= out.size) break
                     var sum = 0
                     for (c in 0 until channels) sum += sb.get()
-                    out[w++] = (sum / channels).toShort()
+                    if (!out.put(sum / channels)) return
                 }
             }
         }
-        return w
     }
 }
 
@@ -273,6 +332,15 @@ class PcmContainerReader(
     private val log: (String) -> Unit = { CrashLogger.log("PcmContainerReader", it) }
 ) {
     private val tag = "PcmContainerReader"
+
+    /** Where samples go; null = collect into DecodedAudio.mono. */
+    private var target: MonoSink? = null
+
+    /** Streams samples to [sink]; the result carries only the format. */
+    fun stream(raw: InputStream, deadlineMs: Long, sink: MonoSink, onProgress: (Float) -> Unit = {}): DecodedAudio? {
+        target = sink
+        try { return read(raw, deadlineMs, onProgress) } finally { target = null }
+    }
 
     fun read(raw: InputStream, deadlineMs: Long, onProgress: (Float) -> Unit = {}): DecodedAudio? {
         DataInputStream(BufferedInputStream(raw, 1 shl 16)).use { din ->
@@ -417,16 +485,17 @@ class PcmContainerReader(
         val frameBytes = bps * channels
         val maxFrames = sampleRate.toLong() * maxSeconds
         val availFrames = if (dataBytes > 0) dataBytes / frameBytes else Long.MAX_VALUE
-        val total = minOf(maxFrames, availFrames).toInt()
+        val total = minOf(maxFrames, availFrames)
         if (total <= 0) return null
 
-        val out = ShortArray(total)
+        val collect = if (target == null) CollectSink(minOf(total, sampleRate.toLong() * 200).toInt()) else null
+        val out = MonoOut(sampleRate, total, target ?: collect!!)
         val buf = ByteArray(frameBytes * 4096)
         val intShift = 32 - 8 * bps
         val intScale = 1.0f / (1L shl (8 * bps - 1)).toFloat()
-        var written = 0
+        var written = 0L
         var carry = 0
-        var lastReport = 0
+        var lastReport = 0L
         while (written < total) {
             if (now() > deadlineMs) {
                 log("PCM read hit deadline at $written/$total frames")
@@ -435,7 +504,7 @@ class PcmContainerReader(
             val n = src.read(buf, carry, buf.size - carry)
             if (n <= 0) break
             val avail = carry + n
-            val frames = minOf(avail / frameBytes, total - written)
+            val frames = minOf((avail / frameBytes).toLong(), total - written).toInt()
             var p = 0
             for (f in 0 until frames) {
                 var sum = 0f
@@ -472,17 +541,18 @@ class PcmContainerReader(
                     p += bps
                 }
                 val mono = (sum / channels * 32767f).toInt().coerceIn(-32768, 32767)
-                out[written++] = mono.toShort()
+                out.put(mono); written++
             }
             val used = frames * frameBytes
             carry = avail - used
             if (carry > 0) System.arraycopy(buf, used, buf, 0, carry)
-            if (written - lastReport > sampleRate * 5) {
+            if (written - lastReport > sampleRate * 5L) {
                 lastReport = written
                 onProgress(written.toFloat() / total)
             }
         }
-        if (written == 0) return null
-        return DecodedAudio(if (written == total) out else out.copyOf(written), sampleRate, channels, bits, isFloat, "PCM")
+        out.flush()
+        if (written == 0L) return null
+        return DecodedAudio(collect?.toArray() ?: ShortArray(0), sampleRate, channels, bits, isFloat, "PCM", written)
     }
 }

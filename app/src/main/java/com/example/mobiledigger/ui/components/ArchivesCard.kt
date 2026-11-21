@@ -1,8 +1,10 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package com.example.mobiledigger.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,17 +46,31 @@ fun ArchiveRow(
     state: String?,
     /** Opens the contents popup (preview, pick files, extract). */
     onOpen: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    /** Multi-select: show a checkbox; tapping the row toggles it. */
+    selectionMode: Boolean = false,
+    selected: Boolean = false,
+    onToggleSelect: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     var ask by remember { mutableStateOf<String?>(null) } // "delete"
+    val bg by androidx.compose.animation.animateColorAsState(
+        if (selected) Amber.copy(alpha = 0.22f) else Amber.copy(alpha = 0.08f), label = "archSel"
+    )
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 3.dp)
+        modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 3.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Amber.copy(alpha = 0.08f))
-            .clickable(onClick = onOpen)
-            .padding(start = 10.dp, top = 6.dp, bottom = 6.dp),
+            .background(bg)
+            .combinedClickable(
+                onClick = { if (selectionMode) onToggleSelect() else onOpen() },
+                onLongClick = onToggleSelect
+            )
+            .padding(start = if (selectionMode) 2.dp else 10.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        androidx.compose.animation.AnimatedVisibility(selectionMode) {
+            Checkbox(checked = selected, onCheckedChange = { onToggleSelect() })
+        }
         Text(
             archive.type, fontSize = 10.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = Amber,
             modifier = Modifier.border(1.dp, Amber, RoundedCornerShape(6.dp)).padding(horizontal = 5.dp, vertical = 1.dp)
@@ -70,12 +86,14 @@ fun ArchiveRow(
             )
         }
         val busy = state != null
+        if (!selectionMode) {
         TextButton(onClick = onOpen, enabled = !busy, contentPadding = PaddingValues(horizontal = 8.dp)) {
             Icon(Icons.Default.Unarchive, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Unpack", fontSize = 13.sp)
         }
         IconButton(onClick = { ask = "delete" }, enabled = !readOnly && !busy) {
             Icon(Icons.Default.DeleteOutline, "Delete ${archive.name}", tint = if (!readOnly && !busy) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        } else Spacer(Modifier.width(12.dp))
     }
 
     when (ask) {

@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mobiledigger.R
 
-private val Accent = Color(0xFF10B981)
-private val Night = Color(0xFF0B1117)
+// Follows the selected theme (was a fixed green on near-black)
+private val Accent: Color @Composable get() = MaterialTheme.colorScheme.primary
 
 /** Readable tail of a SAF tree URI: "primary:Music/To triage" → "Music/To triage". */
 fun folderLabel(uriString: String?): String? {
@@ -65,26 +65,26 @@ fun WelcomePanel(
         if (lastLabel != null || activeDriveName != null) {
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-                    .background(Brush.horizontalGradient(listOf(Accent, Color(0xFF0EA5A0))))
+                    .background(Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)))
                     .clickable(onClick = onResume)
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.PlayArrow, null, tint = Color.White)
+                Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.PlayArrow, null, tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Pick up where you left off", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Pick up where you left off", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     Text(
                         listOfNotNull(
                             lastLabel?.takeIf { sourceMode != "NETWORK" || activeDriveName == null },
                             activeDriveName?.let { "$it (network)" }?.takeIf { sourceMode != "PHONE" || lastLabel == null }
                         ).joinToString(" + "),
-                        color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
                 }
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Color.White)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onPrimary)
             }
         }
 
@@ -166,7 +166,7 @@ private fun Hero() {
     val bob by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "bob")
     Box(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
-            .background(Night)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .background(Brush.radialGradient(listOf(Accent.copy(alpha = glow), Color.Transparent), radius = 700f))
             .padding(horizontal = 20.dp, vertical = 22.dp)
     ) {
@@ -178,8 +178,8 @@ private fun Hero() {
             Spacer(Modifier.width(16.dp))
             Column {
                 Text("MOBILEDIGGER", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                Text("Let's dig.", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 34.sp)
-                Text("Listen. Keep the gems. Bin the rest.", color = Color.White.copy(alpha = 0.75f), fontSize = 14.sp)
+                Text("Let's dig.", color = MaterialTheme.colorScheme.onSurface, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 34.sp)
+                Text("Listen. Keep the gems. Bin the rest.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
             }
         }
     }

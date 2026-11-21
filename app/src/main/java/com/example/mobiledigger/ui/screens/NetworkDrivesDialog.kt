@@ -493,6 +493,7 @@ private fun DriveEditPage(
 private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBack: () -> Unit, onLoad: (String) -> Unit) {
     val st by viewModel.driveBrowse.collectAsState()
     val path = st.path
+    var showTransfer by remember { mutableStateOf(false) }
     val crumbs = if (path.isBlank()) emptyList() else path.split('/')
 
     Column(Modifier.fillMaxWidth()) {
@@ -567,6 +568,21 @@ private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBa
                 Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp))
                 Text(if (path.isBlank()) "Load everything" else "Load “${path.substringAfterLast('/')}”", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            if (path.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { showTransfer = true },
+                    enabled = !st.loading && st.error == null,
+                    modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(Icons.Default.Download, null); Spacer(Modifier.width(8.dp))
+                    Text("Copy or move to phone…", maxLines = 1)
+                }
+            }
         }
     }
+    if (showTransfer) {
+        TransferSetupDialog(drive = drive, folder = path, viewModel = viewModel, onDismiss = { showTransfer = false })
+    }
 }
+

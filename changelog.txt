@@ -2059,3 +2059,83 @@ v13.023 (2026-11-18)
 
 v13.024 (2026-11-20)
 - 🏠 Home button fixed: with archives in the list, Home left an empty full-screen list with no controls (the archive list wasn't cleared, so the app thought something was still loaded). Home now clears archives too and returns to the welcome page. The top row (Reject N, Hide Main Player, Show Playlists) now also shows when a folder holds only archives.
+
+v13.025 (2026-11-20)
+- ⏱ Longer spectrograms: after the default 3 minutes, the SpeK window offers "+3 min" and "Whole track" (up to 60 min). The analysis now streams (decode + FFT in one pass, 1 byte per point), so memory doesn't grow with the length; colours are normalised over the whole span so long images match the 3-minute look. Images over 4000 columns are merged keeping the loudest value. Time labels adapt (30 s … 10 min steps).
+- 🧪 New tests: streaming spectrogram (tone on the right row, same result for any block size, length cap).
+
+v13.026 (2026-11-20)
+- 📐 SpeK window + shared card: the waveform now shows exactly the analysed span and is drawn over the same x-range as the spectrogram (same gutters), so it lines up vertically with the image above.
+- ⬇ Copy or move a folder from a network drive to the phone (drive folder browser → "Copy or move to phone…"): counts files/size, checks free space (keeps 100 MB spare), choose Copy/Move (Move only on writable drives) and the phone folder (default: your music folder). Runs in the background with a notification; progress banner with Pause; interruptions (network drop, app closed) pause it and Continue resumes from the first unfinished file; Abort keeps what's already copied. Move deletes each original only after its copy is complete.
+- 👎 "Reject N" (send listened to Rejected): all rows leave To Do at once (one quick collapse instead of one animation per track) and the files move in the background with a progress bar; anything that fails comes back.
+
+v13.027 (2026-11-20)
+- ⏭ Fixed random skip to the next track when going through tracks fast. Log showed every case: a waveform tap (seek ≈20%) 0.1–0.25 s after a new track started → VLC said "End reached" at once → app played the next track. VLC reports "seekable" before a freshly opened file really plays. Now seeks wait for the first playback tick (max 500 ms), and an "End reached" far from the real end is treated as a glitch: the same track continues at the tapped position instead of skipping.
+
+v13.028 (2026-11-20)
+- ▲ SpeK window + shared card: whole-track overview strip under the aligned waveform again, analysed part coloured, rest dimmed, with a pointer (line + ▲) where the spectrogram stops: "Spectrogram shows the first 3:00 of 7:48". Hidden when the whole track is analysed.
+- 🙈 Main player hidden by default ("Show Main Player" brings it back).
+- ↩ Undo button in the top toolbar, between Filters and Rename (greyed out when there's nothing to undo).
+
+v13.029 (2026-11-20)
+- 🎨 Themes reworked. Colour engine: every Material role is now a solid colour derived from the theme in light AND dark (light mode used to ignore the theme and use default purple-grey; dialogs, menus, cards used Material's default purple-grey containers; several roles were semi-transparent). 30 palettes redesigned with balanced accents (deeper in light mode, brighter in dark), hue-tinted neutral backgrounds and automatically chosen button text; every pair contrast-checked (text ≥ 4.5:1, accent on background ≥ 3:1). Steel, Indigo and High Contrast keep their exact colours.
+- 🏠 Welcome page follows the theme (was fixed green/black).
+
+v13.030 (2026-11-20)
+- ⏳ New loading card that follows the theme: equaliser bars + turning arc in the theme colours, fade/scale-in, hints that change ("Scanning folders", "Reading track names", "Looking for archives"…). App logo and track count follow the theme too (with a readable fallback for dark accents like Steel).
+- 📦 Multi-select archives: long-press an archive (or use Select / the folder checkbox) to tick several, then Unpack or Delete them all from the selection bar (delete asks first). Archive rows animate in/out and highlight when selected.
+
+v13.031 (2026-11-20)
+- ☑️ Selection is one kind at a time: with archives selected only the archive actions show (Unpack · Delete · Exit); with tracks selected only the track actions. Tapping the other kind shows a short hint instead of mixing them. Folder checkboxes follow the kind being selected (archive-only folders select archives).
+
+v13.032 (2026-11-20)
+- 💬 App messages are visible again (themed snackbar at the bottom). They were still being created but nothing drew them anymore — hints, "Deleted X from Pi", "Couldn't delete…", unpack/reject summaries were all silently lost. Also removed the old 1.5 s delay before showing them.
+- ⏹ Stop button on the unpack progress bar: stops the archive being unpacked (reacts mid-file), drops the queue, and removes the half-extracted folder. The archive itself is never touched.
+
+v13.033
+- Notification player rebuilt: one media session only (the hidden empty Media3 session/ExoPlayer is gone), so headphone buttons and the system player always reach the app.
+- Bluetooth/car/lock-screen Play and Pause are explicit (no more toggling the wrong way); Stop never starts music.
+- Notification shows the track that is actually playing (not the one at the same index of the visible tab), split into Title / Artist, with cover art loaded in the background.
+- Notification no longer disappears when tapped while paused; swipe-away while paused no longer shows a "Close MobileDigger?" note.
+- Stays a foreground service through track changes, so Android can't kill playback in the background; no more "Playback service failed to start" popups.
+- Stale WhatsApp "Open with" file is no longer re-added as an "Unknown" track on every start.
+- Going Home no longer fires "No files in current playlist to navigate".
+
+v13.034
+- Pi: folders and tracks are listed by the library server (real names). Samba replaced names it can't show (e.g. a folder ending in a space) with 8.3 names like "BVFMH7~K", so every track in such folders failed with 404 and nothing played. Archives are still added from the SMB share.
+
+v13.035
+- Notification / lock-screen player: tracks without embedded cover art show their waveform as the picture (green→cyan mirrored bars on dark). Reuses the waveform the app already computed; computes its own if none appears within 5 s.
+
+v13.036 / v13.037
+- Notification waveform art fixed: the system media card shows only the middle band of the picture, so the waveform is now drawn small and centred (it showed as full-height stripes), and bar heights are stretched between the track's quiet and loud parts so breakdowns/drops are visible on loud masters.
+
+v13.038
+- Notification waveform: higher resolution — 200 thin bars (was 72) drawn on a 1024 px picture (was 512), built from the full 512-point waveform.
+
+v13.039
+- Notification waveform sits exactly under the system seek bar (same start/end, mirrored around the seek line), so the moving dot marks the current spot on the waveform. 150 bars across the seek bar. Positions measured on Pixel / Android 16; other phone skins lay out the media card differently.
+
+v13.040
+- Car / Bluetooth browsing (e.g. Tesla): the current playlist is published as the session's "Now playing" queue and MusicService is a media browser with To Do / Liked / Rejected folders. Picking a track in the car plays it in the app. Lists are capped at 500 tracks around the playing one. Browsing is only offered to Bluetooth, the system and Android Auto; Quick Settings "resume" is refused.
+
+v13.041 / v13.042
+- 24-band equalizer (toolbar icon between Settings and Search; turns accent-coloured when an EQ curve is active). VLC now plays through one fixed audio session (--aout=android_audiotrack, --audiotrack-session-id) and Android's DynamicsProcessing pre-EQ (24 log-spaced bands, 20 Hz–20 kHz, ±12 dB) is attached to it, so only MobileDigger is affected and it survives track changes and restarts. Automatic headroom (input lowered by the largest boost) + limiter prevent clipping. Presets: Flat, Bass boost, Club, Deep house, Vocal, Treble, Loudness, Cut lows. Drag across the bands to draw a curve; double-tap a band for 0 dB.
+- Live spectrum under the bands, column for column (Visualizer on the same session; needs the microphone permission by Android rule, asked only when you tap "Allow spectrum").
+- Loading card is centred on the screen (it was centred in the area under the toolbar, so it sat low).
+
+v13.043
+- Equalizer redesigned: smooth response curve (spline through the 24 bands) with glow and boost/cut fill, band handles, log-frequency and dB grid, floating readout while dragging, lit power button, pill presets, and a fine-tune row (‹ › to pick a band, − + in 0.5 dB steps, reset). 0 dB is sticky when drawing.
+- Spectrum is now an animated analyzer line (96 log-spaced points, eased motion, glow + gradient fill, slowly falling peak line) instead of bars.
+
+v13.044
+- Equalizer: bigger, ringed band points on the curve (solid when boosted/cut, hollow at 0 dB, haloed when selected).
+- New "Bands" list: one row per band (all 24) with frequency, − / slider / +, and the value (boosts and cuts in different colours). Rows and the curve stay in sync; the picked band is highlighted. "Reset all" above the list.
+
+v13.045
+- Equalizer: 32 bands (was 24). Curves saved with 24 bands are stretched onto the new 32.
+- Each band row has its own reset-to-0 button (dimmed when the band is already flat).
+- The Bands list under the spectrum collapses/expands from its header (remembered), which shows how many bands are changed.
+
+v13.046
+- Equalizer: the Bands list starts collapsed every time the equalizer opens (tap its header to show the rows).

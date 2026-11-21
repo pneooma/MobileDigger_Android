@@ -27,6 +27,9 @@ interface DriveClient {
     /** Deletes a file. Throws [DriveException] with a readable reason when it can't. */
     fun delete(path: String)
 
+    /** Deletes a folder and everything in it (used to clean up a stopped unpack). */
+    fun deleteFolder(path: String): Unit = throw DriveException("Deleting folders isn't supported on this drive")
+
     /** Creates [path] and any missing parent folders. */
     fun mkdirs(path: String)
 

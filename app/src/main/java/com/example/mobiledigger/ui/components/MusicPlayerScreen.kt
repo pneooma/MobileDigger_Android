@@ -1,6 +1,10 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 package com.example.mobiledigger.ui.components
 
+import androidx.compose.ui.layout.positionInWindow
+
+import androidx.compose.ui.layout.onGloballyPositioned
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -191,7 +195,7 @@ fun MusicPlayerScreen(
     var isWaveformVisible by remember { mutableStateOf(true) }
     
     // Main player and playlists visibility states (start hidden by default)
-    var isMainPlayerVisible by remember { mutableStateOf(true) }
+    var isMainPlayerVisible by remember { mutableStateOf(false) } // hidden by default; "Show Main Player" brings it back
     var isPlaylistsVisible by remember { mutableStateOf(false) }
     
     // Preserve user preferences for visibility when entering/exiting Multi-Select
@@ -213,6 +217,7 @@ fun MusicPlayerScreen(
 
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showEqualizer by remember { mutableStateOf(false) }
     var showThemeSelectionDialog by remember { mutableStateOf(false) }
     var showVisualSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
@@ -231,21 +236,16 @@ fun MusicPlayerScreen(
     var notificationJob by remember { mutableStateOf<Job?>(null) }
     
     // Helper function to show info messages with proper replacement
+    // Messages from the app ("Deleted X", "Couldn't …", hints) — shown as a snackbar.
+    // (They used to be stored but never drawn, so the user saw none of them.)
+    val snackbarHostState = remember { SnackbarHostState() }
     fun showInfoMessage(message: String, type: String = "info") {
-        // Cancel any existing notification job
         notificationJob?.cancel()
-        
         notificationJob = scope.launch {
-            // Wait for waveform to appear first (delay after file operations)
-            delay(1500) // 1.5 second delay after waveform appearance
-            
             infoMessageText = message
             infoMessageType = type
-            showInfoMessage = true
-            
-            // Auto-hide after 3 seconds
-            delay(3000)
-            showInfoMessage = false
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
         }
     }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
@@ -679,6 +679,9 @@ fun MusicPlayerScreen(
     }
     
     
+    if (showEqualizer) {
+        com.example.mobiledigger.ui.screens.EqualizerDialog(onDismiss = { showEqualizer = false })
+    }
     if (showSettingsDialog) {
         SettingsDialog(
             visualSettingsManager = viewModel.visualSettingsManager,
@@ -790,7 +793,17 @@ fun MusicPlayerScreen(
     
 
     Scaffold(
-        modifier = Modifier
+        modifier = Modifier,
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.inverseSurface,
+                    contentColor = MaterialTheme.colorScheme.inverseOnSurface
+                )
+            }
+        }
     ) { paddingValues ->
     Column(
         modifier = Modifier
@@ -821,6 +834,8 @@ fun MusicPlayerScreen(
         val unpackProgress by viewModel.unpackProgress.collectAsState()
         val unpackPending by viewModel.unpackPending.collectAsState()
         val unpackDone by viewModel.unpackDone.collectAsState()
+        val selectedArchiveUris by viewModel.selectedArchives.collectAsState()
+        var confirmBulkArchiveDelete by remember { mutableStateOf(false) }
         // Archive contents popup (preview + pick files + keep/delete)
         var openArchive by remember { mutableStateOf<com.example.mobiledigger.file.archives.ArchiveItem?>(null) }
         // Archives count as "something loaded": a folder holding only archives must not fall back to the welcome page
@@ -910,6 +925,37 @@ fun MusicPlayerScreen(
             )
         }
 
+        // Network drive → phone copy/move progress (Pause / Continue / Abort)
+        com.example.mobiledigger.ui.screens.TransferBanner(
+            onRescan = if (viewModel.preferences.getSourceRootUri() != null) ({ viewModel.rescanSourceFolder() }) else null
+        )
+
+        // "Reject listened": rows are gone at once, this shows the files being moved
+        val rejectListened by viewModel.rejectListenedProgress.collectAsState()
+        AnimatedVisibility(visible = rejectListened != null, enter = expandVertically(), exit = shrinkVertically()) {
+            val (done, total) = rejectListened ?: (0 to 1)
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f))
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) {
+                    Text(
+                        if (done < total) "👎 Moving listened tracks to Rejected… $done/$total" else "✓ $total moved to Rejected",
+                        style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    val animRej by animateFloatAsState(done / total.coerceAtLeast(1).toFloat(), label = "rejListened")
+                    LinearProgressIndicator(
+                        progress = { animRej },
+                        modifier = Modifier.weight(1f).height(5.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        trackColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                    )
+                }
+            }
+        }
+
         // Archive unpacking: same slim banner as the rejected-files deletion, so the list stays usable
         AnimatedVisibility(
             visible = unpackProgress != null || unpackDone != null,
@@ -934,6 +980,16 @@ fun MusicPlayerScreen(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text("${(up.fraction * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(4.dp))
+                            TextButton(
+                                onClick = { viewModel.stopUnpacking() },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.error)
+                                Spacer(Modifier.width(2.dp))
+                                Text("Stop", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                            }
                         }
                         Spacer(Modifier.height(4.dp))
                         val animUnpack by animateFloatAsState(up.fraction, label = "unpackProg")
@@ -1010,7 +1066,7 @@ fun MusicPlayerScreen(
                             fontSize = MaterialTheme.typography.headlineMedium.fontSize * 0.45f,
                             lineHeight = MaterialTheme.typography.headlineMedium.fontSize * 0.45f
                         ),
-                        color = if (isMonochrome) monoColor else GreenAccent
+                        color = if (isMonochrome) monoColor else readableAccent()
                     )
                     Text(
                         text = "v${com.example.mobiledigger.BuildConfig.VERSION_NAME}",
@@ -1026,7 +1082,7 @@ fun MusicPlayerScreen(
                     text = "${currentPlaylistFiles.size}",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.2.sp, lineHeight = 8.sp),
                     fontWeight = FontWeight.Bold,
-                    color = if (isMonochrome) monoColor else GreenAccent,
+                    color = if (isMonochrome) monoColor else readableAccent(),
                     maxLines = 1
                 )
                 Spacer(Modifier.weight(1f))
@@ -1067,8 +1123,8 @@ fun MusicPlayerScreen(
                 }
             }
 
-            // Toolbar bar: Home, Settings, Search, Rescan, Info, Sort, Rename, MultiSelect, SpEk
-            val tbIconSize = (screenWidth.value / 9f).coerceIn(22f, 36f).dp
+            // Toolbar bar: Home, Settings, EQ, Search, Rescan, Info, Sort, Rename, MultiSelect, SpEk
+            val tbIconSize = (screenWidth.value / 11.6f).coerceIn(20f, 34f).dp // 11 buttons incl. Undo + EQ
             val showLabels = visualSettings.showToolbarLabels
             val tbLabelStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp, lineHeight = 8.sp)
             var filterMenuExpanded by remember { mutableStateOf(false) }
@@ -1091,6 +1147,12 @@ fun MusicPlayerScreen(
             ) {
                 ToolbarButton(icon = { Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Home", onClick = { viewModel.resetToInitialState() })
                 ToolbarButton(icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Settings", onClick = { showSettingsDialog = true })
+                ToolbarButton(icon = {
+                    val eqOn by com.example.mobiledigger.audio.AudioFx.enabled.collectAsState()
+                    val eqGains by com.example.mobiledigger.audio.AudioFx.gains.collectAsState()
+                    val active = eqOn && eqGains.any { it != 0f }
+                    Icon(Icons.Default.Equalizer, contentDescription = "Equalizer", tint = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize))
+                }, label = "EQ", onClick = { showEqualizer = true })
                 ToolbarButton(icon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Search", onClick = { showSearchInput = !showSearchInput; if (!showSearchInput) { viewModel.updateSearchText(""); viewModel.clearSearchResults() } })
                 ToolbarButton(icon = { Icon(Icons.Default.Sync, contentDescription = "Rescan", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rescan", onClick = { viewModel.rescanSourceFolder() })
                 Box {
@@ -1133,6 +1195,14 @@ fun MusicPlayerScreen(
                         )
                     }
                 }
+                val canUndo = viewModel.sortResults.collectAsState().value.isNotEmpty()
+                ToolbarButton(
+                    icon = { Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo",
+                        tint = if (canUndo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                        modifier = Modifier.size(tbIconSize)) },
+                    label = "Undo",
+                    onClick = { if (canUndo) viewModel.undoLastAction() }
+                )
                 ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })
                 ToolbarButton(icon = { Icon(Icons.Default.Checklist, contentDescription = "Select", tint = if (isMultiSelectionMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Select", onClick = { viewModel.toggleMultiSelectionMode() })
                 ToolbarButton(
@@ -1151,7 +1221,7 @@ fun MusicPlayerScreen(
             // Multi-select inline controls — compact grid layout
             if (isMultiSelectionMode) {
                 val selectedCount by viewModel.selectedIndices.collectAsState()
-                Row(
+                if (selectedArchiveUris.isEmpty()) Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 1.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -1176,8 +1246,51 @@ fun MusicPlayerScreen(
                         Text("Exit", style = msLabelStyle, maxLines = 1, color = Color.Red)
                     }
                 }
+                // Archives picked in select mode get their own actions
+                androidx.compose.animation.AnimatedVisibility(selectedArchiveUris.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.FolderZip, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFFF59E0B))
+                        Text("${selectedArchiveUris.size} archive${if (selectedArchiveUris.size == 1) "" else "s"}",
+                            style = labelStyle.copy(fontSize = 11.sp), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                        OutlinedButton(onClick = { viewModel.unpackSelectedArchives() }, modifier = Modifier.height(28.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp), shape = RoundedCornerShape(16.dp)) {
+                            Icon(Icons.Default.Unarchive, contentDescription = null, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp))
+                            Text("Unpack", style = labelStyle.copy(fontSize = 11.sp))
+                        }
+                        OutlinedButton(onClick = { confirmBulkArchiveDelete = true }, modifier = Modifier.height(28.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp), shape = RoundedCornerShape(16.dp)) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(13.dp), tint = MaterialTheme.colorScheme.error); Spacer(Modifier.width(4.dp))
+                            Text("Delete", style = labelStyle.copy(fontSize = 11.sp), color = MaterialTheme.colorScheme.error)
+                        }
+                        OutlinedButton(onClick = { viewModel.toggleMultiSelectionMode() }, modifier = Modifier.height(28.dp),
+                            border = BorderStroke(1.dp, Color.Red), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp), shape = RoundedCornerShape(16.dp)) {
+                            Text("Exit", style = labelStyle.copy(fontSize = 11.sp), color = Color.Red)
+                        }
+                    }
+                }
+                if (confirmBulkArchiveDelete) {
+                    AlertDialog(
+                        onDismissRequest = { confirmBulkArchiveDelete = false },
+                        icon = { Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        title = { Text("Delete ${selectedArchiveUris.size} archive${if (selectedArchiveUris.size == 1) "" else "s"}?") },
+                        text = { Text("They're deleted without unpacking. This can't be undone.") },
+                        confirmButton = {
+                            Button(onClick = { confirmBulkArchiveDelete = false; viewModel.deleteSelectedArchives() },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") }
+                        },
+                        dismissButton = { TextButton(onClick = { confirmBulkArchiveDelete = false }) { Text("Cancel") } }
+                    )
+                }
                 // Selection count indicator
-                Text("${selectedCount.size} selected", style = labelStyle.copy(fontSize = 9.sp), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(start = 8.dp))
+                if (selectedArchiveUris.isEmpty()) Text(
+                    "${selectedCount.size} track${if (selectedCount.size == 1) "" else "s"} selected",
+                    style = labelStyle.copy(fontSize = 9.sp), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(start = 8.dp)
+                )
             }
             if (showBulkSendDialog && isMultiSelectionMode) {
                 AlertDialog(
@@ -1619,56 +1732,22 @@ fun MusicPlayerScreen(
 
             
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    var elapsedSec by remember { mutableStateOf(0) }
-                    LaunchedEffect(Unit) {
-                        while (true) { kotlinx.coroutines.delay(1000); elapsedSec++ }
-                    }
-                    val loadAnim = rememberInfiniteTransition(label = "load")
-                    val pulse by loadAnim.animateFloat(
-                        initialValue = 0.85f, targetValue = 1.15f,
-                        animationSpec = infiniteRepeatable(tween(600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-                        label = "pulse"
-                    )
-                    Card(
-                        shape = RoundedCornerShape(24.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .background(Brush.verticalGradient(listOf(GreenAccent.copy(alpha = 0.12f), Color.Transparent)))
-                                .padding(horizontal = 36.dp, vertical = 28.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(84.dp),
-                                    strokeWidth = 3.dp,
-                                    color = GreenAccent
-                                )
-                                Icon(
-                                    Icons.Default.MusicNote, contentDescription = null,
-                                    modifier = Modifier.size(38.dp).scale(pulse),
-                                    tint = GreenAccent
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(18.dp))
-                            Text("Loading your music…", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (elapsedSec < 1) "Scanning folders" else "Scanning folders · ${elapsedSec}s",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(14.dp))
-                            LinearProgressIndicator(
-                                modifier = Modifier.width(180.dp).height(5.dp),
-                                color = GreenAccent,
-                                trackColor = GreenAccent.copy(alpha = 0.18f)
-                            )
-                        }
-                    }
+                // Centre the card on the SCREEN, not in the space under the header/toolbar
+                // (that put it visibly low).
+                val rootView = androidx.compose.ui.platform.LocalView.current
+                var boxTop by remember { mutableFloatStateOf(0f) }
+                var boxH by remember { mutableFloatStateOf(0f) }
+                Box(
+                    modifier = Modifier.fillMaxSize().onGloballyPositioned {
+                        boxTop = it.positionInWindow().y; boxH = it.size.height.toFloat()
+                    },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(Modifier.graphicsLayer {
+                        val shift = rootView.rootView.height / 2f - (boxTop + boxH / 2f)
+                        // never push it above the top of the area it lives in
+                        translationY = if (boxH > 0f) shift.coerceAtLeast(-(boxH / 2f - size.height / 2f)) else 0f
+                    }) { LoadingCard() }
                 }
             } else {
                 val listState = rememberLazyListState()
@@ -3843,7 +3922,10 @@ fun MusicPlayerScreen(
                                         val subName = playlistItem.subfolder
                                         val subIndices = currentPlaylistFiles.indices
                                             .filter { currentPlaylistFiles[it].subfolder == subName }.toSet()
-                                        val allSubSelected = subIndices.isNotEmpty() && selectedIndices.containsAll(subIndices)
+                                        val subArch = if (currentPlaylistTab == PlaylistTab.TODO) archiveItems.filter { it.folder == subName }.map { it.uri } else emptyList()
+                                        val allSubSelected = if (selectedArchiveUris.isNotEmpty() || (selectedIndices.isEmpty() && subIndices.isEmpty()))
+                                            subArch.isNotEmpty() && selectedArchiveUris.containsAll(subArch)
+                                        else subIndices.isNotEmpty() && selectedIndices.containsAll(subIndices)
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -3874,6 +3956,10 @@ fun MusicPlayerScreen(
                                         it.id == a.driveId && it.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && it.writeShare.isBlank()
                                     }
                                     ArchiveRow(
+                                        modifier = Modifier.animateItem(),
+                                        selectionMode = isMultiSelectionMode,
+                                        selected = a.uri in selectedArchiveUris,
+                                        onToggleSelect = { viewModel.toggleArchiveSelection(a.uri) },
                                         archive = a,
                                         readOnly = ro,
                                         state = when {

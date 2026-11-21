@@ -56,8 +56,14 @@ class MainActivity : ComponentActivity() {
         // Check if this is the first start and show permissions popup
         checkFirstStartAndRequestPermissions()
         
-        // Handle incoming intent for audio files
-        handleIncomingIntent(intent)
+        // Handle incoming intent for audio files — but only a fresh one. Reopening the app from
+        // Recents (or after an update / process restart) re-delivers the ORIGINAL "Open with"
+        // intent, whose temporary read permission is long gone, so an unreadable "Unknown" track
+        // was added on every start.
+        val fromHistory = (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
+        if (savedInstanceState == null && !fromHistory) handleIncomingIntent(intent)
+        // Consume it so later recreations don't see it again
+        setIntent(Intent(intent).setAction(Intent.ACTION_MAIN).setData(null))
         
         setContent {
             val viewModel: MusicViewModel = viewModel()

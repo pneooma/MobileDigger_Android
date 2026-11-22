@@ -193,7 +193,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                     var w by remember { mutableFloatStateOf(1f) }
                     var h by remember { mutableFloatStateOf(1f) }
                     var last by remember { mutableIntStateOf(-1) }
-                    val padX = 18f
+                    val padX = with(androidx.compose.ui.platform.LocalDensity.current) { 7.dp.toPx() }
                     // Bands sit at their real frequency on the same log axis as the grid and labels
                     fun bandX(i: Int) = padX + (w - 2 * padX) * xOfFreq(AudioFx.centers[i])
                     fun bandAt(x: Float) = (0 until AudioFx.BANDS).minBy { abs(bandX(it) - x) }
@@ -243,12 +243,12 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                         // Grid: frequency verticals + dB horizontals
                         GRID_FREQS.forEach { f ->
                             val x = padX + (size.width - 2 * padX) * xOfFreq(f)
-                            drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), 1f)
+                            drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), 0.5.dp.toPx())
                         }
                         listOf(12f, 6f, -6f, -12f).forEach { db ->
-                            drawLine(gridColor, Offset(0f, yOf(db, size.height)), Offset(size.width, yOf(db, size.height)), 1f)
+                            drawLine(gridColor, Offset(0f, yOf(db, size.height)), Offset(size.width, yOf(db, size.height)), 0.5.dp.toPx())
                         }
-                        drawLine(zeroColor, Offset(0f, zero), Offset(size.width, zero), 1.5f,
+                        drawLine(zeroColor, Offset(0f, zero), Offset(size.width, zero), 0.6.dp.toPx(),
                             pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
 
                         // Curve through the band points, extended flat to the edges
@@ -268,8 +268,8 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                             1f to accent2.copy(alpha = 0.30f * activeAlpha)
                         ))
                         // Glow + line
-                        drawPath(curvePath, curveColor.copy(alpha = 0.25f * activeAlpha), style = Stroke(width = 10f, cap = StrokeCap.Round))
-                        drawPath(curvePath, curveColor.copy(alpha = activeAlpha), style = Stroke(width = 3.5f, cap = StrokeCap.Round))
+                        drawPath(curvePath, curveColor.copy(alpha = 0.25f * activeAlpha), style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round))
+                        drawPath(curvePath, curveColor.copy(alpha = activeAlpha), style = Stroke(width = 1.4.dp.toPx(), cap = StrokeCap.Round))
 
                         // Band handles: big, ringed dots; hollow when the band is at 0 dB
                         val r = 4.5.dp.toPx(); val ring = 1.5.dp.toPx()  // 32 bands: dots just touch on a phone
@@ -306,7 +306,7 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                         }
                     }
                 }
-                FreqAxis(padStartPx = 18f)
+                FreqAxis(padStart = 7.dp)
                 Spacer(Modifier.height(6.dp))
 
                 Spacer(Modifier.height(12.dp))
@@ -338,12 +338,12 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                             Canvas(Modifier.fillMaxSize()) {
                                 tick // redraw every frame
                                 GRID_FREQS.forEach { f ->
-                                    val x = 18f + (size.width - 36f) * xOfFreq(f)
-                                    drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), 1f)
+                                    val x = 7.dp.toPx() + (size.width - 14.dp.toPx()) * xOfFreq(f)
+                                    drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), 0.5.dp.toPx())
                                 }
                                 val top = size.height * 0.08f
                                 val bottom = size.height
-                                val xs = FloatArray(n) { 18f + (size.width - 36f) * it / (n - 1f) }
+                                val xs = FloatArray(n) { 7.dp.toPx() + (size.width - 14.dp.toPx()) * it / (n - 1f) }
                                 val ys = FloatArray(n) { bottom - level[it] * (bottom - top) }
                                 smoothPath(xs, ys, linePath)
                                 areaPath.reset(); areaPath.addPath(linePath)
@@ -351,12 +351,12 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
                                 drawSpectrum(areaPath, linePath, accent, accent2)
                                 val ps = FloatArray(n) { bottom - peak[it] * (bottom - top) }
                                 smoothPath(xs, ps, peakPath)
-                                drawPath(peakPath, accent2.copy(alpha = 0.45f), style = Stroke(width = 1.5f))
+                                drawPath(peakPath, accent2.copy(alpha = 0.45f), style = Stroke(width = 0.6.dp.toPx()))
                             }
                         }
                     }
                 }
-                FreqAxis(padStartPx = 18f)
+                FreqAxis(padStart = 7.dp)
                 Spacer(Modifier.height(18.dp))
 
                 // ---- Every band, one row each ------------------------------------------------
@@ -409,17 +409,16 @@ fun EqualizerDialog(onDismiss: () -> Unit) {
 
 private fun DrawScope.drawSpectrum(area: Path, line: Path, a: Color, b: Color) {
     drawPath(area, Brush.verticalGradient(listOf(a.copy(alpha = 0.55f), b.copy(alpha = 0.18f), Color.Transparent)))
-    drawPath(line, a.copy(alpha = 0.30f), style = Stroke(width = 9f, cap = StrokeCap.Round))
-    drawPath(line, Brush.horizontalGradient(listOf(b, a, b)), style = Stroke(width = 3f, cap = StrokeCap.Round))
+    drawPath(line, a.copy(alpha = 0.30f), style = Stroke(width = 3.5.dp.toPx(), cap = StrokeCap.Round))
+    drawPath(line, Brush.horizontalGradient(listOf(b, a, b)), style = Stroke(width = 1.2.dp.toPx(), cap = StrokeCap.Round))
 }
 
 /** Frequency labels on the same log axis as the graphs. */
 @Composable
-private fun FreqAxis(padStartPx: Float) {
+private fun FreqAxis(padStart: androidx.compose.ui.unit.Dp) {
     val cs = MaterialTheme.colorScheme
     BoxWithConstraints(Modifier.fillMaxWidth().height(20.dp).padding(top = 4.dp)) {
-        val density = androidx.compose.ui.platform.LocalDensity.current
-        val pad = with(density) { padStartPx.toDp() }
+        val pad = padStart
         val inner = maxWidth - pad * 2
         AXIS_LABELS.forEach { (f, label) ->
             val x = pad + inner * xOfFreq(f)

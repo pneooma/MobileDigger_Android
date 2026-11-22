@@ -397,9 +397,30 @@ private fun VisualTab(
             }
         }
         Spacer(Modifier.height(6.dp))
-        CompactSlider("Animation Speed", settings.animationSpeed, 0.05f..3.0f) {
+        CompactSlider("Overall speed (× all below)", settings.animationSpeed, 0.05f..3.0f) {
             onUpdate(settings.copy(animationSpeed = it))
         }
+        Text("Durations in milliseconds. Each is divided by the overall speed; 0 = instant.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(4.dp))
+        MsSlider("Like / Reject swipe out", settings.animSwipeOutMs, 0f..2000f) { onUpdate(settings.copy(animSwipeOutMs = it)) }
+        MsSlider("Row fade when sorted (buttons)", settings.animRemoveMs, 0f..2000f) { onUpdate(settings.copy(animRemoveMs = it)) }
+        MsSlider("List rows sliding into place", settings.animReflowMs, 0f..2000f) { onUpdate(settings.copy(animReflowMs = it)) }
+        MsSlider("Unfinished swipe springs back", settings.animSettleMs, 0f..1500f) { onUpdate(settings.copy(animSettleMs = it)) }
+        MsSlider("Next track slides in", settings.animArriveMs, 0f..1500f) { onUpdate(settings.copy(animArriveMs = it)) }
+        MsSlider("Main player show / hide", settings.animPanelMs, 0f..2500f) { onUpdate(settings.copy(animPanelMs = it)) }
+        MsSlider("Playing row expands", settings.animRowExpandMs, 0f..2000f) { onUpdate(settings.copy(animRowExpandMs = it)) }
+        MsSlider("Waveform show / hide", settings.animWaveformMs, 0f..2000f) { onUpdate(settings.copy(animWaveformMs = it)) }
+        MsSlider("Play / pause icon", settings.animPlayPauseMs, 0f..1000f) { onUpdate(settings.copy(animPlayPauseMs = it)) }
+        TextButton(onClick = {
+            val d = com.example.mobiledigger.ui.theme.VisualSettings()
+            onUpdate(settings.copy(
+                animationSpeed = d.animationSpeed, animSwipeOutMs = d.animSwipeOutMs, animRemoveMs = d.animRemoveMs,
+                animReflowMs = d.animReflowMs, animSettleMs = d.animSettleMs, animArriveMs = d.animArriveMs,
+                animPanelMs = d.animPanelMs, animRowExpandMs = d.animRowExpandMs, animWaveformMs = d.animWaveformMs,
+                animPlayPauseMs = d.animPlayPauseMs
+            ))
+        }) { Text("Reset animation timings") }
     }
 
     SectionCard("Mini Player") {
@@ -483,6 +504,27 @@ private fun CompactSlider(label: String, value: Float, range: ClosedFloatingPoin
             onValueChange = onValueChange,
             valueRange = range,
             modifier = Modifier.fillMaxWidth().height(40.dp)
+        )
+    }
+}
+
+/** Duration slider in 10 ms steps, showing the value and the effective time after the overall speed. */
+@Composable
+private fun MsSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, onValueChange: (Float) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.weight(1f))
+            Text("${value.toInt()} ms", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
+        }
+        Slider(
+            value = value,
+            onValueChange = { onValueChange((it / 10f).toInt() * 10f) },
+            valueRange = range,
+            modifier = Modifier.fillMaxWidth().height(36.dp)
         )
     }
 }

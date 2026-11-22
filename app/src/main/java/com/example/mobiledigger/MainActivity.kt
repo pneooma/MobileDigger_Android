@@ -51,7 +51,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        applyHighRefreshRatePreference()
         
         // Check if this is the first start and show permissions popup
         checkFirstStartAndRequestPermissions()
@@ -67,6 +66,10 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             val viewModel: MusicViewModel = viewModel()
+            // Full refresh rate only while music plays (the playhead moves every frame);
+            // otherwise let Android pick, so LTPO screens can drop to 1–10 Hz when idle.
+            val playingForRefresh by viewModel.isPlaying.collectAsState()
+            LaunchedEffect(playingForRefresh) { setHighRefreshRate(playingForRefresh) }
             var isDarkMode by remember { mutableStateOf(viewModel.themeManager.isDarkMode.value) }
             var useDynamicColor by remember { mutableStateOf(viewModel.themeManager.useDynamicColor.value) }
             var selectedTheme by remember { mutableStateOf(viewModel.themeManager.selectedTheme.value) }
@@ -128,26 +131,24 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    private fun applyHighRefreshRatePreference() {
+    /** Ask for the screen's fastest refresh rate (same resolution), or hand the choice back to Android. */
+    private fun setHighRefreshRate(on: Boolean) {
         try {
-            // Hint the system to use the highest refresh rate mode that matches current resolution
-            val display: Display = window.windowManager.defaultDisplay
-            val currentMode = display.mode
-            val matchingModes = display.supportedModes.filter {
-                it.physicalWidth == currentMode.physicalWidth && it.physicalHeight == currentMode.physicalHeight
-            }
-            val bestMode = matchingModes.maxByOrNull { it.refreshRate } ?: currentMode
-            
-            // Prefer the best mode and refresh rate for the window
             val params = window.attributes
-            params.preferredDisplayModeId = bestMode.modeId
-            params.preferredRefreshRate = bestMode.refreshRate
+            if (on) {
+                val display = window.windowManager.defaultDisplay
+                val cur = display.mode
+                val best = display.supportedModes
+                    .filter { it.physicalWidth == cur.physicalWidth && it.physicalHeight == cur.physicalHeight }
+                    .maxOfOrNull { it.refreshRate } ?: cur.refreshRate
+                params.preferredRefreshRate = best
+            } else {
+                params.preferredRefreshRate = 0f   // no preference: system adapts
+            }
+            params.preferredDisplayModeId = 0
             window.attributes = params
-            
-            CrashLogger.log("MainActivity", "Applied high refresh rate preference: ${bestMode.refreshRate}Hz (modeId=${bestMode.modeId})")
         } catch (e: Throwable) {
-            // Fallback silently if any API isn't available on the device
-            CrashLogger.log("MainActivity", "Failed to apply high refresh rate preference", e)
+            CrashLogger.log("MainActivity", "Refresh-rate preference failed", e)
         }
     }
     

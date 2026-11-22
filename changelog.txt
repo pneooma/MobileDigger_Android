@@ -2139,3 +2139,29 @@ v13.045
 
 v13.046
 - Equalizer: the Bands list starts collapsed every time the equalizer opens (tap its header to show the rows).
+
+v13.047 — high refresh rate & UHD
+- Playhead glides on every display frame (60/90/120/144 Hz) between the ~30/s position updates, instead of stepping at 30 fps. Only the waveform redraws per frame.
+- Refresh rate: full speed requested only while music plays; when paused Android chooses (LTPO screens can idle at 1–10 Hz). Previously pinned to max all the time.
+- Removed the "120 Hz" animation speed-ups: animations take the same time on every screen.
+- Line widths in the waveform, spectrogram grid and equalizer use dp instead of raw pixels, so they look the same on UHD and lower-density screens (unchanged on a ~2.6x density phone).
+
+v13.048 — animations
+- Shared motion specs (Motion.kt) so lists, swipes and players feel consistent.
+- List rows glide into place with a spring (~0.3 s, was a 1.5 s tween) and fade in/out; archive rows too.
+- Row swipe: thresholds in dp (were pixels), swiped rows accelerate out by the full screen width (520 px didn't clear wide/UHD screens), unfinished swipes settle back quickly with one small overshoot (was a slow wobble).
+- Main player swipe: card leaves the screen, then the next track slides in from the opposite side (was an instant pop). The second player layout no longer slides the old track back before switching, and Like there now advances too (it only sorted, which could desync the playing track).
+- Play/pause icons morph with a quick scale + fade.
+- Hiding the main player shrinks its space smoothly instead of jumping at the end.
+- "Animation speed" setting now speeds springs up (it slowed them down) and no longer changes how bouncy they are.
+
+v13.049 — animation timing sliders
+- Settings → Animations: a slider per animation, in ms with wide ranges — Like/Reject swipe out (0–2000), row fade when sorted with the buttons (0–2000), list rows sliding into place (0–2000), unfinished swipe springing back (0–1500), next track sliding in (0–1500), main player show/hide (0–2500), playing row expanding (0–2000), waveform show/hide (0–2000), play/pause icon (0–1000). Plus "Reset animation timings".
+- "Animation Speed" is now "Overall speed" and divides every one of these, with no hidden caps (swipe-out was clamped to 80–450 ms; button-sort fade, list reflow and next-track slide-in ignored it).
+- Button Like/Reject removal waits for the chosen fade time instead of a fixed 300 ms.
+
+v13.050
+- Search results are shown inline under the search field (a scrollable card, up to ~40% of the screen) and push the playlist tabs / main player down instead of floating over them. Header shows the result count and a collapse button; "Show N results" brings them back. Picking a track closes the list.
+
+v13.051
+- Search field no longer overlaps the playlist tabs / main player: their upward 40 dp shift is dropped while search is open.

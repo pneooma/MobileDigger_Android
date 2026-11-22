@@ -216,6 +216,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
 
     // UI removal animation support: URIs fading out before actual removal
+    /** Row fade-out time before a sorted row is removed (Settings → Animations → Remove). */
+    private fun removeAnimMs(): Long = com.example.mobiledigger.ui.components.Motion.removeMs().toLong()
     private val _removingUris = MutableStateFlow<Set<Uri>>(emptySet())
     val removingUris: StateFlow<Set<Uri>> = _removingUris.asStateFlow()
 
@@ -1329,13 +1331,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         // Determine which list the file came from and remove it with fade-out delay
         _removingUris.value = _removingUris.value + sortedFile.uri
         viewModelScope.launch {
-            delay(300)
+            delay(removeAnimMs())
             _removingUris.value = _removingUris.value - sortedFile.uri
         }
         when (sortedFile.sourcePlaylist) {
             PlaylistTab.TODO -> {
                 viewModelScope.launch {
-                    delay(300)
+                    delay(removeAnimMs())
                 val updatedFiles = _musicFiles.value.toMutableList()
                 val indexToRemove = updatedFiles.indexOfFirst { it.uri == sortedFile.uri }
                 if (indexToRemove != -1) {
@@ -1351,7 +1353,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
             PlaylistTab.LIKED -> {
                 viewModelScope.launch {
-                    delay(300)
+                    delay(removeAnimMs())
                 val updatedLikedFiles = _likedFiles.value.toMutableList()
                 val indexToRemove = updatedLikedFiles.indexOfFirst { it.uri == sortedFile.uri }
                 if (indexToRemove != -1) {
@@ -1367,7 +1369,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
             PlaylistTab.REJECTED -> {
                 viewModelScope.launch {
-                    delay(300)
+                    delay(removeAnimMs())
                 val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
                 val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == sortedFile.uri }
                 if (indexToRemove != -1) {

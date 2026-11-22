@@ -38,6 +38,8 @@ fun SharedWaveformDisplay(
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Transparent, // Transparent by default
     currentPosition: Long = 0L, // Current playback position in milliseconds
+    /** While true, the playhead glides forward on every display frame between position updates. */
+    isPlaying: Boolean = false,
     totalDuration: Long = 0L, // Total duration in milliseconds
     fileName: String = "",
     opacity: Float = 0.8f, // Waveform opacity (default 80%)
@@ -51,9 +53,26 @@ fun SharedWaveformDisplay(
     // Local progress state for immediate feedback
     var localProgress by remember { mutableStateOf(progress) }
     
-    // Update local progress when external progress changes
+    // Position updates arrive ~30×/s; between them, move the playhead on every display frame
+    // (60/90/120/144 Hz) from the last known position, so it glides instead of stepping.
+    var anchorProgress by remember { mutableFloatStateOf(progress) }
+    var anchorDirty by remember { mutableStateOf(true) }
     LaunchedEffect(progress) {
         localProgress = progress
+        anchorProgress = progress
+        anchorDirty = true
+    }
+    LaunchedEffect(isPlaying, totalDuration) {
+        if (!isPlaying || totalDuration <= 0L) return@LaunchedEffect
+        var anchorNanos = 0L
+        while (true) {
+            withFrameNanos { now ->
+                if (anchorDirty) { anchorNanos = now; anchorDirty = false }
+                // Cap the glide at 250 ms so a stalled player can't run the line away
+                val ms = ((now - anchorNanos) / 1_000_000L).coerceAtMost(250L)
+                localProgress = (anchorProgress + ms.toFloat() / totalDuration).coerceAtMost(1f)
+            }
+        }
     }
 
     // Format time as MM:SS
@@ -179,9 +198,11 @@ fun SharedWaveformDisplay(
                                 // Configure WaveformSeekBar appearance
                                 waveBackgroundColor = unplayedColor
                                 waveProgressColor = playedColor
-                                waveWidth = 1f // Thin bars
-                                waveGap = 1f // Small gap so the (now doubled) bars read individually
-                                waveCornerRadius = 1f // Less rounding so thin bars stay crisp, not blobby
+                                // Sizes in dp (the view takes px): same look on every screen density
+                                val d = ctx.resources.displayMetrics.density
+                                waveWidth = 0.4f * d // Thin bars
+                                waveGap = 0.4f * d // Small gap so the bars read individually
+                                waveCornerRadius = 0.4f * d // Little rounding so thin bars stay crisp
                                 wavePaddingTop = 1
                                 wavePaddingBottom = 1
                                 

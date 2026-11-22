@@ -30,17 +30,14 @@ object AnimationUtils {
     }
     
     /**
-     * Calculate optimized animation duration based on refresh rate
-     * For 120Hz displays, we can use shorter durations for smoother animations
+     * Animation duration — independent of refresh rate (kept for existing callers)
      */
     fun getOptimizedDuration(baseDurationMs: Int, refreshRate: Float): Int {
-        return when {
-            refreshRate >= 120f -> (baseDurationMs * 0.7f).toInt() // 30% faster for 120Hz+
-            refreshRate >= 90f -> (baseDurationMs * 0.85f).toInt() // 15% faster for 90Hz+
-            else -> baseDurationMs // Standard duration for 60Hz
-        }
+        // Animations take the same TIME on every screen; a faster screen just draws more frames.
+        // (Shortening them on 90/120 Hz made the app feel different per phone, not smoother.)
+        return baseDurationMs
     }
-    
+
     /**
      * Get optimized spring animation spec for high refresh rate displays
      */
@@ -49,11 +46,7 @@ object AnimationUtils {
         stiffness: Float = Spring.StiffnessLow,
         refreshRate: Float = 60f
     ): AnimationSpec<Float> {
-        val speedFactor = if (refreshRate >= 120f) 1.3f else if (refreshRate >= 90f) 1.15f else 1f
-        return spring(
-            dampingRatio = dampingRatio * speedFactor,
-            stiffness = stiffness * speedFactor
-        )
+        return spring(dampingRatio = dampingRatio, stiffness = stiffness)
     }
     
     /**

@@ -163,6 +163,12 @@ fun MusicPlayerScreen(
     val currentIndex by viewModel.currentIndex.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
     val currentPosition by viewModel.currentPosition.collectAsState()
+    // Main-player swipe distances in dp → px (were raw pixels)
+    val motionDensity = androidx.compose.ui.platform.LocalDensity.current
+    val mainTriggerPx = with(motionDensity) { Motion.mainSwipeTrigger.toPx() }
+    val mainDragMaxPx = with(motionDensity) { 114.dp.toPx() }
+    val mainHintPx = with(motionDensity) { 30.dp.toPx() }
+    val mainExitPx = with(motionDensity) { androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp.toPx() } + 40f
     val duration by viewModel.duration.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -285,6 +291,7 @@ fun MusicPlayerScreen(
     
     // Visual settings
     val visualSettings by viewModel.visualSettingsManager.settings
+    Motion.update(visualSettings)
     val isMonochrome = viewModel.themeManager.selectedTheme.value.name == "Monochrome"
     val monoColor = MaterialTheme.colorScheme.onSurfaceVariant
     val customWaveformColor = remember(visualSettings.waveformColor) {
@@ -1628,11 +1635,9 @@ fun MusicPlayerScreen(
                     searchExpanded = currentSearchText.isNotBlank() && searchResults.isNotEmpty()
                 }
 
-                ExposedDropdownMenuBox(
-                    expanded = searchExpanded,
-                    onExpandedChange = { searchExpanded = !searchExpanded },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
+                // Results are shown INLINE under the field (they used to open as a floating menu
+                // that covered the playlist tabs and the main player).
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
                     OutlinedTextField(
                         value = currentSearchText,
                         onValueChange = { newValue ->
@@ -1660,7 +1665,7 @@ fun MusicPlayerScreen(
                                     Icon(Icons.Default.Clear, contentDescription = "Clear Search")
                                 }
                             } else {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = searchExpanded)
+                                Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         },
@@ -1674,7 +1679,6 @@ fun MusicPlayerScreen(
                         }),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                             .focusRequester(searchFocusRequester)
             .onPreviewKeyEvent { event ->
                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_UP) {
@@ -1690,44 +1694,59 @@ fun MusicPlayerScreen(
                 return@onPreviewKeyEvent false
             }
                     )
-                    if (searchExpanded && searchResults.isNotEmpty()) {
-                        ExposedDropdownMenu(
-                            expanded = searchExpanded,
-                            onDismissRequest = { searchExpanded = false },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surface)
+                    val resultsMaxH = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.4f).dp
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = searchExpanded && searchResults.isNotEmpty(),
+                        enter = androidx.compose.animation.expandVertically(tween(Motion.panelMs() / 2)) + androidx.compose.animation.fadeIn(tween(Motion.panelMs() / 2)),
+                        exit = androidx.compose.animation.shrinkVertically(tween(Motion.panelMs() / 2)) + androidx.compose.animation.fadeOut(tween(Motion.panelMs() / 3))
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                         ) {
-                            searchResults.forEach { musicFile ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Column {
-                                            Text(
-                                                text = musicFile.name,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                maxLines = 3,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Text(
-                                                "Source: ${musicFile.sourcePlaylist.toString()}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        viewModel.playFile(musicFile)
-                                        searchExpanded = false
+                            Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("${searchResults.size} result${if (searchResults.size == 1) "" else "s"}",
+                                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f))
+                                IconButton(onClick = { searchExpanded = false }, modifier = Modifier.size(32.dp)) {
+                                    Icon(Icons.Default.ExpandLess, contentDescription = "Hide results", modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = resultsMaxH)) {
+                                items(searchResults.size) { idx ->
+                                    val musicFile = searchResults[idx]
+                                    Column(
+                                        Modifier.fillMaxWidth()
+                                            .clickable { viewModel.playFile(musicFile); searchExpanded = false }
+                                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = musicFile.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 3,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            "Source: ${musicFile.sourcePlaylist.toString()}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-                                )
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                    if (idx < searchResults.size - 1) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                }
                             }
                         }
                     }
+                    // Collapsed results: one tap brings them back
+                    if (!searchExpanded && searchResults.isNotEmpty() && currentSearchText.isNotBlank()) {
+                        TextButton(onClick = { searchExpanded = true }) { Text("Show ${searchResults.size} results") }
+                    }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
 
             
@@ -1778,17 +1797,7 @@ fun MusicPlayerScreen(
                                 animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
                                 label = "transition_fade"
                             )
-                            val animationSpec = remember(visualSettings.enableAnimations, visualSettings.animationSpeed) {
-                                if (visualSettings.enableAnimations) {
-                                    val speedFactor = 1f / visualSettings.animationSpeed
-                                    spring<Float>(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
-                                        stiffness = Spring.StiffnessMediumLow * speedFactor * 1.5f
-                                    )
-                                } else {
-                                    tween<Float>(durationMillis = 0)
-                                }
-                            }
+                            val animationSpec = remember(visualSettings) { Motion.settle }
                             val animatedOffset = mainSwipeOffset.value
                             val cardColor = when (swipeDirection) {
                                 1 -> LikeGreen.copy(alpha = 0.3f)
@@ -1809,7 +1818,7 @@ fun MusicPlayerScreen(
                                 PlaylistTab.REJECTED -> rejectedFiles.size
                             }
                             Spacer(Modifier.height(0.dp))
-                            val panelAnimMs = (500 / visualSettings.animationSpeed).toInt()
+                            val panelAnimMs = Motion.panelMs()
                             AnimatedVisibility(
                                 visible = isMainPlayerVisible,
                                 enter = expandVertically(animationSpec = tween(panelAnimMs)) + fadeIn(animationSpec = tween(panelAnimMs)),
@@ -1819,7 +1828,7 @@ fun MusicPlayerScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .offset(y = (-40).dp)
+                                    .offset(y = if (showSearchInput) 0.dp else (-40).dp) // no overlap with the search box
                                     .graphicsLayer {
                                         translationX = animatedOffset
                                         scaleX = 1f + abs(animatedOffset) / 2000f
@@ -1845,16 +1854,15 @@ fun MusicPlayerScreen(
                                                     onDragStart = { },
                                                     onDragEnd = {
                                                         val current = mainSwipeOffset.value
-                                                        val threshold = 150f
-                                                        val exit = if (current > 0) 520f else -520f
+                                                        val threshold = mainTriggerPx
+                                                        val exit = if (current > 0) mainExitPx else -mainExitPx
                                                         if (abs(current) > threshold) {
                                                             val prevFile = file
                                                             scope.launch {
-                                                                // Slide the card off — speed-scaled but BOUNDED (60..450ms) so a
-                                                                // slow Animation Speed can't delay/stall the action — then fire
-                                                                // like/dislike immediately, then reset for the next track.
-                                                                val exitMs = (220f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450)
-                                                                mainSwipeOffset.animateTo(exit, tween(exitMs))
+                                                                // Slide the card off (accelerating, bounded 80..450 ms so a slow
+                                                                // Animation Speed can't stall the action), fire like/dislike, then
+                                                                // let the next track slide in from the opposite side.
+                                                                mainSwipeOffset.animateTo(exit, Motion.exit())
                                                                 // Both directions sort the CURRENT file AND advance to the next
                                                                 // track. LIKE used to only sort (leaving the audible file playing
                                                                 // while it was removed from the list) which desynced _currentIndex
@@ -1875,7 +1883,8 @@ fun MusicPlayerScreen(
                                                                         prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) }
                                                                     } catch (_: Exception) { }
                                                                 }
-                                                                mainSwipeOffset.snapTo(0f)
+                                                                mainSwipeOffset.snapTo(-exit * 0.35f)
+                                                                mainSwipeOffset.animateTo(0f, Motion.arrive)
                                                             }
                                                         } else {
                                                             scope.launch {
@@ -1886,11 +1895,11 @@ fun MusicPlayerScreen(
                                                     }
                                                 ) { _, dragAmount ->
                                                     val (x, _) = dragAmount
-                                                    val newValue = (mainSwipeOffset.value + x * 0.85f).coerceIn(-300f, 300f)
+                                                    val newValue = (mainSwipeOffset.value + x * 0.85f).coerceIn(-mainDragMaxPx, mainDragMaxPx)
                                                     scope.launch { mainSwipeOffset.snapTo(newValue) }
                                                     swipeDirection = when {
-                                                        newValue > 80f -> 1
-                                                        newValue < -80f -> -1
+                                                        newValue > mainHintPx -> 1
+                                                        newValue < -mainHintPx -> -1
                                                         else -> 0
                                                     }
                                                 }
@@ -1948,10 +1957,11 @@ fun MusicPlayerScreen(
                                                 waveformHeight = visualSettings.waveformHeight.toInt(),
                                                 currentPosition = currentPosition,
                                                 totalDuration = duration,
+                                                isPlaying = isPlaying,
                                                 fileName = file.name,
                                                 customWaveformColor = customWaveformColor,
                                                 animationType = visualSettings.waveformAnimationType,
-                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                                        animationDurationMs = Motion.waveformMs(),
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                             // BPM overlay removed
@@ -2003,11 +2013,7 @@ fun MusicPlayerScreen(
                                                     pressedElevation = 8.dp
                                                 )
                                             ) {
-                                                Icon(
-                                                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                    contentDescription = if (isPlaying) "Pause" else "Play",
-                                                    modifier = Modifier.size(26.dp)
-                                                )
+                                                PlayPauseIcon(isPlaying, Modifier.size(26.dp))
                                             }
                                             Card(
                                                 onClick = { viewModel.next() },
@@ -2547,7 +2553,7 @@ fun MusicPlayerScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
-                                        .offset(y = (-40).dp),
+                                        .offset(y = if (showSearchInput) 0.dp else (-40).dp),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -2737,7 +2743,7 @@ fun MusicPlayerScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .fillMaxHeight()
-                            .offset(y = (-35).dp),
+                            .offset(y = if (showSearchInput) 0.dp else (-35).dp),
                         contentPadding = PaddingValues(top = 0.dp, bottom = 80.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         userScrollEnabled = true,
@@ -2763,19 +2769,7 @@ fun MusicPlayerScreen(
                                     label = "transition_fade"
                                 )
                                 
-                                // Cache animation spec optimized for 120Hz displays
-                                val animationSpec = remember(visualSettings.enableAnimations, visualSettings.animationSpeed) {
-                                    if (visualSettings.enableAnimations) {
-                                        val speedFactor = 1f / visualSettings.animationSpeed
-                                        // Optimized spring for 120Hz with higher stiffness
-                                        spring<Float>(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy * speedFactor,
-                                            stiffness = Spring.StiffnessMediumLow * speedFactor * 1.5f // Faster for 120Hz
-                                        )
-                                    } else { 
-                                        tween<Float>(durationMillis = 0) // Snap immediately if animations are disabled
-                                    }
-                                }
+                                val animationSpec = remember(visualSettings) { Motion.settle }
                                 
                                 val animatedOffset = mainSwipeOffset.value
                                 
@@ -2801,7 +2795,7 @@ fun MusicPlayerScreen(
                                     PlaylistTab.REJECTED -> rejectedFiles.size
                                 }
                                 Spacer(Modifier.height(0.dp)) // moved counts/toggles outside scroll area
-                                val panelAnimMs2 = (500 / visualSettings.animationSpeed).toInt()
+                                val panelAnimMs2 = Motion.panelMs()
                                 val mainPlayerAlpha2 by animateFloatAsState(
                                     targetValue = if (isMainPlayerVisible) 1f else 0f,
                                     animationSpec = tween(panelAnimMs2),
@@ -2811,8 +2805,8 @@ fun MusicPlayerScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = if (isMainPlayerVisible) 4.dp else 0.dp)
-                                        .then(if (mainPlayerAlpha2 == 0f) Modifier.height(0.dp) else Modifier)
-                                        .animateItem(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow))
+                                        .collapseHeight(mainPlayerAlpha2) // shrinks with the fade instead of jumping to 0 at the end
+                                        .animateItem(placementSpec = Motion.placement)
                                         .graphicsLayer {
                                             translationX = animatedOffset
                                             scaleX = 1f + abs(animatedOffset) / 2000f
@@ -2840,16 +2834,13 @@ fun MusicPlayerScreen(
                                                 },
                                                 onDragEnd = {
                                                     val current = mainSwipeOffset.value
-                                                    val threshold = 150f
-                                                    val exit = if (current > 0) 520f else -520f
+                                                    val threshold = mainTriggerPx
+                                                    val exit = if (current > 0) mainExitPx else -mainExitPx
                                                     if (abs(current) > threshold) {
                                                         val prevFile = file
                                                         scope.launch {
-                                                            // 1) Animate out fully
-                                                            mainSwipeOffset.animateTo(exit, tween(220))
-                                                            // 2) Animate back to rest
-                                                            mainSwipeOffset.animateTo(0f, animationSpec)
-                                                            // 3) Then perform actions
+                                                            // 1) Slide out, 2) act, 3) next track slides in from the other side
+                                                            mainSwipeOffset.animateTo(exit, Motion.exit())
                                                             if (current < 0) {
                                                                 try {
                                                                     // Prevent mini-player flash
@@ -2862,10 +2853,18 @@ fun MusicPlayerScreen(
                                                                     CrashLogger.log("Debug", "Error in swipe (main) sort/next: ${e.message}")
                                                                 }
                                                             } else if (current > 0) {
-                                                                try { prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) } } catch (e: Exception) {
+                                                                // Like = sort AND advance (sorting alone left the removed track
+                                                                // playing and desynced the index — the "track restarts" bug)
+                                                                try {
+                                                                    try { prevFile?.let { viewModel.removeFromCurrentListByUri(it.uri) } } catch (_: Exception) {}
+                                                                    viewModel.playNextAfterRemoval()
+                                                                    prevFile?.let { viewModel.sortMusicFile(it, SortAction.LIKE) }
+                                                                } catch (e: Exception) {
                                                                     CrashLogger.log("Debug", "Error in swipe (main) like: ${e.message}")
                                                                 }
                                                             }
+                                                            mainSwipeOffset.snapTo(-exit * 0.35f)
+                                                            mainSwipeOffset.animateTo(0f, Motion.arrive)
                                                         }
                                                     } else {
                                                         scope.launch {
@@ -2876,11 +2875,11 @@ fun MusicPlayerScreen(
                                                 }
                                             ) { _, dragAmount ->
                                                 val (x, _) = dragAmount
-                                                val newValue = (mainSwipeOffset.value + x * 0.85f).coerceIn(-300f, 300f)
+                                                val newValue = (mainSwipeOffset.value + x * 0.85f).coerceIn(-mainDragMaxPx, mainDragMaxPx)
                                                 scope.launch { mainSwipeOffset.snapTo(newValue) }
                                                 swipeDirection = when {
-                                                    newValue > 80f -> 1
-                                                    newValue < -80f -> -1
+                                                    newValue > mainHintPx -> 1
+                                                    newValue < -mainHintPx -> -1
                                                     else -> 0
                                                 }
                                             }
@@ -2943,10 +2942,11 @@ fun MusicPlayerScreen(
                                                 waveformHeight = visualSettings.waveformHeight.toInt(),
                                                 currentPosition = currentPosition,
                                                 totalDuration = duration,
+                                                isPlaying = isPlaying,
                                                 fileName = file.name, // Pass filename to display in waveform
                                                 customWaveformColor = customWaveformColor,
                                                 animationType = visualSettings.waveformAnimationType,
-                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                                        animationDurationMs = Motion.waveformMs(),
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
@@ -3007,11 +3007,7 @@ fun MusicPlayerScreen(
                                                         pressedElevation = 8.dp
                                                     )
                                                 ) {
-            Icon(
-                if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                    if (isPlaying) "Pause" else "Play",
-                                                        modifier = Modifier.size(22.dp) // Reduced from 28dp to 22dp (20% smaller)
-                                                )
+            PlayPauseIcon(isPlaying, Modifier.size(22.dp))
                                             }
                                             
                                                 // Next button with modern style
@@ -3956,7 +3952,7 @@ fun MusicPlayerScreen(
                                         it.id == a.driveId && it.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && it.writeShare.isBlank()
                                     }
                                     ArchiveRow(
-                                        modifier = Modifier.animateItem(),
+                                        modifier = Modifier.animateItem(fadeInSpec = Motion.rowFadeIn, placementSpec = Motion.placement, fadeOutSpec = Motion.rowFadeOut),
                                         selectionMode = isMultiSelectionMode,
                                         selected = a.uri in selectedArchiveUris,
                                         onToggleSelect = { viewModel.toggleArchiveSelection(a.uri) },
@@ -4011,7 +4007,7 @@ fun MusicPlayerScreen(
                             // Animate row height on promotion (inactive → active)
                             val animatedRowHeight by animateDpAsState(
                                 targetValue = adaptiveHeight,
-                                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                                animationSpec = tween(durationMillis = Motion.rowExpandMs(), easing = FastOutSlowInEasing),
                                 label = "rowHeight"
                             )
                             
@@ -4050,21 +4046,24 @@ fun MusicPlayerScreen(
                             var isRowDismissed by remember(item.uri) { mutableStateOf(false) }
                             val rowAlpha by animateFloatAsState(
                                 targetValue = if (isRemoving || isRowDismissed) 0f else 1f,
-                                animationSpec = tween(300),
+                                animationSpec = tween(Motion.removeMs()),
                                 label = "rowAlpha"
                             )
                             // Remove down-to-up/alpha enter; we'll animate only height on promotion
                             // Optimized thresholds for reliable swiping
-                            val swipeIndicatorThreshold = 50f  // Show indicator threshold
-                            val swipeTriggerThreshold = 100f  // Medium swipes trigger action
-                            val swipeMaxOffset = 200f         // Maximum drag distance
+                            val swipeDensity = androidx.compose.ui.platform.LocalDensity.current
+                            val swipeIndicatorThreshold = with(swipeDensity) { Motion.swipeIndicator.toPx() }  // Show indicator
+                            val swipeTriggerThreshold = with(swipeDensity) { Motion.swipeTrigger.toPx() }      // Swipes past this sort
+                            val swipeMaxOffset = with(swipeDensity) { Motion.swipeMax.toPx() }                 // Max drag distance
+                            // Swiped rows leave by the full screen width (520 px didn't clear wide/UHD screens)
+                            val rowExitPx = with(swipeDensity) { androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp.toPx() } + 40f
                             val swipeResistance = 0.7f        // More resistance for better control
                             
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     // Apply placement animation at the ITEM ROOT so all children (overlay + card) glide together
-                                    .animateItem(tween(durationMillis = 1500))
+                                    .animateItem(fadeInSpec = Motion.rowFadeIn, placementSpec = Motion.placement, fadeOutSpec = Motion.rowFadeOut)
                             ) {
                                 // Swipe indicators behind the card (match row height for true vertical centering)
                                 if (rowSwipeOffset.value != 0f && !isMultiSelectionMode && isSwipeActive) {
@@ -4160,20 +4159,17 @@ fun MusicPlayerScreen(
                                                                             try { viewModel.sortMusicFile(fileToSort, SortAction.DISLIKE) } catch (_: Exception) {}
                                                                             rowSwipeOffset.animateTo(
                                                                                 0f,
-                                                                                spring(
-                                                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                                                    stiffness = Spring.StiffnessVeryLow
-                                                                                )
+                                                                                Motion.settle
                                                                             )
                                                                         }
                                                                     } else {
                                                                         // Proceed: swipe-out → remove → reflow → next (if active) → sort
-                                                                        val exit = -520f
+                                                                        val exit = -rowExitPx
                                                                         scope.launch {
                                                                             isRowDismissed = true
                                                                             if (isActiveNow) suppressMiniOnLeftSwipe = true
-                                                                            launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450))) }
-                                                                            delay((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toLong().coerceIn(60L, 450L))
+                                                                            launch { rowSwipeOffset.animateTo(exit, Motion.exit()) }
+                                                                            delay(Motion.exitMs())
                                                                             try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
                                                                     // Hand off the rest to ViewModel so coroutine isn't cancelled when this row is removed
                                                                     viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.DISLIKE, isActiveNow)
@@ -4181,11 +4177,11 @@ fun MusicPlayerScreen(
                                                                     }
                                                                 } else {
                                                                     // Right swipe (LIKE) - no destination guard needed
-                                                                    val exit = 520f
+                                                                    val exit = rowExitPx
                                                                     scope.launch {
                                                                         isRowDismissed = true
-                                                                        launch { rowSwipeOffset.animateTo(exit, tween((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450))) }
-                                                                        delay((180f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toLong().coerceIn(60L, 450L))
+                                                                        launch { rowSwipeOffset.animateTo(exit, Motion.exit()) }
+                                                                        delay(Motion.exitMs())
                                                                         try { viewModel.removeFromCurrentListByUri(item.uri) } catch (_: Exception) {}
                                                                         // Hand off to ViewModel (stable scope) after removal
                                                                         viewModel.handleRowSwipeAfterRemoval(fileToSort, SortAction.LIKE, false)
@@ -4200,10 +4196,7 @@ fun MusicPlayerScreen(
                                                                 scope.launch {
                                                                     rowSwipeOffset.animateTo(
                                                                         0f,
-                                                                        spring(
-                                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                                            stiffness = Spring.StiffnessVeryLow
-                                                                        )
+                                                                        Motion.settle
                                                                     )
                                                                 }
                                                             } catch (e: Exception) {
@@ -4338,11 +4331,7 @@ fun MusicPlayerScreen(
                                                     },
                                                     modifier = Modifier.size(32.dp)
                                                 ) {
-                                                    Icon(
-                                                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                        contentDescription = if (isPlaying) "Pause" else "Play",
-                                                        tint = MaterialTheme.colorScheme.primary,
-                                                        modifier = Modifier.size(18.dp)
+                                                    PlayPauseIcon(isPlaying, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary
                                                     )
                                                 }
                                             }
@@ -4454,11 +4443,12 @@ fun MusicPlayerScreen(
                                                         waveformHeight = visualSettings.rowWaveformHeight.toInt(),
                                                         currentPosition = currentPosition,
                                                         totalDuration = duration,
+                                                        isPlaying = isPlaying,
                                                         fileName = item.name,
                                                         opacity = 0.7f,
                                                         customWaveformColor = customWaveformColor,
                                                         animationType = visualSettings.waveformAnimationType,
-                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                                        animationDurationMs = Motion.waveformMs(),
                                                         modifier = Modifier.fillMaxWidth().height(visualSettings.rowWaveformHeight.dp)
                                                     )
                                                 }
@@ -4803,7 +4793,7 @@ fun MusicPlayerScreen(
                                                     val prevFile = file
                                                     scope.launch {
                                                         // 1) Animate out fully
-                                                        miniSwipeOffset.animateTo(exit, tween((220f / visualSettings.animationSpeed.coerceAtLeast(0.1f)).toInt().coerceIn(60, 450)))
+                                                        miniSwipeOffset.animateTo(exit, Motion.exit())
                                                         // 2) Animate back
                                                         miniSwipeOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
                                                         // 3) Then sequence next/sort
@@ -4873,11 +4863,7 @@ fun MusicPlayerScreen(
                                             contentColor = MaterialTheme.colorScheme.onPrimary,
                                             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp)
                                         ) {
-                                            Icon(
-                                                if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                if (isPlaying) "Pause" else "Play",
-                                                modifier = Modifier.size(16.dp)
-                                            )
+                                            PlayPauseIcon(isPlaying, Modifier.size(16.dp))
                                         }
                                         IconButton(onClick = { viewModel.next() }, modifier = Modifier.size(28.dp)) {
                                             Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -4931,10 +4917,11 @@ fun MusicPlayerScreen(
                                         waveformHeight = visualSettings.miniWaveformHeight.toInt(),
                                         currentPosition = currentPosition,
                                         totalDuration = duration,
+                                        isPlaying = isPlaying,
                                         fileName = file.name,
                                         customWaveformColor = customWaveformColor,
                                         animationType = visualSettings.waveformAnimationType,
-                                                        animationDurationMs = (300 / visualSettings.animationSpeed).toInt(),
+                                                        animationDurationMs = Motion.waveformMs(),
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }

@@ -522,7 +522,7 @@ private fun SpekPlot(
         label.textAlign = android.graphics.Paint.Align.RIGHT
         for (f in frequencyTicks(maxFreq)) {
             val y = b - h * f / maxFreq
-            if (f in 1 until maxFreq) drawLine(grid, androidx.compose.ui.geometry.Offset(l, y), androidx.compose.ui.geometry.Offset(r, y), 1f)
+            if (f in 1 until maxFreq) drawLine(grid, androidx.compose.ui.geometry.Offset(l, y), androidx.compose.ui.geometry.Offset(r, y), 0.5.dp.toPx())
             nc.drawText(formatKhz(f), l - 6f, (y - half).coerceIn(t - half * 2, b), label)
         }
 
@@ -533,7 +533,7 @@ private fun SpekPlot(
         val endLabelW = label.measureText(formatClock(analyzed))
         while (s < analyzed) {
             val x = l + w * s / analyzed
-            if (s > 0) drawLine(grid, androidx.compose.ui.geometry.Offset(x, t), androidx.compose.ui.geometry.Offset(x, b), 1f)
+            if (s > 0) drawLine(grid, androidx.compose.ui.geometry.Offset(x, t), androidx.compose.ui.geometry.Offset(x, b), 0.5.dp.toPx())
             if (x < r - endLabelW) nc.drawText(formatClock(s.toFloat()), x, ty, label)
             s += step
         }

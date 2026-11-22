@@ -90,7 +90,7 @@ fun WaveformSeekBar(
                     drawPath(
                         path = path,
                         color = waveformColor,
-                        style = Stroke(width = 2f)
+                        style = Stroke(width = 0.8.dp.toPx())
                     )
                     
                     // Also draw bars for better visibility
@@ -141,7 +141,7 @@ fun WaveformSeekBar(
                         drawPath(
                             path = path,
                             color = progressColor,
-                            style = Stroke(width = 3f)
+                            style = Stroke(width = 1.2.dp.toPx())
                         )
                     }
                     
@@ -241,7 +241,7 @@ fun CompactWaveformSeekBar(
                     drawPath(
                         path = path,
                         color = waveformColor,
-                        style = Stroke(width = 1.5f)
+                        style = Stroke(width = 0.6.dp.toPx())
                     )
                     
                     // Also draw bars for better visibility
@@ -292,7 +292,7 @@ fun CompactWaveformSeekBar(
                         drawPath(
                             path = path,
                             color = progressColor,
-                            style = Stroke(width = 2f)
+                            style = Stroke(width = 0.8.dp.toPx())
                         )
                     }
                     

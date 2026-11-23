@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import com.example.mobiledigger.audio.MediaLibrary
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
@@ -190,6 +191,22 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
+    /**
+     * True once a source has been loaded (even if it had 0 tracks) or the sorted playlists were
+     * opened directly. Keeps the main screen (Liked / Rejected tabs) reachable when To Do is empty;
+     * it used to fall back to the welcome page whenever To Do had no files.
+     */
+    private val _workspaceOpen = MutableStateFlow(false)
+    val workspaceOpen: StateFlow<Boolean> = _workspaceOpen.asStateFlow()
+
+    /** Welcome page → "Open Liked & Rejected": go to the main screen without a source. */
+    fun openSortedPlaylists() {
+        _workspaceOpen.value = true
+        loadLikedFiles()
+        loadRejectedFiles()
+        if (_musicFiles.value.isEmpty()) switchPlaylistTab(PlaylistTab.LIKED)
+    }
+
     private val _musicFiles = MutableStateFlow<List<MusicFile>>(emptyList())
     val musicFiles: StateFlow<List<MusicFile>> = _musicFiles.asStateFlow()
     
@@ -365,6 +382,34 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     private val _rejectedFiles = MutableStateFlow<List<MusicFile>>(emptyList())
     val rejectedFiles: StateFlow<List<MusicFile>> = _rejectedFiles.asStateFlow()
+
+    /**
+     * To Do tracks that were already sorted: same name (ignoring case and "(1)" copy suffixes)
+     * and same size as a file in Liked / Rejected now, or one sorted earlier (SortHistory).
+     * Value: 'L' = liked before, 'R' = rejected before.
+     */
+    val alreadySorted: StateFlow<Map<Uri, Char>> = kotlinx.coroutines.flow.combine(
+        _musicFiles, _likedFiles, _rejectedFiles, com.example.mobiledigger.util.SortHistory.version
+    ) { todo, liked, rejected, _ ->
+        val H = com.example.mobiledigger.util.SortHistory
+        fun k(f: MusicFile) = H.normName(f.name) + "|" + f.size
+        val likedKeys = liked.filter { it.size > 0 }.mapTo(HashSet()) { k(it) }
+        val rejectedKeys = rejected.filter { it.size > 0 }.mapTo(HashSet()) { k(it) }
+        val sortedUris = HashSet<Uri>().apply { liked.forEach { add(it.uri) }; rejected.forEach { add(it.uri) } }
+        val out = HashMap<Uri, Char>()
+        for (f in todo) {
+            if (f.size <= 0 || f.uri in sortedUris) continue
+            val key = k(f)
+            val v = when {
+                key in rejectedKeys -> 'R'
+                key in likedKeys -> 'L'
+                else -> H.lookup(f.name, f.size)
+            }
+            if (v != null) out[f.uri] = v
+        }
+        out as Map<Uri, Char>
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyMap())
     
     // Liked playlist subfolder filter (null or empty = no filter, show all liked)
     private val _likedFilter = MutableStateFlow<List<String>?>(null)
@@ -749,6 +794,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 
                 _musicFiles.value = files.map { it.copy(sourcePlaylist = PlaylistTab.TODO) }
                 _archives.value = fileManager.lastArchives
+                _workspaceOpen.value = true
                 CrashLogger.log("MusicViewModel", "Updated musicFiles state")
                 
                 // Skip duration extraction to improve performance
@@ -865,6 +911,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 stopPlayback()
                 
                 // Clear all music files and playlists
+                _workspaceOpen.value = false
                 _musicFiles.value = emptyList()
                 _likedFiles.value = emptyList()
                 _rejectedFiles.value = emptyList()
@@ -1473,22 +1520,30 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             return
         }
 
-        // Remove ALL the rows in one go (one quick collapse, not one animation per track),
-        // then move the files in the background with a progress bar. Failures come back.
+        // All the rows fade + slide out together, then are removed in one go (the rest glide up),
+        // the list scrolls back to the top, and the files move in the background with a progress bar.
         val rejectUris = filesToReject.map { it.uri }.toSet()
-        val playingUri = _currentPlayingFile.value?.uri
-        val remaining = _musicFiles.value.filterNot { it.uri in rejectUris }
-        _musicFiles.value = remaining
-        val newIdx = if (playingUri != null) remaining.indexOfFirst { it.uri == playingUri } else -1
-        _currentIndex.value = when {
-            newIdx != -1 -> newIdx
-            remaining.isEmpty() -> 0
-            else -> _currentIndex.value.coerceIn(0, remaining.size - 1)
-        }
         _playedButNotActioned.value = _playedButNotActioned.value - urisToReject
-        _rejectListenedProgress.value = 0 to filesToReject.size
+        _rejectListenedProgress.value = BulkSortProgress(0, filesToReject.size, toLiked = false)
+        _removingUris.value = _removingUris.value + rejectUris
+
+        viewModelScope.launch {
+            delay(removeAnimMs())
+            val playingUri = _currentPlayingFile.value?.uri
+            val remaining = _musicFiles.value.filterNot { it.uri in rejectUris }
+            _musicFiles.value = remaining
+            _removingUris.value = _removingUris.value - rejectUris
+            val newIdx = if (playingUri != null) remaining.indexOfFirst { it.uri == playingUri } else -1
+            _currentIndex.value = when {
+                newIdx != -1 -> newIdx
+                remaining.isEmpty() -> 0
+                else -> _currentIndex.value.coerceIn(0, remaining.size - 1)
+            }
+            _scrollToTop.tryEmit(Unit)
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
+            delay(removeAnimMs())
             val failed = mutableListOf<MusicFile>()
             fileOperationMutex.withLock {
                 filesToReject.forEachIndexed { i, file ->
@@ -1496,7 +1551,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         CrashLogger.log("MusicViewModel", "Reject listened failed: ${file.name}", e); false
                     }
                     if (!ok) failed += file
-                    _rejectListenedProgress.value = (i + 1) to filesToReject.size
+                    _rejectListenedProgress.value = BulkSortProgress(i + 1, filesToReject.size, toLiked = false)
                 }
             }
             withContext(Dispatchers.Main) {
@@ -1504,20 +1559,31 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     val cur = _musicFiles.value
                     _musicFiles.value = cur + failed.filter { f -> cur.none { it.uri == f.uri } }
                     _errorMessage.value = "Rejected ${filesToReject.size - failed.size}, ${failed.size} couldn't be moved."
-                } else {
-                    _errorMessage.value = "Rejected ${filesToReject.size} listened track${if (filesToReject.size == 1) "" else "s"}"
                 }
+                // Success needs no extra message: the progress banner already ends with "✓ N moved to Rejected"
                 loadRejectedFiles()
                 CrashLogger.log("MusicViewModel", "Reject listened: ${filesToReject.size - failed.size} moved, ${failed.size} failed")
             }
-            kotlinx.coroutines.delay(1500)
-            _rejectListenedProgress.value = null
+            finishBulkProgress()
         }
     }
 
-    /** (done, total) while "Reject listened" moves files in the background; null when idle. */
-    private val _rejectListenedProgress = MutableStateFlow<Pair<Int, Int>?>(null)
-    val rejectListenedProgress: StateFlow<Pair<Int, Int>?> = _rejectListenedProgress.asStateFlow()
+    /** Ask the playlist to scroll back to the top (e.g. after "Reject listened"). */
+    private val _scrollToTop = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val scrollToTop: kotlinx.coroutines.flow.SharedFlow<Unit> = _scrollToTop
+
+    /** Files being moved to Liked / Rejected in the background (Reject listened, multi-select). */
+    data class BulkSortProgress(val done: Int, val total: Int, val toLiked: Boolean)
+
+    /** Progress of a background bulk move; null when idle. The banner is the only message for it. */
+    private val _rejectListenedProgress = MutableStateFlow<BulkSortProgress?>(null)
+    val rejectListenedProgress: StateFlow<BulkSortProgress?> = _rejectListenedProgress.asStateFlow()
+
+    /** Lets the bar reach 100 %, then hides the banner (no separate "N moved" message). */
+    private suspend fun finishBulkProgress() {
+        kotlinx.coroutines.delay(450)
+        _rejectListenedProgress.value = null
+    }
 
     fun undoLastAction() {
         val last = _sortResults.value.lastOrNull() ?: return
@@ -2194,6 +2260,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 val fresh = fileManager.loadMusicFiles()
                 _musicFiles.value = fresh
                 _archives.value = fileManager.lastArchives
+                _workspaceOpen.value = true
+                loadLikedFiles()
+                loadRejectedFiles()
                 val err = fileManager.lastDriveError
                 _errorMessage.value = when {
                     err != null -> "${updated.name}: $err"
@@ -2211,7 +2280,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     // ----- What a load includes: phone folder, network drive, or both -----
-    private val _sourceMode = MutableStateFlow(preferences.getSourceMode())
+    // "Load from" starts on Phone every time the app starts (loading a network drive still
+    // switches it to Network for that session).
+    private val _sourceMode = MutableStateFlow(run { preferences.setSourceMode("PHONE"); "PHONE" })
     val sourceMode: StateFlow<String> = _sourceMode.asStateFlow()
     fun setSourceMode(mode: String) {
         preferences.setSourceMode(mode)
@@ -2221,12 +2292,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     /** "Pick up where you left off": reloads whatever the Phone/Network/Both choice says. */
     fun resumeLastSources() {
         val mode = preferences.getSourceMode()
-        val hasPhone = preferences.getSourceRootUri() != null
+        // Same phone folder the welcome page shows: the saved one, or (after Home cleared it)
+        // the most recent one. Previously only the saved one counted, so after Home the card
+        // said "Phone" but loaded the Pi.
+        val phoneUri = preferences.getSourceRootUri() ?: _recentSourceUris.value.firstOrNull()
         val drive = driveStore.active()
+        CrashLogger.log("MusicViewModel", "Resume: load from=$mode, phone=${phoneUri != null}, drive=${drive?.name}")
         when {
-            mode != "NETWORK" && hasPhone -> rescanSourceFolder() // also adds the drive when mode is BOTH
+            mode != "NETWORK" && phoneUri != null -> selectFolder(Uri.parse(phoneUri)) // also adds the drive when mode is BOTH
+            mode == "PHONE" -> _errorMessage.value = "No phone folder yet: pick one under \"On this phone\"."
             drive != null -> loadDrive(drive, drive.folder)
-            hasPhone -> rescanSourceFolder()
+            phoneUri != null -> selectFolder(Uri.parse(phoneUri))
         }
     }
 
@@ -2810,37 +2886,61 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         return true
     }
     
+    /**
+     * "Delete all To Do": permanently deletes exactly the tracks the To Do list SHOWS — the active
+     * Lossy / Lossless filter is respected, subfolders and network tracks included. (It used to
+     * delete every file in the top of the source folder, ignoring filters and subfolders.)
+     */
     fun deleteAllTodo(confirmCount: Int): Boolean {
         if (confirmCount < 4) return false
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val sourceFolder = fileManager.getSelectedFolder()
-                if (sourceFolder != null) {
-                    val files = sourceFolder.listFiles()?.filter { it.isFile } ?: emptyList()
-                    var deleted = 0
-                    files.forEach { f -> 
-                        try { 
-                            if (f.delete()) deleted++ 
-                        } catch (_: Exception) {} 
-                    }
-                    withContext(Dispatchers.Main) { 
-                        _errorMessage.value = "Deleted $deleted todo files"
-                        _musicFiles.value = emptyList() // Clear the music files list
-                        _currentIndex.value = 0
-                        stopPlayback()
-                    }
-                } else {
-                    withContext(Dispatchers.Main) { 
-                        _errorMessage.value = "No source folder selected" 
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) { _errorMessage.value = "Delete failed: ${e.message}" }
-            }
-        }
+        val shown = if (_currentPlaylistTab.value == PlaylistTab.TODO) currentPlaylistFiles.value else _musicFiles.value
+        deleteTracksPermanently(shown)
         return true
     }
-    
+
+    /** Selection bar → Delete: permanently deletes the selected (displayed) tracks. */
+    fun deleteSelectedTracks() {
+        val display = currentPlaylistFiles.value
+        val files = _selectedIndices.value.sorted().mapNotNull { display.getOrNull(it) }
+        _selectedIndices.value = emptySet()
+        _isMultiSelectionMode.value = false
+        deleteTracksPermanently(files)
+    }
+
+    /** Rows fade out, then the files are deleted in the background with the deletion banner. */
+    private fun deleteTracksPermanently(files: List<MusicFile>) {
+        if (files.isEmpty()) { _errorMessage.value = "Nothing to delete"; return }
+        val uris = files.map { it.uri }.toSet()
+        if (_currentPlayingFile.value?.uri in uris) stopPlayback()
+        _removingUris.value = _removingUris.value + uris
+        viewModelScope.launch {
+            delay(removeAnimMs())
+            _musicFiles.value = _musicFiles.value.filterNot { it.uri in uris }
+            _likedFiles.value = _likedFiles.value.filterNot { it.uri in uris }
+            _rejectedFiles.value = _rejectedFiles.value.filterNot { it.uri in uris }
+            _removingUris.value = _removingUris.value - uris
+            _currentIndex.value = _currentIndex.value.coerceIn(0, (currentPlaylistFiles.value.size - 1).coerceAtLeast(0))
+            _isDeletingFiles.value = true
+            _deletionProgress.value = 0f
+            var deleted = 0
+            val failed = mutableListOf<MusicFile>()
+            withContext(Dispatchers.IO) {
+                files.forEachIndexed { i, f ->
+                    if (fileManager.deletePermanently(f)) deleted++ else failed += f
+                    _deletionProgress.value = (i + 1f) / files.size
+                }
+            }
+            _isDeletingFiles.value = false
+            if (failed.isNotEmpty()) {
+                // Put back what couldn't be deleted, in its own list
+                _musicFiles.value = _musicFiles.value + failed.filter { it.sourcePlaylist == PlaylistTab.TODO }
+                _errorMessage.value = "Deleted $deleted, ${failed.size} couldn't be deleted."
+            } else {
+                _errorMessage.value = "Deleted $deleted track${if (deleted == 1) "" else "s"}"
+            }
+        }
+    }
+
     // Multi-selection functions
     // Sort & filter controls
     fun setSortOrder(field: SortField, ascending: Boolean) {
@@ -3085,10 +3185,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
         viewModelScope.launch(Dispatchers.IO) {
             fileOperationMutex.withLock {
-                _errorMessage.value = "Processing ${selectedFiles.size} files..."
+                _rejectListenedProgress.value = BulkSortProgress(0, selectedFiles.size, toLiked = action == SortAction.LIKE)
                 val failedFiles = mutableListOf<MusicFile>()
                 var successCount = 0
-                for (file in selectedFiles) {
+                for ((n, file) in selectedFiles.withIndex()) {
+                    _rejectListenedProgress.value = BulkSortProgress(n, selectedFiles.size, toLiked = action == SortAction.LIKE)
                     try {
                         if (fileManager.sortFile(file, action)) {
                             successCount++
@@ -3101,6 +3202,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         CrashLogger.log("MusicViewModel", "💥 Exception sorting ${file.name}", e)
                     }
                 }
+                _rejectListenedProgress.value = BulkSortProgress(selectedFiles.size, selectedFiles.size, toLiked = action == SortAction.LIKE)
                 CrashLogger.log("MusicViewModel", "📊 Bulk sort done: success=$successCount, failed=${failedFiles.size}")
 
                 withContext(Dispatchers.Main) {
@@ -3124,9 +3226,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             }
                         }
                         _errorMessage.value = "Sorted $successCount, failed ${failedFiles.size}. Check folder permissions."
-                    } else {
-                        _errorMessage.value = "Sorted $successCount files to ${if (action == SortAction.LIKE) "Liked" else "Rejected"}"
                     }
+                    // Success: the progress banner was the message; it hides itself.
+                    viewModelScope.launch { finishBulkProgress() }
 
                     // If the TODO list is now empty and nothing failed, offer to clear rejected.
                     if (tab == PlaylistTab.TODO && _musicFiles.value.isEmpty()) {

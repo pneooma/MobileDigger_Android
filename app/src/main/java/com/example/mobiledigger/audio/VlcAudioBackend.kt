@@ -63,6 +63,9 @@ class VlcAudioBackend(private val context: Context) {
                 "--no-video",                     // Disable video processing
                 "--no-audio-time-stretch",        // No tempo/pitch DSP
                 "--audio-replay-gain-mode=none",  // No replay-gain volume scaling
+                // Read ahead 1 s of local files (default 0.3 s) so a busy disk (file moves,
+                // waveform decoding) can't starve playback and cause short dropouts.
+                "--file-caching=1000",
                 // One fixed audio session (AudioTrack output) so the 24-band equalizer and the
                 // live spectrum (AudioFx) can attach to MobileDigger's sound only.
                 "--aout=android_audiotrack",
@@ -201,6 +204,51 @@ class VlcAudioBackend(private val context: Context) {
         }
     }
     
+    /** Descriptor of the phone file VLC is reading in place (closed when the next track is set). */
+    private var openFd: android.os.ParcelFileDescriptor? = null
+
+    /**
+     * Plays a content:// (SAF) file straight from its file descriptor, like the VLC app does,
+     * instead of copying the whole file into the cache first (that wrote ~80 MB of flash per
+     * track and slowed every start). Returns false if the provider can't give a seekable file;
+     * the caller then falls back to the temp copy.
+     */
+    fun setDataSourceContent(uri: Uri): Boolean {
+        if (!isInitialized.get()) return false
+        val pfd = try { context.contentResolver.openFileDescriptor(uri, "r") } catch (e: Exception) {
+            CrashLogger.log("VlcAudioBackend", "Can't open descriptor: ${e.message}"); null
+        } ?: return false
+        val seekable = try {
+            android.system.Os.lseek(pfd.fileDescriptor, 0L, android.system.OsConstants.SEEK_SET) == 0L && pfd.statSize > 0
+        } catch (_: Exception) { false }
+        if (!seekable) { runCatching { pfd.close() }; return false }
+        return try {
+            mainHandler.removeCallbacks(settleRunnable)
+            settled = false
+            lengthMs = -1L
+            lastTimeMs = 0L
+            lastSeekTarget = -1L
+            pendingSeekMs = -1L
+            recoveries = 0
+            mediaSetAt = android.os.SystemClock.elapsedRealtime()
+            val media = Media(libVLC, pfd.fileDescriptor)
+            mediaPlayer?.media = media
+            media.release()
+            val old = openFd
+            openFd = pfd
+            runCatching { old?.close() }
+            isPrepared.set(false)
+            CrashLogger.log("VlcAudioBackend", "✅ Playing in place (no copy): $uri")
+            true
+        } catch (e: Exception) {
+            CrashLogger.log("VlcAudioBackend", "💥 In-place source failed", e)
+            runCatching { pfd.close() }
+            false
+        }
+    }
+
+    private fun closeOpenFd() { val f = openFd; openFd = null; runCatching { f?.close() } }
+
     fun setDataSource(uri: Uri): Boolean {
         return try {
             if (!isInitialized.get()) {
@@ -223,6 +271,7 @@ class VlcAudioBackend(private val context: Context) {
             val media = Media(libVLC, uri)
             mediaPlayer?.media = media
             media.release() // Release the Media object after setting
+            closeOpenFd()
             
             isPrepared.set(false)
             CrashLogger.log("VlcAudioBackend", "✅ VLC data source set successfully")
@@ -300,6 +349,7 @@ class VlcAudioBackend(private val context: Context) {
             if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔄 Resetting VLC player...")
             mediaPlayer?.stop()
             mediaPlayer?.media = null
+            closeOpenFd()
             isPlaying.set(false)
             isPrepared.set(false)
         } catch (e: Exception) {
@@ -314,6 +364,7 @@ class VlcAudioBackend(private val context: Context) {
             mediaPlayer?.stop()
             mediaPlayer?.release()
             mediaPlayer = null
+            closeOpenFd()
             
             libVLC?.release()
             libVLC = null

@@ -356,8 +356,12 @@ fun SpectrogramPopupScreen(
                 // moment lines up vertically with the spectrogram above.
                 if (waveformData != null && waveformData.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
-                    val fraction = if (actualDuration > 0) (analyzed * 1000f / actualDuration).coerceIn(0.01f, 1f) else 1f
+                    // One waveform of the WHOLE track: the part the spectrogram covers is in the accent
+                    // colour, the rest dimmed, with a marker (line + ▲) where the analysis stops.
+                    val fraction = if (actualDuration > 0 && !wholeTrack) (analyzed * 1000f / actualDuration).coerceIn(0.01f, 1f) else 1f
                     val waveOn = SpekAccent
+                    val waveOff = Color(spekColorsFromTheme().waveOff)
+                    val pointer = SpekText
                     val density = androidx.compose.ui.platform.LocalDensity.current
                     Box(
                         modifier = Modifier
@@ -366,48 +370,13 @@ fun SpectrogramPopupScreen(
                             .background(SpekPanel)
                             .border(1.dp, SpekStroke, RoundedCornerShape(18.dp))
                     ) {
-                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxWidth().height(84.dp).padding(10.dp)) {
+                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxWidth().height(96.dp).padding(10.dp)) {
                             val l = with(density) { 30.dp.toPx() }
                             val r = size.width - with(density) { 34.dp.toPx() }
                             val w = (r - l).coerceAtLeast(1f)
-                            val end = (waveformData.size * fraction).toInt().coerceIn(1, waveformData.size)
-                            val step = 2.dp.toPx()
-                            val bars = (w / step).toInt().coerceAtLeast(1)
-                            val peak = (waveformData.maxOrNull() ?: 1).coerceAtLeast(1).toFloat()
-                            val per = end.toFloat() / bars
-                            val mid = size.height / 2
-                            for (i in 0 until bars) {
-                                val s0 = (i * per).toInt()
-                                val e0 = ((i + 1) * per).toInt().coerceIn(s0 + 1, end)
-                                var m = 0
-                                for (k in s0 until e0) if (waveformData[k] > m) m = waveformData[k]
-                                val amp = (m / peak) * mid
-                                val x = l + i * step + step / 2
-                                drawLine(
-                                    color = waveOn,
-                                    start = androidx.compose.ui.geometry.Offset(x, mid - amp),
-                                    end = androidx.compose.ui.geometry.Offset(x, mid + amp),
-                                    strokeWidth = step * 0.7f
-                                )
-                            }
-                        }
-                    }
-                    Text(
-                        "Waveform of ${formatClock(0f)}–${formatClock(analyzed)}" + if (wholeTrack) " (whole track)" else "",
-                        color = SpekMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = 40.dp, top = 4.dp)
-                    )
-                    // Whole-track overview with a pointer at how far the spectrogram reaches
-                    if (!wholeTrack && actualDuration > 0) {
-                        val overviewOff = Color(spekColorsFromTheme().waveOff)
-                        val pointer = SpekText
-                        Spacer(Modifier.height(6.dp))
-                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 10.dp)) {
-                            val l = with(density) { 30.dp.toPx() }
-                            val r = size.width - with(density) { 34.dp.toPx() }
-                            val w = (r - l).coerceAtLeast(1f)
-                            val barH = with(density) { 22.dp.toPx() }
-                            val mid = barH / 2
+                            val markerSpace = if (fraction < 1f) 12.dp.toPx() else 0f
+                            val waveH = size.height - markerSpace
+                            val mid = waveH / 2
                             val step = 2.dp.toPx()
                             val bars = (w / step).toInt().coerceAtLeast(1)
                             val peak = (waveformData.maxOrNull() ?: 1).coerceAtLeast(1).toFloat()
@@ -420,38 +389,32 @@ fun SpectrogramPopupScreen(
                                 val amp = (m / peak) * mid
                                 val x = l + i * step + step / 2
                                 drawLine(
-                                    color = if (i.toFloat() / bars <= fraction) waveOn else overviewOff,
+                                    color = if ((i + 0.5f) / bars <= fraction) waveOn else waveOff,
                                     start = androidx.compose.ui.geometry.Offset(x, mid - amp),
                                     end = androidx.compose.ui.geometry.Offset(x, mid + amp),
                                     strokeWidth = step * 0.7f
                                 )
                             }
-                            // pointer: line through the strip + a ▲ under it
-                            val px = l + w * fraction
-                            drawLine(pointer, androidx.compose.ui.geometry.Offset(px, 0f), androidx.compose.ui.geometry.Offset(px, barH), strokeWidth = 2.dp.toPx())
-                            val tri = androidx.compose.ui.graphics.Path().apply {
-                                moveTo(px, barH + 2.dp.toPx())
-                                lineTo(px - 6.dp.toPx(), barH + 11.dp.toPx())
-                                lineTo(px + 6.dp.toPx(), barH + 11.dp.toPx())
-                                close()
+                            if (fraction < 1f) {
+                                val px = l + w * fraction
+                                drawLine(pointer, androidx.compose.ui.geometry.Offset(px, 0f), androidx.compose.ui.geometry.Offset(px, waveH), strokeWidth = 2.dp.toPx())
+                                val tri = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(px, waveH + 1.dp.toPx())
+                                    lineTo(px - 6.dp.toPx(), waveH + 10.dp.toPx())
+                                    lineTo(px + 6.dp.toPx(), waveH + 10.dp.toPx())
+                                    close()
+                                }
+                                drawPath(tri, pointer)
                             }
-                            drawPath(tri, pointer)
                         }
-                        Text(
-                            "▲ Spectrogram shows the first ${formatClock(analyzed)} of ${formatClock(actualDuration / 1000f)}",
-                            color = SpekMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = 40.dp)
-                        )
                     }
+                    Text(
+                        if (wholeTrack || fraction >= 1f) "Spectrogram covers the whole track (${formatClock(analyzed)})"
+                        else "▲ Spectrogram covers the first ${formatClock(analyzed)} of ${formatClock(actualDuration / 1000f)}",
+                        color = SpekMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = 40.dp, top = 4.dp)
+                    )
                 }
-
-                // ---- footnote
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    "Linear frequency scale · $SPEK_DB_RANGE dB range · " +
-                        if (wholeTrack) "whole track analyzed" else "first ${formatClock(analyzed)} analyzed",
-                    color = SpekMuted, fontSize = 11.sp, lineHeight = 15.sp
-                )
             }
         }
     }

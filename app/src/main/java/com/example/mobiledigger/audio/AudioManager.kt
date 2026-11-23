@@ -767,6 +767,12 @@ class AudioManager(private val context: Context) {
                 }
                 currentVlcTempPath = null
                 fileUri = uri
+            } else if (uri.scheme == "content" && vlc.setDataSourceContent(uri)) {
+                // Read in place from the phone's storage — no temp copy, no flash writes
+                currentVlcTempPath = null
+                vlc.start()
+                CrashLogger.log("AudioManager", "✅ VLC playback initiated (in place)")
+                return true
             } else {
                 val uriKey = uri.toString()
                 val cachedPath = tempFileCache[uriKey]?.takeIf { File(it).exists() }

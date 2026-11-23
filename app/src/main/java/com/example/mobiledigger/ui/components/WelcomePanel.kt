@@ -1,5 +1,9 @@
 package com.example.mobiledigger.ui.components
 
+import androidx.compose.foundation.verticalScroll
+
+import androidx.compose.foundation.rememberScrollState
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -55,7 +59,9 @@ fun WelcomePanel(
     onSetDestination: (String) -> Unit,
     onRemoveDestination: (String) -> Unit,
     sourceMode: String = "BOTH",
-    onSourceMode: (String) -> Unit = {}
+    onSourceMode: (String) -> Unit = {},
+    /** Opens the results folder in the phone's file manager. */
+    onOpenSorted: (() -> Unit)? = null
 ) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Hero()
@@ -134,21 +140,35 @@ fun WelcomePanel(
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            // "Open" = show the results folder (Liked / Rejected files) in the phone's file manager
+            if (destinationName != null && onOpenSorted != null) {
+                FilledTonalButton(
+                    onClick = onOpenSorted,
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                    modifier = Modifier.height(34.dp)
+                ) { Text("Open", fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+                Spacer(Modifier.width(8.dp))
+            }
             Text(if (destinationName != null) "Change" else "Pick", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
         }
 
         // Recent folders
         if (recentSources.isNotEmpty() || recentDestinations.isNotEmpty()) {
-            Text("Recent", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            val total = recentSources.size.coerceAtMost(20) + recentDestinations.size.coerceAtMost(5)
+            Text(if (total > 4) "Recent · $total  (scroll for more)" else "Recent",
+                style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp, top = 4.dp))
+            // Scrolls on its own once there are more than ~4 entries
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .heightIn(max = 290.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                recentSources.take(6).forEach { uri ->
+                recentSources.take(20).forEach { uri ->
                     RecentRow(Icons.Default.LibraryMusic, folderLabel(uri) ?: uri, "Music folder", "Load",
                         onAction = { onLoadRecent(uri) }, onRemove = { onRemoveRecent(uri) })
                 }
-                recentDestinations.take(3).forEach { uri ->
+                recentDestinations.take(5).forEach { uri ->
                     RecentRow(Icons.Default.Inventory2, folderLabel(uri) ?: uri, "Sorted tracks", "Use",
                         onAction = { onSetDestination(uri) }, onRemove = { onRemoveDestination(uri) })
                 }
@@ -262,4 +282,27 @@ private fun LoadFromChooser(mode: String, onMode: (String) -> Unit) {
             }
         }
     }
+}
+
+
+/**
+ * Opens [folderUri] (a SAF tree or document URI) in the phone's file manager. Tries the folder view
+ * of the Files app first; returns false if nothing on the phone can show a folder.
+ */
+fun openFolderInFiles(context: android.content.Context, folderUri: android.net.Uri): Boolean {
+    val docUri = try {
+        if (android.provider.DocumentsContract.isTreeUri(folderUri) && !android.provider.DocumentsContract.isDocumentUri(context, folderUri))
+            android.provider.DocumentsContract.buildDocumentUriUsingTree(folderUri, android.provider.DocumentsContract.getTreeDocumentId(folderUri))
+        else folderUri
+    } catch (_: Exception) { folderUri }
+    val attempts = listOf(
+        android.content.Intent(android.content.Intent.ACTION_VIEW).setDataAndType(docUri, android.provider.DocumentsContract.Document.MIME_TYPE_DIR),
+        android.content.Intent(android.content.Intent.ACTION_VIEW).setDataAndType(docUri, "resource/folder"),
+        android.content.Intent(android.content.Intent.ACTION_VIEW, docUri)
+    )
+    for (i in attempts) {
+        i.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        try { context.startActivity(i); return true } catch (_: Exception) { }
+    }
+    return false
 }

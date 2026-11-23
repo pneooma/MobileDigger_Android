@@ -55,7 +55,7 @@ internal fun spekColorsFromTheme(): SpekColors {
         muted = cs.onSurfaceVariant.toArgb(),
         accent = cs.primary.toArgb(),
         warn = 0xFFF59E0B.toInt(),            // cutoff = amber in every theme (it's a warning colour)
-        waveOff = mix(cs.onSurface, 0.25f),
+        waveOff = mix(cs.onSurface, 0.42f),     // second colour: clearly different from the accent and the panel
         onWarn = 0xFF1A1A1A.toInt()
     )
 }
@@ -307,53 +307,45 @@ internal fun renderSpectrogramShareCard(
     }
     y += panelH + 24f
 
-    // ---- waveform of the analysed span, on the same x-range as the spectrogram plot
+    // ---- one waveform of the whole track: analysed part in the accent colour, rest in the
+    //      second colour, with a marker (line + ▲) where the spectrogram stops
     if (waveformData != null && waveformData.isNotEmpty()) {
         val wfH = 130f
-        val r = panelRect(y, wfH + 40f)
+        val fraction = if (durationMs > 0) (analyzed * 1000f / durationMs).coerceIn(0.01f, 1f) else 1f
+        val partial = durationMs > 0 && fraction < 0.995f
+        val markerH = if (partial) 30f else 0f
+        val r = panelRect(y, wfH + 40f + markerH)
         val mid = y + 20f + wfH / 2
         val peak = (waveformData.maxOrNull() ?: 1).coerceAtLeast(1).toFloat()
-        val fraction = if (durationMs > 0) (analyzed * 1000f / durationMs).coerceIn(0.01f, 1f) else 1f
-        val end = (waveformData.size * fraction).toInt().coerceIn(1, waveformData.size)
         val on = Paint().apply { color = accent; strokeWidth = 2f }
+        val off = Paint().apply { color = colors.waveOff; strokeWidth = 2f }
         val ww = (plotR - plotL).toInt()
-        val per = end.toFloat() / ww
+        val per = waveformData.size.toFloat() / ww
         for (i in 0 until ww step 3) {
             val s0 = (i * per).toInt()
-            val e0 = ((i + 3) * per).toInt().coerceIn(s0 + 1, end)
+            val e0 = ((i + 3) * per).toInt().coerceIn(s0 + 1, waveformData.size)
             var m = 0
             for (k in s0 until e0) if (waveformData[k] > m) m = waveformData[k]
             val a = (m / peak) * (wfH / 2)
-            c.drawLine(plotL + i, mid - a, plotL + i, mid + a, on)
+            c.drawLine(plotL + i, mid - a, plotL + i, mid + a, if (!partial || (i + 1.5f) / ww <= fraction) on else off)
         }
-        val note = tp(22f, muted, medium)
-        c.drawText("Waveform of ${formatClock(0f)}–${formatClock(analyzed)}", plotL, r.bottom + 30f, note)
-        y = r.bottom + 48f
-
-        // Whole-track overview with a pointer at how far the spectrogram reaches
-        if (durationMs > 0 && fraction < 0.995f) {
-            val oh = 50f
-            val omid = y + oh / 2
-            val off = Paint().apply { color = colors.waveOff; strokeWidth = 2f }
-            val per2 = waveformData.size.toFloat() / ww
-            for (i in 0 until ww step 3) {
-                val s0 = (i * per2).toInt()
-                val e0 = ((i + 3) * per2).toInt().coerceIn(s0 + 1, waveformData.size)
-                var m = 0
-                for (k in s0 until e0) if (waveformData[k] > m) m = waveformData[k]
-                val a = (m / peak) * (oh / 2)
-                c.drawLine(plotL + i, omid - a, plotL + i, omid + a, if (i.toFloat() / ww <= fraction) on else off)
-            }
+        if (partial) {
             val px = plotL + ww * fraction
             val pointer = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = text; strokeWidth = 4f }
-            c.drawLine(px, y, px, y + oh, pointer)
+            val top = y + 20f; val bottom = y + 20f + wfH
+            c.drawLine(px, top, px, bottom, pointer)
             val tri = android.graphics.Path().apply {
-                moveTo(px, y + oh + 4f); lineTo(px - 13f, y + oh + 24f); lineTo(px + 13f, y + oh + 24f); close()
+                moveTo(px, bottom + 4f); lineTo(px - 13f, bottom + 24f); lineTo(px + 13f, bottom + 24f); close()
             }
             c.drawPath(tri, pointer)
-            c.drawText("▲ Spectrogram shows the first ${formatClock(analyzed)} of ${formatClock(durationMs / 1000f)}", plotL, y + oh + 56f, note)
-            y += oh + 76f
         }
+        val note = tp(22f, muted, medium)
+        c.drawText(
+            if (partial) "▲ Spectrogram covers the first ${formatClock(analyzed)} of ${formatClock(durationMs / 1000f)}"
+            else "Spectrogram covers the whole track (${formatClock(analyzed)})",
+            plotL, r.bottom + 30f, note
+        )
+        y = r.bottom + 48f
     }
 
     // ---- footer
@@ -365,14 +357,7 @@ internal fun renderSpectrogramShareCard(
     c.drawText("MobileDigger for Android", pad + 28f, y, footL)
     c.drawText("groovy's child", W - pad, y, footR)
     y += 38f
-    val fine = tp(21f, muted)
-    val wholeTrack = durationMs > 0 && analyzed * 1000f >= durationMs - 1500
-    val fineText = "Linear frequency scale · ${SPEK_DB_RANGE} dB range · " +
-        if (wholeTrack) "whole track analyzed" else "first ${formatClock(analyzed)} analyzed"
-    val fineLayout = StaticLayout.Builder.obtain(fineText, 0, fineText.length, fine, inner.toInt())
-        .setAlignment(Layout.Alignment.ALIGN_NORMAL).build()
-    c.save(); c.translate(pad, y - 18f); fineLayout.draw(c); c.restore()
-    y += fineLayout.height + pad - 10f
+    y += pad - 20f
 
     val finalH = y.toInt().coerceAtMost(maxH)
     val out = Bitmap.createBitmap(bmp, 0, 0, W, finalH)

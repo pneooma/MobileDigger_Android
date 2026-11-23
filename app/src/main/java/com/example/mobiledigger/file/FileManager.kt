@@ -18,6 +18,8 @@ import android.provider.DocumentsContract
 import android.content.ContentResolver
 
 class FileManager(private val context: Context) {
+    init { com.example.mobiledigger.util.SortHistory.init(context) }
+
     
     private var selectedFolder: DocumentFile? = null
     private var destinationFolder: DocumentFile? = null
@@ -519,7 +521,33 @@ class FileManager(private val context: Context) {
         }
     }
 
-    suspend fun sortFile(musicFile: MusicFile, action: SortAction): Boolean {
+    /**
+     * Permanently deletes one track (phone file via SAF, or on its network drive). Quiet: the
+     * caller reports totals. Returns true if it's gone.
+     */
+    suspend fun deletePermanently(musicFile: MusicFile): Boolean = withContext(Dispatchers.IO) {
+        com.example.mobiledigger.file.drives.DriveProxy.parse(musicFile.uri)?.let { (driveId, path) ->
+            val drive = com.example.mobiledigger.file.drives.DriveStore(context).get(driveId) ?: return@withContext false
+            val client = com.example.mobiledigger.file.drives.DriveClients.create(drive)
+            return@withContext try { client.delete(path); true } catch (e: Exception) {
+                CrashLogger.log("FileManager", "Delete on drive failed: ${musicFile.name}", e); false
+            } finally { runCatching { client.close() } }
+        }
+        try {
+            if (android.provider.DocumentsContract.isDocumentUri(context, musicFile.uri))
+                android.provider.DocumentsContract.deleteDocument(context.contentResolver, musicFile.uri)
+            else androidx.documentfile.provider.DocumentFile.fromSingleUri(context, musicFile.uri)?.delete() == true
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Delete failed: ${musicFile.name}", e); false
+        }
+    }
+
+    suspend fun sortFile(musicFile: MusicFile, action: SortAction): Boolean =
+        sortFileInner(musicFile, action).also { ok ->
+            if (ok) com.example.mobiledigger.util.SortHistory.record(musicFile, action == SortAction.LIKE)
+        }
+
+    private suspend fun sortFileInner(musicFile: MusicFile, action: SortAction): Boolean {
         return withContext(Dispatchers.IO) {
             // Remote (Pi) files live on the server — no filesystem move is possible.
             // Report success so the UI playlists still update.
@@ -605,6 +633,12 @@ class FileManager(private val context: Context) {
                     sourceFile!!.name ?: musicFile.name
                 }
                 val safeName = resolveUniqueName(targetSubFolder, desiredName)
+                // Same storage: an instant move (rename) instead of copying the whole file —
+                // big back-to-back copies starved playback of the next track (audible hiccups).
+                if (!isTemporaryFile && safeName == desiredName && fastMove(sourceFile!!.uri, targetSubFolder.uri)) {
+                    CrashLogger.log("FileManager", "Moved (rename) ${musicFile.name} to $subFolderName")
+                    return@withContext true
+                }
                 val target = targetSubFolder.createFile("audio/*", safeName)
                     ?: run {
                         CrashLogger.log("FileManager", "Failed to create target file: $safeName")
@@ -667,16 +701,40 @@ class FileManager(private val context: Context) {
         }
     }
 
+    /**
+     * Moves a document into [targetParent] without copying its bytes (a rename when both are on
+     * the same storage). Returns false when the provider can't do it, so the caller copies instead.
+     */
+    private fun fastMove(src: Uri, targetParent: Uri): Boolean = try {
+        if (src.authority != targetParent.authority || !DocumentsContract.isDocumentUri(context, src)) false
+        else {
+            val docId = DocumentsContract.getDocumentId(src)
+            val slash = docId.lastIndexOf('/')
+            if (slash <= 0) false else {
+                val parentId = docId.substring(0, slash)
+                val parentUri = if (DocumentsContract.isTreeUri(src)) DocumentsContract.buildDocumentUriUsingTree(src, parentId)
+                    else DocumentsContract.buildDocumentUri(src.authority, parentId)
+                DocumentsContract.moveDocument(contentResolver, src, parentUri, targetParent) != null
+            }
+        }
+    } catch (e: Exception) {
+        CrashLogger.log("FileManager", "Fast move not possible, copying instead: ${e.message}")
+        false
+    }
+
     private fun resolveUniqueName(parent: DocumentFile, desiredName: String): String {
         // Keep extension, append (1), (2), ... if needed
         val dot = desiredName.lastIndexOf('.')
         val base = if (dot > 0) desiredName.substring(0, dot) else desiredName
         val ext = if (dot > 0) desiredName.substring(dot) else ""
-        if (parent.findFile(desiredName) == null) return desiredName
+        // Phone storage ignores letter case ("BeckhäUser" == "Beckhäuser"), so compare that way;
+        // a case-only clash used to slip through and end up as "name.flac (1)".
+        val taken = parent.listFiles().mapNotNull { it.name?.lowercase() }.toHashSet()
+        if (desiredName.lowercase() !in taken) return desiredName
         var index = 1
         while (true) {
             val candidate = "$base ($index)$ext"
-            if (parent.findFile(candidate) == null) return candidate
+            if (candidate.lowercase() !in taken) return candidate
             index += 1
         }
     }
@@ -943,7 +1001,13 @@ class FileManager(private val context: Context) {
         return documentFile?.name
     }
 
-    suspend fun moveFilesToSubfolder(files: List<MusicFile>, subfolderName: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun moveFilesToSubfolder(files: List<MusicFile>, subfolderName: String): Boolean =
+        moveFilesToSubfolderInner(files, subfolderName).also { ok ->
+            if (ok && (subfolderName == "Liked" || subfolderName == "Rejected"))
+                files.forEach { com.example.mobiledigger.util.SortHistory.record(it, subfolderName == "Liked") }
+        }
+
+    private suspend fun moveFilesToSubfolderInner(files: List<MusicFile>, subfolderName: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val destination = destinationFolder ?: return@withContext false
             var targetSubFolder = destination.findFile(subfolderName)
@@ -966,6 +1030,7 @@ class FileManager(private val context: Context) {
                 }
                 val desiredName = sourceFile.name ?: musicFile.name
                 val safeName = resolveUniqueName(targetSubFolder, desiredName)
+                if (safeName == desiredName && fastMove(sourceFile.uri, targetSubFolder.uri)) return@forEach
                 val target = targetSubFolder.createFile(sourceFile.type ?: "audio/*", safeName)
                 if (target == null) {
                     allSucceeded = false

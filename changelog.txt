@@ -2165,3 +2165,93 @@ v13.050
 
 v13.051
 - Search field no longer overlaps the playlist tabs / main player: their upward 40 dp shift is dropped while search is open.
+
+v13.052
+- To Do: "Archives · N" drawer bar at the top of the list shows/hides all archive rows (collapsed by default, remembered). Folder headers still show their archive count when hidden.
+- Reject listened: the listened rows fade and slide left together (timed by the "Row fade when sorted" slider), then are removed in one go while the rest glide up, and the list scrolls back to the top.
+- Search opens below the main player and the playlist tabs (it was above them).
+
+v13.053
+- Search box animates in (slides down + expands + fades under the tabs) and out (shrinks up + fades). Timing follows Settings → Animations → Main player show/hide.
+
+v13.054
+- Spectrogram card: one waveform of the whole track — the analysed part in the accent colour, the rest dimmed, with a marker line + ▲ where the analysis stops (the separate overview strip is gone). Removed the "Linear frequency scale · dB range" footnote.
+
+v13.055
+- Spectrogram shared image matches the window: one whole-track waveform in two colours (analysed span = accent, rest = second colour) with the marker line + ▲, no separate overview strip, no "Linear frequency scale" fine print.
+- The second (not analysed) colour is clearer: 42% text colour instead of 25%, in the window and the image.
+
+v13.056
+- App messages ("1 file moved to Liked", "Source set…", errors, loaded counts) show as a slim banner at the TOP, like the Rejected-moving / deleting banners, instead of a snackbar at the bottom. Colour/icon by kind (❤️ green like, 👎 red reject, ⚠️ errors, ℹ️ info); stays 2.5 s + 40 ms per character (max 6 s); tap to dismiss; animates with the panel timing.
+
+v13.057
+- The app no longer locks you out on the welcome page when To Do is empty (empty source folder, or everything sorted). Once a source is loaded — even with 0 tracks — the main screen with the Liked / Rejected tabs stays open until you tap Home.
+- Welcome page: "Open Liked & Rejected" (shown when a destination is set) opens the sorted playlists without loading a source.
+- Empty To Do shows a card: "Nothing left to sort" (or "No tracks to sort · N archives") with what to do next.
+- Welcome page Recent card scrolls when there are more entries (up to 20 folders + 5 destinations, was 6 + 3).
+
+v13.058
+- Welcome page: "Open" button next to "Change" on the results-folder card opens the Liked / Rejected playlists without loading a source (replaces the separate "Open Liked & Rejected" button).
+
+v13.059
+- Welcome page "Open" (next to Change) opens the results folder in the phone's file manager (Files app folder view), not the playlists in the app. Message if no file manager can show it.
+
+v13.060
+- Rename dialogs: "✨ Clean up" tidies the name (underscores/%20/dots → spaces, website tags like [www.dj-promo.org] or "- djsoundtop.com", leading track numbers "005_" / "03." / "24 -", promo junk "Free Download", "320kbps", "Played by", "(1)" copies, repeated "(Extended Mix) (Extended Mix)", stray ★ * | symbols, "Artist-Title" spacing). Keeps mix names and label tags. "Undo" restores the original. Unit-tested (FilenameCleanerTest, 12 cases).
+- (Includes v13.059: welcome "Open" opens the results folder in the file manager.)
+
+v13.061
+- Copy / move from a network drive shows the download speed and time left ("4.2 MB/s · 1:23 left") in the banner and in the background notification. Smoothed speed, sampled every 0.5 s (progress now also updates every 0.5 s on slow links, not only every 2 MB).
+
+v13.062
+- Selection bar: new "Delete" (with confirmation) permanently deletes the selected tracks — e.g. tick folders while "Lossy only" is on to delete just the lossy files shown. Phone files via SAF, network tracks on their drive. Rows fade out, the deletion banner shows progress, failures are put back and reported.
+- FIX "Delete all To Do": now deletes exactly the tracks the To Do list shows (Lossy / Lossless filter respected, subfolders and network tracks included). It used to delete every file at the top of the source folder — ignoring the filter and subfolders, and including non-music files. The dialog states the count and the filter.
+
+v13.063
+- Reject listened: no separate "Rejected N listened tracks" message any more; the progress banner (ending "✓ N moved to Rejected") is the only one. The message still appears if some files could not be moved.
+
+v13.064
+- "Load from" starts on Phone every time the app starts (loading a network drive still switches it to Network for that session).
+
+v13.065
+- Bulk moves show ONLY the progress banner: "👎 Moving to Rejected… 12/16" (red) or "❤️ Moving to Liked… 12/16" (green). It hides itself right after the bar fills — no "✓ 16 moved to Rejected" line, no "Processing N files…" or "Sorted N files to Rejected" messages. Used by Reject listened and by the selection bar's Like / Reject. Failures are still reported.
+
+v13.066
+- Fix: short audio hiccups while sorting tracks quickly. Like/Reject now moves the file instantly (a rename on the same storage) instead of copying 80-130 MB and deleting the original; it only falls back to copying when a move is not possible (another storage, or a name already taken). VLC also reads 1 s ahead on local files (was 0.3 s).
+
+v13.067
+- To Do / Liked folder headers are now a quiet one-line divider: small folder icon, the folder name (last part only, one line, ellipsized, regular weight), a small track-count pill and the select-all checkbox. Tap the name to unfold the full folder path and its track/archive counts. No more 4-row bold titles.
+
+v13.068
+- Folder header dropdown shows where the folder really is: the place (Phone, SD card / USB drive, Pi · <name>, Network (SMB/WebDAV) · <name>, Google Drive) with a matching icon, then the full path ("Music  ›  To triage  ›  Abstracted"), then track/archive counts.
+
+v13.069
+- Bigger selection buttons. Multi-select bar: six equal-width buttons (46 dp tall) with an 18 dp icon above a readable label: Reject, Rename, Move, Like, Delete, Exit (was 26 dp pills with 10 sp text). Archive selection bar: 38 dp buttons, 18 dp icons, 13 sp labels.
+
+v13.070
+- Fix: "Pick up where you left off" loaded the Pi although Load from was set to Phone. Home clears the saved phone folder while the welcome page still shows the most recent one, so Resume found "no phone folder", loaded the drive and switched Load from to Network for the session. Resume now uses the same phone folder the card shows, never falls back to the drive when Load from is Phone, and logs what it loads.
+
+v13.071
+- Less flash wear, faster starts: phone tracks (content://) are now played in place from their file descriptor instead of being copied whole into the cache first (measured before: 59 copies / 4.6 GB written in 20 minutes of sorting). The temp copy stays only as a fallback for providers that can not give a seekable file (e.g. some cloud apps).
+
+v13.072
+- Fix: sorting a track whose name matched an existing file in Liked/Rejected except for letter case ("BeckhäUser" vs "Beckhäuser") could not be moved and was copied as "name.flac (1)", which broke the extension. The duplicate-name check now ignores case (like phone storage does), so it is moved as "name (1).flac".
+
+v13.073
+- To Do flags tracks you already sorted: a small green "♥ dup" or red "👎 dup" tag before the name (and "⚠ already liked/rejected" on the playing row) when the exact same file (same name ignoring case and "(1)" suffixes, and the same size) is in Liked / Rejected, or was sorted earlier into any results folder. Every sort is remembered in a small text index (about 100 bytes per track, about 1 MB per 10,000 tracks). Matching is done in memory on a background thread and never reads the audio.
+
+v13.074
+- Fix: the "dup" tag was only drawn on the playing row in its compact layout. It now shows on every To Do row. The playing row info line starts with ALREADY REJECTED (red, bold) or ALREADY LIKED (green, bold), same size as time | kbps | size.
+- Sort history stays lean: loading folders never writes to it (only an actual Like/Reject does), each track is kept once, and stale lines from re-sorting are compacted away on start.
+
+v13.075
+- Header tightened: the status-bar gap was counted twice (outer and inner Scaffold), leaving a big empty band under the clock; removed. "MobileDigger v13.xxx" moved into a thin centred bar right under the status bar, so the file count and the Reject / Show Main Player / Hide Playlists buttons sit directly below it.
+
+v13.076
+- Title bar 40% taller (MobileDigger 13 sp, version 10 sp).
+- App messages (moved to Liked, errors, info) now appear under the playlist tabs instead of above the title bar; on the welcome page they stay at the top.
+- Fix: "Show Main Player" did nothing right after loading a folder (no track loaded yet, so the player had nothing to draw). It now shows a "Nothing playing - tap to play <first track>" card.
+
+v13.077
+- More space between the MobileDigger bar and the header buttons (8 dp below, 2 dp above).
+- Fix: the "Nothing playing" card sat under the To Do / Liked / Rejected tabs; it now gets the same 40 dp lift as the real player and the tabs.

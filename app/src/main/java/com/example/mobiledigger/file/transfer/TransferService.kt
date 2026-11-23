@@ -56,7 +56,8 @@ class TransferService : Service() {
         )
         val title = if (job == null) "Copying…" else "${if (job.move) "Moving" else "Copying"} ${job.folderName} to the phone"
         val text = if (job == null) "" else
-            "${job.doneFiles}/${job.files.size} files · ${TransferManager.fmt(st.doneBytes)} of ${TransferManager.fmt(job.totalBytes)}"
+            "${job.doneFiles}/${job.files.size} files · ${TransferManager.fmt(st.doneBytes)} of ${TransferManager.fmt(job.totalBytes)}" +
+                (if (st.speedBps > 0) " · ${TransferManager.fmtSpeed(st.speedBps)}" + (st.etaSeconds?.let { " · " + TransferManager.fmtEta(it) } ?: "") else "")
         return Notification.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentTitle(title)

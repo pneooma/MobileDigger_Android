@@ -167,6 +167,15 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
                         maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
                     )
                     if (st.status != TransferStatus.DONE) {
+                        // Download speed + time left while running
+                        if (st.status == TransferStatus.RUNNING && st.speedBps > 0) {
+                            Text(
+                                TransferManager.fmtSpeed(st.speedBps) + (st.etaSeconds?.let { " · " + TransferManager.fmtEta(it) } ?: ""),
+                                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
                         Text("${(st.fraction * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                     }
                 }

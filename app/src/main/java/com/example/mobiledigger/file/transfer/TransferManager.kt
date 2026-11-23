@@ -74,8 +74,16 @@ data class TransferUi(
     val currentBytes: Long = 0,
     val currentName: String = "",
     /** Why it's paused (null = paused by the user), or the summary when done. */
-    val message: String? = null
+    val message: String? = null,
+    /** Smoothed download speed while running, bytes per second (0 = not known yet). */
+    val speedBps: Long = 0
 ) {
+    /** Seconds left at the current speed, or null when unknown. */
+    val etaSeconds: Long? get() {
+        val total = job?.totalBytes ?: return null
+        if (speedBps <= 0 || status != TransferStatus.RUNNING) return null
+        return ((total - doneBytes).coerceAtLeast(0) / speedBps)
+    }
     val doneBytes: Long get() = (job?.doneBytes ?: 0) + currentBytes
     val fraction: Float get() = job?.totalBytes?.takeIf { it > 0 }?.let { (doneBytes.toFloat() / it).coerceIn(0f, 1f) } ?: 0f
 }
@@ -161,6 +169,41 @@ object TransferManager {
         else null
     }
 
+    // ---- speed: exponential moving average of bytes/s, sampled at most every 0.5 s
+    private var speedT = 0L
+    private var speedBytes = 0L
+    private var speedEma = 0.0
+
+    private fun resetSpeed() { speedT = 0L; speedBytes = 0L; speedEma = 0.0 }
+
+    /** Publishes [currentBytes] of the file in progress, updating the speed. */
+    private fun report(currentBytes: Long) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        val st = _state.value.copy(currentBytes = currentBytes)
+        val total = st.doneBytes
+        if (speedT == 0L) { speedT = now; speedBytes = total }
+        val dt = now - speedT
+        if (dt >= 500) {
+            val inst = (total - speedBytes).coerceAtLeast(0) * 1000.0 / dt
+            speedEma = if (speedEma <= 0.0) inst else speedEma * 0.7 + inst * 0.3
+            speedT = now; speedBytes = total
+        }
+        _state.value = st.copy(speedBps = speedEma.toLong())
+    }
+
+    /** "4.2 MB/s" */
+    fun fmtSpeed(bps: Long): String = when {
+        bps >= 1024L * 1024 -> "%.1f MB/s".format(bps / (1024.0 * 1024.0))
+        bps >= 1024 -> "${bps / 1024} KB/s"
+        else -> "$bps B/s"
+    }
+
+    /** "1:23 left" / "1 h 05 min left" */
+    fun fmtEta(sec: Long): String = when {
+        sec >= 3600 -> "${sec / 3600} h ${"%02d".format((sec % 3600) / 60)} min left"
+        else -> "${sec / 60}:${"%02d".format(sec % 60)} left"
+    }
+
     fun fmt(b: Long): String = when {
         b >= 1L shl 30 -> String.format(java.util.Locale.US, "%.1f GB", b / (1024.0 * 1024 * 1024))
         b >= 1L shl 20 -> String.format(java.util.Locale.US, "%.0f MB", b / (1024.0 * 1024))
@@ -211,6 +254,7 @@ object TransferManager {
             _state.value = TransferUi(TransferStatus.PAUSED, start, message = it)
             return
         }
+        resetSpeed()
         _state.value = TransferUi(TransferStatus.RUNNING, start)
         runCatching {
             app.startForegroundService(Intent(app, TransferService::class.java))
@@ -286,15 +330,18 @@ object TransferManager {
             (app.contentResolver.openOutputStream(target, "wt") ?: throw Exception("Can't write $name")).use { out ->
                 val buf = ByteArray(256 * 1024)
                 var lastReport = 0L
+                var lastReportT = 0L
                 while (true) {
                     if (!alive()) throw java.util.concurrent.CancellationException("paused")
                     val n = rs.input.read(buf)
                     if (n <= 0) break
                     out.write(buf, 0, n)
                     written += n
-                    if (written - lastReport > 2L * 1024 * 1024) {
-                        lastReport = written
-                        _state.value = _state.value.copy(currentBytes = written)
+                    // Report every 2 MB or every 0.5 s (slow links), which also drives the speed
+                    val now = android.os.SystemClock.elapsedRealtime()
+                    if (written - lastReport > 2L * 1024 * 1024 || now - lastReportT >= 500) {
+                        lastReport = written; lastReportT = now
+                        report(written)
                     }
                 }
             }

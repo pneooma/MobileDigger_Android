@@ -336,6 +336,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private var audioPreloadJob: kotlinx.coroutines.Job? = null
     private var preloadedFile: MusicFile? = null
     
+    private val MAX_UNDO = 5
     private val _sortResults = MutableStateFlow<List<SortResult>>(emptyList())
     val sortResults: StateFlow<List<SortResult>> = _sortResults.asStateFlow()
 
@@ -521,6 +522,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     init {
         // Plain-language notes from network-drive actions (e.g. a delete the drive refused)
         fileManager.onDriveNotice = { msg -> _errorMessage.value = msg }
+        // Settings → History shows where each sorted track came from, in readable form
+        com.example.mobiledigger.util.SortHistory.describeLocation = { uri ->
+            com.example.mobiledigger.ui.components.folderLocation(uri, _drives.value)?.let { loc ->
+                val name = com.example.mobiledigger.file.drives.DriveProxy.parse(uri)?.second?.substringAfterLast('/')
+                    ?: runCatching { android.provider.DocumentsContract.getDocumentId(uri).substringAfterLast('/') }.getOrNull()
+                    ?: uri.lastPathSegment?.substringAfterLast('/')
+                (listOf(loc.place) + loc.parts + listOfNotNull(name)).joinToString(" › ")
+            }
+        }
         try {
             CrashLogger.log("MusicViewModel", "=== APP STARTED ===")
             
@@ -1278,7 +1288,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
 
         val sortResult = SortResult(sortedFile, action)
-        _sortResults.value = _sortResults.value + sortResult
+        // Keep the last 5 actions for Undo (pick any of them)
+        _sortResults.value = (_sortResults.value + sortResult).takeLast(MAX_UNDO)
         
         _lastSortedAction.value = action // Set the last sorted action
         viewModelScope.launch {
@@ -1496,15 +1507,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _rejectListenedProgress.value = null
     }
 
-    fun undoLastAction() {
-        val last = _sortResults.value.lastOrNull() ?: return
+    /** Undo one of the last [MAX_UNDO] likes/rejects (not only the most recent one). */
+    fun undoAction(action: SortResult) {
+        if (action !in _sortResults.value) return
         viewModelScope.launch {
             try {
-                val restored = fileManager.undoSort(last)
+                val restored = fileManager.undoSort(action)
                 if (restored != null) {
-                    com.example.mobiledigger.util.SortHistory.forget(last.musicFile)
-                    _musicFiles.value = _musicFiles.value.toMutableList().apply { add(_currentIndex.value, restored) }
-                    _sortResults.value = _sortResults.value.dropLast(1)
+                    com.example.mobiledigger.util.SortHistory.forget(action.musicFile)
+                    _musicFiles.value = _musicFiles.value.toMutableList().apply {
+                        add(_currentIndex.value.coerceIn(0, size), restored)
+                    }
+                    _sortResults.value = _sortResults.value.filterNot { it === action }
                     
                     // Reload all playlists after undo
                     loadLikedFiles()
@@ -1515,7 +1529,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     
                     _errorMessage.value = null
                 } else {
-                    _errorMessage.value = "Unable to undo last action"
+                    _errorMessage.value = "Couldn't undo: ${action.musicFile.name} is no longer in ${if (action.action == SortAction.LIKE) "Liked" else "Rejected"}"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error undoing: ${e.message}"

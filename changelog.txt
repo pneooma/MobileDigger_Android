@@ -2310,3 +2310,15 @@ v13.091
 v13.092
 - "Reject N" (reject listened) header button is 30% wider.
 - Show / Hide Playlists now slides the playlist tabs open and closed (with fade), like the main player, instead of popping in.
+
+v13.093
+- Spacing under the header is now even in every combination of Show/Hide Actions, Main Player and Playlists, with or without a banner or search. Each section (main player, playlist tabs, messages/progress banners, search, list) has the same 6 dp gap above it. (Everything used to be drawn 35–40 dp higher than its real place to hide two leftover 16 dp spacers, so whichever section came first after a hidden one sat right under the header buttons.)
+- New "Spectrogram (MobileDigger)" entry in Android's Open with and Share menus for audio files: shows only the spectrum analysis of that file, without loading it into the player or the playlists. The regular "MobileDigger" entry still opens a file to listen to it.
+- Network drive copy/move: "Cancel" is available while the transfer runs (next to Pause) and when it is paused (was "Abort", paused only). Asks for confirmation; files already on the phone stay, the half-copied file is deleted so no cut-off track is left behind.
+
+v13.094
+- Settings → History: every track you have liked or rejected, newest first — exact file name, Liked/Rejected, date and time, size, where it came from (full path, e.g. "Phone › To triage › Abstracted › 2026-W46 › Release 2026-11-12 › track.wav") and where it went ("Phone › Results october › Liked"). Search by any part of the name or path, filter All / Liked / Rejected, copy a path with one tap. Built on the duplicate-checker sort history, which now also stores the original path, destination and exact name of every sort (moving a track between Liked and Rejected keeps where it originally came from). Tracks sorted before this version show "not recorded" for the path; today's single sorts were filled in from the app log (backup: files/sort_history.backup-13093.tsv).
+- The action buttons toolbar now sits between the main player and the playlist tabs (it was above the main player).
+
+v13.095
+- Undo lets you choose: the Undo button (toolbar and player) opens "Undo which one?" with your last 5 likes/rejects, newest first (name, Liked/Rejected, how long ago). Tap one to put that track back where it came from; the others stay undoable. Older actions can be undone without undoing the newer ones first.

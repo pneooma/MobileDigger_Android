@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -102,11 +103,14 @@ fun SettingsDialog(
                 ) {
                     PillTab("General", Icons.Default.Tune, selectedTab == 0, Modifier.weight(1f)) { selectedTab = 0 }
                     PillTab("Visual", Icons.Default.Palette, selectedTab == 1, Modifier.weight(1f)) { selectedTab = 1 }
+                    PillTab("History", Icons.Default.History, selectedTab == 3, Modifier.weight(1f)) { selectedTab = 3 }
                     PillTab("About", Icons.Default.Info, selectedTab == 2, Modifier.weight(1f)) { selectedTab = 2 }
                 }
 
                 // Tab content with crossfade
                 Crossfade(targetState = selectedTab, label = "settingsTab", modifier = Modifier.weight(1f)) { tab ->
+                    // History has its own scrolling list (can't sit inside the scrolling column)
+                    if (tab == 3) { com.example.mobiledigger.ui.screens.SortHistoryPanel(); return@Crossfade }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()

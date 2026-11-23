@@ -548,7 +548,7 @@ class FileManager(private val context: Context) {
 
     suspend fun sortFile(musicFile: MusicFile, action: SortAction): Boolean =
         sortFileInner(musicFile, action).also { ok ->
-            if (ok) com.example.mobiledigger.util.SortHistory.record(musicFile, action == SortAction.LIKE)
+            if (ok) com.example.mobiledigger.util.SortHistory.record(musicFile, action == SortAction.LIKE, resultsPath(if (action == SortAction.LIKE) "Liked" else "Rejected"))
         }
 
     private suspend fun sortFileInner(musicFile: MusicFile, action: SortAction): Boolean {
@@ -979,8 +979,21 @@ class FileManager(private val context: Context) {
     suspend fun moveFilesToSubfolder(files: List<MusicFile>, subfolderName: String): Boolean =
         moveFilesToSubfolderInner(files, subfolderName).also { ok ->
             if (ok && (subfolderName == "Liked" || subfolderName == "Rejected"))
-                files.forEach { com.example.mobiledigger.util.SortHistory.record(it, subfolderName == "Liked") }
+                files.forEach { com.example.mobiledigger.util.SortHistory.record(it, subfolderName == "Liked", resultsPath(subfolderName)) }
         }
+
+    /** "Results october › Liked" — where a sorted track went (for Settings → History). */
+    private fun resultsPath(sub: String): String {
+        val dest = destinationFolder
+        val loc = dest?.uri?.let { u ->
+            runCatching { DocumentsContract.getTreeDocumentId(u) }.getOrNull()?.let { id ->
+                val vol = id.substringBefore(':')
+                val path = id.substringAfter(':', "").trim('/').split('/').filter { it.isNotBlank() }
+                (listOf(if (vol.equals("primary", true)) "Phone" else "SD card / USB ($vol)") + path).joinToString(" › ")
+            }
+        } ?: dest?.name ?: "Results"
+        return "$loc › $sub"
+    }
 
     private suspend fun moveFilesToSubfolderInner(files: List<MusicFile>, subfolderName: String): Boolean = withContext(Dispatchers.IO) {
         try {

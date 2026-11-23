@@ -140,11 +140,28 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
     val context = LocalContext.current
     val st by TransferManager.state.collectAsState()
     val job = st.job
+    var confirmCancel by remember { mutableStateOf(false) }
+    if (confirmCancel && job != null) {
+        val verb = if (job.move) "move" else "copy"
+        AlertDialog(
+            onDismissRequest = { confirmCancel = false },
+            title = { Text("Cancel the $verb?") },
+            text = {
+                Text("${job.doneFiles} of ${job.files.size} files are already on the phone and stay there. " +
+                    "The file being copied right now is removed. " +
+                    (if (job.move) "Files not moved yet stay on the network drive. " else "") +
+                    "This can't be continued later.")
+            },
+            confirmButton = { TextButton(onClick = { confirmCancel = false; TransferManager.abort() }) {
+                Text("Cancel $verb", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { confirmCancel = false }) { Text("Keep going") } }
+        )
+    }
     AnimatedVisibility(visible = st.status != TransferStatus.IDLE && job != null, enter = expandVertically(), exit = shrinkVertically()) {
         if (job == null) return@AnimatedVisibility
         val blue = Color(0xFF3B82F6)
         Card(
-            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 0.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = when (st.status) {
@@ -199,9 +216,13 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     when (st.status) {
-                        TransferStatus.RUNNING -> TextButton(onClick = { TransferManager.pause() }) { Text("Pause") }
+                        TransferStatus.RUNNING -> {
+                            // Cancel stops for good (confirm first); Pause can be continued later
+                            TextButton(onClick = { confirmCancel = true }) { Text("Cancel", color = MaterialTheme.colorScheme.error) }
+                            TextButton(onClick = { TransferManager.pause() }) { Text("Pause") }
+                        }
                         TransferStatus.PAUSED -> {
-                            TextButton(onClick = { TransferManager.abort() }) { Text("Abort", color = MaterialTheme.colorScheme.error) }
+                            TextButton(onClick = { confirmCancel = true }) { Text("Cancel", color = MaterialTheme.colorScheme.error) }
                             Button(onClick = { TransferManager.resume(context) }) { Text("Continue") }
                         }
                         else -> {

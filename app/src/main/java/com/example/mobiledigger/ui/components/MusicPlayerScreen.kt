@@ -283,6 +283,7 @@ fun MusicPlayerScreen(
 
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showUndoPicker by remember { mutableStateOf(false) }
     var showEqualizer by remember { mutableStateOf(false) }
     // "Archives" drawer in the To Do list: collapsed by default, choice remembered
     val uiPrefs = remember { context.getSharedPreferences("ui_prefs", android.content.Context.MODE_PRIVATE) }
@@ -769,6 +770,47 @@ fun MusicPlayerScreen(
     if (showEqualizer) {
         com.example.mobiledigger.ui.screens.EqualizerDialog(onDismiss = { showEqualizer = false })
     }
+    // Undo: pick which of the last 5 likes/rejects to take back
+    if (showUndoPicker) {
+        val undoable by viewModel.sortResults.collectAsState()
+        if (undoable.isEmpty()) showUndoPicker = false
+        val now = System.currentTimeMillis()
+        AlertDialog(
+            onDismissRequest = { showUndoPicker = false },
+            title = { Text("Undo which one?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    undoable.asReversed().forEach { r ->
+                        val liked = r.action == SortAction.LIKE
+                        val ago = ((now - r.timestamp) / 1000).let { sec ->
+                            when { sec < 60 -> "just now"; sec < 3600 -> "${sec / 60} min ago"; else -> "${sec / 3600} h ago" }
+                        }
+                        Card(
+                            onClick = { showUndoPicker = false; viewModel.undoAction(r) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(if (liked) Icons.Default.Favorite else Icons.Default.ThumbDown, contentDescription = null,
+                                    tint = if (liked) Color(0xFF22C55E) else Color(0xFFEF4444), modifier = Modifier.size(20.dp))
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(r.musicFile.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
+                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text((if (liked) "Liked" else "Rejected") + " · " + ago, style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showUndoPicker = false }) { Text("Close") } }
+        )
+    }
     if (showSettingsDialog) {
         SettingsDialog(
             visualSettingsManager = viewModel.visualSettingsManager,
@@ -961,7 +1003,7 @@ fun MusicPlayerScreen(
                 else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f) to "ℹ️"
             }
             Card(
-                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp)
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 0.dp)
                     .clickable { notificationJob?.cancel(); topMessage = null },
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = bg)
@@ -1013,7 +1055,7 @@ fun MusicPlayerScreen(
             exit = shrinkVertically()
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 0.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isDeletingFiles)
@@ -1060,7 +1102,7 @@ fun MusicPlayerScreen(
             val prog = lastBulkProgress
             val done = prog.done; val total = prog.total
             Card(
-                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 0.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = if (prog.toLiked) Color(0xFF2E7D32).copy(alpha = 0.25f) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f))
             ) {
@@ -1089,7 +1131,7 @@ fun MusicPlayerScreen(
         ) {
             val up = unpackProgress
             Card(
-                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 0.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (up != null) Color(0xFFF59E0B).copy(alpha = 0.22f) else Color(0xFF2E7D32).copy(alpha = 0.25f)
@@ -1171,6 +1213,9 @@ fun MusicPlayerScreen(
 
         // Header row: [Logo] [Reject All] [Player] [Playlist]
         // (also when only archives are loaded, so the app stays controllable)
+        // The action buttons toolbar is set up with the header but drawn between the main
+        // player and the playlist tabs (see MainPlayerSection / PlaylistTabsHeader below)
+        var actionsToolbar: (@Composable () -> Unit)? = null
         if (hasSourceFolder && !isLoading) {
             val labelStyle = MaterialTheme.typography.labelSmall
             var showBulkSendDialog by remember { mutableStateOf(false) }
@@ -1290,7 +1335,7 @@ fun MusicPlayerScreen(
                 }
             }
 
-            AnimatedVisibility(
+            actionsToolbar = { androidx.compose.animation.AnimatedVisibility(
                 visible = isActionsVisible,
                 enter = expandVertically(tween(Motion.panelMs() / 2)) + fadeIn(tween(Motion.panelMs() / 2)),
                 exit = shrinkVertically(tween(Motion.panelMs() / 2)) + fadeOut(tween(Motion.panelMs() / 3))
@@ -1356,7 +1401,7 @@ fun MusicPlayerScreen(
                             tint = if (canUndo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
                             modifier = Modifier.size(tbIconSize)) },
                         label = "Undo",
-                        onClick = { if (canUndo) viewModel.undoLastAction() }
+                        onClick = { if (canUndo) showUndoPicker = true }
                     )
                     ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })
                     ToolbarButton(icon = { Icon(Icons.Default.Checklist, contentDescription = "Select", tint = if (isMultiSelectionMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Select", onClick = { viewModel.toggleMultiSelectionMode() })
@@ -1372,7 +1417,7 @@ fun MusicPlayerScreen(
                         onClick = { if (currentPlayingFile != null) showSpectrogram = true }
                     )
                 }
-            }
+            } }
 
             // Multi-select inline controls — compact grid layout
             if (isMultiSelectionMode) {
@@ -1759,7 +1804,11 @@ fun MusicPlayerScreen(
         }
         
             
-            Spacer(modifier = Modifier.height(6.dp))
+            // Gap under the header buttons. (With a source loaded, each section below — player,
+            // tabs, banners, search, list — adds its own 6 dp top gap; nothing is lifted with
+            // negative offsets any more, which used to jam whichever section came first into
+            // the header when the ones above it were hidden.)
+            Spacer(modifier = Modifier.height(4.dp))
             
             // Folder selection buttons - minimize after selection
             if (!hasSourceFolder && !isLoading) { // Hide while loading so the hero/buttons don't stack behind the loading card
@@ -1797,7 +1846,7 @@ fun MusicPlayerScreen(
                 // When both not selected, show full-size buttons (kept below header)
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            if (!hasSourceFolder) Spacer(modifier = Modifier.height(16.dp))
 
             
             // Search box + inline results. Rendered BELOW the main player and the playlist tabs.
@@ -1829,7 +1878,7 @@ fun MusicPlayerScreen(
 
                 // Results are shown INLINE under the field (they used to open as a floating menu
                 // that covered the playlist tabs and the main player).
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 6.dp)) {
                     OutlinedTextField(
                         value = currentSearchText,
                         onValueChange = { newValue ->
@@ -1940,7 +1989,7 @@ fun MusicPlayerScreen(
             }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (!hasSourceFolder) Spacer(modifier = Modifier.height(16.dp))
 
             
             if (isLoading) {
@@ -2021,8 +2070,7 @@ fun MusicPlayerScreen(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .offset(y = (-40).dp)
+                                    .padding(top = 6.dp)
                                     .graphicsLayer {
                                         translationX = animatedOffset
                                         scaleX = 1f + abs(animatedOffset) / 2000f
@@ -2271,7 +2319,7 @@ fun MusicPlayerScreen(
                                                 }
                                                 // Undo
                                                 Card(
-                                                    onClick = { viewModel.undoLastAction() },
+                                                    onClick = { showUndoPicker = true },
                                                     modifier = Modifier.size(38.dp),
                                                     shape = CircleShape,
                                                     colors = CardDefaults.cardColors(
@@ -2560,7 +2608,7 @@ fun MusicPlayerScreen(
                                                         } }
                                                     // Undo
                                                     Card(
-                                                        onClick = { viewModel.undoLastAction() },
+                                                        onClick = { showUndoPicker = true },
                                                         modifier = Modifier.size(38.dp),
                                                         shape = CircleShape,
                                                         colors = CardDefaults.cardColors(
@@ -2735,8 +2783,7 @@ fun MusicPlayerScreen(
                             // Nothing loaded yet (fresh folder): "Show Main Player" used to do nothing.
                             // A slim card that starts the first track.
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                                    .offset(y = (-40).dp) // same lift as the real player and the tabs
+                                modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
                                     .clickable { viewModel.jumpTo(0) },
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -2768,8 +2815,7 @@ fun MusicPlayerScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                        .offset(y = (-40).dp),
+                                        .padding(start = 8.dp, end = 8.dp, top = 6.dp),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -2949,11 +2995,12 @@ fun MusicPlayerScreen(
                     
                     // Render fixed sections
                     MainPlayerSection()
+                    actionsToolbar?.invoke()
                     PlaylistTabsHeader()
                     // App messages and progress banners appear under the playlist buttons (were above the title bar)
-                    Box(Modifier.offset(y = (-40).dp)) { Column { topMessageBanner(); progressBanners() } }
-                    // Search opens under the player and tabs (lifted by the same 40 dp as they are)
-                    Box(Modifier.offset(y = (-40).dp)) { SearchSection() }
+                    Column { topMessageBanner(); progressBanners() }
+                    // Search opens under the player, the tabs and the banners
+                    SearchSection()
                     
                     // Only the playlist list scrolls
                     val renderHeadersInList = false
@@ -2962,9 +3009,8 @@ fun MusicPlayerScreen(
                         state = listState,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .fillMaxHeight()
-                            .offset(y = (-35).dp),
-                        contentPadding = PaddingValues(top = 0.dp, bottom = 80.dp),
+                            .fillMaxHeight(),
+                        contentPadding = PaddingValues(top = 6.dp, bottom = 80.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                         userScrollEnabled = true,
                         reverseLayout = false
@@ -3293,7 +3339,7 @@ fun MusicPlayerScreen(
 
                                                 // Undo
                                                 Card(
-                                                    onClick = { viewModel.undoLastAction() },
+                                                    onClick = { showUndoPicker = true },
                                                     modifier = Modifier.size(38.dp),
                                                     shape = CircleShape,
                                                     colors = CardDefaults.cardColors(

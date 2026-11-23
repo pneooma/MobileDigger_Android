@@ -95,6 +95,8 @@ data class TransferUi(
 object TransferManager {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var worker: Job? = null
+    /** Phone file being written right now; deleted if the transfer is cancelled mid-file. */
+    @Volatile private var currentTarget: Uri? = null
     private val _state = MutableStateFlow(TransferUi())
     val state: StateFlow<TransferUi> = _state.asStateFlow()
     private lateinit var app: Context
@@ -232,9 +234,21 @@ object TransferManager {
         _state.value = _state.value.copy(status = TransferStatus.PAUSED, currentBytes = 0, message = null)
     }
 
-    /** Stops for good. Files already copied stay on the phone. */
+    /**
+     * Stops for good (works while running or paused). Files already copied stay on the phone;
+     * the one that was half-written when it was cancelled is deleted, so no cut-off track is left.
+     */
     fun abort() {
-        worker?.cancel()
+        val w = worker
+        w?.cancel()
+        currentTarget?.let { partial ->
+            currentTarget = null
+            scope.launch {
+                runCatching { w?.join() } // let the copy loop close the file first
+                runCatching { DocumentsContract.deleteDocument(app.contentResolver, partial) }
+                    .onSuccess { CrashLogger.log("TransferManager", "Cancelled: removed the partly copied file") }
+            }
+        }
         val job = _state.value.job
         jobFile().delete()
         _state.value = TransferUi(
@@ -324,6 +338,7 @@ object TransferManager {
         val dir = saf.dirFor(f.rel.substringBeforeLast('/', ""))
         val name = f.rel.substringAfterLast('/')
         val target = saf.fileFor(dir, name) // existing (overwritten) or new
+        currentTarget = target
         var written = 0L
         client.open(f.path, 0).use { rs ->
             (app.contentResolver.openOutputStream(target, "wt") ?: throw Exception("Can't write $name")).use { out ->
@@ -346,6 +361,7 @@ object TransferManager {
             }
         }
         if (f.size > 0 && written != f.size) throw Exception("$name: only ${fmt(written)} of ${fmt(f.size)} arrived")
+        currentTarget = null
     }
 
     /** Folders/files inside a SAF tree, found by name (so a resumed copy reuses them). */

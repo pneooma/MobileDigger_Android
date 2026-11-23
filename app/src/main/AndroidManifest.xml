@@ -97,9 +97,31 @@
             </intent-filter>
             
         </activity>
-        
 
-        
+        <!-- "Spectrogram (MobileDigger)" in Open with / Share: shows only the spectrum analysis of
+             an audio file, separate from opening it to listen (MainActivity above). -->
+        <activity
+            android:name=".SpectrogramActivity"
+            android:exported="true"
+            android:label="@string/spectrogram_label"
+            android:theme="@style/Theme.MobileDigger"
+            android:taskAffinity="com.example.mobiledigger.spectrogram"
+            android:excludeFromRecents="true"
+            android:screenOrientation="portrait">
+            <intent-filter android:label="@string/spectrogram_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/spectrogram_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+        </activity>
+
         <!-- Media session service for audio playback -->
         <!-- Exported so the car (Bluetooth AVRCP browsing) can list tracks; onGetRoot only lets
              Bluetooth / system / Android Auto in. -->

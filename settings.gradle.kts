@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "MobileDigger"
 include(":app")
-// include(":ffmpeg") // Disabled for now

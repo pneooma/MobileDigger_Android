@@ -2255,3 +2255,37 @@ v13.076
 v13.077
 - More space between the MobileDigger bar and the header buttons (8 dp below, 2 dp above).
 - Fix: the "Nothing playing" card sat under the To Do / Liked / Rejected tabs; it now gets the same 40 dp lift as the real player and the tabs.
+
+v13.078
+- Fix: Undo put the track back at the top of the source folder instead of the subfolder it came from (e.g. "GloryBeats Premium/2026-W33/<album>/"), so it vanished from its folder group. It now goes back to its original folder, by an instant move (rename) instead of copying the whole file; copy is only a fallback.
+
+v13.079
+- Fix: an undone Like/Reject left the track flagged "♥ dup" / "👎 dup" in To Do. Undo now also removes it from the sort history (restoring any earlier sort of the same file).
+
+v13.080
+- Fix: after Undo the restored track would not play ("not a descendant" permission error) because the moved file's link pointed through the Liked/Rejected folder. It now points through the source folder and plays in place.
+
+v13.081
+- Fix: when the first track started playing, the list scrolled 500 px down (an old v10.98 "reveal the main player" scroll from when the player lived inside the list), hiding the playing row and its folder header under the header icons with only a strip of its waveform showing. The list now stays at the top so the folder header and the playing row are fully visible.
+
+v13.082
+- Cleanup: removed code and resources nothing used any more (no behaviour change). ~70 unused functions/values: old spectrogram quality/range/window/smoothing helpers in AudioManager, ViewModel calls the UI no longer makes (likeFile/dislikeFile/togglePlayPause/searchMusic/shareLikedFilesTxt…), CompactWaveformSeekBar, PlaylistSeekBar and ErrorHandler files, unused theme schemes and template purple/teal colours, CrashLogger extras, unused screen state. Resources: three old notification layouts, ic_glasses / ic_music_note / ic_seekbar_thumb drawables, Google font certs. Verified with unit tests (42/42) and on the phone (play, Like/Undo, notification, settings, search, playlists, spectrogram).
+
+v13.083
+- Notification / lock-screen player: tracks with an embedded cover now also show the waveform under the seek line. The cover shows at once; when the waveform is ready the picture becomes the cover (darkened, most of all around the seek line) with the waveform drawn over it. Tracks without a cover keep the waveform-only picture. Covers are decoded at up to ~512 px (was ~256 px) so they stay sharp under the overlay.
+
+v13.084
+- Progress banners ("👎 Moving to Rejected… 12/16", "❤️ Moving to Liked…", deleting rejected files, network copy, unpacking) now appear under the playlist buttons, like the other app messages, instead of at the top. On the welcome page they stay at the top.
+- Removed the FFmpeg player: its native library has not been bundled since the 16 KB-alignment fix, so it failed to load on every start and none of its code ever ran. VLC plays everything (ExoPlayer stays as fallback). Also stops the preloader from copying each upcoming AIFF into the cache for that player (wasted flash writes), and drops the FFmpegMediaPlayer-core library.
+- Fix (memory): every log line was also kept in a queue that was never emptied (UnifiedLogger), so memory use crept up for as long as the app ran. Removed it; CrashLogger writes logcat itself. CrashLogger's timestamp formatter is now thread-safe, and its disabled Downloads/destination-folder stubs are gone.
+- Cleanup: unused AnimationUtils, VLC prepareAsync, a never-used folder picker, write-only state and timers, 63 unused imports, and an always-true check. Unit tests 42/42.
+
+v13.085
+- Fix: at the end of a move to Liked, the progress banner briefly flipped to a red "👎 Moving to Rejected… 0/1" while it slid away (its progress was already cleared, so it fell back to a default). It now keeps showing the last real progress until it is gone.
+- Verified on the phone after removing FFmpeg: AIFF plays (VLC) and its spectrogram decodes directly (1.4 s); FLAC spectrogram via MediaCodec, including "Whole track"; cover + waveform notification; progress banners under the playlist buttons; no crashes or errors logged.
+
+v13.086
+- App messages and progress banners use the app's regular text style in the selected font (they used the small bold 11 sp label style with extra letter spacing, so they looked like a different typeface). Network-copy banner too.
+- Liked and Rejected are ordered by when each track was liked/rejected, newest first. The sort history now stores the time of every Like/Reject; tracks sorted before this version use the file's modified date. (The list was "sorted by date added", but that date was never filled in — it was the moment the list was loaded — and since v13.066 a sort is a rename that keeps the file's old date.)
+- One-off on the test phone: sort times of today's 134 sorts were filled in from the app log (backup: files/sort_history.backup-13085.tsv).
+- Checked: no Liked files lost — every move into Liked in today's log is accounted for, the count stayed at 168, and the folder has no truncated, temp or "(restored)" files.

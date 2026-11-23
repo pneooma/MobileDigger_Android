@@ -8,9 +8,7 @@ import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
 import android.os.Build
-import android.graphics.Canvas
 import android.graphics.Color
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -21,9 +19,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.extractor.DefaultExtractorsFactory
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.util.CrashLogger
-import com.example.mobiledigger.util.ResourceManager
 import com.example.mobiledigger.util.PerformanceProfiler
-import wseemann.media.FFmpegMediaPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,8 +34,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.Collections
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
-import android.media.AudioManager as AndroidAudioManager
 
 @androidx.media3.common.util.UnstableApi
 enum class SpectrogramQuality {
@@ -69,11 +63,9 @@ class AudioManager(private val context: Context) {
     }
     private val verbosePreloadLogs = false
     
-    private var ffmpegPlayer: FFmpegMediaPlayer? = null
     private var exoPlayerFallback: ExoPlayer? = null
     private var vlcBackend: VlcAudioBackend? = null
     private var currentFile: MusicFile? = null
-    private var isUsingFFmpeg = false
     private var isUsingVlc = false
     private var lastGcTimestampMs: Long = 0L
 
@@ -159,7 +151,6 @@ class AudioManager(private val context: Context) {
     private var preloadedFile: MusicFile? = null
     
     // Track cache files currently in active use to avoid deleting them during trimming
-    private var currentFFmpegDataSourcePath: String? = null
     private var currentTempWavPath: String? = null
 
     private val spectrogramDecoder by lazy {
@@ -168,19 +159,14 @@ class AudioManager(private val context: Context) {
     private var currentVlcTempPath: String? = null
 
     /** Temp cache paths currently in use — must NOT be deleted by cache trimming. */
-    fun getProtectedTempPaths(): Set<String> = setOfNotNull(currentFFmpegDataSourcePath, currentTempWavPath, currentVlcTempPath)
+    fun getProtectedTempPaths(): Set<String> = setOfNotNull(currentTempWavPath, currentVlcTempPath)
 
-    // Guard against spurious completion events that fire immediately after starting playback
-    private var trackStartTime = 0L
-    private val minPlaybackDurationMs = 2000L // Track must play for at least 2 seconds to be considered "completed"
-    
     // User preferences for spectrogram quality
     // HIGH (512 bins, 8192-pt FFT) + temporalResolution 10 px/s ≈ double the prior
     // BALANCED/5 quality on both the frequency and time axes.
     private var spectrogramQuality: SpectrogramQuality = SpectrogramQuality.HIGH
     private var frequencyRange: FrequencyRange = FrequencyRange.EXTENDED
     private var temporalResolution: Int = 10 // pixels per second
-    private var isFFmpegPrepared = false
     
     // Spectrogram cache with size limit to prevent memory leaks (EXTREMELY REDUCED for memory safety)
     private val maxCacheSize = 1 // CRITICAL: Limit to only 1 spectrogram to prevent memory exhaustion
@@ -205,33 +191,6 @@ class AudioManager(private val context: Context) {
             }
         }
     )
-    
-    // PHASE 2: Cache monitoring
-    fun logCacheStats() {
-        val spectrogramCount = spectrogramCache.size
-        val tempFileCount = tempFileCache.size
-        CrashLogger.log("AudioManager", "📊 Cache Stats - Spectrograms: ${spectrogramCount}/${maxCacheSize}, Temp Files: ${tempFileCount}/${maxTempCacheSize}")
-    }
-    
-    // User control methods
-    fun setSpectrogramQuality(quality: SpectrogramQuality) {
-        spectrogramQuality = quality
-        CrashLogger.log("AudioManager", "Spectrogram quality set to: $quality")
-    }
-    
-    fun setFrequencyRange(range: FrequencyRange) {
-        frequencyRange = range
-        CrashLogger.log("AudioManager", "Frequency range set to: $range")
-    }
-    
-    fun setTemporalResolution(resolution: Int) {
-        temporalResolution = resolution.coerceIn(3, 10) // Limit between 3-10 pixels/second
-        CrashLogger.log("AudioManager", "Temporal resolution set to: $temporalResolution pixels/second")
-    }
-    
-    fun getCurrentSettings(): Triple<SpectrogramQuality, FrequencyRange, Int> {
-        return Triple(spectrogramQuality, frequencyRange, temporalResolution)
-    }
     
     private fun getQualityParameters(): Triple<Int, Int, Int> {
         val windowSize = when (spectrogramQuality) {
@@ -264,9 +223,8 @@ class AudioManager(private val context: Context) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
                 if (size > maxTempCacheSize && eldest != null) {
                     // CRITICAL: Don't delete a temp file that's currently in use by any backend
-                    // (FFmpeg, the AIFF temp WAV, or the VLC temp) — that would kill playback.
-                    if (eldest.value == currentFFmpegDataSourcePath ||
-                        eldest.value == currentVlcTempPath ||
+                    // (the AIFF temp WAV or the VLC temp) — that would kill playback.
+                    if (eldest.value == currentVlcTempPath ||
                         eldest.value == currentTempWavPath) {
                         CrashLogger.log("AudioManager", "⚠️ Skipping deletion of in-use temp file: ${eldest.value}")
                         return false // Don't remove it from cache
@@ -294,23 +252,6 @@ class AudioManager(private val context: Context) {
         try {
             // Initialize broadcast receiver for cache clearing
             initializeBroadcastReceiver()
-            
-            // Initialize FFmpegMediaPlayer (primary)
-            CrashLogger.log("AudioManager", "Attempting to create FFmpegMediaPlayer...")
-            try {
-                ffmpegPlayer = FFmpegMediaPlayer()
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer created successfully")
-            } catch (e: Throwable) {
-                // Throwable, not Exception: the FFmpeg native libs are no longer bundled
-                // (not 16 KB-aligned), so this throws UnsatisfiedLinkError — an Error.
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer unavailable (native libs not bundled): ${e.message}")
-                ffmpegPlayer = null
-            }
-            
-            ffmpegPlayer?.let { player ->
-                setupFFmpegListeners(player)
-            }
-            CrashLogger.log("AudioManager", "FFmpegMediaPlayer listeners set successfully")
             
             // Initialize VLC backend (for AIFF and problematic files)
             if (USE_VLC_FOR_AIFF || USE_VLC_FOR_ALL) {
@@ -358,7 +299,7 @@ class AudioManager(private val context: Context) {
                 }
             })
             
-            CrashLogger.log("AudioManager", "AudioManager initialized with FFmpegMediaPlayer + ExoPlayer fallback")
+            CrashLogger.log("AudioManager", "AudioManager initialized with VLC + ExoPlayer fallback")
         } catch (e: Exception) {
             CrashLogger.log("AudioManager", "AudioManager initialization failed", e)
         }
@@ -368,7 +309,6 @@ class AudioManager(private val context: Context) {
         vlcBackend?.let { vlc ->
             vlc.setOnPreparedListener {
                 CrashLogger.log("AudioManager", "✅ VLC prepared")
-                    isFFmpegPrepared = true
                 // Start playback automatically when prepared
                 vlc.start()
             }
@@ -391,79 +331,6 @@ class AudioManager(private val context: Context) {
         }
     }
     
-    private fun setupFFmpegListeners(player: FFmpegMediaPlayer) {
-        try {
-            player.setOnPreparedListener { mp ->
-                try {
-                    CrashLogger.log("AudioManager", "🎵 FFmpegMediaPlayer prepared successfully - configuring and starting playback NOW")
-                    isFFmpegPrepared = true
-
-                        // Stream type is set before prepareAsync() (MediaPlayer contract:
-                        // setAudioStreamType is invalid after prepare). Unity volume here.
-                        mp.setVolume(1.0f, 1.0f)
-                        mp.start()
-                    
-                    // Mark the start time for spurious completion event detection
-                    trackStartTime = System.currentTimeMillis()
-                    
-                        CrashLogger.log("AudioManager", "✅ Playback started automatically after async prepare")
-                    } catch (e: Exception) {
-                        CrashLogger.log("AudioManager", "❌ Failed to start playback in onPreparedListener", e)
-                    }
-                }
-            player.setOnErrorListener { mp, what, extra ->
-                    val errorMessage = when (what) {
-                        FFmpegMediaPlayer.MEDIA_ERROR_UNKNOWN -> "Unknown error"
-                        FFmpegMediaPlayer.MEDIA_ERROR_SERVER_DIED -> "Server died"
-                        FFmpegMediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK -> "Not valid for progressive playback"
-                        else -> "Error code: $what"
-                    }
-                CrashLogger.log("AudioManager", "💥 FFmpegMediaPlayer error: $errorMessage (what=$what, extra=$extra)")
-                    isFFmpegPrepared = false
-                
-                // CRITICAL: Auto-skip to next track on FFmpeg error to prevent app crashes
-                CrashLogger.log("AudioManager", "🔄 Auto-skipping to next track due to FFmpeg error")
-                try {
-                    // Send broadcast to trigger next track. Must use MusicService.ACTION_NEXT
-                    // ("com.example.mobiledigger.NEXT") — the old literal "…ACTION_NEXT" string
-                    // matched no receiver, and without setPackage the broadcast was implicit
-                    // (undeliverable to RECEIVER_NOT_EXPORTED receivers), so auto-skip was dead.
-                    val intent = Intent(MusicService.ACTION_NEXT).apply { setPackage(context.packageName) }
-                    context.sendBroadcast(intent)
-                    CrashLogger.log("AudioManager", "✅ Broadcast sent to skip to next track")
-                } catch (e: Exception) {
-                    CrashLogger.log("AudioManager", "❌ Failed to send skip broadcast", e)
-                }
-                    
-                    // Try to reset the player to recover from error state
-                    try {
-                        mp.reset()
-                    } catch (e: Exception) {
-                        CrashLogger.log("AudioManager", "Failed to reset FFmpegMediaPlayer after error", e)
-                    }
-                    false
-                }
-            player.setOnCompletionListener { mp ->
-                val playbackDuration = System.currentTimeMillis() - trackStartTime
-                
-                if (playbackDuration < minPlaybackDurationMs) {
-                    CrashLogger.log("AudioManager", "Spurious completion event ignored (track played for only ${playbackDuration}ms)")
-                    return@setOnCompletionListener
-                }
-                
-                CrashLogger.log("AudioManager", "FFmpegMediaPlayer playback completed (duration: ${playbackDuration}ms)")
-                    playbackCompletionListener?.onTrackCompletion()
-                }
-            player.setOnInfoListener { mp, what, extra ->
-                    CrashLogger.log("AudioManager", "FFmpegMediaPlayer info: what=$what, extra=$extra")
-                    false
-            }
-            CrashLogger.log("AudioManager", "FFmpegMediaPlayer listeners set successfully")
-        } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Failed to setup FFmpegMediaPlayer listeners", e)
-        }
-    }
-    
     fun preloadFile(musicFile: MusicFile) {
         if (musicFile == preloadedFile) {
             if (verbosePreloadLogs) CrashLogger.log("AudioManager", "File ${musicFile.name} already preloaded.")
@@ -476,13 +343,8 @@ class AudioManager(private val context: Context) {
             if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Skipping preload while VLC is active")
             return
         }
-        // Both preload paths below reuse the SAME player instances that handle live
-        // playback (ffmpegPlayer / exoPlayerFallback). If either is actively playing,
-        // preloading would reset it and kill the audible track mid-play.
-        if (isUsingFFmpeg) {
-            if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Skipping preload while FFmpeg is active")
-            return
-        }
+        // The preload reuses the SAME ExoPlayer that handles fallback playback; if it is
+        // actively playing, preloading would reset it and kill the audible track mid-play.
         if (isCurrentlyPlaying()) {
             if (verbosePreloadLogs) CrashLogger.log("AudioManager", "Skipping preload while ExoPlayer is active")
             return
@@ -509,14 +371,9 @@ class AudioManager(private val context: Context) {
         val fileName = musicFile.name.lowercase(Locale.getDefault())
         val isAiffFile = fileName.endsWith(".aif") || fileName.endsWith(".aiff")
         
-        if (isAiffFile) {
-            // Do NOT preload AIFF via FFmpegMediaPlayer: its shared onPreparedListener
-            // auto-starts playback, so a "preload" would audibly start the next track.
-            // AIFF is played by VLC anyway; at most warm the temp-file cache.
-            if (uri.scheme != "file") {
-                getFFmpegDataSource(uri) // copies to cache so real playback starts fast
-            }
-        } else {
+        // AIFF is played by VLC, in place — nothing to preload (this used to copy the
+        // whole file into the cache for an FFmpeg player that is no longer bundled).
+        if (!isAiffFile) {
             // Preload with ExoPlayer (main thread — ExoPlayer is not thread-safe)
             exoPlayerFallback?.let { player ->
                 try {
@@ -542,59 +399,7 @@ class AudioManager(private val context: Context) {
             exoPlayerFallback?.stop()
             exoPlayerFallback?.clearMediaItems()
         }
-        // Reset FFmpegMediaPlayer
-        ffmpegPlayer?.reset()
-        isFFmpegPrepared = false
         CrashLogger.log("AudioManager", "Preloaded player released.")
-    }
-    
-    // Helper to get FFmpeg data source, extracted from tryPlayWithFFmpegSync
-    private fun getFFmpegDataSource(uri: Uri): String? {
-        return try {
-            if (uri.scheme == "file") {
-                val path = uri.path
-                if (path.isNullOrEmpty()) {
-                    CrashLogger.log("AudioManager", "File URI has null or empty path: $uri")
-                    return null
-                }
-                
-                // Validate that the file actually exists
-                val file = File(path)
-                if (!file.exists()) {
-                    CrashLogger.log("AudioManager", "File does not exist: $path")
-                    return null
-                }
-                
-                if (!file.canRead()) {
-                    CrashLogger.log("AudioManager", "File cannot be read: $path")
-                    return null
-                }
-                
-                CrashLogger.log("AudioManager", "Valid file path for FFmpeg: $path")
-                path
-            } else {
-                val uriString = uri.toString()
-                val cachedPath = tempFileCache[uriString]
-                if (cachedPath != null && File(cachedPath).exists()) {
-                    CrashLogger.log("AudioManager", "Using cached temp file: $cachedPath")
-                    cachedPath
-                } else {
-                    val tempFile = copyUriToTempFile(uri)
-                    if (tempFile != null) {
-                        val tempPath = tempFile.absolutePath
-                        tempFileCache[uriString] = tempPath
-                        CrashLogger.log("AudioManager", "Created temp file for FFmpeg: $tempPath")
-                        tempPath
-                    } else {
-                        CrashLogger.log("AudioManager", "Failed to create temp file for URI: $uri")
-                        null
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Error getting FFmpeg data source", e)
-            null
-        }
     }
     
     fun playFile(musicFile: MusicFile): Boolean {
@@ -606,7 +411,7 @@ class AudioManager(private val context: Context) {
             val uri = musicFile.uri
             
                 // Validate URI before attempting playback
-                if (uri == null || uri.toString().isEmpty() || uri.toString() == "null") {
+                if (uri.toString().isEmpty() || uri.toString() == "null") {
                     CrashLogger.log("AudioManager", "❌ Invalid or empty URI for file: ${musicFile.name}, URI: $uri")
                     return@profile false
                 }
@@ -633,7 +438,7 @@ class AudioManager(private val context: Context) {
                 // removed sleep to avoid UI jank
             }
             
-            // Check if this is an AIFF file that needs FFmpeg. Remote http(s) files always
+            // AIFF files are validated first, then played by VLC. Remote http(s) files always
             // take the VLC-for-all path — the AIFF branch's local-file validation would
             // wrongly reject them (it opens the URI via ContentResolver).
             val isRemote = uri.scheme == "http" || uri.scheme == "https"
@@ -651,7 +456,7 @@ class AudioManager(private val context: Context) {
                 
                 CrashLogger.log("AudioManager", "🔄 AIFF file detected, validating before playback: ${musicFile.name}")
                 
-                // CRITICAL FIX: Validate AIFF file before attempting FFmpeg playback
+                // Validate the AIFF before playing it
                 // This prevents crashes from corrupted or problematic AIFF files
                 if (!validateAIFFFile(uri, musicFile)) {
                     CrashLogger.log("AudioManager", "❌ AIFF file validation failed, skipping: ${musicFile.name}")
@@ -660,39 +465,24 @@ class AudioManager(private val context: Context) {
                 
                 CrashLogger.log("AudioManager", "✅ AIFF file validation passed, trying VLC first")
                 
-                // Try VLC first for AIFF files (more stable than FFmpegMediaPlayer)
+                // AIFF is played by VLC
                 if (USE_VLC_FOR_AIFF && vlcBackend != null) {
                     try {
                         val vlcSuccess = tryPlayWithVlcSync(uri)
                         if (vlcSuccess) {
-                            isUsingFFmpeg = false
                             isUsingVlc = true
                             CrashLogger.log("AudioManager", "✅ VLC playback successful for AIFF: ${musicFile.name}")
                             return@profile true
                         } else {
-                            CrashLogger.log("AudioManager", "❌ VLC failed for AIFF, trying FFmpegMediaPlayer: ${musicFile.name}")
+                            CrashLogger.log("AudioManager", "❌ VLC failed for AIFF: ${musicFile.name}")
                         }
                     } catch (e: Exception) {
                         CrashLogger.log("AudioManager", "💥 Exception in VLC for AIFF: ${musicFile.name}", e)
                     }
                 }
                 
-                // Fallback to FFmpegMediaPlayer for AIFF files
-                try {
-                    val ffmpegSuccess = tryPlayWithFFmpegSync(uri)
-                    if (ffmpegSuccess) {
-                        isUsingFFmpeg = true
-                        isUsingVlc = false
-                        CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer playback successful for AIFF: ${musicFile.name}")
-                        return@profile true
-                    } else {
-                        CrashLogger.log("AudioManager", "❌ FFmpegMediaPlayer failed for AIFF: ${musicFile.name}")
-                        return@profile false
-                    }
-                } catch (e: Exception) {
-                    CrashLogger.log("AudioManager", "💥 Exception in FFmpegMediaPlayer for AIFF: ${musicFile.name}", e)
-                    return@profile false
-                }
+                // No other player handles AIFF (the FFmpeg fallback is no longer bundled)
+                return@profile false
             }
             
             // If VLC-for-all is enabled, prefer VLC for all filetypes
@@ -701,7 +491,6 @@ class AudioManager(private val context: Context) {
                     val vlcSuccessAll = tryPlayWithVlcSync(uri)
                     if (vlcSuccessAll) {
                         isUsingVlc = true
-                        isUsingFFmpeg = false
                         CrashLogger.log("AudioManager", "✅ VLC playback successful for: ${musicFile.name}")
                         try {
                             val intent = android.content.Intent(MusicService.ACTION_UPDATE_NOTIFICATION)
@@ -723,7 +512,6 @@ class AudioManager(private val context: Context) {
             // Use ExoPlayer as fallback (kept for non-AIFF and edge cases)
             val exoSuccess = tryPlayWithExoPlayerSync(uri)
             if (exoSuccess) {
-                isUsingFFmpeg = false
                 isUsingVlc = false
                 CrashLogger.log("AudioManager", "ExoPlayer playback successful for: ${musicFile.name}")
                 return@profile true
@@ -811,134 +599,6 @@ class AudioManager(private val context: Context) {
         }
     }
     
-    private fun tryPlayWithFFmpegSync(uri: Uri): Boolean {
-        return try {
-            CrashLogger.log("AudioManager", "🔄 Starting FFmpegMediaPlayer playback for: $uri")
-            
-            val player = ffmpegPlayer
-            if (player == null) {
-                CrashLogger.log("AudioManager", "❌ FFmpegMediaPlayer is null - not initialized properly")
-                return false
-            }
-            CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer is available, attempting playback")
-            
-            // CRITICAL: Proper cleanup before loading new file
-            CrashLogger.log("AudioManager", "🧹 Performing FFmpeg cleanup before new file...")
-            try {
-                if (player.isPlaying) {
-                    CrashLogger.log("AudioManager", "🛑 Stopping current playback...")
-                    player.stop()
-                }
-                CrashLogger.log("AudioManager", "🔄 Resetting FFmpegMediaPlayer state...")
-                player.reset()
-                CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer reset completed")
-            } catch (cleanupException: Exception) {
-                CrashLogger.log("AudioManager", "⚠️ FFmpeg cleanup failed - recreating player", cleanupException)
-                // If cleanup fails, recreate the player
-                try {
-                    ffmpegPlayer?.release()
-                    ffmpegPlayer = FFmpegMediaPlayer()
-                    setupFFmpegListeners(ffmpegPlayer!!)
-                    CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer recreated successfully")
-                } catch (recreateException: Throwable) { // UnsatisfiedLinkError when libs absent
-                    CrashLogger.log("AudioManager", "💥 Failed to recreate FFmpegMediaPlayer", recreateException)
-                    return false
-                }
-            }
-            
-            // Clear tracking variables
-            currentFFmpegDataSourcePath = null
-            isFFmpegPrepared = false
-            
-            // Enhanced memory management before FFmpeg operations
-            CrashLogger.log("AudioManager", "🧠 Running garbage collection...")
-            System.gc()
-            lastGcTimestampMs = System.currentTimeMillis()
-            // removed sleep to avoid UI jank
-            
-            // Try to set data source for FFmpegMediaPlayer
-            val dataSource = getFFmpegDataSource(uri)
-            
-            if (dataSource == null) {
-                CrashLogger.log("AudioManager", "❌ No data source available for FFmpegMediaPlayer")
-                return false
-            }
-            
-            // Additional validation before setDataSource
-            if (dataSource.isEmpty()) {
-                CrashLogger.log("AudioManager", "❌ Data source is empty, cannot set for FFmpegMediaPlayer")
-                return false
-            }
-            
-            CrashLogger.log("AudioManager", "📁 Data source prepared: $dataSource")
-            
-            // CRITICAL FIX: Use crash-safe setDataSource with timeout detection
-            CrashLogger.log("AudioManager", "🔄 Setting FFmpegMediaPlayer data source with crash protection...")
-            
-            // Use a timeout mechanism to detect if setDataSource hangs or crashes
-            var setDataSourceSuccess = false
-            val setDataSourceThread = Thread {
-                try {
-                player.setDataSource(dataSource)
-                    setDataSourceSuccess = true
-                    CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer setDataSource successful")
-                } catch (e: Exception) {
-                    CrashLogger.log("AudioManager", "💥 FFmpegMediaPlayer setDataSource failed with exception", e)
-                    setDataSourceSuccess = false
-                }
-            }
-            
-            setDataSourceThread.start()
-            
-            // Wait for setDataSource to complete with timeout
-            try {
-                setDataSourceThread.join(2000) // 2 second timeout
-                
-                if (setDataSourceThread.isAlive) {
-                    CrashLogger.log("AudioManager", "💥 FFmpegMediaPlayer setDataSource timed out - likely crashed")
-                    setDataSourceThread.interrupt()
-                    return false
-                }
-                
-                if (!setDataSourceSuccess) {
-                    CrashLogger.log("AudioManager", "💥 FFmpegMediaPlayer setDataSource failed")
-                    return false
-                }
-                
-                // Track in-use data source path if it is a file path inside cache
-                currentFFmpegDataSourcePath = try {
-                    val f = java.io.File(dataSource)
-                    if (f.exists() && f.absolutePath.startsWith(context.cacheDir.absolutePath)) f.absolutePath else null
-                } catch (_: Exception) { null }
-                
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "💥 Error during setDataSource timeout handling", e)
-                return false
-            }
-            
-            // Use ASYNC preparation to avoid blocking UI thread (NO LAG!)
-            // Audio settings will be configured in onPreparedListener callback after preparation completes
-            try {
-                CrashLogger.log("AudioManager", "⚡ Starting NON-BLOCKING prepareAsync() for instant playback")
-                // Must be set BEFORE prepare per the MediaPlayer state machine.
-                player.setAudioStreamType(AndroidAudioManager.STREAM_MUSIC)
-                player.prepareAsync()
-                CrashLogger.log("AudioManager", "✅ prepareAsync() called - will configure audio and start when ready (onPreparedListener)")
-                // Playback will start automatically in onPreparedListener callback (lines 177-190)
-                // This returns immediately without blocking!
-            } catch (e: Exception) {
-                CrashLogger.log("AudioManager", "❌ FFmpegMediaPlayer prepareAsync failed", e)
-                return false
-            }
-            
-            true
-        } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "FFmpegMediaPlayer playback error", e)
-            false
-        }
-    }
-    
-    
     private fun tryPlayWithExoPlayerSync(uri: Uri): Boolean {
         return try {
             val player = exoPlayerFallback ?: return false
@@ -974,8 +634,6 @@ class AudioManager(private val context: Context) {
         try {
             if (isUsingVlc) {
                 vlcBackend?.pause()
-            } else if (isUsingFFmpeg) {
-                ffmpegPlayer?.pause()
             } else {
                 exoPlayerFallback?.pause()
             }
@@ -1007,27 +665,6 @@ class AudioManager(private val context: Context) {
                 }
             }
             
-            // Stop FFmpegMediaPlayer if it's playing
-            ffmpegPlayer?.let { player ->
-                try {
-                    CrashLogger.log("AudioManager", "🧹 Cleaning up FFmpegMediaPlayer...")
-                    if (player.isPlaying) {
-                        CrashLogger.log("AudioManager", "🛑 Stopping FFmpegMediaPlayer playback...")
-                        player.stop()
-                        CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer stopped")
-                    }
-                    CrashLogger.log("AudioManager", "🔄 Resetting FFmpegMediaPlayer state...")
-                    player.reset()
-                    currentFFmpegDataSourcePath = null // Mark file as no longer in use
-                    CrashLogger.log("AudioManager", "✅ FFmpegMediaPlayer reset completed")
-                    
-                    // Additional cleanup delay
-                    // removed sleep to avoid UI jank
-                } catch (e: Exception) {
-                    CrashLogger.log("AudioManager", "💥 Error stopping FFmpegMediaPlayer", e)
-                }
-            }
-            
             // Stop ExoPlayer if it's playing - with proper cleanup to prevent dead thread handlers
             exoPlayerFallback?.let { player ->
                 try {
@@ -1051,9 +688,7 @@ class AudioManager(private val context: Context) {
             // Reset the player state tracking. isUsingVlc must be reset here too —
             // previously it stayed true after stop(), so pause/seek/position calls kept
             // routing to the (stopped) VLC backend.
-            isUsingFFmpeg = false
             isUsingVlc = false
-            isFFmpegPrepared = false
             currentVlcTempPath = null // safe: stopAllPlayback runs before the next temp is created
 
             CrashLogger.log("AudioManager", "All playback stopped successfully")
@@ -1067,8 +702,6 @@ class AudioManager(private val context: Context) {
             acquireWakeLock()
             if (isUsingVlc) {
                 vlcBackend?.start()
-            } else if (isUsingFFmpeg) {
-                ffmpegPlayer?.start()
             } else {
                 runOnMainSync { exoPlayerFallback?.play() }
             }
@@ -1082,8 +715,6 @@ class AudioManager(private val context: Context) {
         try {
             if (isUsingVlc) {
                 vlcBackend?.setVolume(v)
-            } else if (isUsingFFmpeg) {
-                ffmpegPlayer?.setVolume(v, v)
             } else {
                 runOnMainSync { exoPlayerFallback?.volume = v }
             }
@@ -1132,8 +763,6 @@ class AudioManager(private val context: Context) {
         try {
             if (isUsingVlc) {
                 vlcBackend?.seekTo(positionMs = position)
-            } else if (isUsingFFmpeg) {
-                ffmpegPlayer?.seekTo(position.toInt())
             } else {
                 runOnMainSync { exoPlayerFallback?.seekTo(position) }
             }
@@ -1146,8 +775,6 @@ class AudioManager(private val context: Context) {
         return try {
             if (isUsingVlc) {
                 vlcBackend?.isPlaying() ?: false
-            } else if (isUsingFFmpeg) {
-                ffmpegPlayer?.isPlaying ?: false
             } else {
                 callOnMainSync { exoPlayerFallback?.isPlaying ?: false }
             }
@@ -1161,8 +788,6 @@ class AudioManager(private val context: Context) {
         return try {
             if (isUsingVlc) {
                 vlcBackend?.getCurrentPosition() ?: 0L
-            } else if (isUsingFFmpeg) {
-                (ffmpegPlayer?.currentPosition ?: 0).toLong()
             } else {
                 callOnMainSync { exoPlayerFallback?.currentPosition ?: 0L }
             }
@@ -1176,8 +801,6 @@ class AudioManager(private val context: Context) {
         return try {
             if (isUsingVlc) {
                 vlcBackend?.getDuration() ?: 0L
-            } else if (isUsingFFmpeg) {
-                (ffmpegPlayer?.duration ?: 0).toLong()
             } else {
                 callOnMainSync { exoPlayerFallback?.duration ?: 0L }
             }
@@ -1197,8 +820,7 @@ class AudioManager(private val context: Context) {
             tempFileCache.keys.toList().forEach { key ->
                 tempFileCache.remove(key)?.let { tempPath ->
                     // CRITICAL: Don't delete a temp file currently in use by any backend.
-                    if (tempPath == currentFFmpegDataSourcePath ||
-                        tempPath == currentVlcTempPath ||
+                    if (tempPath == currentVlcTempPath ||
                         tempPath == currentTempWavPath) {
                         CrashLogger.log("AudioManager", "⚠️ Skipping deletion of in-use temp file: $tempPath")
                         // Put it back in the cache since it's still needed
@@ -1223,7 +845,7 @@ class AudioManager(private val context: Context) {
     }
     
     /**
-     * Validate AIFF file before attempting FFmpeg playback to prevent crashes
+     * Validate an AIFF file before playing it, so a corrupted file is skipped instead of crashing
      */
     private fun validateAIFFFile(uri: Uri, musicFile: MusicFile): Boolean {
         return try {
@@ -1281,44 +903,6 @@ class AudioManager(private val context: Context) {
         }
     }
     
-    /**
-     * Monitor memory pressure and clear caches if needed - AGGRESSIVE MEMORY MANAGEMENT
-     */
-    private fun checkMemoryPressure() {
-        try {
-            val runtime = Runtime.getRuntime()
-            val usedMemory = runtime.totalMemory() - runtime.freeMemory()
-            val maxMemory = runtime.maxMemory()
-            val memoryUsagePercent = (usedMemory * 100) / maxMemory
-            
-            when {
-                memoryUsagePercent > 85 -> {
-                    // CRITICAL: Emergency memory cleanup (lowered threshold)
-                    CrashLogger.log("AudioManager", "CRITICAL: Memory usage at ${memoryUsagePercent}%, emergency cleanup")
-                    clearAllCaches()
-                    spectrogramCache.clear() // Force clear spectrogram cache
-                System.gc()
-                lastGcTimestampMs = System.currentTimeMillis()
-                    Thread.sleep(200) // Give GC more time to work
-                }
-                memoryUsagePercent > 70 -> {
-                    // High memory usage - aggressive cleanup (lowered threshold)
-                    CrashLogger.log("AudioManager", "High memory usage detected: ${memoryUsagePercent}%, aggressive cleanup")
-                    clearAllCaches()
-                System.gc()
-                lastGcTimestampMs = System.currentTimeMillis()
-                }
-                memoryUsagePercent > 50 -> {
-                    // Moderate memory usage - standard cleanup (lowered threshold)
-                    CrashLogger.log("AudioManager", "Moderate memory usage: ${memoryUsagePercent}%, standard cleanup")
-                    clearAllCaches()
-                }
-            }
-        } catch (e: Exception) {
-            CrashLogger.log("AudioManager", "Memory pressure check failed", e)
-        }
-    }
-    
     private fun copyUriToTempFile(uri: Uri): File? {
         var tempFile: File? = null
         return try {
@@ -1366,7 +950,7 @@ class AudioManager(private val context: Context) {
                 return null // Will trigger cleanup in finally block
             }
             
-            // CRITICAL: Give the OS time to fully close file descriptors before FFmpeg opens the file
+            // Give the OS time to fully close file descriptors before the player opens the file
             // This prevents fdsan crashes where fd 0 gets corrupted
             // Force garbage collection to ensure all file handles are released
             CrashLogger.log("AudioManager", "🔄 Running GC and waiting for file descriptor cleanup...")
@@ -1428,9 +1012,6 @@ class AudioManager(private val context: Context) {
                 broadcastReceiver = null
             }
             
-            ffmpegPlayer?.release()
-            ffmpegPlayer = null
-            currentFFmpegDataSourcePath = null // Clear tracking before cleanup
             currentVlcTempPath = null
             
             vlcBackend?.release()
@@ -1875,43 +1456,6 @@ class AudioManager(private val context: Context) {
             windowed[i] = data[i] * windowValue
         }
         return windowed
-    }
-    
-    private fun applyBlackmanWindow(data: ShortArray): FloatArray {
-        val windowed = FloatArray(data.size)
-        val n = data.size
-        for (i in data.indices) {
-            val windowValue = (0.42 - 0.5 * cos(2 * PI * i / (n - 1)) + 0.08 * cos(4 * PI * i / (n - 1))).toFloat()
-            windowed[i] = data[i] * windowValue
-        }
-        return windowed
-    }
-    
-    private fun applySmoothing(data: Array<FloatArray>, width: Int, height: Int): Array<FloatArray> {
-        val smoothed = Array(height) { FloatArray(width) }
-        val kernelSize = 3
-        val halfKernel = kernelSize / 2
-        
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                var sum = 0f
-                var count = 0
-                
-                // Apply 3x3 smoothing kernel
-                for (ky in -halfKernel..halfKernel) {
-                    for (kx in -halfKernel..halfKernel) {
-                        val ny = (y + ky).coerceIn(0, height - 1)
-                        val nx = (x + kx).coerceIn(0, width - 1)
-                        sum += data[ny][nx]
-                        count++
-                    }
-                }
-                
-                smoothed[y][x] = sum / count
-            }
-        }
-        
-        return smoothed
     }
     
     private fun performSimpleFFT(data: FloatArray): FloatArray {

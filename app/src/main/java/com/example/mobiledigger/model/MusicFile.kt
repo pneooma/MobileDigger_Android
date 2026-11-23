@@ -1,7 +1,6 @@
 package com.example.mobiledigger.model
 
 import android.net.Uri
-import androidx.compose.ui.graphics.ImageBitmap
 import com.example.mobiledigger.viewmodel.PlaylistTab
 
 data class MusicFile(

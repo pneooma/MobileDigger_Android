@@ -11,9 +11,6 @@ class MediaButtonReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_MEDIA_BUTTON = "android.intent.action.MEDIA_BUTTON"
         private const val PREFS_NAME = "headphone_button_times"
-        private const val KEY_LAST_NEXT = "last_next_tap"
-        private const val KEY_LAST_PREV = "last_prev_tap"
-        private const val DOUBLE_TAP_WINDOW = 500L // 500ms
     }
     
     override fun onReceive(context: Context, intent: Intent) {

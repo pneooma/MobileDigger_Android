@@ -163,7 +163,7 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
                             TransferStatus.PAUSED -> "⏸ $verb “${job.folderName}” paused"
                             else -> st.message ?: "Done"
                         },
-                        style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
                     )
                     if (st.status != TransferStatus.DONE) {
@@ -171,12 +171,11 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
                         if (st.status == TransferStatus.RUNNING && st.speedBps > 0) {
                             Text(
                                 TransferManager.fmtSpeed(st.speedBps) + (st.etaSeconds?.let { " · " + TransferManager.fmtEta(it) } ?: ""),
-                                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
+                                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(Modifier.width(8.dp))
                         }
-                        Text("${(st.fraction * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Text("${(st.fraction * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 if (st.status != TransferStatus.DONE) {
@@ -194,7 +193,7 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
                                 st.status == TransferStatus.RUNNING && st.currentName.isNotEmpty() -> " · ${st.currentName}"
                                 else -> ""
                             },
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2, overflow = TextOverflow.Ellipsis
                     )
                 }

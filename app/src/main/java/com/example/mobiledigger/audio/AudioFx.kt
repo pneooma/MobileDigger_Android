@@ -31,7 +31,6 @@ object AudioFx {
     val centers = FloatArray(BANDS) { F_LO * (F_HI / F_LO).pow(it / (BANDS - 1f)) }
     /** Upper edge of each band (geometric midpoint to the next centre). */
     private val cutoffs = FloatArray(BANDS) { i -> if (i == BANDS - 1) F_HI else sqrt(centers[i] * centers[i + 1]) }
-    private fun lowEdge(i: Int) = if (i == 0) F_LO / 1.2f else cutoffs[i - 1]
 
     private var appContext: Context? = null
     @Volatile private var session = 0

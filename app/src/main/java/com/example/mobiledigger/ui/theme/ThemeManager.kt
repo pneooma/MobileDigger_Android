@@ -32,20 +32,10 @@ class ThemeManager(context: Context) {
         prefs.edit().putBoolean(KEY_DARK_MODE, newValue).apply()
     }
     
-    fun setDarkMode(enabled: Boolean) {
-        _isDarkMode.value = enabled
-        prefs.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
-    }
-    
     fun toggleDynamicColor() {
         val newValue = !_useDynamicColor.value
         _useDynamicColor.value = newValue
         prefs.edit().putBoolean(KEY_DYNAMIC_COLOR, newValue).apply()
-    }
-    
-    fun setDynamicColor(enabled: Boolean) {
-        _useDynamicColor.value = enabled
-        prefs.edit().putBoolean(KEY_DYNAMIC_COLOR, enabled).apply()
     }
     
     fun setSelectedTheme(theme: ThemeColors) {
@@ -53,10 +43,6 @@ class ThemeManager(context: Context) {
         prefs.edit().putString(KEY_SELECTED_THEME, theme.name).apply()
     }
     
-    fun getSelectedTheme(): ThemeColors {
-        return _selectedTheme.value
-    }
-
     val availableThemes: List<ThemeColors> = AvailableThemes
 
     fun selectTheme(name: String) {

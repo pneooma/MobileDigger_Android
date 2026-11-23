@@ -1,23 +1,19 @@
 package com.example.mobiledigger.util
 
 import android.content.Context
-import android.content.ContentValues
-import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import androidx.documentfile.provider.DocumentFile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+/**
+ * App log: every line goes to logcat (debug builds, or always with an exception) and, in
+ * batches, to files/crashlogs/mobiledigger_crash_log.txt (capped at 2 MB).
+ */
 object CrashLogger {
-    private var destinationFolder: DocumentFile? = null
-    private var context: Context? = null
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
-    private val memoryLogs = ArrayDeque<String>() // ring buffer for UI/debug
+    // DateTimeFormatter is thread-safe (the old shared SimpleDateFormat was not)
+    private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+    private val memoryLogs = ArrayDeque<String>() // recent lines, used to trim the file
     private val pendingLines = ArrayDeque<String>() // to-be-written lines
     private val lock = Any()
     private const val MAX_IN_MEMORY_LINES = 500
@@ -25,61 +21,47 @@ object CrashLogger {
     private const val WRITE_INTERVAL_MS = 1000L
     private var lastWriteAtMs: Long = 0L
     private var internalLogFile: java.io.File? = null
-    private var publicDownloadsLogUri: Uri? = null
-    
-    fun setDestinationFolder(ctx: Context, uri: Uri?) {
-        context = ctx
-        destinationFolder = uri?.let { DocumentFile.fromTreeUri(ctx, it) }
-        
-        // Create internal crash logs directory
+
+    fun init(ctx: Context) {
         try {
             val crashLogsDir = java.io.File(ctx.filesDir, "crashlogs")
-            if (!crashLogsDir.exists()) {
-                crashLogsDir.mkdirs()
-            }
+            if (!crashLogsDir.exists()) crashLogsDir.mkdirs()
             internalLogFile = java.io.File(crashLogsDir, "mobiledigger_crash_log.txt")
         } catch (e: Exception) {
             android.util.Log.e("CrashLogger", "Failed to create internal log file", e)
         }
-        
-        // Move public downloads file creation to background to avoid blocking startup
-        Thread {
-            ensurePublicDownloadsFile(ctx)
-        }.start()
     }
-    
+
     fun log(tag: String, message: String, throwable: Throwable? = null) {
-        // Delegate to UnifiedLogger
-        UnifiedLogger.log(tag, message, throwable)
-        
-        // Keep existing in-memory logging for backward compatibility
-        val timestamp = dateFormat.format(Date())
-        val threadName = Thread.currentThread().name
-        val threadId = Thread.currentThread().id
-        
+        // Verbose logs only in debug builds; exceptions always log.
+        if (throwable != null || com.example.mobiledigger.BuildConfig.DEBUG) {
+            android.util.Log.d(tag, message, throwable)
+        }
+
+        val timestamp = LocalDateTime.now().format(dateFormat)
+        val thread = Thread.currentThread()
         val logEntry = if (throwable != null) {
             val stackTrace = StringWriter()
             throwable.printStackTrace(PrintWriter(stackTrace))
-            "[$timestamp] [Thread:$threadName-$threadId] [$tag] $message\nException: ${throwable.javaClass.simpleName}: ${throwable.message}\nStack trace:\n$stackTrace"
+            "[$timestamp] [Thread:${thread.name}-${thread.id}] [$tag] $message\nException: ${throwable.javaClass.simpleName}: ${throwable.message}\nStack trace:\n$stackTrace"
         } else {
-            "[$timestamp] [Thread:$threadName-$threadId] [$tag] $message"
+            "[$timestamp] [Thread:${thread.name}-${thread.id}] [$tag] $message"
         }
-        
+
         synchronized(lock) {
             memoryLogs.addLast(logEntry)
             if (memoryLogs.size > MAX_IN_MEMORY_LINES) memoryLogs.removeFirst()
             pendingLines.addLast(logEntry)
         }
-        
+
         // Write out periodically, immediately if throwable present
         try {
-            val force = throwable != null
-            writeOutIfDue(force)
+            writeOutIfDue(force = throwable != null)
         } catch (e: Exception) {
             android.util.Log.e("CrashLogger", "Failed to schedule log write", e)
         }
     }
-    
+
     private fun writeOutIfDue(force: Boolean) {
         val now = System.currentTimeMillis()
         if (!force && now - lastWriteAtMs < WRITE_INTERVAL_MS) return
@@ -90,9 +72,6 @@ object CrashLogger {
             // Throwable, not Exception: an OutOfMemoryError here previously killed the
             // whole app from a background logging thread.
             try { writeToInternalFile(batch) } catch (e: Throwable) { android.util.Log.e("CrashLogger", "Internal write failed", e) }
-            // Disabled external writes to avoid creating files in user storage
-            // try { writeToPublicDownloads(batch) } catch (e: Exception) { android.util.Log.e("CrashLogger", "Public write failed", e) }
-            // try { writeToDestinationFile(batch) } catch (e: Exception) { android.util.Log.e("CrashLogger", "Destination write failed", e) }
         }.start()
     }
 
@@ -105,24 +84,6 @@ object CrashLogger {
         }
     }
 
-    private fun writeToDestinationFile(batch: List<String>) { /* disabled */ }
-    
-    fun getAllLogs(): String {
-        synchronized(lock) { return memoryLogs.joinToString("\n") }
-    }
-    
-    private fun writeToInternalFileAsync() {
-        Thread {
-            try {
-                val batch = drainPending()
-                if (batch.isEmpty()) return@Thread
-                writeToInternalFile(batch)
-            } catch (e: Exception) {
-                android.util.Log.e("CrashLogger", "Internal write failed", e)
-            }
-        }.start()
-    }
-    
     private fun writeToInternalFile(batch: List<String>) {
         val logFile = internalLogFile ?: return
         try {
@@ -135,26 +96,6 @@ object CrashLogger {
             }
         } catch (e: Throwable) {
             android.util.Log.e("CrashLogger", "Failed to write to internal log file", e)
-        }
-    }
-    
-    fun getInternalLogPath(): String? {
-        return internalLogFile?.absolutePath
-    }
-
-    private fun ensurePublicDownloadsFile(ctx: Context) { /* disabled */ }
-
-    private fun writeToPublicDownloads(batch: List<String>) { /* disabled */ }
-    
-    fun clearLogs() {
-        synchronized(lock) {
-            memoryLogs.clear()
-            pendingLines.clear()
-        }
-        try {
-            internalLogFile?.delete()
-        } catch (e: Exception) {
-            android.util.Log.e("CrashLogger", "Failed to clear internal log", e)
         }
     }
 }

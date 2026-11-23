@@ -1,8 +1,6 @@
 package com.example.mobiledigger.util
 import com.example.mobiledigger.util.CrashLogger
 
-import android.os.Handler
-import android.os.Looper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

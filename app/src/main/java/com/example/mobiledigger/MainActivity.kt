@@ -28,9 +28,6 @@ import androidx.core.content.edit
 import com.example.mobiledigger.util.CrashLogger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
-import android.view.Surface
-import android.view.WindowManager
-import android.view.Display
 
 class MainActivity : ComponentActivity() {
     

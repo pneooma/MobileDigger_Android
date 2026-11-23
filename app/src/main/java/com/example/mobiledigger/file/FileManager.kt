@@ -6,7 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.example.mobiledigger.model.MusicFile
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.util.CrashLogger
-import com.example.mobiledigger.util.UnifiedLogger
 import com.example.mobiledigger.util.ResourceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,8 +63,6 @@ class FileManager(private val context: Context) {
     
     
     
-    fun getSelectedFolder(): DocumentFile? = selectedFolder
-    
     fun clearSelectedFolder() {
         selectedFolder = null
         selectedFolderPath = null
@@ -92,8 +89,6 @@ class FileManager(private val context: Context) {
                 CrashLogger.log("FileManager", "WARNING: No write permission to destination folder: $uri")
             } else {
                 CrashLogger.log("FileManager", "Destination folder set successfully: $uri")
-                // Set this as the results folder for unified logging
-                UnifiedLogger.setResultsFolder(uri)
             }
         }
     }
@@ -377,11 +372,20 @@ class FileManager(private val context: Context) {
                                 }
                             } catch (e: Exception) { 0L }
                             
+                            // Liked / Rejected are ordered newest-sorted first: the time it was
+                            // liked/rejected (sort history), else the file's modified date. (A sort is
+                            // a rename, which keeps the file's old date.)
+                            val lastModified = runCatching {
+                                cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED))
+                            }.getOrDefault(0L)
+                            val addedAt = (if (!isSource) com.example.mobiledigger.util.SortHistory.sortedAt(displayName, fileSize) else null)
+                                ?: lastModified
                             val basicMusicFile = MusicFile(
                                 uri = childUri,
                                 name = displayName,
                                 duration = 0L, // Will be extracted when played
                                 size = fileSize,
+                                dateAdded = addedAt,
                                 subfolder = subfolderPath
                             )
                             musicFiles.add(basicMusicFile)
@@ -739,37 +743,13 @@ class FileManager(private val context: Context) {
         }
     }
 
-    private fun ensureSubfolder(name: String, root: DocumentFile? = selectedFolder): DocumentFile? {
-        val rootFolder = root ?: return null
-        val direct = rootFolder.findFile(name)
-        if (direct != null && direct.isDirectory) return direct
-        // case-insensitive search
-        rootFolder.listFiles().firstOrNull { it.isDirectory && (it.name ?: "").equals(name, ignoreCase = true) }?.let { return it }
-        return rootFolder.createDirectory(name)
-    }
-
-    private fun createOrReplaceFile(parent: DocumentFile, mime: String, displayName: String): DocumentFile? {
-        // Find exact or case-insensitive match
-        val existing = parent.findFile(displayName)
-            ?: parent.listFiles().firstOrNull { it.isFile && (it.name ?: "").equals(displayName, ignoreCase = true) }
-        if (existing != null) {
-            try { existing.delete() } catch (_: Exception) {}
-        }
-        return parent.createFile(mime, displayName)
-    }
-
     // Direct move via DocumentsContract.moveDocument is not used here due to inconsistent
     // provider support; copy + delete achieves the same user-visible result reliably.
-    
-    fun getFolderPath(): String {
-        return selectedFolder?.uri?.path ?: "No folder selected"
-    }
     
     fun getDestinationPath(): String {
         return destinationFolder?.uri?.path ?: "Not set"
     }
 
-    fun isFolderSelected(): Boolean = selectedFolder != null
     fun isDestinationSelected(): Boolean = destinationFolder != null
 
     fun getFolderUriString(): String = selectedFolder?.uri?.toString() ?: ""
@@ -792,38 +772,77 @@ class FileManager(private val context: Context) {
                 com.example.mobiledigger.model.SortAction.SKIP -> return@withContext null
             }
             val sourceFolder = root.findFile(sourceFolderName) ?: return@withContext null
-            val movedName = result.musicFile.name
+            val original = result.musicFile
+            val movedName = original.name
             val sourceFile = sourceFolder.findFile(movedName) ?: return@withContext null
-            val destRoot = selectedFolder ?: return@withContext null
 
-            // Resolve name collision
-            val finalName = if (destRoot.findFile(movedName) == null) movedName else "$movedName (restored)"
-            val targetFile = destRoot.createFile(sourceFile.type ?: "audio/*", finalName) ?: return@withContext null
+            // Put the track back in the folder it came from (it may be several subfolders deep),
+            // not the top of the source folder.
+            val originalParent = originalParentUri(original.uri)
+            val parentUri = originalParent ?: selectedFolder?.uri ?: return@withContext null
+            val parentName = originalParent?.let { DocumentsContract.getDocumentId(it).substringAfterLast('/') }
+            CrashLogger.log("FileManager", "Undo: restoring $movedName to ${parentName ?: "source root"}")
 
-            contentResolver.openInputStream(sourceFile.uri)?.use { input ->
-                contentResolver.openOutputStream(targetFile.uri)?.use { output ->
-                    input.copyTo(output)
+            // Same storage: instant move, keeping the original name when it is free.
+            val nameFree = childExists(parentUri, movedName).not()
+            if (nameFree) {
+                val moved = try {
+                    DocumentsContract.moveDocument(contentResolver, sourceFile.uri, sourceFolder.uri, parentUri)
+                } catch (e: Exception) {
+                    CrashLogger.log("FileManager", "Undo fast move not possible, copying instead: ${e.message}")
+                    null
+                }
+                if (moved != null) {
+                    CrashLogger.log("FileManager", "Undo: moved (rename) $movedName back")
+                    // moveDocument hands back a URI under the Liked/Rejected tree, which can't
+                    // open a file outside it — rebuild it under the source folder's tree.
+                    val usable = DocumentsContract.buildDocumentUriUsingTree(parentUri, DocumentsContract.getDocumentId(moved))
+                    return@withContext original.copy(uri = usable)
                 }
             }
-            sourceFile.delete()
 
-            val fileSize = try {
-                context.contentResolver.openAssetFileDescriptor(targetFile.uri, "r")?.use { it.length } ?: 0L
-            } catch (e: Exception) { 0L }
-            
-            MusicFile(
-                uri = targetFile.uri,
-                name = targetFile.name ?: finalName,
-                duration = getDuration(targetFile.uri),
-                size = fileSize,
-                
-            )
+            // Fallback: copy + delete into the original folder.
+            val dot = movedName.lastIndexOf('.')
+            val finalName = if (nameFree) movedName
+                else if (dot > 0) movedName.substring(0, dot) + " (restored)" + movedName.substring(dot)
+                else "$movedName (restored)"
+            val targetUri = DocumentsContract.createDocument(contentResolver, parentUri, sourceFile.type ?: "audio/*", finalName)
+                ?: return@withContext null
+            contentResolver.openInputStream(sourceFile.uri)?.use { input ->
+                contentResolver.openOutputStream(targetUri)?.use { output -> input.copyTo(output) }
+            }
+            sourceFile.delete()
+            CrashLogger.log("FileManager", "Undo: copied $movedName back as $finalName")
+            original.copy(uri = targetUri, name = finalName)
         } catch (e: Exception) {
             CrashLogger.log("FileManager", "Error undoing sort", e)
             null
         }
     }
-    
+
+    /** Parent folder of a SAF tree document (same tree), or null if it can't be derived/doesn't exist. */
+    private fun originalParentUri(uri: Uri): Uri? = try {
+        if (!DocumentsContract.isTreeUri(uri) || !DocumentsContract.isDocumentUri(context, uri)) null
+        else {
+            val docId = DocumentsContract.getDocumentId(uri)
+            val slash = docId.lastIndexOf('/')
+            if (slash <= 0) null else {
+                val parent = DocumentsContract.buildDocumentUriUsingTree(uri, docId.substring(0, slash))
+                if (DocumentFile.fromSingleUri(context, parent)?.exists() == true) parent else null
+            }
+        }
+    } catch (_: Exception) { null }
+
+    /** Whether [parentDoc] (a tree document URI) already has a child named [name], ignoring case. */
+    private fun childExists(parentDoc: Uri, name: String): Boolean = try {
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(parentDoc, DocumentsContract.getDocumentId(parentDoc))
+        contentResolver.query(children, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)?.use { c ->
+            var found = false
+            while (c.moveToNext()) if (c.getString(0)?.equals(name, ignoreCase = true) == true) { found = true; break }
+            found
+        } ?: false
+    } catch (_: Exception) { false }
+
     private suspend fun getDuration(uri: Uri): Long {
         return try {
             val duration = ResourceManager.extractDurationWithFallback(context, uri)
@@ -884,46 +903,6 @@ class FileManager(private val context: Context) {
     }
 
     
-    // Create liked files text file in cache for sharing
-    suspend fun createLikedFilesTxt(): java.io.File? = withContext(Dispatchers.IO) {
-        try {
-            val destination = destinationFolder ?: return@withContext null
-            val likedFolder = destination.findFile("Liked") ?: destination.findFile("I DIG") ?: return@withContext null
-            
-            if (!likedFolder.isDirectory) return@withContext null
-            
-            val files = likedFolder.listFiles().filter { it.isFile }
-            if (files.isEmpty()) return@withContext null
-            
-            // Create text file in cache directory
-            val cacheDir = java.io.File(context.cacheDir, "shared_txt")
-            if (!cacheDir.exists()) cacheDir.mkdirs()
-            
-            val dateStr = java.text.SimpleDateFormat("dd-MM-yy", java.util.Locale.getDefault()).format(java.util.Date())
-            val txtFile = java.io.File(cacheDir, "Liked_Songs_${dateStr}.txt")
-            
-            java.io.FileOutputStream(txtFile).use { output ->
-                val writer = output.bufferedWriter()
-                writer.write("Liked Songs List - ${java.time.LocalDateTime.now()}\n")
-                writer.write("=".repeat(50) + "\n\n")
-                
-                files.forEachIndexed { index, file ->
-                    writer.write("${index + 1}. ${file.name}\n")
-                }
-                
-                writer.write("\nTotal: ${files.size} songs\n")
-                writer.write("Generated by MobileDigger\n")
-                writer.flush()
-            }
-            
-            CrashLogger.log("FileManager", "Created TXT file with ${files.size} liked files: ${txtFile.absolutePath}")
-            txtFile
-        } catch (e: Exception) {
-            CrashLogger.log("FileManager", "Error creating liked files TXT", e)
-            null
-        }
-    }
-
     suspend fun zipIDigFolder(context: Context): File? = withContext(Dispatchers.IO) {
         try {
             val destination = destinationFolder ?: return@withContext null
@@ -949,10 +928,6 @@ class FileManager(private val context: Context) {
             CrashLogger.log("FileManager", "zipIDigFolder failed", e)
             null
         }
-    }
-    
-    fun getLikedFolderUri(): Uri? {
-        return destinationFolder?.findFile("Liked")?.uri
     }
     
     fun getRejectedFolderUri(): Uri? {

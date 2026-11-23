@@ -10,7 +10,6 @@ import com.example.mobiledigger.file.drives.DriveClient
 import com.example.mobiledigger.file.drives.DriveClients
 import com.example.mobiledigger.file.drives.DriveStore
 import com.example.mobiledigger.file.drives.NetworkDrive
-import com.example.mobiledigger.file.drives.RemoteEntry
 import com.example.mobiledigger.util.CrashLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

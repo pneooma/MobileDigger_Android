@@ -312,18 +312,13 @@ class WaveformGenerator(private val context: Context) {
         var currentTimeUs = segmentStartUs
         
         // Profiling for this segment
-        var totalSeekTime = 0L
-        var totalDecodeTime = 0L
         
         while (samplesCollected < targetSamples && currentTimeUs < segmentEndUs) {
             try {
                 // Seek to position
-                val seekStart = System.nanoTime()
                 extractor.seekTo(currentTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
-                totalSeekTime += (System.nanoTime() - seekStart) / 1_000_000
                 
                 // Decode one frame
-                val decodeStart = System.nanoTime()
                 val inputBufferIndex = codec.dequeueInputBuffer(TIMEOUT_US)
                 if (inputBufferIndex >= 0) {
                     val inputBuffer = codec.getInputBuffer(inputBufferIndex)
@@ -352,7 +347,6 @@ class WaveformGenerator(private val context: Context) {
                         }
                     }
                 }
-                totalDecodeTime += (System.nanoTime() - decodeStart) / 1_000_000
                 
                 currentTimeUs += intervalUs
                 
@@ -367,25 +361,6 @@ class WaveformGenerator(private val context: Context) {
         } else {
             pcmSamples.toList()
         }
-    }
-    
-    /**
-     * Extract amplitude samples from a PCM buffer.
-     * Assumes 16-bit PCM audio (most common format).
-     */
-    private fun extractSamplesFromBuffer(buffer: ByteBuffer, bufferInfo: MediaCodec.BufferInfo): List<Float> {
-        val samples = mutableListOf<Float>()
-        
-        buffer.position(bufferInfo.offset)
-        buffer.limit(bufferInfo.offset + bufferInfo.size)
-        
-        // Read 16-bit PCM samples
-        while (buffer.remaining() >= 2) {
-            val sample = buffer.short.toFloat() / Short.MAX_VALUE // Normalize to -1.0 to 1.0
-            samples.add(abs(sample)) // Use absolute value for amplitude
-        }
-        
-        return samples
     }
     
     /**

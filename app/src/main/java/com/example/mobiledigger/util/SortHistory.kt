@@ -16,6 +16,9 @@ object SortHistory {
     private const val FILE = "sort_history.tsv"
     private var file: File? = null
     private val map = HashMap<String, Char>()          // key → 'L' or 'R' (last sort wins)
+    private val beforeLast = HashMap<String, Char?>()  // key → value before the last record (for Undo)
+    private val times = HashMap<String, Long>()         // key → when it was last sorted (epoch ms)
+    private val beforeLastTime = HashMap<String, Long?>()
     private val _version = MutableStateFlow(0)
     /** Bumps whenever a track is recorded, so flags can refresh. */
     val version: StateFlow<Int> = _version.asStateFlow()
@@ -40,17 +43,28 @@ object SortHistory {
         file = f
         var lines = 0
         runCatching {
+            // Lines: "key<TAB>L|R|-" (older) or "key<TAB>L|R|-<TAB>epochMs" ('-' = undone)
             if (f.exists()) f.forEachLine { line ->
                 lines++
-                val i = line.lastIndexOf('\t')
-                if (i > 0 && i == line.length - 2) map[line.substring(0, i)] = line[i + 1]
+                val parts = line.split('\t')
+                if (parts.size < 2 || parts[1].length != 1) return@forEachLine
+                val k = parts[0]
+                val v = parts[1][0]
+                if (v == '-') { map.remove(k); times.remove(k) }
+                else {
+                    map[k] = v
+                    val t = parts.getOrNull(2)?.toLongOrNull()
+                    if (t != null) times[k] = t else times.remove(k)
+                }
             }
         }
         // A track re-sorted (liked, later rejected) appends a newer line; when such stale lines
         // pile up, rewrite the file with one line per track.
         if (lines > map.size + 200) runCatching {
             val tmp = File(f.parentFile, "$FILE.tmp")
-            tmp.bufferedWriter().use { w -> map.forEach { (k, v) -> w.write("$k\t$v\n") } }
+            tmp.bufferedWriter().use { w ->
+                map.forEach { (k, v) -> w.write(times[k]?.let { "$k\t$v\t$it\n" } ?: "$k\t$v\n") }
+            }
             tmp.renameTo(f)
         }
         _version.value++
@@ -61,11 +75,35 @@ object SortHistory {
         if (file.size <= 0) return
         val k = key(file.name, file.size)
         val v = if (liked) 'L' else 'R'
-        if (map[k] == v) return
+        beforeLast[k] = map[k]
+        beforeLastTime[k] = times[k]
+        // The time is kept even when the verdict is unchanged: Liked / Rejected are ordered by it
+        val now = System.currentTimeMillis()
+        val changed = map[k] != v
         map[k] = v
-        runCatching { this.file?.appendText("$k\t$v\n") }
+        times[k] = now
+        runCatching { this.file?.appendText("$k\t$v\t$now\n") }
+        if (changed) _version.value++
+    }
+
+    /** Undo of a sort: put the track back to what it was before that sort (usually "never sorted"). */
+    @Synchronized
+    fun forget(file: MusicFile) {
+        if (file.size <= 0) return
+        val k = key(file.name, file.size)
+        val prev = if (beforeLast.containsKey(k)) beforeLast.remove(k) else null
+        val prevTime = beforeLastTime.remove(k)
+        if (prev == null) { map.remove(k); times.remove(k) } else {
+            map[k] = prev
+            if (prevTime != null) times[k] = prevTime else times.remove(k)
+        }
+        runCatching { this.file?.appendText("$k\t${prev ?: '-'}" + (if (prev != null && prevTime != null) "\t$prevTime" else "") + "\n") }
         _version.value++
     }
+
+    /** When this exact track (same name and size) was last liked/rejected, or null if unknown. */
+    @Synchronized
+    fun sortedAt(name: String, size: Long): Long? = if (size > 0) times[key(name, size)] else null
 
     /** 'L' / 'R' if this exact track (same name and size) was sorted before, else null. */
     @Synchronized
@@ -77,6 +115,7 @@ object SortHistory {
     @Synchronized
     fun clear() {
         map.clear()
+        times.clear()
         runCatching { file?.delete() }
         _version.value++
     }

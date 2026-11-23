@@ -4,12 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 
 /**
  * Waveforms the app already computed, keyed by track URI, so the notification can use them as
- * cover art for tracks without one (no second decode). Small, in-memory, same process.
+ * cover art (alone, or drawn over the track's own cover) without a second decode. Small, in-memory, same process.
  */
 object WaveformShare {
     private const val MAX = 6
@@ -32,14 +33,33 @@ object WaveformShare {
     /**
      * Square picture of the waveform laid exactly under the notification's seek bar, mirrored
      * around the seek line, so the moving dot shows where you are in the track.
-     * [samples] are 0..100.
+     * [samples] are 0..100. With a [cover], the cover is the background (cropped to a square
+     * and darkened, most of all around the seek line) and the waveform is drawn over it.
      */
-    fun render(samples: IntArray, size: Int = 1024): Bitmap {
+    fun render(samples: IntArray, size: Int = 1024, cover: Bitmap? = null): Bitmap {
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        c.drawPaint(Paint().apply {
-            shader = LinearGradient(0f, 0f, 0f, size.toFloat(), 0xFF111827.toInt(), 0xFF0B1020.toInt(), Shader.TileMode.CLAMP)
-        })
+        if (cover != null && cover.width > 0 && cover.height > 0) {
+            // Centre-crop the cover to a square and fill the picture with it
+            val side = minOf(cover.width, cover.height)
+            val src = Rect((cover.width - side) / 2, (cover.height - side) / 2, (cover.width + side) / 2, (cover.height + side) / 2)
+            c.drawBitmap(cover, src, RectF(0f, 0f, size.toFloat(), size.toFloat()), Paint(Paint.FILTER_BITMAP_FLAG))
+            // Darken: a little everywhere, a lot in the band around the seek line, so the bars
+            // (and the card's own text) stay readable on any cover.
+            val bandTop = size * (SEEK_Y - MAX_HALF * 2.2f)
+            val bandBot = size * (SEEK_Y + MAX_HALF * 2.2f)
+            c.drawPaint(Paint().apply { color = 0x59000000 })
+            c.drawRect(0f, 0f, size.toFloat(), size.toFloat(), Paint().apply {
+                shader = LinearGradient(0f, 0f, 0f, size.toFloat(),
+                    intArrayOf(0x00000000, 0x00000000, 0x99000000.toInt(), 0x99000000.toInt(), 0x00000000),
+                    floatArrayOf(0f, bandTop / size - 0.08f, bandTop / size, bandBot / size, (bandBot / size + 0.08f).coerceAtMost(1f)),
+                    Shader.TileMode.CLAMP)
+            })
+        } else {
+            c.drawPaint(Paint().apply {
+                shader = LinearGradient(0f, 0f, 0f, size.toFloat(), 0xFF111827.toInt(), 0xFF0B1020.toInt(), Shader.TileMode.CLAMP)
+            })
+        }
         if (samples.isEmpty()) return bmp
 
         val x0 = size * SEEK_START

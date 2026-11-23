@@ -138,7 +138,4 @@ class VisualSettingsManager(context: Context) {
         }.apply()
     }
 
-    fun resetToDefaults() {
-        updateSettings(VisualSettings())
-    }
 }

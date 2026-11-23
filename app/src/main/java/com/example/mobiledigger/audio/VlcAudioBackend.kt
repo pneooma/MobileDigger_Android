@@ -6,8 +6,6 @@ import com.example.mobiledigger.util.CrashLogger
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
-import org.videolan.libvlc.interfaces.IMedia
-import org.videolan.libvlc.interfaces.IVLCVout
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -283,29 +281,6 @@ class VlcAudioBackend(private val context: Context) {
         }
     }
     
-    fun prepareAsync() {
-        try {
-            if (!isInitialized.get()) {
-                CrashLogger.log("VlcAudioBackend", "❌ VLC not initialized for prepare")
-                return
-            }
-            
-            if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔄 Starting VLC prepare async...")
-            
-            // VLC doesn't have a separate prepare step - it prepares automatically
-            // We'll simulate the prepared callback after a short delay
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                isPrepared.set(true)
-                if (verboseLogs) CrashLogger.log("VlcAudioBackend", "✅ VLC prepared")
-                onPreparedListener?.invoke()
-            }, 100)
-            
-        } catch (e: Exception) {
-            CrashLogger.log("VlcAudioBackend", "💥 VLC prepare failed", e)
-            onErrorListener?.invoke("VLC prepare failed: ${e.message}")
-        }
-    }
-    
     fun start() {
         try {
             if (!isInitialized.get()) {
@@ -446,16 +421,6 @@ class VlcAudioBackend(private val context: Context) {
         } catch (_: Exception) {}
     }
 
-    fun getVolume(): Float {
-        return try {
-            val volume = mediaPlayer?.volume ?: 0
-            (volume / 100f).coerceIn(0f, 1f)
-        } catch (e: Exception) {
-            CrashLogger.log("VlcAudioBackend", "💥 VLC volume get failed", e)
-            0f
-        }
-    }
-    
     fun getCurrentPosition(): Long {
         return try {
             mediaPlayer?.time ?: 0L

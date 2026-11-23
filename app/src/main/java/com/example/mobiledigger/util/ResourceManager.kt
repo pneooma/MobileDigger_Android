@@ -7,9 +7,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
-import java.util.concurrent.TimeUnit
 
 /**
  * Utility class for proper resource management of MediaMetadataRetriever and MediaExtractor

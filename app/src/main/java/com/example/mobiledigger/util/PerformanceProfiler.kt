@@ -38,22 +38,6 @@ object PerformanceProfiler {
     }
     
     /**
-     * Create a timed scope that logs duration on completion
-     */
-    class TimedScope(private val operationName: String) : AutoCloseable {
-        private val startTime = SystemClock.elapsedRealtime()
-        
-        override fun close() {
-            val duration = SystemClock.elapsedRealtime() - startTime
-            if (duration > SLOW_OPERATION_THRESHOLD_MS) {
-                CrashLogger.log(TAG, "⚠️ SLOW: $operationName took ${duration}ms")
-            } else if (duration > 100) {
-                CrashLogger.log(TAG, "⏱️ $operationName: ${duration}ms")
-            }
-        }
-    }
-    
-    /**
      * Track operation count and aggregate timing
      */
     private val operationStats = mutableMapOf<String, OperationStats>()

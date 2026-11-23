@@ -1,11 +1,9 @@
 package com.example.mobiledigger.ui.components
 
 import androidx.compose.animation.core.*
-import com.example.mobiledigger.util.AnimationUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,14 +16,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 import com.example.mobiledigger.util.CrashLogger
 import com.example.mobiledigger.ui.theme.WaveformAnimationType
@@ -47,8 +42,6 @@ fun SharedWaveformDisplay(
     animationType: WaveformAnimationType = WaveformAnimationType.EXPAND,
     animationDurationMs: Int = 300
 ) {
-    val context = LocalContext.current
-    val refreshRate = remember { AnimationUtils.getDisplayRefreshRate(context) }
     
     // Local progress state for immediate feedback
     var localProgress by remember { mutableStateOf(progress) }
@@ -100,7 +93,6 @@ fun SharedWaveformDisplay(
             },
         contentAlignment = Alignment.Center
     ) {
-        val containerWidth = maxWidth
         
         // Content layer
         Box(modifier = Modifier.fillMaxSize())
@@ -139,14 +131,12 @@ fun SharedWaveformDisplay(
                 LaunchedEffect(sharedState.waveformData) {
                     hasAppeared = true
                     val data = sharedState.waveformData
-                    if (data != null) {
-                        val min = data.minOrNull() ?: 0
-                        val max = data.maxOrNull() ?: 0
-                        val avg = if (data.isNotEmpty()) data.average().toInt() else 0
-                        CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - Received waveform: ${data.size} samples")
-                        CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - Min: $min, Max: $max, Avg: $avg")
-                        CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - First 10: ${data.take(10).joinToString()}")
-                    }
+                    val min = data.minOrNull() ?: 0
+                    val max = data.maxOrNull() ?: 0
+                    val avg = if (data.isNotEmpty()) data.average().toInt() else 0
+                    CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - Received waveform: ${data.size} samples")
+                    CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - Min: $min, Max: $max, Avg: $avg")
+                    CrashLogger.log("WaveformGenerator", "📺 SharedWaveformDisplay - First 10: ${data.take(10).joinToString()}")
                 }
                 
                 // Resolve RANDOM to a concrete type per-waveform appearance

@@ -31,29 +31,22 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.painterResource
 import com.example.mobiledigger.R
 import com.example.mobiledigger.util.CrashLogger
-import com.example.mobiledigger.ui.components.SharedWaveformState
 import com.example.mobiledigger.ui.components.rememberSharedWaveformState
-import com.example.mobiledigger.ui.components.SharedWaveformDisplay
 import com.example.mobiledigger.ui.components.WaveformWithToggle
 import com.example.mobiledigger.ui.components.SettingsDialog
 import com.example.mobiledigger.ui.screens.SpectrogramPopupDialog
-import com.example.mobiledigger.util.rememberOptimizedAnimationSpecs
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -79,7 +72,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
@@ -87,7 +79,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.with
-import androidx.compose.animation.togetherWith
 
 
 import androidx.compose.ui.platform.LocalConfiguration
@@ -108,27 +99,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import com.example.mobiledigger.model.SortAction
 import com.example.mobiledigger.ui.theme.DislikeRed
-import com.example.mobiledigger.ui.theme.GreenAccent
-import com.example.mobiledigger.ui.theme.GroovyBlue
 import com.example.mobiledigger.ui.theme.LikeGreen
 import com.example.mobiledigger.ui.theme.NoButton
 import com.example.mobiledigger.ui.theme.YesButton
 import com.example.mobiledigger.ui.theme.AvailableThemes
-import com.example.mobiledigger.ui.theme.appFontFamilies
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import com.example.mobiledigger.viewmodel.PlaylistTab
 import com.example.mobiledigger.viewmodel.SortField
-import com.example.mobiledigger.viewmodel.SortOrder
 
 import kotlin.math.abs
 import kotlin.math.ceil
 import java.util.Locale
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
 
 private fun formatTime(milliseconds: Long): String {
@@ -295,12 +279,6 @@ fun MusicPlayerScreen(
         uri?.let { viewModel.selectFolder(it) }
     }
     
-    val destinationFolderLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree()
-    ) { uri ->
-        uri?.let { viewModel.selectDestinationFolder(it) }
-    }
-
 
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -310,32 +288,21 @@ fun MusicPlayerScreen(
     var archivesOpen by remember { mutableStateOf(uiPrefs.getBoolean("archives_open", false)) }
     val setArchivesOpen: (Boolean) -> Unit = { open -> archivesOpen = open; uiPrefs.edit().putBoolean("archives_open", open).apply() }
     var showThemeSelectionDialog by remember { mutableStateOf(false) }
-    var showVisualSettingsDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
-    var showRescanSourceDialog by remember { mutableStateOf(false) } // Added state for rescan source dialog
     var showSearchInput by remember { mutableStateOf(false) } // New state to control search input visibility
     val searchFocusRequester = remember { FocusRequester() }
     
     // Info message dropdown state
-    var showInfoMessage by remember { mutableStateOf(false) }
-    var infoMessageText by remember { mutableStateOf("") }
-    var infoMessageType by remember { mutableStateOf("info") } // "info", "success", "error"
     var showSubfolderDialog by remember { mutableStateOf(false) } // New state for subfolder selection
     
     // Job for managing notification display
     var notificationJob by remember { mutableStateOf<Job?>(null) }
     
-    // Helper function to show info messages with proper replacement
-    // Messages from the app ("Deleted X", "Couldn't …", hints) — shown as a snackbar.
-    // (They used to be stored but never drawn, so the user saw none of them.)
-    val snackbarHostState = remember { SnackbarHostState() }
     var topMessage by remember { mutableStateOf<String?>(null) }
     fun showInfoMessage(message: String, type: String = "info") {
         notificationJob?.cancel()
         notificationJob = scope.launch {
-            infoMessageText = message
-            infoMessageType = type
             // Shown as a slim banner at the TOP (like the Rejected-moving / deleting banners),
             // long enough to read: 2.5 s + 40 ms per character, max 6 s.
             topMessage = message
@@ -353,8 +320,6 @@ fun MusicPlayerScreen(
     var showSubfolderSelectionDialog by remember { mutableStateOf(false) } // State for subfolder selection dialog from playlist
     var viewModeForSubfolderDialog by remember { mutableStateOf(false) } // When true, dialog shows VIEW selector; when false, MOVE-only
     var multiMoveMode by remember { mutableStateOf(false) } // When true, the subfolder dialog moves the multi-selected files (bulk)
-    var showLikedSubfoldersViewDialog by remember { mutableStateOf(false) } // New: multi-select liked subfolders to view
-    var selectedLikedSubfolders by remember { mutableStateOf(setOf<String>()) }
 
     val zipInProgress by viewModel.zipInProgress.collectAsState()
     val zipProgress by viewModel.zipProgress.collectAsState()
@@ -387,7 +352,6 @@ fun MusicPlayerScreen(
     val customWaveformColor = remember(visualSettings.waveformColor) {
         if (visualSettings.waveformColor != 0) Color(visualSettings.waveformColor) else null
     }
-    val animationSpecs = rememberOptimizedAnimationSpecs()
     
 
     if (showShareDialog) {
@@ -896,8 +860,6 @@ fun MusicPlayerScreen(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
-    // val isCompactScreen = screenWidth < 600.dp || screenHeight < 800.dp // isCompactScreen is used, keeping
-    val playlistMaxHeight = screenHeight * 0.65f // Playlist takes 65% of screen
     // Adaptive button size for 2x2 grid in playlist rows
     val adaptiveButtonSize = (screenWidth.value / 14f).coerceIn(24f, 40f).dp
     val adaptiveIconSize = (adaptiveButtonSize.value * 0.56f).dp
@@ -954,7 +916,6 @@ fun MusicPlayerScreen(
         val workspaceOpen by viewModel.workspaceOpen.collectAsState()
         val hasSourceFolder = workspaceOpen || musicFiles.isNotEmpty() || archiveItems.isNotEmpty()
         val hasDestinationFolder = viewModel.destinationFolder.collectAsState().value != null // This can be false
-        val bothFoldersSelected = hasSourceFolder && hasDestinationFolder
 
         // Reject count
         val playedButNotActionedCount = remember(playedButNotActioned, currentPlayingFile) {
@@ -1003,9 +964,9 @@ fun MusicPlayerScreen(
                 colors = CardDefaults.cardColors(containerColor = bg)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) {
-                    Text(icon, style = MaterialTheme.typography.labelSmall)
+                    Text(icon, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.width(8.dp))
-                    Text(m, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                    Text(m, style = MaterialTheme.typography.bodyMedium,
                         maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 }
             }
@@ -1015,6 +976,23 @@ fun MusicPlayerScreen(
         // On the welcome page (no tabs yet) messages stay at the top
         if (!hasSourceFolder || isLoading) topMessageBanner()
 
+        openArchive?.let { a ->
+            val ro = a.driveId != null && savedDrives.any {
+                it.id == a.driveId && it.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && it.writeShare.isBlank()
+            }
+            ArchiveContentsDialog(
+                archive = a,
+                readOnly = ro,
+                loader = { viewModel.listArchive(a) },
+                onExtract = { include, deleteAfter -> viewModel.unpackArchive(a, include, deleteAfter); openArchive = null },
+                onDismiss = { openArchive = null }
+            )
+        }
+
+        // Progress banners (deleting rejected files, network copy, moving to Liked/Rejected,
+        // unpacking). Shown under the playlist buttons like the app messages; on the welcome
+        // page (no tabs yet) at the top.
+        val progressBanners: @Composable () -> Unit = {
         // Permanent-deletion progress bar (rejected playlist cleanup) + subtle done flash
         val isDeletingFiles by viewModel.isDeletingFiles.collectAsState()
         val deletionProgress by viewModel.deletionProgress.collectAsState()
@@ -1046,7 +1024,7 @@ fun MusicPlayerScreen(
                 ) {
                     if (isDeletingFiles) {
                         Text("🗑 Deleting rejected files… ${(deletionProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.width(10.dp))
                         val animProg by animateFloatAsState(deletionProgress, label = "delProg")
                         LinearProgressIndicator(
@@ -1057,24 +1035,10 @@ fun MusicPlayerScreen(
                         )
                     } else {
                         Text("✓ All rejected files deleted",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                            style = MaterialTheme.typography.bodyMedium, color = Color(0xFF2E7D32))
                     }
                 }
             }
-        }
-
-        openArchive?.let { a ->
-            val ro = a.driveId != null && savedDrives.any {
-                it.id == a.driveId && it.type == com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER && it.writeShare.isBlank()
-            }
-            ArchiveContentsDialog(
-                archive = a,
-                readOnly = ro,
-                loader = { viewModel.listArchive(a) },
-                onExtract = { include, deleteAfter -> viewModel.unpackArchive(a, include, deleteAfter); openArchive = null },
-                onDismiss = { openArchive = null }
-            )
         }
 
         // Network drive → phone copy/move progress (Pause / Continue / Abort)
@@ -1084,8 +1048,12 @@ fun MusicPlayerScreen(
 
         // "Reject listened": rows are gone at once, this shows the files being moved
         val rejectListened by viewModel.rejectListenedProgress.collectAsState()
+        // Keep the last real progress while the banner animates out (it used to fall back to a
+        // default and flash "Moving to Rejected… 0/1" at the end of a move to Liked)
+        var lastBulkProgress by remember { mutableStateOf(MusicViewModel.BulkSortProgress(0, 1, false)) }
+        rejectListened?.let { lastBulkProgress = it }
         AnimatedVisibility(visible = rejectListened != null, enter = expandVertically(), exit = shrinkVertically()) {
-            val prog = rejectListened ?: MusicViewModel.BulkSortProgress(0, 1, false)
+            val prog = lastBulkProgress
             val done = prog.done; val total = prog.total
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
@@ -1095,7 +1063,7 @@ fun MusicPlayerScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) {
                     Text(
                         (if (prog.toLiked) "❤️ Moving to Liked… " else "👎 Moving to Rejected… ") + "$done/$total",
-                        style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.width(10.dp))
                     val animRej by animateFloatAsState(done / total.coerceAtLeast(1).toFloat(), label = "rejListened")
@@ -1128,11 +1096,11 @@ fun MusicPlayerScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 "📦 Unpacking ${up.name}",
-                                style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("${(up.fraction * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text("${(up.fraction * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
                             Spacer(Modifier.width(4.dp))
                             TextButton(
                                 onClick = { viewModel.stopUnpacking() },
@@ -1141,7 +1109,7 @@ fun MusicPlayerScreen(
                             ) {
                                 Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.error)
                                 Spacer(Modifier.width(2.dp))
-                                Text("Stop", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                Text("Stop", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                             }
                         }
                         Spacer(Modifier.height(4.dp))
@@ -1155,19 +1123,21 @@ fun MusicPlayerScreen(
                         Spacer(Modifier.height(3.dp))
                         Text(
                             up.step + if (up.queued > 0) "  ·  ${up.queued} more queued" else "",
-                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1, overflow = TextOverflow.Ellipsis
                         )
                     }
                 } else {
                     Text(
-                        unpackDone ?: "", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                        unpackDone ?: "", style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF2E7D32), maxLines = 2, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
                     )
                 }
             }
         }
+        }
+        if (!hasSourceFolder || isLoading) progressBanners()
 
         // Rename dialogs state
         var showRenameActionDialog by remember { mutableStateOf(false) }
@@ -2234,10 +2204,6 @@ fun MusicPlayerScreen(
                                                 }
                                             }
                                         }
-                                        // Right side controls: Dislike / Undo / Like  |  Share / Spectrogram / Move
-                                        val isCompactMain by remember(screenWidth, screenHeight) {
-                                            mutableStateOf(screenWidth < 600.dp || screenHeight < 800.dp)
-                                        }
                                         if (true) {
                                             Row(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -2952,8 +2918,8 @@ fun MusicPlayerScreen(
                     // Render fixed sections
                     MainPlayerSection()
                     PlaylistTabsHeader()
-                    // App messages appear under the playlist buttons (were above the title bar)
-                    Box(Modifier.offset(y = (-40).dp)) { Column { topMessageBanner() } }
+                    // App messages and progress banners appear under the playlist buttons (were above the title bar)
+                    Box(Modifier.offset(y = (-40).dp)) { Column { topMessageBanner(); progressBanners() } }
                     // Search opens under the player and tabs (lifted by the same 40 dp as they are)
                     Box(Modifier.offset(y = (-40).dp)) { SearchSection() }
                     
@@ -5038,7 +5004,7 @@ fun MusicPlayerScreen(
                     LaunchedEffect(isScrolled, currentTrackIndex) {
                         if (isScrolled || currentTrackIndex > 0) isFirstOpen = false
                     }
-                    // First-time auto-scroll to reveal main player
+                    // First track playing on first open: keep the list at the top so its row is fully visible
                     LaunchedEffect(currentTrackIndex, isFirstOpen, currentPlayingFile?.uri) {
                         if (isFirstOpen && !initialAutoScrolled && isFileInCurrentPlaylist && currentTrackIndex == 0 && currentPlayingFile != null) {
                             try {
@@ -5048,8 +5014,12 @@ fun MusicPlayerScreen(
                                     delay(25)
                                     attempts++
                                 }
-                                // Smoothly scroll ~500px from top of first item to reveal main player area
-                                listState.animateScrollToItem(0, 500)
+                                // The first track's row sits right under its folder header at the top of the
+                                // list. (This used to scroll 500 px down to reveal a main player that lived
+                                // inside the list; that now hid the playing row under the header.)
+                                if (listState.firstVisibleItemIndex != 0 || listState.firstVisibleItemScrollOffset != 0) {
+                                    listState.animateScrollToItem(0)
+                                }
                             } catch (e: Exception) {
                                 CrashLogger.log("MusicPlayerScreen", "Auto-scroll failed: ${e.message}")
                             } finally {

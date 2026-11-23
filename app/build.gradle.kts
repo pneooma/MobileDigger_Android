@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-         versionCode = 13077
-         versionName = "13.077"
+         versionCode = 13086
+         versionName = "13.086"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,8 +39,6 @@ android {
         buildConfig = true
     }
     
-    // Dynamic delivery disabled for now
-    // dynamicFeatures += setOf(":ffmpeg")
     
     lint {
         disable.addAll(listOf(
@@ -75,12 +73,6 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.2")
     
-    // Audio processing - FFmpegMediaPlayer classes kept for the (optional) AIFF fallback.
-    // The -native artifact is intentionally NOT bundled: its .so files are not 16 KB
-    // page-aligned (Android 16 / Play Store requirement) and the project is dead.
-    // Without it FFmpegMediaPlayer construction fails gracefully and VLC handles AIFF.
-    implementation("com.github.wseemann:FFmpegMediaPlayer-core:1.0.5")
-
     // libVLC for robust audio playback (including AIFF). 3.7.7 ships 16 KB-aligned libs.
     implementation("org.videolan.android:libvlc-all:3.7.7")
 

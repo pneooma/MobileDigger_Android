@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.os.Build
 import com.example.mobiledigger.audio.MusicService
 import com.example.mobiledigger.util.CrashLogger
-import com.example.mobiledigger.util.UnifiedLogger
 import com.example.mobiledigger.util.MemoryMonitor
 import com.example.mobiledigger.util.LowMemoryHandler
 import kotlinx.coroutines.CoroutineScope
@@ -27,10 +26,8 @@ class MobileDiggerApplication : Application() {
         com.example.mobiledigger.file.transfer.TransferManager.init(this)
         
         createNotificationChannels()
-        // Initialize unified logging system
-        UnifiedLogger.initialize(this)
-        // Initialize crash logging immediately with no destination yet (internal + Downloads)
-        CrashLogger.setDestinationFolder(this, null)
+        // App log (logcat + files/crashlogs)
+        CrashLogger.init(this)
         CrashLogger.log("App", "Application started")
         
         // PHASE 1: Start memory monitoring

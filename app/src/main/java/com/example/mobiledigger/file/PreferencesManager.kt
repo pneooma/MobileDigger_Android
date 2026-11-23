@@ -8,23 +8,12 @@ class PreferencesManager(context: Context) {
         context.getSharedPreferences("mobiledigger_prefs", Context.MODE_PRIVATE)
 
     companion object {
-        private const val KEY_AUTO_CREATE_SUBFOLDERS = "auto_create_subfolders" // tri-state stored as string: "true"/"false"/absent
         private const val KEY_SOURCE_ROOT_URI = "source_root_uri"
         private const val KEY_DEST_ROOT_URI = "dest_root_uri"
         private const val KEY_STATS_LISTENED_TODAY = "stats_listened_today"
         private const val KEY_STATS_LIKED_TODAY = "stats_liked_today"
         private const val KEY_STATS_REFUSED_TODAY = "stats_refused_today"
         private const val KEY_STATS_DATE = "stats_date"
-    }
-
-    fun getAutoCreateSubfolders(): Boolean? {
-        return if (prefs.contains(KEY_AUTO_CREATE_SUBFOLDERS)) {
-            prefs.getBoolean(KEY_AUTO_CREATE_SUBFOLDERS, false)
-        } else null
-    }
-
-    fun setAutoCreateSubfolders(value: Boolean) {
-        prefs.edit().putBoolean(KEY_AUTO_CREATE_SUBFOLDERS, value).apply()
     }
 
     /** What a load includes: "PHONE", "NETWORK" or "BOTH" (default, the old behaviour). */

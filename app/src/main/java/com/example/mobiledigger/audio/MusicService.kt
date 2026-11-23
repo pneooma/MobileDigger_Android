@@ -76,8 +76,6 @@ class MusicService : MediaBrowserServiceCompat() {
         const val ACTION_PREVIOUS = "com.example.mobiledigger.PREVIOUS"
         const val ACTION_LIKE = "com.example.mobiledigger.LIKE"
         const val ACTION_DISLIKE = "com.example.mobiledigger.DISLIKE"
-        const val ACTION_SPECTROGRAM = "com.example.mobiledigger.SPECTROGRAM"
-        const val ACTION_SHARE = "com.example.mobiledigger.SHARE"
         const val ACTION_STOP = "com.example.mobiledigger.STOP"
         const val ACTION_UPDATE_NOTIFICATION = "com.example.mobiledigger.UPDATE_NOTIFICATION"
         /** Updates only the seek position (no re-post, so no flicker). */
@@ -426,11 +424,11 @@ class MusicService : MediaBrowserServiceCompat() {
                     if (target.scheme == "http" || target.scheme == "https") r.setDataSource(target.toString(), HashMap())
                     else r.setDataSource(this, target)
                     r.embeddedPicture?.takeIf { it.isNotEmpty() }?.let { bytes ->
-                        // Downscale big covers; the notification only needs ~256 px
+                        // Downscale big covers; ~512 px is plenty under the waveform overlay
                         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
                         var sample = 1
-                        while (opts.outWidth / (sample * 2) >= 256 && opts.outHeight / (sample * 2) >= 256) sample *= 2
+                        while (opts.outWidth / (sample * 2) >= 512 && opts.outHeight / (sample * 2) >= 512) sample *= 2
                         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
                     }
                 } finally { runCatching { r.release() } }
@@ -438,16 +436,18 @@ class MusicService : MediaBrowserServiceCompat() {
                 CrashLogger.log("MusicService", "No cover art: ${e.message}")
                 null
             }
-            // No embedded cover → the track's waveform. Reuse the app's (it computes one for
-            // the playing row); if it hasn't appeared after a few seconds, compute our own.
-            val art = bmp ?: waveformArt(target, name)
-            main.post {
-                if (artUri == target && art != null) {
-                    this.art = art
+            fun show(picture: Bitmap?) = main.post {
+                if (artUri == target && picture != null) {
+                    this.art = picture
                     publishMetadata()
                     postNotification()
                 }
             }
+            // A cover shows at once; then the waveform is laid over it under the seek line.
+            // No cover → the waveform alone. Reuses the app's waveform (it computes one for
+            // the playing row); if it hasn't appeared after a few seconds, computes its own.
+            if (bmp != null) show(bmp)
+            waveformArt(target, name, bmp)?.let { show(it) }
         }
     }
 
@@ -532,7 +532,7 @@ class MusicService : MediaBrowserServiceCompat() {
     }
 
     /** Runs on [artLoader]. Null if the track changed meanwhile or nothing could be decoded. */
-    private fun waveformArt(target: Uri, name: String): Bitmap? {
+    private fun waveformArt(target: Uri, name: String, cover: Bitmap? = null): Bitmap? {
         val key = target.toString()
         var samples: IntArray? = null
         val until = SystemClock.elapsedRealtime() + 5_000
@@ -549,6 +549,6 @@ class MusicService : MediaBrowserServiceCompat() {
             }
             samples?.let { WaveformShare.put(key, it) }
         }
-        return samples?.let { runCatching { WaveformShare.render(it) }.getOrNull() }
+        return samples?.let { runCatching { WaveformShare.render(it, cover = cover) }.getOrNull() }
     }
 }

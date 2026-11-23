@@ -16,11 +16,6 @@ import com.example.mobiledigger.util.CrashLogger
 private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 private fun Float.format(digits: Int) = "%.${digits}f".format(this)
 
-// DISABLED: Waveform caching completely disabled to prevent memory issues and crashes
-// Waveforms will be regenerated each time a file is played
-// This uses more CPU but prevents memory-related crashes
-private val waveformCache = emptyMap<String, IntArray>() // No caching
-
 // Shared preference key for waveform generation toggle
 private const val PREF_WAVEFORM_ENABLED = "waveform_generation_enabled"
 

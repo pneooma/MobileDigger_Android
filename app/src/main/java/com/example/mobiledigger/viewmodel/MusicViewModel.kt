@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.net.Uri
@@ -149,7 +148,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private val fileOperationChannel = Channel<FileOperation>(capacity = 100) // Max 100 pending operations
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val fileOperationDispatcher = Dispatchers.IO.limitedParallelism(1) // Single-threaded queue
-    private var fileOperationWorker: Job? = null
     
     // Broadcast receiver for notification actions
     private val notificationReceiver = object : BroadcastReceiver() {
@@ -198,14 +196,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
      */
     private val _workspaceOpen = MutableStateFlow(false)
     val workspaceOpen: StateFlow<Boolean> = _workspaceOpen.asStateFlow()
-
-    /** Welcome page → "Open Liked & Rejected": go to the main screen without a source. */
-    fun openSortedPlaylists() {
-        _workspaceOpen.value = true
-        loadLikedFiles()
-        loadRejectedFiles()
-        if (_musicFiles.value.isEmpty()) switchPlaylistTab(PlaylistTab.LIKED)
-    }
 
     private val _musicFiles = MutableStateFlow<List<MusicFile>>(emptyList())
     val musicFiles: StateFlow<List<MusicFile>> = _musicFiles.asStateFlow()
@@ -350,7 +340,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     val sortResults: StateFlow<List<SortResult>> = _sortResults.asStateFlow()
 
     private val _destinationPath = MutableStateFlow("")
-    val destinationPath: StateFlow<String> = _destinationPath.asStateFlow()
     
     private val _destinationFolder = MutableStateFlow<androidx.documentfile.provider.DocumentFile?>(null)
     val destinationFolder: StateFlow<androidx.documentfile.provider.DocumentFile?> = _destinationFolder.asStateFlow()
@@ -533,8 +522,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         // Plain-language notes from network-drive actions (e.g. a delete the drive refused)
         fileManager.onDriveNotice = { msg -> _errorMessage.value = msg }
         try {
-            // Initialize crash logger
-            CrashLogger.setDestinationFolder(application, null) // Will be set when destination is selected
             CrashLogger.log("MusicViewModel", "=== APP STARTED ===")
             
             // Reset session counters on app start
@@ -598,8 +585,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     if (destinationFolder != null && destinationFolder.exists() && destinationFolder.canWrite()) {
                         _destinationPath.value = fileManager.getDestinationPath()
                         _destinationFolder.value = destinationFolder
-                        // Set crash logger destination
-                        CrashLogger.setDestinationFolder(application, uri)
                         CrashLogger.log("MusicViewModel", "Restored destination folder: ${fileManager.getDestinationPath()}")
                         android.util.Log.d("MusicViewModel", "Restored destination folder: ${fileManager.getDestinationPath()}")
                         
@@ -645,7 +630,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
      * This prevents blocking the UI and audio playback during file operations
      */
     private fun startFileOperationWorker() {
-        fileOperationWorker = viewModelScope.launch(fileOperationDispatcher) {
+        viewModelScope.launch(fileOperationDispatcher) {
             CrashLogger.log("FileOperationWorker", "Worker started, waiting for operations...")
             for (operation in fileOperationChannel) {
                 try {
@@ -868,8 +853,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 preferences.setDestinationRootUri(uri.toString())
                 addRecentDestination(uri)
                 CrashLogger.log("MusicViewModel", "Saved destination folder URI: $uri")
-                // Set crash logger destination
-                CrashLogger.setDestinationFolder(getApplication(), uri)
                 CrashLogger.log("MusicViewModel", "Set destination folder: ${fileManager.getDestinationPath()}")
                 
                 // Reload playlists when destination is selected
@@ -1159,61 +1142,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
-    fun togglePlayPause() {
-        if (_isPlaying.value) {
-            audioManager.pause()
-            _isPlaying.value = false
-            pausedByAudioFocusLoss = false
-            systemAudioManager.abandonAudioFocusRequest(audioFocusRequest)
-        } else {
-            val result = systemAudioManager.requestAudioFocus(audioFocusRequest)
-            if (result == android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                audioManager.resume()
-                _isPlaying.value = true
-                pausedByAudioFocusLoss = false
-            }
-        }
-        updateNotification()
-    }
-    
-    fun likeFile(file: MusicFile) {
-        // Remove from played-but-not-actioned when liked
-        _playedButNotActioned.value = _playedButNotActioned.value - file.uri
-        
-        val updatedLikedFiles = _likedFiles.value.toMutableList()
-        if (!updatedLikedFiles.any { it.uri == file.uri }) {
-            updatedLikedFiles.add(file.copy(
-                sourcePlaylist = PlaylistTab.LIKED,
-                dateAdded = System.currentTimeMillis()
-            ))
-            // Sort by dateAdded descending (newest first)
-            updatedLikedFiles.sortByDescending { it.dateAdded }
-            _likedFiles.value = updatedLikedFiles
-            // Save to preferences
-            val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
-            prefs.edit().putStringSet("liked_files", updatedLikedFiles.map { it.uri.toString() }.toSet()).apply()
-        }
-    }
-    
-    fun dislikeFile(file: MusicFile) {
-        // Remove from played-but-not-actioned when disliked
-        _playedButNotActioned.value = _playedButNotActioned.value - file.uri
-        
-        val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
-        if (!updatedRejectedFiles.any { it.uri == file.uri }) {
-            updatedRejectedFiles.add(file.copy(
-                sourcePlaylist = PlaylistTab.REJECTED,
-                dateAdded = System.currentTimeMillis()
-            ))
-            // Sort by dateAdded descending (newest first)
-            updatedRejectedFiles.sortByDescending { it.dateAdded }
-            _rejectedFiles.value = updatedRejectedFiles
-            // Save to preferences
-            val prefs = context.getSharedPreferences("music_prefs", android.content.Context.MODE_PRIVATE)
-            prefs.edit().putStringSet("rejected_files", updatedRejectedFiles.map { it.uri.toString() }.toSet()).apply()
-        }
-    }
-
     fun jumpTo(index: Int) {
         // `index` is a position in the displayed (filtered + sorted) list. Resolve the
         // target file there, then translate to the raw-list index that _currentIndex and
@@ -1293,23 +1221,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 handleError("sortCurrentFile", e)
             }
         }
-    }
-
-    private fun sortFileAtIndex(index: Int, action: SortAction) {
-        // This function will still be used for multi-selection where a specific index in the current view is sorted.
-        // It should get the MusicFile from the current view's list.
-        val files = when (_currentPlaylistTab.value) {
-            PlaylistTab.TODO -> _musicFiles.value
-            PlaylistTab.LIKED -> _likedFiles.value
-            PlaylistTab.REJECTED -> _rejectedFiles.value
-        }
-        if (index !in files.indices) {
-            CrashLogger.log("MusicViewModel", "Invalid index for sorting: $index")
-            _errorMessage.value = "Invalid file selected for sorting."
-            return
-        }
-        val fileToSort = files[index]
-        sortMusicFile(fileToSort, action) // Delegate to the new function
     }
 
     fun sortMusicFile(file: MusicFile, action: SortAction) {
@@ -1591,6 +1502,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             try {
                 val restored = fileManager.undoSort(last)
                 if (restored != null) {
+                    com.example.mobiledigger.util.SortHistory.forget(last.musicFile)
                     _musicFiles.value = _musicFiles.value.toMutableList().apply { add(_currentIndex.value, restored) }
                     _sortResults.value = _sortResults.value.dropLast(1)
                     
@@ -1692,7 +1604,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             _errorMessage.value = "Cannot start playback. Unsupported file or permission denied."
                             CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed for ${currentFile.name}")
                         }
-                        CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback failed - FFmpegMediaPlayer error listener will handle auto-skip")
                     } else {
                         _errorMessage.value = null
                         CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - playback started successfully for ${currentFile.name}")
@@ -2513,46 +2424,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
-    // Share liked files as text file via WhatsApp
-    fun shareLikedFilesTxt() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val txtFile = fileManager.createLikedFilesTxt()
-                if (txtFile == null) {
-                    withContext(Dispatchers.Main) { _errorMessage.value = "No liked files to share" }
-                    return@launch
-                }
-                
-                val uri = androidx.core.content.FileProvider.getUriForFile(
-                    getApplication(),
-                    "${getApplication<Application>().packageName}.fileprovider",
-                    txtFile
-                )
-                
-                withContext(Dispatchers.Main) {
-                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                        putExtra(android.content.Intent.EXTRA_SUBJECT, txtFile.name)
-                        putExtra(android.content.Intent.EXTRA_TEXT, "Liked Songs List from MobileDigger")
-                        setPackage("com.whatsapp")
-                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    try { 
-                        getApplication<Application>().startActivity(send) 
-                    } catch (_: Exception) {
-                        val chooser = android.content.Intent.createChooser(send, "Share Liked Songs TXT")
-                        chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        getApplication<Application>().startActivity(chooser)
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) { _errorMessage.value = "Share failed: ${e.message}" }
-            }
-        }
-    }
-    
     // Check if user wants to delete rejected files after sorting is complete
 
     
@@ -3110,27 +2981,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     // Mutex for file operations to prevent race conditions
     private val fileOperationMutex = Mutex()
     
-    // Memory monitoring for crash detection
-    private fun logMemoryStatus(context: String) {
-        val runtime = Runtime.getRuntime()
-        val maxMemory = runtime.maxMemory()
-        val totalMemory = runtime.totalMemory()
-        val freeMemory = runtime.freeMemory()
-        val usedMemory = totalMemory - freeMemory
-        val availableMemory = maxMemory - usedMemory
-        
-        val maxMB = maxMemory / (1024 * 1024)
-        val usedMB = usedMemory / (1024 * 1024)
-        val availableMB = availableMemory / (1024 * 1024)
-        
-        CrashLogger.log("MusicViewModel", "🧠 Memory [$context]: Used=${usedMB}MB, Available=${availableMB}MB, Max=${maxMB}MB")
-        
-        // Warn if memory is getting low
-        if (availableMB < 50) {
-            CrashLogger.log("MusicViewModel", "⚠️ LOW MEMORY WARNING [$context]: Only ${availableMB}MB available!")
-        }
-    }
-    
     fun sortSelectedFiles(action: SortAction) {
         val selected = _selectedIndices.value
         CrashLogger.log("MusicViewModel", "🔍 sortSelectedFiles called with action=$action, selectedCount=${selected.size}")
@@ -3559,23 +3409,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     private var searchJob: Job? = null
     private var debounceJob: Job? = null
     
-    fun searchMusic(query: String) {
-        try {
-            // Debounced search (2s), no limits
-            if (query.isBlank()) {
-                _searchResults.value = emptyList()
-                return
-            }
-            debounceJob?.cancel()
-            debounceJob = viewModelScope.launch {
-                delay(2000)
-                performSearchNow(query)
-            }
-        } catch (e: Exception) {
-            CrashLogger.log("MusicViewModel", "Error starting search", e)
-        }
-    }
-
     // Immediate search with no limits, used by UI button/IME action
     fun searchMusicImmediate(query: String) {
         try {
@@ -4105,16 +3938,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         return null
     }
     
-    fun setCurrentFileWithoutPlaying(file: MusicFile) {
-        // Set the current file without starting playback
-        _currentPlayingFile.value = file
-        // Don't call loadCurrentFile() or start playback
-    }
-    
-    fun loadFilesFromLikedSubfolder(subfolderName: String) {
-        loadFilesFromLikedSubfolders(listOf(subfolderName))
-    }
-
     fun loadFilesFromLikedSubfolders(subfolderNames: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -4155,11 +3978,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 CrashLogger.log("MusicViewModel", "Error loading files from liked subfolders", e)
             }
         }
-    }
-    
-    fun setLikedFilter(subfolderNames: List<String>) {
-        _likedFilter.value = subfolderNames
-        loadFilesFromLikedSubfolders(subfolderNames)
     }
     
     fun clearLikedFilterAndReload() {

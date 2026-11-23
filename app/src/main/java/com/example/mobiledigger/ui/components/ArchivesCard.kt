@@ -110,22 +110,6 @@ fun ArchiveRow(
     }
 }
 
-/** Slim progress strip shown at the top of the list while an archive is being unpacked. */
-@Composable
-fun UnpackProgressStrip(status: String) {
-    Column(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Amber.copy(alpha = 0.10f))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(3.dp)), color = Amber)
-        Spacer(Modifier.height(5.dp))
-        Text("Unpacking $status", fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
 /**
  * Popup listing everything inside an archive. The user picks what to extract (everything is
  * ticked to start with) and whether the archive is deleted afterwards.

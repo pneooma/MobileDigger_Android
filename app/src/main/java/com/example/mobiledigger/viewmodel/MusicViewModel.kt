@@ -1345,8 +1345,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         
         // Reload playlists after sorting immediately to ensure UI consistency
         refreshAllPlaylists()
-        
-        _errorMessage.value = if (action == SortAction.LIKE) "Moved to 'Liked'" else "Moved to 'Rejected'"
+        // No "Moved to 'Liked' / 'Rejected'" message for a single track: the row disappearing is
+        // feedback enough. Moves of several tracks show the progress banner; failures still report.
     }
 
     fun sortAtIndex(index: Int, action: SortAction) {
@@ -2430,12 +2430,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
 
     /**
-     * Shares the current track to WhatsApp as a plain document — the ORIGINAL file, no zip.
-     * The file is copied (keeping its exact name) into cache/shared_music and exposed via
-     * GenericShareProvider, which reports application/octet-stream so WhatsApp sends it as
-     * a document instead of treating it as audio media.
+     * Shares the current track — the ORIGINAL file, no zip — to any app the user picks (system
+     * share sheet). The file is copied (keeping its exact name) into cache/shared_music and
+     * exposed via GenericShareProvider, which reports application/octet-stream so WhatsApp and
+     * similar apps send it as a document instead of re-encoding it as audio media.
      */
-    fun shareToWhatsApp() {
+    fun shareCurrentTrack() {
         val currentFile = _currentPlayingFile.value
         if (currentFile == null) {
             _errorMessage.value = "No song selected to share"
@@ -2480,20 +2480,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         type = com.example.mobiledigger.file.GenericShareProvider.GENERIC_MIME
                         putExtra(Intent.EXTRA_STREAM, uri)
                         putExtra(Intent.EXTRA_TITLE, originalName)
-                        setPackage("com.whatsapp")
+                        // ClipData lets the read permission reach whichever app is picked
+                        clipData = android.content.ClipData.newRawUri(originalName, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    val chooser = Intent.createChooser(shareIntent, "Share $originalName").apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-                    try {
-                        context.startActivity(shareIntent)
-                        CrashLogger.log("MusicViewModel", "WhatsApp document share intent started")
-                    } catch (e: Exception) {
-                        CrashLogger.log("MusicViewModel", "WhatsApp not found, using chooser", e)
-                        shareIntent.setPackage(null)
-                        val chooser = Intent.createChooser(shareIntent, "Share audio")
-                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(chooser)
-                    }
+                    context.startActivity(chooser)
+                    CrashLogger.log("MusicViewModel", "Share sheet opened for $originalName")
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

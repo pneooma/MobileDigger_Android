@@ -2289,3 +2289,24 @@ v13.086
 - Liked and Rejected are ordered by when each track was liked/rejected, newest first. The sort history now stores the time of every Like/Reject; tracks sorted before this version use the file's modified date. (The list was "sorted by date added", but that date was never filled in — it was the moment the list was loaded — and since v13.066 a sort is a rename that keeps the file's old date.)
 - One-off on the test phone: sort times of today's 134 sorts were filled in from the app log (backup: files/sort_history.backup-13085.tsv).
 - Checked: no Liked files lost — every move into Liked in today's log is accounted for, the count stayed at 168, and the folder has no truncated, temp or "(restored)" files.
+
+v13.087
+- Fix: a short click when seeking (tapping the waveform) during playback. A seek dropped the buffered audio and jumped mid-waveform. Now the sound fades out (~36 ms), the seek happens once the silence has reached the speaker, and it fades back in (~72 ms). Quick repeated taps only seek to the last position; a track change cancels a fade in progress.
+
+v13.088
+- No more "Moved to 'Liked'" / "Moved to 'Rejected'" message when a single track is liked or rejected (the row disappearing is enough). The progress banner ("❤️ Moving to Liked… 3/12") now shows only when several tracks are moved at once; failures are still reported.
+
+v13.089
+- New "Hide Actions / Show Actions" header button (next to Show/Hide Playlists) hides the toolbar of action buttons (Home, Settings, EQ, Search, Rescan, Sort, Undo, Rename, Select, SpEk) for more list space. The choice is remembered.
+- Playing row: new SpEk button spanning both control columns, under the time and Share button; opens the spectrogram of the playing track.
+- Share now opens the Android share sheet, so the original file can be sent to any app (Quick Share, Telegram, Signal, Drive…), not only WhatsApp. WhatsApp still receives it as a document.
+
+v13.090
+- Playing row spectrogram button reads "SPEK" (capitals).
+
+v13.091
+- More space (12 dp) above app messages and progress banners, so they no longer sit right under the header buttons when the playlist tabs and action buttons are hidden.
+
+v13.092
+- "Reject N" (reject listened) header button is 30% wider.
+- Show / Hide Playlists now slides the playlist tabs open and closed (with fade), like the main player, instead of popping in.

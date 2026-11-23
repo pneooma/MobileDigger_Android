@@ -311,6 +311,7 @@ class VlcAudioBackend(private val context: Context) {
     fun stop() {
         try {
             if (verboseLogs) CrashLogger.log("VlcAudioBackend", "⏹️ Stopping VLC playback...")
+            cancelSeekFade()
             mediaPlayer?.stop()
             isPlaying.set(false)
             isPrepared.set(false)
@@ -322,6 +323,7 @@ class VlcAudioBackend(private val context: Context) {
     fun reset() {
         try {
             if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔄 Resetting VLC player...")
+            cancelSeekFade()
             mediaPlayer?.stop()
             mediaPlayer?.media = null
             closeOpenFd()
@@ -375,10 +377,16 @@ class VlcAudioBackend(private val context: Context) {
     }
     
     // Audio control
+    // Volume the caller asked for (0..100); seek fades return to it.
+    @Volatile private var baseVolume = 100
+    // Bumped on every seek, so a newer seek cancels the steps of an older fade.
+    private var seekFadeGen = 0
+
     fun setVolume(volume: Float) {
         try {
             val clampedVolume = volume.coerceIn(0f, 1f)
-            mediaPlayer?.volume = (clampedVolume * 100).toInt()
+            baseVolume = (clampedVolume * 100).toInt()
+            mediaPlayer?.volume = baseVolume
             if (verboseLogs) CrashLogger.log("VlcAudioBackend", "🔊 VLC volume set to: ${(clampedVolume * 100).toInt()}%")
         } catch (e: Exception) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC volume set failed", e)
@@ -394,8 +402,9 @@ class VlcAudioBackend(private val context: Context) {
             val mp = mediaPlayer ?: return
             lastSeekTarget = positionMs
             if (mp.isSeekable && settled) {
-                mp.time = positionMs
                 pendingSeekMs = -1L
+                if (mp.isPlaying && baseVolume > 0) fadedSeek(positionMs)
+                else mp.time = positionMs
                 if (verboseLogs) CrashLogger.log("VlcAudioBackend", "↔️ Seeking to ${positionMs}ms")
             } else {
                 // Track still opening — defer; applied on the first time tick (or after 500 ms).
@@ -406,6 +415,39 @@ class VlcAudioBackend(private val context: Context) {
             CrashLogger.log("VlcAudioBackend", "💥 VLC seek failed", e)
             onErrorListener?.invoke("VLC seek failed: ${e.message}")
         }
+    }
+
+    /**
+     * Seek without a click. A plain seek drops the buffered audio and jumps mid-waveform, which
+     * is heard as a short tick. Fade out (~30 ms), wait for the faded audio to reach the speaker,
+     * seek, then fade back in (~80 ms) once the new position is playing. Runs on the main thread;
+     * a newer seek cancels an older one's remaining steps (only the last position is used).
+     */
+    private fun fadedSeek(positionMs: Long) {
+        val gen = ++seekFadeGen
+        val mp = mediaPlayer ?: return
+        val target = baseVolume
+        val outSteps = 3; val inSteps = 6; val stepMs = 12L
+        val startVol = mp.volume.coerceIn(0, target)
+        for (i in 1..outSteps) mainHandler.postDelayed({
+            if (gen == seekFadeGen) runCatching { mediaPlayer?.volume = startVol * (outSteps - i) / outSteps }
+        }, i * stepMs)
+        // AudioTrack latency: let the silent samples get played before the seek flushes them
+        val seekAt = outSteps * stepMs + 60L
+        mainHandler.postDelayed({
+            if (gen == seekFadeGen) runCatching { mediaPlayer?.time = lastSeekTarget.takeIf { it >= 0 } ?: positionMs }
+        }, seekAt)
+        val inStart = seekAt + 60L
+        for (i in 1..inSteps) mainHandler.postDelayed({
+            if (gen == seekFadeGen) runCatching { mediaPlayer?.volume = baseVolume * i / inSteps }
+        }, inStart + i * stepMs)
+    }
+
+    /** Drop a seek fade still in progress (track stopped/changed) and restore the volume. */
+    private fun cancelSeekFade() {
+        seekFadeGen++
+        // Synchronous, so a later setVolume() (e.g. the next track's fade-in) always wins
+        runCatching { mediaPlayer?.let { if (it.volume != baseVolume) it.volume = baseVolume } }
     }
 
     private fun applyPendingSeek() {

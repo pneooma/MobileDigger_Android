@@ -144,7 +144,7 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
         if (job == null) return@AnimatedVisibility
         val blue = Color(0xFF3B82F6)
         Card(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = when (st.status) {

@@ -4,6 +4,7 @@ package com.example.mobiledigger.ui.components
 import androidx.compose.ui.draw.clip
 
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.layout
 
 import androidx.compose.ui.layout.onGloballyPositioned
 
@@ -287,6 +288,8 @@ fun MusicPlayerScreen(
     val uiPrefs = remember { context.getSharedPreferences("ui_prefs", android.content.Context.MODE_PRIVATE) }
     var archivesOpen by remember { mutableStateOf(uiPrefs.getBoolean("archives_open", false)) }
     val setArchivesOpen: (Boolean) -> Unit = { open -> archivesOpen = open; uiPrefs.edit().putBoolean("archives_open", open).apply() }
+    // Toolbar of action buttons (Home, Settings, EQ, Search…): can be hidden for more list space; remembered
+    var isActionsVisible by remember { mutableStateOf(uiPrefs.getBoolean("actions_visible", true)) }
     var showThemeSelectionDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDeleteDialogStep by remember { mutableStateOf(0) }
@@ -958,7 +961,7 @@ fun MusicPlayerScreen(
                 else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f) to "ℹ️"
             }
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp)
                     .clickable { notificationJob?.cancel(); topMessage = null },
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = bg)
@@ -1010,7 +1013,7 @@ fun MusicPlayerScreen(
             exit = shrinkVertically()
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isDeletingFiles)
@@ -1052,11 +1055,12 @@ fun MusicPlayerScreen(
         // default and flash "Moving to Rejected… 0/1" at the end of a move to Liked)
         var lastBulkProgress by remember { mutableStateOf(MusicViewModel.BulkSortProgress(0, 1, false)) }
         rejectListened?.let { lastBulkProgress = it }
-        AnimatedVisibility(visible = rejectListened != null, enter = expandVertically(), exit = shrinkVertically()) {
+        // Only for several tracks; a single track moves silently
+        AnimatedVisibility(visible = rejectListened != null && lastBulkProgress.total > 1, enter = expandVertically(), exit = shrinkVertically()) {
             val prog = lastBulkProgress
             val done = prog.done; val total = prog.total
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = if (prog.toLiked) Color(0xFF2E7D32).copy(alpha = 0.25f) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f))
             ) {
@@ -1085,7 +1089,7 @@ fun MusicPlayerScreen(
         ) {
             val up = unpackProgress
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 2.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (up != null) Color(0xFFF59E0B).copy(alpha = 0.22f) else Color(0xFF2E7D32).copy(alpha = 0.25f)
@@ -1221,7 +1225,13 @@ fun MusicPlayerScreen(
                         onClick = {
                             if (playedButNotActionedCount > 0) viewModel.movePlayedButNotActionedToRejected()
                         },
-                        modifier = Modifier.height(hdrBtnHeight),
+                        // 30% wider than its natural size (easier to hit); content stays centred
+                        modifier = Modifier.height(hdrBtnHeight).layout { measurable, constraints ->
+                            val natural = measurable.maxIntrinsicWidth(constraints.maxHeight)
+                            val w = (natural * 1.3f).toInt().coerceAtMost(constraints.maxWidth)
+                            val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
+                            layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                        },
                         border = BorderStroke(1.dp, Color.White),
                         contentPadding = hdrBtnPad,
                         shape = RoundedCornerShape(20.dp)
@@ -1250,6 +1260,17 @@ fun MusicPlayerScreen(
                 ) {
                     Text(if (isPlaylistsVisible) "Hide Playlists" else "Show Playlists", style = labelStyle, maxLines = 1)
                 }
+                // Show/Hide the action buttons toolbar
+                OutlinedButton(
+                    onClick = {
+                        isActionsVisible = !isActionsVisible
+                        uiPrefs.edit().putBoolean("actions_visible", isActionsVisible).apply()
+                    },
+                    contentPadding = hdrBtnPad,
+                    modifier = Modifier.height(hdrBtnHeight)
+                ) {
+                    Text(if (isActionsVisible) "Hide Actions" else "Show Actions", style = labelStyle, maxLines = 1)
+                }
             }
 
             // Toolbar bar: Home, Settings, EQ, Search, Rescan, Info, Sort, Rename, MultiSelect, SpEk
@@ -1269,82 +1290,88 @@ fun MusicPlayerScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
+            AnimatedVisibility(
+                visible = isActionsVisible,
+                enter = expandVertically(tween(Motion.panelMs() / 2)) + fadeIn(tween(Motion.panelMs() / 2)),
+                exit = shrinkVertically(tween(Motion.panelMs() / 2)) + fadeOut(tween(Motion.panelMs() / 3))
             ) {
-                ToolbarButton(icon = { Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Home", onClick = { viewModel.resetToInitialState() })
-                ToolbarButton(icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Settings", onClick = { showSettingsDialog = true })
-                ToolbarButton(icon = {
-                    val eqOn by com.example.mobiledigger.audio.AudioFx.enabled.collectAsState()
-                    val eqGains by com.example.mobiledigger.audio.AudioFx.gains.collectAsState()
-                    val active = eqOn && eqGains.any { it != 0f }
-                    Icon(Icons.Default.Equalizer, contentDescription = "Equalizer", tint = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize))
-                }, label = "EQ", onClick = { showEqualizer = true })
-                ToolbarButton(icon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Search", onClick = { showSearchInput = !showSearchInput; if (!showSearchInput) { viewModel.updateSearchText(""); viewModel.clearSearchResults() } })
-                ToolbarButton(icon = { Icon(Icons.Default.Sync, contentDescription = "Rescan", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rescan", onClick = { viewModel.rescanSourceFolder() })
-                Box {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ToolbarButton(icon = { Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Home", onClick = { viewModel.resetToInitialState() })
+                    ToolbarButton(icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Settings", onClick = { showSettingsDialog = true })
                     ToolbarButton(icon = {
-                        val filterActive = sortOrder != null || losslessOnly || lossyOnly
-                        Box {
-                            Icon(Icons.Default.List, contentDescription = "Sort", tint = if (filterActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tbIconSize))
-                            if (filterActive) {
-                                // Marker dot when a sort/filter is active
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .size(8.dp)
-                                        .background(MaterialTheme.colorScheme.error, androidx.compose.foundation.shape.CircleShape)
-                                )
+                        val eqOn by com.example.mobiledigger.audio.AudioFx.enabled.collectAsState()
+                        val eqGains by com.example.mobiledigger.audio.AudioFx.gains.collectAsState()
+                        val active = eqOn && eqGains.any { it != 0f }
+                        Icon(Icons.Default.Equalizer, contentDescription = "Equalizer", tint = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize))
+                    }, label = "EQ", onClick = { showEqualizer = true })
+                    ToolbarButton(icon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Search", onClick = { showSearchInput = !showSearchInput; if (!showSearchInput) { viewModel.updateSearchText(""); viewModel.clearSearchResults() } })
+                    ToolbarButton(icon = { Icon(Icons.Default.Sync, contentDescription = "Rescan", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rescan", onClick = { viewModel.rescanSourceFolder() })
+                    Box {
+                        ToolbarButton(icon = {
+                            val filterActive = sortOrder != null || losslessOnly || lossyOnly
+                            Box {
+                                Icon(Icons.Default.List, contentDescription = "Sort", tint = if (filterActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(tbIconSize))
+                                if (filterActive) {
+                                    // Marker dot when a sort/filter is active
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(8.dp)
+                                            .background(MaterialTheme.colorScheme.error, androidx.compose.foundation.shape.CircleShape)
+                                    )
+                                }
                             }
+                        }, label = "Sort", onClick = { filterMenuExpanded = true })
+                        DropdownMenu(
+                            expanded = filterMenuExpanded,
+                            onDismissRequest = { filterMenuExpanded = false },
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ) {
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Name"); if (sortOrder?.field == SortField.NAME) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.NAME) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.NAME, asc) })
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("File Size"); if (sortOrder?.field == SortField.FILE_SIZE) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.FILE_SIZE) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.FILE_SIZE, asc) })
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Date Added"); if (sortOrder?.field == SortField.DATE_ADDED) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DATE_ADDED) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.DATE_ADDED, asc) })
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Duration"); if (sortOrder?.field == SortField.DURATION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DURATION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.DURATION, asc) })
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Extension"); if (sortOrder?.field == SortField.EXTENSION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.EXTENSION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.EXTENSION, asc) })
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Subfolder"); if (sortOrder?.field == SortField.SUBFOLDER) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.SUBFOLDER) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.SUBFOLDER, asc) })
+                            DropdownMenuItem(text = { Text("Shuffle") }, onClick = { viewModel.setSortOrder(SortField.RANDOM, true) })
+                            HorizontalDivider()
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossless Only"); if (losslessOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLosslessOnly() })
+                            DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossy Only (MP3, AAC…)"); if (lossyOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLossyOnly() })
+                            HorizontalDivider()
+                            DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly(); if (lossyOnly) viewModel.toggleLossyOnly() })
+                            DropdownMenuItem(
+                                text = { Text(if (activeDrive != null) "Network drive: ${activeDrive.name}" else "Network drives…") },
+                                leadingIcon = { Icon(Icons.Default.Router, contentDescription = null) },
+                                onClick = { filterMenuExpanded = false; showDrivesDialog = true }
+                            )
                         }
-                    }, label = "Sort", onClick = { filterMenuExpanded = true })
-                    DropdownMenu(
-                        expanded = filterMenuExpanded,
-                        onDismissRequest = { filterMenuExpanded = false },
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ) {
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Name"); if (sortOrder?.field == SortField.NAME) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.NAME) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.NAME, asc) })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("File Size"); if (sortOrder?.field == SortField.FILE_SIZE) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.FILE_SIZE) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.FILE_SIZE, asc) })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Date Added"); if (sortOrder?.field == SortField.DATE_ADDED) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DATE_ADDED) !(sortOrder?.ascending ?: true) else false; viewModel.setSortOrder(SortField.DATE_ADDED, asc) })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Duration"); if (sortOrder?.field == SortField.DURATION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.DURATION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.DURATION, asc) })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Extension"); if (sortOrder?.field == SortField.EXTENSION) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.EXTENSION) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.EXTENSION, asc) })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Subfolder"); if (sortOrder?.field == SortField.SUBFOLDER) { Spacer(Modifier.width(4.dp)); Text(if (sortOrder?.ascending == true) "▲" else "▼", style = labelStyle) } } }, onClick = { val asc = if (sortOrder?.field == SortField.SUBFOLDER) !(sortOrder?.ascending ?: true) else true; viewModel.setSortOrder(SortField.SUBFOLDER, asc) })
-                        DropdownMenuItem(text = { Text("Shuffle") }, onClick = { viewModel.setSortOrder(SortField.RANDOM, true) })
-                        HorizontalDivider()
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossless Only"); if (losslessOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLosslessOnly() })
-                        DropdownMenuItem(text = { Row(verticalAlignment = Alignment.CenterVertically) { Text("Lossy Only (MP3, AAC…)"); if (lossyOnly) { Spacer(Modifier.width(4.dp)); Text("✓", color = MaterialTheme.colorScheme.primary) } } }, onClick = { viewModel.toggleLossyOnly() })
-                        HorizontalDivider()
-                        DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly(); if (lossyOnly) viewModel.toggleLossyOnly() })
-                        DropdownMenuItem(
-                            text = { Text(if (activeDrive != null) "Network drive: ${activeDrive.name}" else "Network drives…") },
-                            leadingIcon = { Icon(Icons.Default.Router, contentDescription = null) },
-                            onClick = { filterMenuExpanded = false; showDrivesDialog = true }
-                        )
                     }
+                    val canUndo = viewModel.sortResults.collectAsState().value.isNotEmpty()
+                    ToolbarButton(
+                        icon = { Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo",
+                            tint = if (canUndo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                            modifier = Modifier.size(tbIconSize)) },
+                        label = "Undo",
+                        onClick = { if (canUndo) viewModel.undoLastAction() }
+                    )
+                    ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })
+                    ToolbarButton(icon = { Icon(Icons.Default.Checklist, contentDescription = "Select", tint = if (isMultiSelectionMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Select", onClick = { viewModel.toggleMultiSelectionMode() })
+                    ToolbarButton(
+                        icon = {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy((-2).dp)) {
+                                val spekColor = if (isMonochrome) monoColor else Color(0xFFFFB6C1)
+                                Text("Sp", style = labelStyle.copy(fontWeight = FontWeight.Bold, fontSize = (tbIconSize.value * 0.35f).sp), color = spekColor)
+                                Text("eK", style = labelStyle.copy(fontWeight = FontWeight.Bold, fontSize = (tbIconSize.value * 0.35f).sp), color = spekColor)
+                            }
+                        },
+                        label = "SpEk",
+                        onClick = { if (currentPlayingFile != null) showSpectrogram = true }
+                    )
                 }
-                val canUndo = viewModel.sortResults.collectAsState().value.isNotEmpty()
-                ToolbarButton(
-                    icon = { Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo",
-                        tint = if (canUndo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                        modifier = Modifier.size(tbIconSize)) },
-                    label = "Undo",
-                    onClick = { if (canUndo) viewModel.undoLastAction() }
-                )
-                ToolbarButton(icon = { Icon(Icons.Default.Edit, contentDescription = "Rename", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Rename", onClick = { if (currentPlayingFile != null) { manualRenameText = (currentPlayingFile?.name ?: "").substringBeforeLast('.', (currentPlayingFile?.name ?: "")); showRenameCurrentDialog = true } })
-                ToolbarButton(icon = { Icon(Icons.Default.Checklist, contentDescription = "Select", tint = if (isMultiSelectionMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Select", onClick = { viewModel.toggleMultiSelectionMode() })
-                ToolbarButton(
-                    icon = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy((-2).dp)) {
-                            val spekColor = if (isMonochrome) monoColor else Color(0xFFFFB6C1)
-                            Text("Sp", style = labelStyle.copy(fontWeight = FontWeight.Bold, fontSize = (tbIconSize.value * 0.35f).sp), color = spekColor)
-                            Text("eK", style = labelStyle.copy(fontWeight = FontWeight.Bold, fontSize = (tbIconSize.value * 0.35f).sp), color = spekColor)
-                        }
-                    },
-                    label = "SpEk",
-                    onClick = { if (currentPlayingFile != null) showSpectrogram = true }
-                )
             }
 
             // Multi-select inline controls — compact grid layout
@@ -2301,9 +2328,9 @@ fun MusicPlayerScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                // Share to WhatsApp
+                                                // Share (any app)
                                                 Card(
-                                                    onClick = { viewModel.shareToWhatsApp() },
+                                                    onClick = { viewModel.shareCurrentTrack() },
                                                     modifier = Modifier.size(38.dp),
                                                     shape = CircleShape,
                                                     colors = CardDefaults.cardColors(
@@ -2317,7 +2344,7 @@ fun MusicPlayerScreen(
                                                     ) {
                                                         Icon(
                                                             Icons.Default.Share,
-                                                            contentDescription = "Share to WhatsApp",
+                                                            contentDescription = "Share",
                                                             tint = Color.White,
                                                             modifier = Modifier.size(19.dp)
                                                         )
@@ -2568,9 +2595,9 @@ fun MusicPlayerScreen(
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    // Share to WhatsApp
+                                                    // Share (any app)
                                                     Card(
-                                                        onClick = { viewModel.shareToWhatsApp() },
+                                                        onClick = { viewModel.shareCurrentTrack() },
                                                         modifier = Modifier.size(38.dp),
                                                         shape = CircleShape,
                                                         colors = CardDefaults.cardColors(
@@ -2578,7 +2605,7 @@ fun MusicPlayerScreen(
                                                         ),
                                                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                                     ) { Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                                            Icon(Icons.Default.Share, contentDescription = "Share to WhatsApp", tint = Color.White, modifier = Modifier.size(19.dp))
+                                                            Icon(Icons.Default.Share, contentDescription = "Share", tint = Color.White, modifier = Modifier.size(19.dp))
                                                         } }
                                                     // Spectrogram
                                                     Card(
@@ -2731,7 +2758,12 @@ fun MusicPlayerScreen(
                     // Local composable to render the playlist tabs header (previously inside the list)
                     @Composable
                     fun PlaylistTabsHeader() {
-                        if (isPlaylistsVisible) {
+                        // Slides open/closed like the main player (was an instant jump)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = isPlaylistsVisible,
+                            enter = expandVertically(tween(Motion.panelMs())) + fadeIn(tween(Motion.panelMs())),
+                            exit = shrinkVertically(tween(Motion.panelMs())) + fadeOut(tween(Motion.panelMs()))
+                        ) {
                             Column {
                                 Row(
                                     modifier = Modifier
@@ -3320,9 +3352,9 @@ fun MusicPlayerScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                            // Share to WhatsApp Button
+                                            // Share button (any app)
                                                 Card(
-                                                    onClick = { viewModel.shareToWhatsApp() },
+                                                    onClick = { viewModel.shareCurrentTrack() },
                                                     modifier = Modifier.size(38.dp),
                                                     shape = CircleShape,
                                                     colors = CardDefaults.cardColors(
@@ -3336,7 +3368,7 @@ fun MusicPlayerScreen(
                                                     ) {
                                                         Icon(
                                                             Icons.Default.Share,
-                                                            contentDescription = "Share to WhatsApp",
+                                                            contentDescription = "Share",
                                                             tint = Color.White,
                                                             modifier = Modifier.size(19.dp)
                                                         )
@@ -4852,7 +4884,7 @@ fun MusicPlayerScreen(
                                                     IconButton(
                                                         onClick = {
                                                             try {
-                                                                viewModel.shareToWhatsApp()
+                                                                viewModel.shareCurrentTrack()
                                                             } catch (e: Exception) {
                                                                 CrashLogger.log("Debug", "Error in share button: ${e.message}")
                                                             }
@@ -4861,6 +4893,25 @@ fun MusicPlayerScreen(
                                                     ) {
                                                         Icon(Icons.Default.Share, contentDescription = "Share", tint = Color(0xFF2196F3), modifier = Modifier.size(adaptiveIconSize))
                                                     }
+                                                }
+                                                // SpEk (spectrogram) spanning both columns, under time + share
+                                                Box(
+                                                    contentAlignment = Alignment.Center,
+                                                    modifier = Modifier
+                                                        .width(adaptiveButtonSize * 2 + 2.dp)
+                                                        .height(adaptiveButtonSize * 0.62f)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .border(1.dp, Color(0xFFFFB6C1).copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                                                        .clickable { showSpectrogram = true }
+                                                ) {
+                                                    Text(
+                                                        "SPEK",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = (adaptiveButtonSize.value * 0.32f).sp
+                                                        ),
+                                                        color = if (isMonochrome) monoColor else Color(0xFFFFB6C1)
+                                                    )
                                                 }
                                             }
                                         } else if (!isCurrent) {

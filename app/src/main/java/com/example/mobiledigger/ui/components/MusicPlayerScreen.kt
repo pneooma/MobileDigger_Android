@@ -5,6 +5,8 @@ import androidx.compose.ui.draw.clip
 
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.animation.animateColorAsState
 
 import androidx.compose.ui.layout.onGloballyPositioned
 
@@ -2035,22 +2037,57 @@ fun MusicPlayerScreen(
                             val scope = rememberCoroutineScope()
                             val mainSwipeOffset = remember { Animatable(0f) }
                             var swipeDirection by remember { mutableStateOf(0) }
+                            // While the card itself is sliding (swipe or Like/Dislike button) the track
+                            // change needs no extra effect; otherwise (next/previous) a gentle dip.
+                            var flinging by remember { mutableStateOf(false) }
                             val transitionAlpha by animateFloatAsState(
-                                targetValue = if (isTransitioning) 0.3f else 1f,
-                                animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
+                                targetValue = if (isTransitioning && !flinging) 0.75f else 1f,
+                                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
                                 label = "transition_fade"
                             )
                             val animationSpec = remember(visualSettings) { Motion.settle }
                             val animatedOffset = mainSwipeOffset.value
-                            val cardColor = when (swipeDirection) {
-                                1 -> LikeGreen.copy(alpha = 0.3f)
-                                -1 -> DislikeRed.copy(alpha = 0.3f)
-                                else -> MaterialTheme.colorScheme.primaryContainer
-                            }
-                            val borderColor = when (swipeDirection) {
-                                1 -> LikeGreen
-                                -1 -> DislikeRed
-                                else -> Color.Transparent
+                            // Tint and border fade in/out instead of switching in one frame
+                            val cardColor by animateColorAsState(
+                                when (swipeDirection) {
+                                    1 -> lerp(MaterialTheme.colorScheme.primaryContainer, LikeGreen, 0.35f)
+                                    -1 -> lerp(MaterialTheme.colorScheme.primaryContainer, DislikeRed, 0.35f)
+                                    else -> MaterialTheme.colorScheme.primaryContainer
+                                }, tween(160), label = "mainCardTint"
+                            )
+                            val borderColor by animateColorAsState(
+                                when (swipeDirection) {
+                                    1 -> LikeGreen
+                                    -1 -> DislikeRed
+                                    else -> LikeGreen.copy(alpha = 0f)
+                                }, tween(160), label = "mainCardBorder"
+                            )
+                            /**
+                             * Like / Dislike from the buttons: the same motion as a swipe — the card
+                             * glides out (right for Like, left for Dislike), the track is sorted and the
+                             * next one starts, and the new card glides in from the other side.
+                             */
+                            fun flingAndSort(action: SortAction) {
+                                if (flinging) return
+                                val dir = if (action == SortAction.LIKE) 1f else -1f
+                                val prevFile = file
+                                scope.launch {
+                                    flinging = true
+                                    try {
+                                        swipeDirection = dir.toInt()
+                                        mainSwipeOffset.animateTo(dir * mainExitPx, Motion.exit())
+                                        if (action == SortAction.DISLIKE) suppressMiniOnLeftSwipe = true
+                                        try { viewModel.removeFromCurrentListByUri(prevFile.uri) } catch (_: Exception) {}
+                                        viewModel.playNextAfterRemoval()
+                                        viewModel.sortMusicFile(prevFile, action)
+                                        swipeDirection = 0
+                                        mainSwipeOffset.snapTo(-dir * mainExitPx * 0.35f)
+                                        mainSwipeOffset.animateTo(0f, Motion.arrive)
+                                    } finally {
+                                        swipeDirection = 0
+                                        flinging = false
+                                    }
+                                }
                             }
                             val played = viewModel.preferences.getListened()
                             val yes = viewModel.preferences.getLiked()
@@ -2077,17 +2114,7 @@ fun MusicPlayerScreen(
                                         scaleY = 1f + abs(animatedOffset) / 2000f
                                         alpha = transitionAlpha
                                     }
-                                    .then(
-                                        if (swipeDirection != 0) {
-                                            Modifier.border(
-                                                width = 3.dp,
-                                                color = borderColor,
-                                                shape = RoundedCornerShape(12.dp)
-                                            )
-                                        } else {
-                                            Modifier
-                                        }
-                                    )
+                                    .border(width = 3.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
                                     .then(
                                         run {
                                             val isCurrentInPlaylist = currentPlaylistFiles.any { it.uri == file.uri }
@@ -2101,6 +2128,7 @@ fun MusicPlayerScreen(
                                                         if (abs(current) > threshold) {
                                                             val prevFile = file
                                                             scope.launch {
+                                                                flinging = true
                                                                 // Slide the card off (accelerating, bounded 80..450 ms so a slow
                                                                 // Animation Speed can't stall the action), fire like/dislike, then
                                                                 // let the next track slide in from the opposite side.
@@ -2127,6 +2155,7 @@ fun MusicPlayerScreen(
                                                                 }
                                                                 mainSwipeOffset.snapTo(-exit * 0.35f)
                                                                 mainSwipeOffset.animateTo(0f, Motion.arrive)
+                                                                flinging = false
                                                             }
                                                         } else {
                                                             scope.launch {
@@ -2593,6 +2622,8 @@ fun MusicPlayerScreen(
                                                         onClick = {
                                                             if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
                                                                 viewModel.sortSelectedFiles(SortAction.DISLIKE)
+                                                            } else if (currentPlaylistFiles.any { it.uri == file.uri }) {
+                                                                flingAndSort(SortAction.DISLIKE)
                                                             } else {
                                                                 viewModel.sortCurrentFile(SortAction.DISLIKE)
                                                             }
@@ -2623,6 +2654,8 @@ fun MusicPlayerScreen(
                                                         onClick = {
                                                             if (isMultiSelectionMode && selectedIndices.isNotEmpty()) {
                                                                 viewModel.sortSelectedFiles(SortAction.LIKE)
+                                                            } else if (currentPlaylistFiles.any { it.uri == file.uri }) {
+                                                                flingAndSort(SortAction.LIKE)
                                                             } else {
                                                                 viewModel.sortCurrentFile(SortAction.LIKE)
                                                             }

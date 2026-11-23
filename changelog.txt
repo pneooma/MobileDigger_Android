@@ -2322,3 +2322,9 @@ v13.094
 
 v13.095
 - Undo lets you choose: the Undo button (toolbar and player) opens "Undo which one?" with your last 5 likes/rejects, newest first (name, Liked/Rejected, how long ago). Tap one to put that track back where it came from; the others stay undoable. Older actions can be undone without undoing the newer ones first.
+
+v13.096
+- Main player Like / Dislike buttons now move like a swipe: the card glides out (right for Like, left for Dislike), the track is sorted, the next one starts and its card glides in from the other side (was an instant content swap). Like from the button now also advances to the next track, as swiping already did.
+- No more 30% opacity flash on the main player during a track change; next/previous get a gentle 75% dip over 220 ms, and none while the card is sliding.
+- The green/red swipe tint and border fade in and out (160 ms) instead of switching in one frame.
+- Not yet checked on screen (phone was locked at build time).

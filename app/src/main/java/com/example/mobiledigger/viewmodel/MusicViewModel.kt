@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.os.Build
 import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
@@ -3749,6 +3750,91 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _showSubfolderManagementDialog.value = false
     }
     
+    /** Why [name] can't be a folder name, or null if it's fine. */
+    fun folderNameProblem(name: String): String? {
+        val n = name.trim()
+        return when {
+            n.isEmpty() -> "Type a name"
+            n == "." || n == ".." -> "That name isn't allowed"
+            n.any { it in "/\\:*?\"<>|," } -> "A name can't contain / \\ : * ? \" < > | or a comma"
+            n.length > 100 -> "That name is too long"
+            else -> null
+        }
+    }
+
+    /**
+     * Renames the custom folder Liked/[oldName] to [newName] on disk, and keeps everything that
+     * refers to it in step: the remembered folder names, the Liked list and its folder filter,
+     * and the playing track if it lives in that folder (its URI changes with the folder's).
+     */
+    fun renameLikedSubfolder(oldName: String, newName: String) {
+        val target = newName.trim()
+        folderNameProblem(target)?.let { _errorMessage.value = it; return }
+        if (target == oldName) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val result: String? = fileOperationMutex.withLock {
+                try {
+                    val dest = fileManager.getDestinationFolder() ?: return@withLock "No destination folder selected"
+                    val liked = dest.findFile("Liked") ?: dest.findFile("I DIG") ?: return@withLock "Liked folder not found"
+                    val folder = liked.findFile(oldName)?.takeIf { it.isDirectory }
+                    val clash = liked.listFiles().any { it.name?.equals(target, ignoreCase = true) == true && it.uri != folder?.uri }
+                    when {
+                        folder == null -> {
+                            // Only remembered, never created on disk: just rename the memory.
+                            null
+                        }
+                        clash -> "A folder called “$target” already exists"
+                        else -> {
+                            val cr = getApplication<Application>().contentResolver
+                            val oldId = DocumentsContract.getDocumentId(folder.uri)
+                            // Phone storage ignores letter case, so a case-only rename goes via a temp name.
+                            var uri = folder.uri
+                            if (target.equals(oldName, ignoreCase = true)) {
+                                uri = DocumentsContract.renameDocument(cr, uri, "$target.renaming") ?: return@withLock "Couldn't rename “$oldName”"
+                            }
+                            val renamed = DocumentsContract.renameDocument(cr, uri, target) ?: return@withLock "Couldn't rename “$oldName”"
+                            val newId = DocumentsContract.getDocumentId(renamed)
+                            // Files inside keep their names; only the folder part of their ids changes.
+                            val remap: (MusicFile) -> MusicFile = { f ->
+                                if (f.subfolder != oldName) f else {
+                                    val id = runCatching { DocumentsContract.getDocumentId(f.uri) }.getOrNull()
+                                    val newUri = if (id != null && id.startsWith("$oldId/"))
+                                        DocumentsContract.buildDocumentUriUsingTree(f.uri, newId + id.removePrefix(oldId)) else f.uri
+                                    f.copy(uri = newUri, subfolder = target)
+                                }
+                            }
+                            withContext(Dispatchers.Main) {
+                                _likedFiles.value = _likedFiles.value.map(remap)
+                                currentFile = currentFile?.let(remap)
+                                _currentPlayingFile.value = _currentPlayingFile.value?.let(remap)
+                            }
+                            null
+                        }
+                    }
+                } catch (e: Exception) {
+                    CrashLogger.log("MusicViewModel", "Rename folder $oldName -> $target failed", e)
+                    "Couldn't rename “$oldName”: ${e.message}"
+                }
+            }
+            withContext(Dispatchers.Main) {
+                if (result != null) { _errorMessage.value = result; return@withContext }
+                _subfolderHistory.value = _subfolderHistory.value.map { if (it == oldName) target else it }.distinct()
+                saveSubfolderHistory()
+                _likedFilter.value = _likedFilter.value?.map { if (it == oldName) target else it }
+                updateSubfolderInfo()
+                if (_currentPlaylistTab.value == PlaylistTab.LIKED) {
+                    val filter = _likedFilter.value
+                    when {
+                        filter.isNullOrEmpty() -> loadLikedFiles()
+                        filter.contains("<ROOT_ONLY>") -> loadLikedRootOnly()
+                        else -> loadFilesFromLikedSubfolders(filter)
+                    }
+                } else loadLikedFiles()
+                _errorMessage.value = "Renamed “$oldName” to “$target”"
+            }
+        }
+    }
+
     fun removeSubfoldersFromHistory(subfolderNames: List<String>) {
         if (subfolderNames.isEmpty()) return
         

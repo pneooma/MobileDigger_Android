@@ -3722,7 +3722,7 @@ fun MusicPlayerScreen(
                                                                     contentDescription = null,
                                                                     tint = Color(0xFFFF5722) // Orange color
                                                                 )
-                                                                Text("Manage subfolders")
+                                                                Text("Rename / manage folders")
                                                             }
                                                         },
                                                         onClick = { 
@@ -5444,74 +5444,53 @@ fun MusicPlayerScreen(
         )
     }
     
-    // Subfolder management dialog
+    // Custom folders (Liked/<name>): rename on disk, or forget remembered names
     if (showSubfolderManagementDialogState) {
         var selectedSubfolders by remember { mutableStateOf(setOf<String>()) }
-        
+        var renaming by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(Unit) { viewModel.updateSubfolderInfo() }
+        val onDisk = availableSubfolders.toSet()
+        val all = (availableSubfolders + subfolderHistory).distinct().sortedBy { it.lowercase() }
+        val close = { viewModel.hideSubfolderManagementDialog(); selectedSubfolders = emptySet() }
+
         AlertDialog(
-            onDismissRequest = {
-                viewModel.hideSubfolderManagementDialog()
-                selectedSubfolders = emptySet()
-            },
+            onDismissRequest = close,
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            title = { Text("Manage Subfolders") },
+            title = { Text("Custom folders") },
             text = {
                 Column {
-                    Text("Select subfolders to remove from memory:")
+                    Text("Tap ✎ to rename a folder (on the phone too). Tick names to forget them from the list.",
+                        style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Show all subfolders from history
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.height(200.dp)
-                    ) {
-                        items(
-                            items = subfolderHistory,
-                            key = { it },
-                            contentType = { "subfolder-history" }
-                        ) { subfolder ->
-                            val isSelected = selectedSubfolders.contains(subfolder)
-                            
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { 
-                                        selectedSubfolders = if (isSelected) {
-                                            selectedSubfolders - subfolder
-                                        } else {
-                                            selectedSubfolders + subfolder
-                                        }
-                                    },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) 
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                    else 
-                                        MaterialTheme.colorScheme.surface
-                                )
+                    if (all.isEmpty()) Text("No custom folders yet.", modifier = Modifier.padding(vertical = 12.dp))
+                    LazyColumn(Modifier.heightIn(max = 380.dp)) {
+                        items(count = all.size, key = { all[it] }) { idx ->
+                            val name = all[idx]
+                            val isSelected = name in selectedSubfolders
+                            val exists = name in onDisk
+                            Row(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent)
+                                    .clickable { selectedSubfolders = if (isSelected) selectedSubfolders - name else selectedSubfolders + name }
+                                    .padding(start = 4.dp, top = 2.dp, bottom = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Checkbox(
-                                        checked = isSelected,
-                                        onCheckedChange = { 
-                                            selectedSubfolders = if (isSelected) {
-                                                selectedSubfolders - subfolder
-                                            } else {
-                                                selectedSubfolders + subfolder
-                                            }
-                                        }
-                                    )
+                                Checkbox(checked = isSelected, onCheckedChange = {
+                                    selectedSubfolders = if (isSelected) selectedSubfolders - name else selectedSubfolders + name
+                                })
+                                Column(Modifier.weight(1f)) {
+                                    Text(name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
-                                        text = subfolder,
-                                        modifier = Modifier.weight(1f),
-                                        style = MaterialTheme.typography.bodySmall
+                                        if (exists) subfolderFileCounts[name]?.let { "$it ${if (it == 1) "track" else "tracks"}" } ?: "Folder"
+                                        else "Remembered name · no folder yet",
+                                        style = MaterialTheme.typography.labelSmall
                                     )
+                                }
+                                IconButton(onClick = { renaming = name }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Rename $name", tint = MaterialTheme.colorScheme.primary)
                                 }
                             }
                         }
@@ -5520,30 +5499,26 @@ fun MusicPlayerScreen(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { 
-                        if (selectedSubfolders.isNotEmpty()) {
-                            viewModel.removeSubfoldersFromHistory(selectedSubfolders.toList())
-                        }
-                        viewModel.hideSubfolderManagementDialog()
+                    onClick = {
+                        viewModel.removeSubfoldersFromHistory(selectedSubfolders.toList())
                         selectedSubfolders = emptySet()
                     },
                     enabled = selectedSubfolders.isNotEmpty()
-                ) {
-                    Text("Remove Selected")
-                }
+                ) { Text(if (selectedSubfolders.isEmpty()) "Forget" else "Forget ${selectedSubfolders.size}") }
             },
-            dismissButton = {
-                TextButton(onClick = { 
-                    viewModel.hideSubfolderManagementDialog()
-                    selectedSubfolders = emptySet()
-                }) {
-                    Text("Cancel")
-                }
-            }
+            dismissButton = { TextButton(onClick = close) { Text("Done") } }
         )
+
+        renaming?.let { old ->
+            RenameFolderDialog(
+                old = old, existing = all, onDisk = old in onDisk,
+                problemOf = viewModel::folderNameProblem,
+                onRename = { viewModel.renameLikedSubfolder(old, it); renaming = null },
+                onDismiss = { renaming = null }
+            )
+        }
     }
     
-    // Subfolder selection dialog for playlist items
     if (showSubfolderSelectionDialog) {
         // Update subfolder info when dialog is shown
         LaunchedEffect(showSubfolderSelectionDialog) {
@@ -5776,10 +5751,55 @@ fun MusicPlayerScreen(
                 }
             },
             confirmButton = { TextButton(onClick = { showSubfolderSelectionDialog = false; multiMoveMode = false }) { Text("Close") } }
+            ,
+            dismissButton = {
+                TextButton(onClick = { viewModel.showSubfolderManagementDialog() }) {
+                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp)); Text("Rename folders…")
+                }
+            }
         )
     }
 
 
 }
 }
+}
+
+
+/** Asks for a new name for the custom folder [old]; checks it as the user types. */
+@Composable
+private fun RenameFolderDialog(
+    old: String, existing: List<String>, onDisk: Boolean,
+    problemOf: (String) -> String?, onRename: (String) -> Unit, onDismiss: () -> Unit
+) {
+    var text by remember(old) { mutableStateOf(old) }
+    val trimmed = text.trim()
+    val changed = trimmed != old
+    val problem = problemOf(trimmed)
+        ?: if (!trimmed.equals(old, ignoreCase = true) && existing.any { it.equals(trimmed, ignoreCase = true) })
+            "A folder called “$trimmed” already exists" else null
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rename folder") },
+        text = {
+            OutlinedTextField(
+                value = text, onValueChange = { text = it }, singleLine = true,
+                label = { Text("New name") },
+                isError = problem != null && changed,
+                supportingText = {
+                    Text(
+                        when {
+                            problem != null && changed -> problem
+                            onDisk -> "Renames Liked/$old on the phone. Tracks inside stay put."
+                            else -> "Only the remembered name changes (there's no folder yet)."
+                        }
+                    )
+                },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+            )
+        },
+        confirmButton = { TextButton(onClick = { onRename(trimmed) }, enabled = problem == null && changed) { Text("Rename") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }

@@ -726,6 +726,107 @@ class FileManager(private val context: Context) {
         false
     }
 
+    /** True for local files we can move (not the Pi / network-drive streams). */
+    fun isLocalMovable(uri: Uri): Boolean =
+        (uri.scheme == "content" || uri.scheme == "file") &&
+            !com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(uri)
+
+    /** The Liked folder in the destination ("I DIG" on older setups), created if missing. */
+    private fun likedFolder(create: Boolean): DocumentFile? {
+        val dest = destinationFolder ?: return null
+        return dest.findFile("Liked") ?: dest.findFile("I DIG") ?: if (create) dest.createDirectory("Liked") else null
+    }
+
+    /**
+     * Moves one local track into Liked/[subfolderName] (or the Liked root when null) and returns
+     * it with its new URI, or null on failure. Same storage: an instant move; otherwise copy, then
+     * delete the original — and if that delete fails the copy is removed (no duplicates).
+     */
+    suspend fun moveToLikedFolder(musicFile: MusicFile, subfolderName: String?): MusicFile? = withContext(Dispatchers.IO) {
+        if (!isLocalMovable(musicFile.uri)) return@withContext null
+        try {
+            val liked = likedFolder(create = true) ?: return@withContext null
+            val target = if (subfolderName.isNullOrBlank()) liked
+                else liked.findFile(subfolderName) ?: liked.createDirectory(subfolderName) ?: return@withContext null
+            val src = DocumentFile.fromSingleUri(context, musicFile.uri)
+            if (src == null || !src.exists()) return@withContext null
+            val desiredName = src.name ?: musicFile.name
+            val safeName = resolveUniqueName(target, desiredName)
+            if (safeName == desiredName) {
+                moveDocumentTo(src.uri, target.uri)?.let { newUri ->
+                    return@withContext musicFile.copy(uri = newUri, name = desiredName)
+                }
+            }
+            val created = target.createFile(src.type ?: "audio/*", safeName) ?: return@withContext null
+            val copied = try {
+                contentResolver.openInputStream(src.uri)?.use { input ->
+                    contentResolver.openOutputStream(created.uri)?.use { output -> input.copyTo(output); output.flush(); true }
+                } ?: false
+            } catch (e: Exception) {
+                CrashLogger.log("FileManager", "Copy to $subfolderName failed: ${musicFile.name}", e); false
+            }
+            if (!copied || !src.delete()) {
+                CrashLogger.log("FileManager", "Move to $subfolderName failed (copied=$copied); original kept: ${musicFile.name}")
+                created.delete()
+                return@withContext null
+            }
+            musicFile.copy(uri = created.uri, name = created.name ?: safeName)
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "Error moving ${musicFile.name} to $subfolderName", e)
+            null
+        }
+    }
+
+    /** Like [fastMove] but returns the new URI, rebuilt under the target's tree so it stays openable. */
+    private fun moveDocumentTo(src: Uri, targetParent: Uri): Uri? = try {
+        if (src.authority != targetParent.authority || !DocumentsContract.isDocumentUri(context, src)) null
+        else {
+            val docId = DocumentsContract.getDocumentId(src)
+            val slash = docId.lastIndexOf('/')
+            if (slash <= 0) null else {
+                val parentId = docId.substring(0, slash)
+                val parentUri = if (DocumentsContract.isTreeUri(src)) DocumentsContract.buildDocumentUriUsingTree(src, parentId)
+                    else DocumentsContract.buildDocumentUri(src.authority, parentId)
+                DocumentsContract.moveDocument(contentResolver, src, parentUri, targetParent)?.let { moved ->
+                    if (DocumentsContract.isTreeUri(targetParent))
+                        DocumentsContract.buildDocumentUriUsingTree(targetParent, DocumentsContract.getDocumentId(moved))
+                    else moved
+                }
+            }
+        }
+    } catch (e: Exception) {
+        CrashLogger.log("FileManager", "Fast move not possible, copying instead: ${e.message}")
+        null
+    }
+
+    /**
+     * Returns [musicFile] if it is still where its URI says; otherwise looks for it (by name) where
+     * the app may have moved it — Liked, Liked/<subfolder>, Rejected — and returns it with the new
+     * URI. Null if it can't be found. Network tracks are returned unchanged.
+     */
+    suspend fun locate(musicFile: MusicFile): MusicFile? = withContext(Dispatchers.IO) {
+        if (!isLocalMovable(musicFile.uri) || musicFile.uri.scheme == "file") return@withContext musicFile
+        try {
+            if (DocumentFile.fromSingleUri(context, musicFile.uri)?.exists() == true) return@withContext musicFile
+            val name = musicFile.name
+            val liked = likedFolder(create = false)
+            liked?.findFile(name)?.takeIf { it.isFile }?.let {
+                return@withContext musicFile.copy(uri = it.uri, sourcePlaylist = com.example.mobiledigger.viewmodel.PlaylistTab.LIKED, subfolder = null)
+            }
+            liked?.listFiles()?.filter { it.isDirectory }?.forEach { sub ->
+                sub.findFile(name)?.takeIf { it.isFile }?.let {
+                    return@withContext musicFile.copy(uri = it.uri, sourcePlaylist = com.example.mobiledigger.viewmodel.PlaylistTab.LIKED, subfolder = sub.name)
+                }
+            }
+            destinationFolder?.findFile("Rejected")?.findFile(name)?.takeIf { it.isFile }?.let {
+                return@withContext musicFile.copy(uri = it.uri, sourcePlaylist = com.example.mobiledigger.viewmodel.PlaylistTab.REJECTED, subfolder = null)
+            }
+            null
+        } catch (e: Exception) {
+            CrashLogger.log("FileManager", "locate failed for ${musicFile.name}", e); null
+        }
+    }
+
     private fun resolveUniqueName(parent: DocumentFile, desiredName: String): String {
         // Keep extension, append (1), (2), ... if needed
         val dot = desiredName.lastIndexOf('.')

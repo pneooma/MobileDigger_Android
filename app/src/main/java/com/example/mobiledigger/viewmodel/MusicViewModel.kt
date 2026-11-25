@@ -141,7 +141,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     // Background file operation queue system - prevents blocking playback
     private sealed class FileOperation {
-        data class Move(val file: MusicFile, val action: SortAction) : FileOperation()
+        /** [resolve]: the playing track — find where it is now first (it may have been liked/moved already). */
+        data class Move(val file: MusicFile, val action: SortAction, val resolve: Boolean = false) : FileOperation()
     }
     
     // PHASE 2: Bounded channel to prevent memory leaks (was UNLIMITED)
@@ -659,13 +660,46 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             // same time and collide on the destination folder (duplicate
                             // unique-name resolution, concurrent createFile/delete).
                             val success = fileOperationMutex.withLock {
-                                fileManager.sortFile(operation.file, operation.action)
+                                val file = if (operation.resolve) fileManager.locate(operation.file) else operation.file
+                                when {
+                                    file == null -> false
+                                    // Already where this action would put it (e.g. Like pressed twice).
+                                    operation.action == SortAction.LIKE && file.uri != operation.file.uri &&
+                                        file.sourcePlaylist == PlaylistTab.LIKED && file.subfolder == null -> true
+                                    operation.action == SortAction.DISLIKE && file.uri != operation.file.uri &&
+                                        file.sourcePlaylist == PlaylistTab.REJECTED -> true
+                                    else -> fileManager.sortFile(file, operation.action)
+                                }
                             }
 
                             if (success) {
                                 CrashLogger.log("FileOperationWorker", "Successfully moved: ${operation.file.name}")
+                                // The playing track keeps playing after Like/Dislike: point it at its new
+                                // place so rename / share / move-to-folder don't hit the old, gone URI.
+                                if (operation.resolve) {
+                                    val old = operation.file.uri
+                                    fileManager.locate(operation.file)?.takeIf { it.uri != old }?.let { moved ->
+                                        withContext(Dispatchers.Main) {
+                                            if (currentFile?.uri == old) currentFile = moved
+                                            if (_currentPlayingFile.value?.uri == old) _currentPlayingFile.value = moved
+                                        }
+                                    }
+                                }
                             } else {
                                 CrashLogger.log("FileOperationWorker", "Failed to move: ${operation.file.name}")
+                                // The row was already removed optimistically: put it back and say so,
+                                // instead of silently leaving the file where it was.
+                                val stillThere = fileManager.locate(operation.file)?.uri == operation.file.uri
+                                withContext(Dispatchers.Main) {
+                                    val f = operation.file
+                                    _sortResults.value = _sortResults.value.filterNot { it.musicFile.uri == f.uri }
+                                    if (stillThere && f.sourcePlaylist == PlaylistTab.TODO && fileManager.isLocalMovable(f.uri) &&
+                                        _musicFiles.value.none { it.uri == f.uri }) {
+                                        _musicFiles.value = _musicFiles.value + f
+                                    }
+                                    refreshAllPlaylists()
+                                    _errorMessage.value = "Couldn't move '${f.name}' to ${if (operation.action == SortAction.LIKE) "Liked" else "Rejected"}"
+                                }
                             }
                         }
                     }
@@ -1204,7 +1238,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             try {
                 // 1. Queue the file operation in background (non-blocking)
                 if (fileManager.isDestinationSelected() || com.example.mobiledigger.file.drives.DriveProxy.isDriveUri(fileToSort.uri)) {
-                    fileOperationChannel.send(FileOperation.Move(fileToSort, action))
+                    fileOperationChannel.send(FileOperation.Move(fileToSort, action, resolve = true))
                     CrashLogger.log("MusicViewModel", "File operation queued: ${fileToSort.name}")
                 } else {
                     _errorMessage.value = "Please select a destination folder from the 'Actions' menu before sorting."
@@ -2967,22 +3001,35 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     fun moveSelectedFilesToSubfolder(subfolderName: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val selected = _selectedIndices.value.toList()
-            val filesToMove = selected.mapNotNull { index -> currentPlaylistFiles.value.getOrNull(index) }
-
-            if (filesToMove.isNotEmpty()) {
-                val success = fileManager.moveFilesToSubfolder(filesToMove, subfolderName)
-                if (success) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Moved ${filesToMove.size} files to $subfolderName"
-                        _selectedIndices.value = emptySet()
-                        _isMultiSelectionMode.value = false
-                        rescanSourceFolder() // Refresh the list
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Failed to move files"
-                    }
+            val display = currentPlaylistFiles.value
+            val filesToMove = _selectedIndices.value.sorted().mapNotNull { display.getOrNull(it) }
+            if (filesToMove.isEmpty()) return@launch
+            if (fileManager.getDestinationFolder() == null) {
+                withContext(Dispatchers.Main) { _errorMessage.value = "No destination folder selected" }
+                return@launch
+            }
+            // Custom folders live in Liked/<name> (where single moves go and the Liked tab looks);
+            // they used to land in the results root, outside the app's view.
+            val moved = mutableMapOf<Uri, MusicFile>()
+            var failed = 0
+            fileOperationMutex.withLock {
+                filesToMove.forEach { f ->
+                    val m = if (fileManager.isLocalMovable(f.uri)) fileManager.moveToLikedFolder(f, subfolderName) else null
+                    if (m != null) moved[f.uri] = m.copy(sourcePlaylist = PlaylistTab.LIKED, subfolder = subfolderName) else failed++
+                }
+            }
+            withContext(Dispatchers.Main) {
+                _selectedIndices.value = emptySet()
+                _isMultiSelectionMode.value = false
+                if (moved.isNotEmpty()) {
+                    addToSubfolderHistory(subfolderName)
+                    updateSubfolderInfo()
+                    applyMovedToLiked(moved)
+                }
+                _errorMessage.value = when {
+                    failed == 0 -> "Moved ${moved.size} files to $subfolderName"
+                    moved.isEmpty() -> "Failed to move files"
+                    else -> "Moved ${moved.size} files to $subfolderName, $failed couldn't be moved"
                 }
             }
         }
@@ -3133,6 +3180,22 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
 
+    /**
+     * A rename can change the track's URI: point every list, the playing pointers and the
+     * listened tracker at the new one, or later Like / Move / Reject-listened act on a gone URI.
+     */
+    private fun applyRenames(renames: Map<Uri, MusicFile>) {
+        if (renames.isEmpty()) return
+        fun fix(list: List<MusicFile>) = list.map { f -> renames[f.uri]?.copy(sourcePlaylist = f.sourcePlaylist, subfolder = f.subfolder) ?: f }
+        _musicFiles.value = fix(_musicFiles.value)
+        _likedFiles.value = fix(_likedFiles.value)
+        _rejectedFiles.value = fix(_rejectedFiles.value)
+        _currentPlayingFile.value?.let { f -> renames[f.uri]?.let { _currentPlayingFile.value = it } }
+        currentFile?.let { f -> renames[f.uri]?.let { currentFile = it } }
+        val played = _playedButNotActioned.value
+        if (played.any { it in renames }) _playedButNotActioned.value = played.map { renames[it]?.uri ?: it }.toSet()
+    }
+
     fun renameSelectedFiles(mode: RenameCase) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -3155,18 +3218,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     if (renamed != null) {
                         success++
                         renames[mf.uri] = renamed
-                        if (_currentPlayingFile.value?.uri == mf.uri) {
-                            _currentPlayingFile.value = renamed
-                        }
-                        if (currentFile?.uri == mf.uri) currentFile = renamed
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    when (_currentPlaylistTab.value) {
-                        PlaylistTab.TODO -> _musicFiles.value = _musicFiles.value.map { renames[it.uri] ?: it }
-                        PlaylistTab.LIKED -> _likedFiles.value = _likedFiles.value.map { renames[it.uri] ?: it }
-                        PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.map { renames[it.uri] ?: it }
-                    }
+                    applyRenames(renames)
                     _selectedIndices.value = emptySet()
                     _isMultiSelectionMode.value = false
                     _errorMessage.value = "Renamed $success files"
@@ -3187,16 +3242,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 val renamed = fileManager.renameFile(cur, finalBase)
                 if (renamed != null) {
                     withContext(Dispatchers.Main) {
-                        // Update in current playlist
-                        when (_currentPlaylistTab.value) {
-                            PlaylistTab.TODO -> _musicFiles.value = _musicFiles.value.map { if (it.uri == cur.uri) renamed else it }
-                            PlaylistTab.LIKED -> _likedFiles.value = _likedFiles.value.map { if (it.uri == cur.uri) renamed else it }
-                            PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.map { if (it.uri == cur.uri) renamed else it }
-                        }
-                        _currentPlayingFile.value = renamed
-                        // Renaming changes the URI: keep the field used by Like/Dislike and
-                        // "move to custom folder" in sync, or they act on the old, gone URI.
-                        if (currentFile?.uri == cur.uri) currentFile = renamed
+                        applyRenames(mapOf(cur.uri to renamed))
                         // Ensure playback continues from same time
                         try { seekTo(resumePos) } catch (_: Exception) {}
                         _errorMessage.value = "Renamed current file"
@@ -3213,26 +3259,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     fun renameFileAtIndex(index: Int, manualBase: String, mode: RenameCase) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val files = when (_currentPlaylistTab.value) {
-                    PlaylistTab.TODO -> _musicFiles.value
-                    PlaylistTab.LIKED -> _likedFiles.value
-                    PlaylistTab.REJECTED -> _rejectedFiles.value
-                }
-                val mf = files.getOrNull(index) ?: return@launch
+                // `index` is a row of the displayed (sorted / filtered) list — resolve it there,
+                // not in the raw tab list, or a sort or Lossless/Lossy filter renames the wrong track.
+                val mf = currentPlaylistFiles.value.getOrNull(index) ?: return@launch
                 val base = if (manualBase.isNotBlank()) manualBase else mf.name.substringBeforeLast('.', mf.name)
                 val finalBase = applyCaseTransform(base, mode)
                 val renamed = fileManager.renameFile(mf, finalBase)
                 if (renamed != null) {
                     withContext(Dispatchers.Main) {
-                        when (_currentPlaylistTab.value) {
-                            PlaylistTab.TODO -> _musicFiles.value = _musicFiles.value.mapIndexed { i, f -> if (i == index) renamed else f }
-                            PlaylistTab.LIKED -> _likedFiles.value = _likedFiles.value.mapIndexed { i, f -> if (i == index) renamed else f }
-                            PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.mapIndexed { i, f -> if (i == index) renamed else f }
-                        }
-                        if (_currentPlayingFile.value?.uri == mf.uri) {
-                            _currentPlayingFile.value = renamed
-                        }
-                        if (currentFile?.uri == mf.uri) currentFile = renamed
+                        applyRenames(mapOf(mf.uri to renamed))
                         _errorMessage.value = "Renamed file"
                     }
                 } else {
@@ -3679,259 +3714,94 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _errorMessage.value = "Removed ${subfolderNames.size} subfolder(s) from memory"
     }
     
+    /**
+     * After tracks moved on disk ([moves]: old URI -> moved track): the playing pointers follow it, it leaves
+     * the TODO / Rejected lists (with the fade-out), the listened tracker forgets it and Liked reloads.
+     */
+    private fun applyMovedToLiked(moves: Map<Uri, MusicFile>) {
+        val oldUris = moves.keys
+        _playedButNotActioned.value = _playedButNotActioned.value - oldUris
+        currentFile?.let { f -> moves[f.uri]?.let { currentFile = it } }
+        _currentPlayingFile.value?.let { f -> moves[f.uri]?.let { _currentPlayingFile.value = it } }
+        _removingUris.value = _removingUris.value + oldUris
+        viewModelScope.launch {
+            delay(300)
+            _removingUris.value = _removingUris.value - oldUris
+            removeFromTabList(PlaylistTab.TODO, oldUris)
+            removeFromTabList(PlaylistTab.REJECTED, oldUris)
+            loadLikedFiles()
+        }
+    }
+
+    /** Drops [uris] from a tab's list, keeping the current index on the same track. */
+    private fun removeFromTabList(tab: PlaylistTab, uris: Set<Uri>) {
+        val flow = when (tab) {
+            PlaylistTab.TODO -> _musicFiles
+            PlaylistTab.LIKED -> _likedFiles
+            PlaylistTab.REJECTED -> _rejectedFiles
+        }
+        val list = flow.value
+        val idx = list.indexOfFirst { it.uri in uris }
+        if (idx == -1) return
+        val updated = list.filterNot { it.uri in uris }
+        flow.value = updated
+        if (_currentPlaylistTab.value == tab) {
+            if (idx < _currentIndex.value) _currentIndex.value = _currentIndex.value - 1
+            else if (_currentIndex.value >= updated.size) _currentIndex.value = (updated.size - 1).coerceAtLeast(0)
+        }
+    }
+
+    /**
+     * Moves the playing track into Liked/[subfolderName] (Liked root when null). Works even when
+     * the track was already liked, renamed or moved to another folder: it is first looked up where
+     * it is now, instead of failing on its old location.
+     */
+    private fun moveCurrentToLiked(subfolderName: String?) {
+        val start = this.currentFile ?: _currentPlayingFile.value
+        if (start == null) {
+            _errorMessage.value = "No file is currently playing"
+            return
+        }
+        if (!fileManager.isLocalMovable(start.uri)) {
+            _errorMessage.value = "Network tracks can't be moved to a folder"
+            return
+        }
+        val label = subfolderName ?: "Liked"
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (fileManager.getDestinationFolder() == null) {
+                    withContext(Dispatchers.Main) { _errorMessage.value = "No destination folder selected" }
+                    return@launch
+                }
+                val moved = fileOperationMutex.withLock {
+                    val now = fileManager.locate(start) ?: return@withLock null
+                    fileManager.moveToLikedFolder(now, subfolderName)?.let { now to it }
+                }
+                withContext(Dispatchers.Main) {
+                    if (moved == null) {
+                        _errorMessage.value = "Couldn't move '${start.name}' to '$label'"
+                        return@withContext
+                    }
+                    val (from, to) = moved
+                    val newFile = to.copy(sourcePlaylist = PlaylistTab.LIKED, subfolder = subfolderName)
+                    if (subfolderName != null) addToSubfolderHistory(subfolderName)
+                    updateSubfolderInfo()
+                    applyMovedToLiked(mapOf(start.uri to newFile, from.uri to newFile))
+                    _errorMessage.value = "Moved '${newFile.name}' to '$label'"
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { _errorMessage.value = "Error moving file: ${e.message}" }
+                CrashLogger.log("MusicViewModel", "Error moving file to $label", e)
+            }
+        }
+    }
+
     fun moveCurrentFileToSubfolder(subfolderName: String) {
-        // Use currentFile property (set immediately in loadCurrentFile) instead of _currentPlayingFile StateFlow
-        val fileToMove = this.currentFile
-        CrashLogger.log("MusicViewModel", "📂 moveCurrentFileToSubfolder called - Current file: ${fileToMove?.name}, Subfolder: $subfolderName")
-        if (fileToMove == null) {
-            _errorMessage.value = "No file is currently playing"
-            CrashLogger.log("MusicViewModel", "📂 moveCurrentFileToSubfolder - No current file, aborting")
-            return
-        }
-        
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val destinationFolder = fileManager.getDestinationFolder()
-                if (destinationFolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "No destination folder selected"
-                    }
-                    return@launch
-                }
-                
-                // Get the Liked folder within the destination folder
-                val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
-                if (likedFolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Liked folder not found"
-                    }
-                    return@launch
-                }
-                
-                // Create subfolder if it doesn't exist
-                var subfolder = likedFolder.findFile(subfolderName)
-                if (subfolder == null) {
-                    subfolder = likedFolder.createDirectory(subfolderName)
-                    if (subfolder == null) {
-                        withContext(Dispatchers.Main) {
-                            _errorMessage.value = "Failed to create subfolder: $subfolderName"
-                        }
-                        return@launch
-                    }
-                }
-                
-                // Move the file - preserve original filename and MIME type
-                val fileName = fileManager.getFileName(fileToMove.uri) ?: "unknown"
-                val originalMimeType = getApplication<Application>().contentResolver.getType(fileToMove.uri) ?: "audio/mpeg"
-                val targetFile = subfolder.createFile(originalMimeType, fileName)
-                
-                if (targetFile != null) {
-                    // Copy file content
-                    val inputStream = getApplication<Application>().contentResolver.openInputStream(fileToMove.uri)
-                    val outputStream = getApplication<Application>().contentResolver.openOutputStream(targetFile.uri)
-                    
-                    if (inputStream != null && outputStream != null) {
-                        inputStream.copyTo(outputStream)
-                        inputStream.close()
-                        outputStream.close()
-                        
-                        // Delete original file
-                        val originalFile = DocumentFile.fromSingleUri(getApplication(), fileToMove.uri)
-                        originalFile?.delete()
-                        
-                        // Update playlists
-                        withContext(Dispatchers.Main) {
-                            addToSubfolderHistory(subfolderName)
-                            updateSubfolderInfo()
-                            
-                            // Remove from played-but-not-actioned counter (this is like liking the file)
-                            _playedButNotActioned.value = _playedButNotActioned.value - fileToMove.uri
-                            
-                            // Handle file movement based on current playlist tab
-                            when (_currentPlaylistTab.value) {
-                                PlaylistTab.TODO -> {
-                                    // Remove from TODO playlist
-                                    val updatedTodoFiles = _musicFiles.value.toMutableList()
-                                    val indexToRemove = updatedTodoFiles.indexOfFirst { it.uri == fileToMove.uri }
-                                    val wasPlayingRemovedFile = (indexToRemove == _currentIndex.value)
-                                    
-                                    if (indexToRemove != -1) {
-                                        // Trigger fade-out animation before removal
-                                        _removingUris.value = _removingUris.value + fileToMove.uri
-                                        viewModelScope.launch {
-                                            delay(300)
-                                            _removingUris.value = _removingUris.value - fileToMove.uri
-                                        updatedTodoFiles.removeAt(indexToRemove)
-                                        _musicFiles.value = updatedTodoFiles
-                                        
-                                        // PHASE 4: Keep file playing when moved to subfolder
-                                        // Don't interrupt playback - just update the index
-                                        if (indexToRemove < _currentIndex.value) {
-                                            _currentIndex.value = _currentIndex.value - 1
-                                        } else if (wasPlayingRemovedFile) {
-                                            // File was playing - DON'T load next file, keep current one playing
-                                            // Just adjust index to prevent out of bounds
-                                            if (_currentIndex.value >= updatedTodoFiles.size && updatedTodoFiles.isNotEmpty()) {
-                                                _currentIndex.value = updatedTodoFiles.size - 1
-                                            }
-                                            CrashLogger.log("MusicViewModel", "📂 File moved to subfolder while playing - keeping playback active")
-                                        }
-                                            // Update current playing file to point to new URI in liked folder
-                                            _currentPlayingFile.value = fileToMove.copy(uri = targetFile.uri, sourcePlaylist = PlaylistTab.LIKED, subfolder = subfolderName)
-                                        }
-                                    }
-                                    
-                                    // Add to liked files with subfolder info
-                                    val likedFile = fileToMove.copy(
-                                        sourcePlaylist = PlaylistTab.LIKED,
-                                        subfolder = subfolderName,
-                                        uri = targetFile.uri // Use the new URI
-                                    )
-                                    val updatedLikedFiles = _likedFiles.value.toMutableList()
-                                    // Check for duplicates before adding
-                                    if (!updatedLikedFiles.any { it.uri == likedFile.uri }) {
-                                        updatedLikedFiles.add(likedFile)
-                                        _likedFiles.value = updatedLikedFiles
-                                    }
-                                }
-                                PlaylistTab.REJECTED -> {
-                                    // Remove from REJECTED playlist
-                                    val updatedRejectedFiles = _rejectedFiles.value.toMutableList()
-                                    val indexToRemove = updatedRejectedFiles.indexOfFirst { it.uri == fileToMove.uri }
-                                    val wasPlayingRemovedFile = (indexToRemove == _currentIndex.value)
-                                    
-                                    if (indexToRemove != -1) {
-                                        _removingUris.value = _removingUris.value + fileToMove.uri
-                                        viewModelScope.launch {
-                                            delay(300)
-                                            _removingUris.value = _removingUris.value - fileToMove.uri
-                                        updatedRejectedFiles.removeAt(indexToRemove)
-                                        _rejectedFiles.value = updatedRejectedFiles
-                                        
-                                        // PHASE 4: Keep file playing when moved to subfolder
-                                        if (indexToRemove < _currentIndex.value) {
-                                            _currentIndex.value = _currentIndex.value - 1
-                                        } else if (wasPlayingRemovedFile) {
-                                            // File was playing - DON'T load next file, keep current one playing
-                                            if (_currentIndex.value >= updatedRejectedFiles.size && updatedRejectedFiles.isNotEmpty()) {
-                                                _currentIndex.value = updatedRejectedFiles.size - 1
-                                            }
-                                            CrashLogger.log("MusicViewModel", "📂 File moved to subfolder while playing - keeping playback active")
-                                        }
-                                            _currentPlayingFile.value = fileToMove.copy(uri = targetFile.uri, sourcePlaylist = PlaylistTab.LIKED, subfolder = subfolderName)
-                                        }
-                                    }
-                                    
-                                    // Add to liked files with subfolder info
-                                    val likedFile = fileToMove.copy(
-                                        sourcePlaylist = PlaylistTab.LIKED,
-                                        subfolder = subfolderName,
-                                        uri = targetFile.uri // Use the new URI
-                                    )
-                                    val updatedLikedFiles = _likedFiles.value.toMutableList()
-                                    // Check for duplicates before adding
-                                    if (!updatedLikedFiles.any { it.uri == likedFile.uri }) {
-                                        updatedLikedFiles.add(likedFile)
-                                        _likedFiles.value = updatedLikedFiles
-                                    }
-                                }
-                                PlaylistTab.LIKED -> {
-                                    // For liked files, we're just moving between subfolders
-                                    // Reload liked files to reflect the new subfolder structure
-                                    loadLikedFiles()
-                                }
-                            }
-                            
-                            _errorMessage.value = "Moved '$fileName' to '$subfolderName'"
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            _errorMessage.value = "Failed to copy file to subfolder"
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Failed to create file in subfolder"
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _errorMessage.value = "Error moving file: ${e.message}"
-                }
-                CrashLogger.log("MusicViewModel", "Error moving file to subfolder", e)
-            }
-        }
+        CrashLogger.log("MusicViewModel", "📂 moveCurrentFileToSubfolder: ${currentFile?.name} -> $subfolderName")
+        moveCurrentToLiked(subfolderName)
     }
-    
-    fun moveCurrentFileFromSubfolderToRoot() {
-        val currentFile = _currentPlayingFile.value
-        if (currentFile == null) {
-            _errorMessage.value = "No file is currently playing"
-            return
-        }
-        
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val destinationFolder = fileManager.getDestinationFolder()
-                if (destinationFolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "No destination folder selected"
-                    }
-                    return@launch
-                }
-                
-                // Get the Liked folder within the destination folder
-                val likedFolder = destinationFolder.findFile("Liked") ?: destinationFolder.findFile("I DIG")
-                if (likedFolder == null) {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Liked folder not found"
-                    }
-                    return@launch
-                }
-                
-                // Move file from subfolder to root - preserve original filename and MIME type
-                val fileName = fileManager.getFileName(currentFile.uri) ?: "unknown"
-                val originalMimeType = getApplication<Application>().contentResolver.getType(currentFile.uri) ?: "audio/mpeg"
-                val targetFile = likedFolder.createFile(originalMimeType, fileName)
-                
-                if (targetFile != null) {
-                    // Copy file content
-                    val inputStream = getApplication<Application>().contentResolver.openInputStream(currentFile.uri)
-                    val outputStream = getApplication<Application>().contentResolver.openOutputStream(targetFile.uri)
-                    
-                    if (inputStream != null && outputStream != null) {
-                        inputStream.copyTo(outputStream)
-                        inputStream.close()
-                        outputStream.close()
-                        
-                        // Delete original file
-                        val originalFile = DocumentFile.fromSingleUri(getApplication(), currentFile.uri)
-                        originalFile?.delete()
-                        
-                        // Update playlists
-                        withContext(Dispatchers.Main) {
-                            updateSubfolderInfo()
-                            loadLikedFiles() // Refresh liked files
-                            _errorMessage.value = "Moved '$fileName' to root liked folder"
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            _errorMessage.value = "Failed to copy file to root"
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        _errorMessage.value = "Failed to create file in root"
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _errorMessage.value = "Error moving file: ${e.message}"
-                }
-                CrashLogger.log("MusicViewModel", "Error moving file from subfolder to root", e)
-            }
-        }
-    }
+
+    fun moveCurrentFileFromSubfolderToRoot() = moveCurrentToLiked(null)
     
     fun getCurrentFileSubfolder(): String? {
         val currentFile = _currentPlayingFile.value ?: return null

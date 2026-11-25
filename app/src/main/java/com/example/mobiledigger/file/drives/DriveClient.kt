@@ -48,10 +48,14 @@ object DriveClients {
     fun isAudio(name: String) = name.substringAfterLast('.', "").lowercase() in AUDIO_EXTENSIONS
     fun isArchive(name: String) = name.substringAfterLast('.', "").lowercase() in ARCHIVE_EXTENSIONS
 
+    /** Set once at app start; USB drives need it to reach the storage provider. */
+    @Volatile lateinit var appContext: android.content.Context
+
     fun create(drive: NetworkDrive): DriveClient = when (drive.type) {
         DriveType.MOBILEDIGGER -> MobileDiggerServerClient(drive)
         DriveType.WEBDAV -> WebDavClient(drive)
         DriveType.SMB -> SmbDriveClient(drive)
+        DriveType.USB -> SafDriveClient(appContext, android.net.Uri.parse(drive.address))
     }
 
     /** Recursively collects audio files (and archives) under [root] as (folder, file) pairs, up to [limit]. */

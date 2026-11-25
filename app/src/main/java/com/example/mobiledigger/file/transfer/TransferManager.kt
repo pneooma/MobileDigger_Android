@@ -38,7 +38,13 @@ data class TransferJob(
     val move: Boolean,
     val files: List<TransferFile>,
     /** Files copied but whose original couldn't be deleted (move only). */
-    val notDeleted: Int = 0
+    val notDeleted: Int = 0,
+    /** Already on the phone (same name and size), so not copied again. */
+    val skipped: Int = 0,
+    /** A different file had the same name on the phone, so this one was saved as "name (1)". */
+    val renamed: Int = 0,
+    /** Drive kind, for wording ("USB drive" vs network). */
+    val usb: Boolean = false
 ) {
     val folderName: String get() = sourceFolder.trim('/').substringAfterLast('/').ifBlank { driveName }
     val totalBytes: Long get() = files.sumOf { it.size }
@@ -48,6 +54,7 @@ data class TransferJob(
     fun toJson(): JSONObject = JSONObject()
         .put("driveId", driveId).put("driveName", driveName).put("sourceFolder", sourceFolder)
         .put("destTreeUri", destTreeUri).put("destLabel", destLabel).put("move", move).put("notDeleted", notDeleted)
+        .put("skipped", skipped).put("renamed", renamed).put("usb", usb)
         .put("files", JSONArray().apply {
             files.forEach { put(JSONObject().put("p", it.path).put("r", it.rel).put("s", it.size).put("d", it.done)) }
         })
@@ -59,7 +66,7 @@ data class TransferJob(
             o.getJSONArray("files").let { a ->
                 (0 until a.length()).map { i -> a.getJSONObject(i).let { TransferFile(it.getString("p"), it.getString("r"), it.optLong("s"), it.optBoolean("d")) } }
             },
-            o.optInt("notDeleted")
+            o.optInt("notDeleted"), o.optInt("skipped"), o.optInt("renamed"), o.optBoolean("usb")
         )
     }
 }
@@ -124,6 +131,9 @@ object TransferManager {
 
     data class Plan(val files: List<TransferFile>, val totalBytes: Long)
 
+    /** Drive housekeeping folders that are never copied (Windows / Android / macOS). */
+    private val SYSTEM_DIRS = setOf("System Volume Information", "LOST.DIR", "\$RECYCLE.BIN", "RECYCLER")
+
     /** Lists everything under [folder] on [drive] (all files, not just audio). */
     fun scan(drive: NetworkDrive, folder: String): Plan {
         val client = DriveClients.create(drive)
@@ -134,7 +144,7 @@ object TransferManager {
             fun walk(path: String, depth: Int) {
                 if (depth > 15 || out.size > 20000) return
                 for (e in client.list(path).sortedBy { it.name.lowercase() }) {
-                    if (e.name.startsWith(".")) continue
+                    if (e.name.startsWith(".") || e.name.startsWith("$") || e.name in SYSTEM_DIRS) continue
                     if (e.isDir) walk(e.path, depth + 1)
                     else {
                         val inside = if (root.isEmpty()) e.path.trim('/') else e.path.trim('/').removePrefix("$root/")
@@ -206,6 +216,7 @@ object TransferManager {
     }
 
     fun fmt(b: Long): String = when {
+        b >= 1L shl 40 -> String.format(java.util.Locale.US, "%.2f TB", b / (1024.0 * 1024 * 1024 * 1024))
         b >= 1L shl 30 -> String.format(java.util.Locale.US, "%.1f GB", b / (1024.0 * 1024 * 1024))
         b >= 1L shl 20 -> String.format(java.util.Locale.US, "%.0f MB", b / (1024.0 * 1024))
         else -> String.format(java.util.Locale.US, "%.0f KB", b / 1024.0)
@@ -277,7 +288,7 @@ object TransferManager {
             var job = start
             val drive = DriveStore(app).get(job.driveId)
             if (drive == null) {
-                _state.value = TransferUi(TransferStatus.PAUSED, job, message = "The network drive \"${job.driveName}\" is no longer saved")
+                _state.value = TransferUi(TransferStatus.PAUSED, job, message = "The drive \"${job.driveName}\" is no longer saved")
                 return@launch
             }
             var client: DriveClient = DriveClients.create(drive)
@@ -289,9 +300,10 @@ object TransferManager {
                     if (!isActive) return@launch
                     _state.value = _state.value.copy(currentName = f.rel.substringAfterLast('/'), currentBytes = 0)
                     var attempt = 0
+                    var outcome: Outcome
                     while (true) {
                         try {
-                            copyOne(client, saf, f) { isActive }
+                            outcome = copyOne(client, saf, f) { isActive }
                             break
                         } catch (e: Exception) {
                             if (!isActive) return@launch
@@ -316,17 +328,19 @@ object TransferManager {
                             CrashLogger.log("TransferManager", "Copied but couldn't delete the original: ${f.path}", e)
                         }
                     }
-                    job = job.copy(files = job.files.toMutableList().also { it[i] = f.copy(done = true) }, notDeleted = notDeleted)
+                    job = job.copy(
+                        files = job.files.toMutableList().also { it[i] = f.copy(done = true) }, notDeleted = notDeleted,
+                        skipped = job.skipped + if (outcome == Outcome.SKIPPED) 1 else 0,
+                        renamed = job.renamed + if (outcome == Outcome.RENAMED) 1 else 0
+                    )
+                    // A skipped file "arrives" instantly: re-baseline so it doesn't spike the speed.
+                    if (outcome == Outcome.SKIPPED) speedT = 0L
                     save(job)
                     _state.value = _state.value.copy(job = job, currentBytes = 0)
                 }
                 jobFile().delete()
-                val verb = if (job.move) "Moved" else "Copied"
-                _state.value = TransferUi(
-                    TransferStatus.DONE, job,
-                    message = "$verb ${job.files.size} files (${fmt(job.totalBytes)}) to ${job.destLabel}/${job.folderName}" +
-                        if (job.notDeleted > 0) ". ${job.notDeleted} originals couldn't be deleted from ${job.driveName}." else ""
-                )
+                if (job.move && job.notDeleted == 0) removeEmptyFolders(client, job.sourceFolder)
+                _state.value = TransferUi(TransferStatus.DONE, job, message = summary(job))
                 CrashLogger.log("TransferManager", "Transfer finished: ${job.files.size} files")
             } finally {
                 runCatching { client.close() }
@@ -334,10 +348,45 @@ object TransferManager {
         }
     }
 
-    private fun copyOne(client: DriveClient, saf: SafTree, f: TransferFile, alive: () -> Boolean) {
+    private enum class Outcome { COPIED, SKIPPED, RENAMED }
+
+    private fun summary(job: TransferJob): String {
+        val verb = if (job.move) "Moved" else "Copied"
+        val n = job.files.size - job.skipped
+        return buildString {
+            append("$verb $n ${if (n == 1) "file" else "files"} to ${job.destLabel}/${job.folderName}")
+            if (job.skipped > 0) append(" · ${job.skipped} already there")
+            if (job.renamed > 0) append(" · ${job.renamed} saved as “(1)” (same name, different file)")
+            if (job.notDeleted > 0) append(" · ${job.notDeleted} originals couldn't be deleted from ${job.driveName}")
+        }
+    }
+
+    /**
+     * After a full move: deletes the source folder if nothing but (now empty) folders is left in
+     * it. Any file still there — even a hidden one — keeps the folder.
+     */
+    private fun removeEmptyFolders(client: DriveClient, folder: String) {
+        val root = folder.trim('/')
+        if (root.isEmpty()) return
+        fun empty(path: String, depth: Int): Boolean =
+            depth < 20 && client.list(path).all { it.isDir && empty(it.path, depth + 1) }
+        runCatching { if (empty(root, 0)) client.deleteFolder(root) }
+            .onFailure { CrashLogger.log("TransferManager", "Left the emptied source folder in place: ${it.message}") }
+    }
+
+    /**
+     * Copies one file. It is written as "name.mdpart" and only renamed to its real name once
+     * complete, so a cut-off copy never looks like a finished track. A file already on the phone
+     * with the same name and size is skipped; a different file with that name is never
+     * overwritten (the copy gets "name (1)").
+     */
+    private fun copyOne(client: DriveClient, saf: SafTree, f: TransferFile, alive: () -> Boolean): Outcome {
         val dir = saf.dirFor(f.rel.substringBeforeLast('/', ""))
         val name = f.rel.substringAfterLast('/')
-        val target = saf.fileFor(dir, name) // existing (overwritten) or new
+        val existing = saf.child(dir, name)
+        if (existing != null && f.size > 0 && existing.second == f.size) return Outcome.SKIPPED
+        val finalName = if (existing == null) name else saf.freeName(dir, name)
+        val target = saf.fileFor(dir, "$name$PART") // a leftover part from an earlier try is overwritten
         currentTarget = target
         var written = 0L
         client.open(f.path, 0).use { rs ->
@@ -361,8 +410,14 @@ object TransferManager {
             }
         }
         if (f.size > 0 && written != f.size) throw Exception("$name: only ${fmt(written)} of ${fmt(f.size)} arrived")
+        DocumentsContract.renameDocument(app.contentResolver, target, finalName)
+            ?: throw Exception("Couldn't finish $name (rename failed)")
+        saf.forget(dir)
         currentTarget = null
+        return if (finalName == name) Outcome.COPIED else Outcome.RENAMED
     }
+
+    private const val PART = ".mdpart"
 
     /** Folders/files inside a SAF tree, found by name (so a resumed copy reuses them). */
     private class SafTree(private val context: Context, private val tree: Uri) {
@@ -370,23 +425,46 @@ object TransferManager {
         private val rootDoc = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
         private val dirs = HashMap<String, Uri>().apply { put("", rootDoc) }
 
-        private fun child(parent: Uri, name: String): Uri? {
+        /** Folder listing (lower-cased name -> uri, size), cached per folder; [forget] after changes. */
+        private val listings = HashMap<Uri, Map<String, Pair<Uri, Long>>>()
+
+        private fun listing(parent: Uri): Map<String, Pair<Uri, Long>> = listings.getOrPut(parent) {
+            val out = HashMap<String, Pair<Uri, Long>>()
             val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getDocumentId(parent))
-            cr.query(children, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)?.use { c ->
-                while (c.moveToNext()) if (c.getString(1) == name) return DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0))
+            cr.query(children, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_SIZE), null, null, null)?.use { c ->
+                while (c.moveToNext()) {
+                    val n = c.getString(1) ?: continue
+                    out[n.lowercase()] = DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0)) to c.getLong(2)
+                }
             }
-            return null
+            out
+        }
+
+        /** The child called [name] (phone storage ignores letter case) and its size, or null. */
+        fun child(parent: Uri, name: String): Pair<Uri, Long>? = listing(parent)[name.lowercase()]
+
+        fun forget(parent: Uri) { listings.remove(parent) }
+
+        /** "name (1).ext", "name (2).ext" … the first one not taken in [dir]. */
+        fun freeName(dir: Uri, name: String): String {
+            val dot = name.lastIndexOf('.')
+            val base = if (dot > 0) name.substring(0, dot) else name
+            val ext = if (dot > 0) name.substring(dot) else ""
+            var i = 1
+            while (child(dir, "$base ($i)$ext") != null) i++
+            return "$base ($i)$ext"
         }
 
         fun dirFor(rel: String): Uri = dirs.getOrPut(rel) {
             val parent = dirFor(rel.substringBeforeLast('/', ""))
             val name = rel.substringAfterLast('/')
-            child(parent, name) ?: DocumentsContract.createDocument(cr, parent, DocumentsContract.Document.MIME_TYPE_DIR, name)
-                ?: throw Exception("Can't create folder $name")
+            child(parent, name)?.first ?: DocumentsContract.createDocument(cr, parent, DocumentsContract.Document.MIME_TYPE_DIR, name)
+                ?.also { forget(parent) } ?: throw Exception("Can't create folder $name")
         }
 
         fun fileFor(dir: Uri, name: String): Uri =
-            child(dir, name) ?: DocumentsContract.createDocument(cr, dir, "application/octet-stream", name)
-                ?: throw Exception("Can't create $name")
+            child(dir, name)?.first ?: DocumentsContract.createDocument(cr, dir, "application/octet-stream", name)
+                ?.also { forget(dir) } ?: throw Exception("Can't create $name")
     }
 }

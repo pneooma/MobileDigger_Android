@@ -102,11 +102,11 @@ fun WelcomePanel(
                 selected = false, modifier = Modifier.weight(1f), onClick = onPickSource
             )
             SourceTile(
-                icon = Icons.Default.Router, title = "Network drive",
+                icon = Icons.Default.Router, title = "Drives",
                 subtitle = when {
                     activeDriveName != null -> activeDriveName
                     savedDriveCount > 0 -> "$savedDriveCount saved"
-                    else -> "NAS, PC or Pi"
+                    else -> "USB, NAS, PC or Pi"
                 },
                 selected = activeDriveName != null, modifier = Modifier.weight(1f), onClick = onOpenDrives
             )

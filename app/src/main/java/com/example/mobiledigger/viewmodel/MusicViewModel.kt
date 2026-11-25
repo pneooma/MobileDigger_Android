@@ -2148,8 +2148,54 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         refreshDrives()
     }
 
+    /**
+     * Saves access to a plugged-in drive the user just granted with the system prompt ([tree] = the
+     * folder they picked, normally the drive's top). Re-granting the same drive updates its entry.
+     * Returns the saved drive, or null if the folder isn't on that drive.
+     */
+    fun connectUsbDrive(tree: Uri, volume: com.example.mobiledigger.file.drives.AttachedVolume): com.example.mobiledigger.file.drives.NetworkDrive? {
+        val ctx = getApplication<Application>()
+        if (com.example.mobiledigger.file.drives.UsbDrives.volumeOf(tree) != volume.id) {
+            _errorMessage.value = "That folder isn't on ${volume.label}. Pick a folder on the drive."
+            return null
+        }
+        runCatching {
+            ctx.contentResolver.takePersistableUriPermission(tree,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        }.onFailure {
+            runCatching { ctx.contentResolver.takePersistableUriPermission(tree, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        }
+        val folder = com.example.mobiledigger.file.drives.UsbDrives.folderOf(tree)
+        val existing = driveStore.all().firstOrNull { it.type == com.example.mobiledigger.file.drives.DriveType.USB && it.share == volume.id }
+        val drive = (existing ?: com.example.mobiledigger.file.drives.NetworkDrive(
+            name = volume.label, type = com.example.mobiledigger.file.drives.DriveType.USB, address = ""
+        )).copy(
+            address = tree.toString(), share = volume.id,
+            name = if (folder.isBlank()) volume.label else "${volume.label} · ${folder.substringAfterLast('/')}",
+            folder = ""
+        )
+        existing?.address?.takeIf { it != drive.address }?.let { releaseUsbAccess(it) }
+        driveStore.save(drive)
+        com.example.mobiledigger.file.drives.DriveProxy.invalidate(drive.id)
+        refreshDrives()
+        return drive
+    }
+
+    private fun releaseUsbAccess(tree: String) {
+        val ctx = getApplication<Application>()
+        runCatching {
+            ctx.contentResolver.releasePersistableUriPermission(Uri.parse(tree),
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        }
+    }
+
     fun deleteDrive(id: String) {
         val wasActive = driveStore.activeId() == id
+        driveStore.get(id)?.takeIf { it.type == com.example.mobiledigger.file.drives.DriveType.USB }?.let { usb ->
+            // Don't drop the grant if the same folder is also the phone source / destination.
+            val inUse = usb.address == preferences.getSourceRootUri() || usb.address == fileManager.getDestinationUriString()
+            if (!inUse) releaseUsbAccess(usb.address)
+        }
         driveStore.delete(id)
         com.example.mobiledigger.file.drives.DriveProxy.invalidate(id)
         refreshDrives()

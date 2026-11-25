@@ -9,7 +9,11 @@ import java.util.UUID
 enum class DriveType(val label: String, val hint: String) {
     SMB("Shared folder (SMB)", "Windows / Mac sharing, most NAS boxes, router USB drives"),
     WEBDAV("WebDAV", "Synology, QNAP, TrueNAS, Nextcloud, ownCloud"),
-    MOBILEDIGGER("MobileDigger server", "A Raspberry Pi or PC running the MobileDigger library server");
+    MOBILEDIGGER("MobileDigger server", "A Raspberry Pi or PC running the MobileDigger library server"),
+    /** A drive plugged into the phone: address = granted folder (SAF tree URI), share = volume id. */
+    USB("USB drive", "A hard drive, SSD or stick plugged into the phone");
+
+    val isNetwork: Boolean get() = this != USB
 }
 
 /**
@@ -47,6 +51,7 @@ data class NetworkDrive(
     val displayAddress: String
         get() = when (type) {
             DriveType.SMB -> "smb://${address.trim()}/${share.trim()}"
+            DriveType.USB -> "Plugged into the phone"
             else -> address.trim()
         }
 

@@ -7,7 +7,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Lan
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
@@ -22,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mobiledigger.file.drives.DriveClients
+import com.example.mobiledigger.file.drives.DriveType
 import com.example.mobiledigger.file.drives.NetworkDrive
 import com.example.mobiledigger.file.transfer.TransferJob
 import com.example.mobiledigger.file.transfer.TransferManager
@@ -31,7 +44,7 @@ import com.example.mobiledigger.viewmodel.MusicViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Copy or move [folder] of [drive] to a folder on the phone. */
+/** Copy or move [folder] of [drive] (USB or network) to a folder on the phone. */
 @Composable
 fun TransferSetupDialog(drive: NetworkDrive, folder: String, viewModel: MusicViewModel, onDismiss: () -> Unit) {
     val context = LocalContext.current
@@ -39,10 +52,12 @@ fun TransferSetupDialog(drive: NetworkDrive, folder: String, viewModel: MusicVie
     var scanError by remember { mutableStateOf<String?>(null) }
     var writable by remember { mutableStateOf(false) }
     var move by remember { mutableStateOf(false) }
+    var musicOnly by remember { mutableStateOf(false) }
     // Default destination: the phone folder already used as the music source
     var dest by remember { mutableStateOf(viewModel.preferences.getSourceRootUri()?.let { Uri.parse(it) }) }
     val busy = TransferManager.state.collectAsState().value.status == TransferStatus.RUNNING
-    val folderName = folder.trim('/').substringAfterLast('/')
+    val folderName = folder.trim('/').substringAfterLast('/').ifBlank { drive.name }
+    val isUsb = drive.type == DriveType.USB
 
     LaunchedEffect(drive.id, folder) {
         withContext(Dispatchers.IO) {
@@ -60,78 +75,141 @@ fun TransferSetupDialog(drive: NetworkDrive, folder: String, viewModel: MusicVie
             dest = uri
         }
     }
+    val files = remember(plan, musicOnly) {
+        plan?.files?.let { all -> if (musicOnly) all.filter { DriveClients.isAudio(it.rel) } else all }
+    }
+    val bytes = files?.sumOf { it.size } ?: 0L
+    val leftOut = (plan?.files?.size ?: 0) - (files?.size ?: 0)
     val free = remember(dest) { dest?.let { TransferManager.freeBytes(context, it) } }
-    val spaceProblem = remember(dest, plan) { dest?.let { d -> plan?.let { TransferManager.spaceProblem(context, d, it.totalBytes) } } }
+    val spaceProblem = remember(dest, bytes) { dest?.let { d -> files?.let { TransferManager.spaceProblem(context, d, bytes) } } }
+    val canMove = writable
+    val doMove = move && canMove
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Download, null) },
-        title = { Text("Copy “$folderName” to the phone", maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        title = { Text(if (doMove) "Move to the phone" else "Copy to the phone") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                when {
-                    scanError != null -> Text(scanError!!, color = MaterialTheme.colorScheme.error)
-                    plan == null -> Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(10.dp)); Text("Counting files…")
-                    }
-                    else -> Text("${plan!!.files.size} files · ${TransferManager.fmt(plan!!.totalBytes)} (subfolders included)",
-                        fontWeight = FontWeight.SemiBold)
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // From → To
+                RouteRow(
+                    icon = if (isUsb) Icons.Default.Usb else Icons.Default.Lan,
+                    caption = "From ${drive.name}", title = folderName,
+                    detail = when {
+                        scanError != null -> null
+                        files == null -> "Counting files…"
+                        else -> "${files.size} ${if (musicOnly) "music files" else "files"} · ${TransferManager.fmt(bytes)}" +
+                            (if (leftOut > 0) " · $leftOut other files left out" else "")
+                    },
+                    loading = plan == null && scanError == null
+                )
+                Icon(Icons.Default.ArrowDownward, null, Modifier.padding(start = 12.dp).size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedCard(onClick = { picker.launch(dest) }, shape = RoundedCornerShape(16.dp)) {
+                    RouteRow(
+                        icon = Icons.Default.PhoneAndroid, caption = "Into this phone folder",
+                        title = dest?.let { folderLabel(it.toString()) } ?: "Pick a phone folder",
+                        detail = if (dest != null) "A folder “$folderName” is made inside it" else null,
+                        trailing = "Change", modifier = Modifier.padding(12.dp)
+                    )
                 }
+                scanError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
+                // Space on the phone
+                if (free != null && files != null) {
+                    val after = (free - bytes).coerceAtLeast(0)
+                    Column {
+                        LinearProgressIndicator(
+                            progress = { if (free > 0) (bytes.toFloat() / free).coerceIn(0f, 1f) else 1f },
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = if (spaceProblem != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text("Needs ${TransferManager.fmt(bytes)} of ${TransferManager.fmt(free)} free · ${TransferManager.fmt(after)} left after",
+                            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                if (spaceProblem != null) Text(spaceProblem, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+
+                // Copy / Move
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    SegmentedButton(selected = !move, onClick = { move = false }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("Copy") }
-                    SegmentedButton(selected = move, onClick = { move = true }, enabled = writable, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text("Move") }
+                    SegmentedButton(selected = !doMove, onClick = { move = false }, shape = SegmentedButtonDefaults.itemShape(0, 2),
+                        icon = { SegmentedButtonDefaults.Icon(!doMove) { Icon(Icons.Default.ContentCopy, null, Modifier.size(16.dp)) } }) { Text("Copy") }
+                    SegmentedButton(selected = doMove, onClick = { move = true }, enabled = canMove, shape = SegmentedButtonDefaults.itemShape(1, 2),
+                        icon = { SegmentedButtonDefaults.Icon(doMove) { Icon(Icons.AutoMirrored.Filled.DriveFileMove, null, Modifier.size(16.dp)) } }) { Text("Move") }
                 }
                 Text(
                     when {
-                        !writable -> "Move isn't available: ${drive.name} is read-only. Copy leaves the files on the drive."
-                        move -> "Each file is deleted from ${drive.name} once it's safely on the phone."
+                        !canMove && isUsb -> "Move needs write access to ${drive.name}. Copy leaves the files on the drive."
+                        !canMove -> "Move isn't available: ${drive.name} is read-only. Copy leaves the files on the drive."
+                        doMove -> "Each file is deleted from ${drive.name} only after it's safely on the phone. Emptied folders are removed."
                         else -> "The files stay on ${drive.name} too."
                     },
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                OutlinedCard(onClick = { picker.launch(dest) }, shape = RoundedCornerShape(14.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Folder, null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Save into", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(dest?.let { folderLabel(it.toString()) } ?: "Pick a phone folder", fontWeight = FontWeight.SemiBold,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            if (dest != null) Text("A folder “$folderName” is made inside it", fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Text("Change", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { musicOnly = !musicOnly }.padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Only music files", fontWeight = FontWeight.SemiBold)
+                        Text("Leave out covers, playlists, text files…", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    Switch(checked = musicOnly, onCheckedChange = { musicOnly = it })
                 }
-                if (free != null) Text("Free on the phone: ${TransferManager.fmt(free)}", fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (spaceProblem != null) Text(spaceProblem, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-                Text("It runs in the background. You can keep sorting meanwhile.", fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "Files already on the phone (same name and size) are skipped. A different file with the same name is never " +
+                        "overwritten: the new one is saved as “name (1)”. It runs in the background — keep sorting meanwhile.",
+                    fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val p = plan ?: return@Button
+                    val f = files ?: return@Button
                     val d = dest ?: return@Button
                     TransferManager.start(
                         context, TransferJob(
                             driveId = drive.id, driveName = drive.name, sourceFolder = folder,
                             destTreeUri = d.toString(), destLabel = folderLabel(d.toString()) ?: "phone",
-                            move = move && writable, files = p.files
+                            move = doMove, files = f, usb = isUsb
                         )
                     )
                     onDismiss()
                 },
-                enabled = plan != null && plan!!.files.isNotEmpty() && dest != null && spaceProblem == null && !busy
-            ) { Text(if (move && writable) "Move" else "Copy") }
+                enabled = !files.isNullOrEmpty() && dest != null && spaceProblem == null && !busy
+            ) {
+                Icon(if (doMove) Icons.AutoMirrored.Filled.DriveFileMove else Icons.Default.ContentCopy, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (busy) "Another transfer is running" else if (doMove) "Move" else "Copy")
+            }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+@Composable
+private fun RouteRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector, caption: String, title: String, detail: String?,
+    modifier: Modifier = Modifier, loading: Boolean = false, trailing: String? = null
+) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
+        ) { Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer) }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(caption, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (detail != null) Row(verticalAlignment = Alignment.CenterVertically) {
+                if (loading) { CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp); Spacer(Modifier.width(6.dp)) }
+                Text(detail, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if (trailing != null) Text(trailing, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+    }
 }
 
 /** Slim progress banner on the main screen: Pause / Continue / Abort. */
@@ -149,7 +227,7 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
             text = {
                 Text("${job.doneFiles} of ${job.files.size} files are already on the phone and stay there. " +
                     "The file being copied right now is removed. " +
-                    (if (job.move) "Files not moved yet stay on the network drive. " else "") +
+                    (if (job.move) "Files not moved yet stay on ${job.driveName}. " else "") +
                     "This can't be continued later.")
             },
             confirmButton = { TextButton(onClick = { confirmCancel = false; TransferManager.abort() }) {
@@ -174,10 +252,13 @@ fun TransferBanner(onRescan: (() -> Unit)?) {
             Column(Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) {
                 val verb = if (job.move) "Moving" else "Copying"
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(if (job.usb) Icons.Default.Usb else Icons.Default.Lan, null, Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         when (st.status) {
-                            TransferStatus.RUNNING -> "⬇ $verb “${job.folderName}” to the phone"
-                            TransferStatus.PAUSED -> "⏸ $verb “${job.folderName}” paused"
+                            TransferStatus.RUNNING -> "$verb “${job.folderName}” from ${job.driveName}"
+                            TransferStatus.PAUSED -> "$verb “${job.folderName}” paused"
                             else -> st.message ?: "Done"
                         },
                         style = MaterialTheme.typography.bodyMedium,

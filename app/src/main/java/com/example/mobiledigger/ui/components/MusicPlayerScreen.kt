@@ -155,12 +155,14 @@ fun folderLocation(
         val d = drives.firstOrNull { it.id == driveId }
         val kind = when (d?.type) {
             com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER -> "pi"
+            com.example.mobiledigger.file.drives.DriveType.USB -> "usb"
             else -> "network"
         }
         val place = when (d?.type) {
             com.example.mobiledigger.file.drives.DriveType.MOBILEDIGGER -> "Pi"
             com.example.mobiledigger.file.drives.DriveType.SMB -> "Network (SMB)"
             com.example.mobiledigger.file.drives.DriveType.WEBDAV -> "Network (WebDAV)"
+            com.example.mobiledigger.file.drives.DriveType.USB -> "USB drive"
             null -> "Network drive"
         } + (d?.name?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
         return FolderLocation(place, kind, path.trim('/').split('/').dropLast(1).filter { it.isNotBlank() })
@@ -1391,7 +1393,7 @@ fun MusicPlayerScreen(
                             HorizontalDivider()
                             DropdownMenuItem(text = { Text("Clear Sort & Filter") }, onClick = { filterMenuExpanded = false; viewModel.clearSort(); if (losslessOnly) viewModel.toggleLosslessOnly(); if (lossyOnly) viewModel.toggleLossyOnly() })
                             DropdownMenuItem(
-                                text = { Text(if (activeDrive != null) "Network drive: ${activeDrive.name}" else "Network drives…") },
+                                text = { Text(if (activeDrive != null) "Drive: ${activeDrive.name}" else "Drives (USB & network)…") },
                                 leadingIcon = { Icon(Icons.Default.Router, contentDescription = null) },
                                 onClick = { filterMenuExpanded = false; showDrivesDialog = true }
                             )
@@ -4330,6 +4332,7 @@ fun MusicPlayerScreen(
                                                             when (loc?.kind) {
                                                                 "phone" -> Icons.Default.PhoneAndroid
                                                                 "external" -> Icons.Default.SdCard
+                                                                "usb" -> Icons.Default.Usb
                                                                 "pi" -> Icons.Default.Dns
                                                                 "cloud" -> Icons.Default.Cloud
                                                                 else -> Icons.Default.Lan

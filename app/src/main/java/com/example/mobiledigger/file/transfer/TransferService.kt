@@ -30,7 +30,7 @@ class TransferService : Service() {
     override fun onCreate() {
         super.onCreate()
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(channelId, "Copying from network drives", NotificationManager.IMPORTANCE_LOW))
+        nm.createNotificationChannel(NotificationChannel(channelId, "Copying from drives", NotificationManager.IMPORTANCE_LOW))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

@@ -40,6 +40,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.mobiledigger.file.drives.DriveType
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.example.mobiledigger.file.drives.AttachedVolume
+import com.example.mobiledigger.file.drives.UsbDrives
+import com.example.mobiledigger.file.transfer.TransferManager
 import com.example.mobiledigger.file.drives.NetworkDrive
 import com.example.mobiledigger.viewmodel.MusicViewModel
 import kotlinx.coroutines.launch
@@ -50,6 +56,7 @@ fun driveIcon(type: DriveType): ImageVector = when (type) {
     DriveType.SMB -> Icons.Default.Lan
     DriveType.WEBDAV -> Icons.Default.Cloud
     DriveType.MOBILEDIGGER -> Icons.Default.Dns
+    DriveType.USB -> Icons.Default.Usb
 }
 
 private sealed interface DrivesPage {
@@ -58,7 +65,7 @@ private sealed interface DrivesPage {
     data class Browse(val drive: NetworkDrive) : DrivesPage
 }
 
-/** Full-screen manager for network drives: list → add/edit → pick a folder → load. */
+/** Full-screen manager for drives (USB + network): list → add/edit → pick a folder → load / copy. */
 @Composable
 fun NetworkDrivesDialog(viewModel: MusicViewModel, onDismiss: () -> Unit) {
     LaunchedEffect(Unit) { viewModel.refreshDrives() }
@@ -90,6 +97,7 @@ fun NetworkDrivesDialog(viewModel: MusicViewModel, onDismiss: () -> Unit) {
                     DrivesPage.List -> DriveListPage(
                         drives = drives,
                         activeId = activeId,
+                        viewModel = viewModel,
                         onClose = onDismiss,
                         onAdd = { page = DrivesPage.Edit(null) },
                         onEdit = { page = DrivesPage.Edit(it) },
@@ -133,10 +141,36 @@ private fun PageHeader(title: String, subtitle: String?, onBack: (() -> Unit)?, 
 
 // ---------------------------------------------------------------- list
 
+/** Removable volumes plugged in right now; updates live as drives are plugged in or pulled out. */
+@Composable
+private fun rememberAttachedVolumes(): List<AttachedVolume> {
+    val context = LocalContext.current
+    var vols by remember { mutableStateOf(UsbDrives.attached(context)) }
+    DisposableEffect(Unit) {
+        val sm = context.getSystemService(android.os.storage.StorageManager::class.java)
+        val cb = object : android.os.storage.StorageManager.StorageVolumeCallback() {
+            override fun onStateChanged(volume: android.os.storage.StorageVolume) { vols = UsbDrives.attached(context) }
+        }
+        sm?.registerStorageVolumeCallback(context.mainExecutor, cb)
+        onDispose { runCatching { sm?.unregisterStorageVolumeCallback(cb) } }
+    }
+    return vols
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text.uppercase(), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
+        letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 4.dp, top = 10.dp, bottom = 2.dp)
+    )
+}
+
 @Composable
 private fun DriveListPage(
     drives: List<NetworkDrive>,
     activeId: String?,
+    viewModel: MusicViewModel,
     onClose: () -> Unit,
     onAdd: () -> Unit,
     onEdit: (NetworkDrive) -> Unit,
@@ -144,59 +178,194 @@ private fun DriveListPage(
     onDelete: (NetworkDrive) -> Unit,
     onDisconnect: () -> Unit
 ) {
+    val context = LocalContext.current
     var confirmDelete by remember { mutableStateOf<NetworkDrive?>(null) }
+    val attached = rememberAttachedVolumes()
+    val usbSaved = drives.filter { it.type == DriveType.USB }
+    val network = drives.filter { it.type.isNetwork }
+    // Grants can be revoked from system settings; re-check whenever the list changes.
+    val access = remember(drives, attached) { usbSaved.associate { it.id to UsbDrives.hasAccess(context, it.address) } }
+
+    var pendingVolume by remember { mutableStateOf<AttachedVolume?>(null) }
+    val grant = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val vol = pendingVolume
+        pendingVolume = null
+        val tree = res.data?.data
+        if (res.resultCode == android.app.Activity.RESULT_OK && tree != null && vol != null) {
+            viewModel.connectUsbDrive(tree, vol)?.let(onOpen)
+        }
+    }
+
     Column(Modifier.fillMaxWidth()) {
-        PageHeader("Network drives", "Play music straight from a NAS, a computer or a Pi on your Wi-Fi.", null, onClose)
-        Spacer(Modifier.height(8.dp))
-        if (drives.isEmpty()) {
-            Column(
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    Modifier.size(84.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) { Icon(Icons.Default.Router, null, Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                Spacer(Modifier.height(16.dp))
-                Text("No drives yet", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "Works with shared folders (SMB), WebDAV and the MobileDigger server.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        PageHeader("Drives", "USB drives plugged into the phone, and drives on your Wi-Fi.", null, onClose)
+        LazyColumn(
+            Modifier.fillMaxWidth().weight(1f, fill = false),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            item { SectionLabel("Plugged into the phone") }
+            if (attached.isEmpty()) item {
+                HintCard(
+                    Icons.Default.Usb,
+                    "No USB drive plugged in",
+                    "Connect a hard drive, SSD or stick (USB-C, or with an OTG adapter). It appears here by itself."
                 )
             }
-        } else {
-            LazyColumn(
-                Modifier.fillMaxWidth().weight(1f, fill = false),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(drives, key = { it.id }) { d ->
-                    DriveCard(d, d.id == activeId, onOpen = { onOpen(d) }, onEdit = { onEdit(d) }, onDelete = { confirmDelete = d })
+            items(attached, key = { "vol-" + it.id }) { v ->
+                val saved = usbSaved.firstOrNull { it.share == v.id }
+                if (saved != null && access[saved.id] == true) {
+                    UsbCard(
+                        name = saved.name, vol = v, active = saved.id == activeId, connected = true,
+                        onOpen = { onOpen(saved) }, onForget = { confirmDelete = saved }
+                    )
+                } else {
+                    UsbCard(
+                        name = v.label, vol = v, active = false, connected = true, needsAccess = true,
+                        onOpen = { pendingVolume = v; grant.launch(UsbDrives.accessIntent(v)) }, onForget = null
+                    )
                 }
+            }
+            val away = usbSaved.filter { d -> attached.none { it.id == d.share } }
+            items(away, key = { it.id }) { d ->
+                UsbCard(name = d.name, vol = null, active = d.id == activeId, connected = false,
+                    onOpen = {}, onForget = { confirmDelete = d })
+            }
+
+            item { SectionLabel("Network") }
+            if (network.isEmpty()) item {
+                HintCard(Icons.Default.Router, "No network drives yet", "Shared folders (SMB), WebDAV and the MobileDigger server.")
+            }
+            items(network, key = { it.id }) { d ->
+                DriveCard(d, d.id == activeId, onOpen = { onOpen(d) }, onEdit = { onEdit(d) }, onDelete = { confirmDelete = d })
             }
         }
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onAdd, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp)) {
-                Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add a drive")
+                Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add a network drive")
             }
             if (activeId != null) {
                 OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                    Icon(Icons.Default.LinkOff, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Stop using network music")
+                    Icon(Icons.Default.LinkOff, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Stop playing from a drive")
                 }
             }
         }
     }
     confirmDelete?.let { d ->
+        val usb = d.type == DriveType.USB
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
-            title = { Text("Remove ${d.name}?") },
-            text = { Text("This only removes the saved connection. Nothing on the drive is touched.") },
-            confirmButton = { TextButton(onClick = { onDelete(d); confirmDelete = null }) { Text("Remove") } },
+            title = { Text(if (usb) "Forget ${d.name}?" else "Remove ${d.name}?") },
+            text = {
+                Text(
+                    if (usb) "The app stops having access to this drive. Nothing on it is touched; you can allow access again any time."
+                    else "This only removes the saved connection. Nothing on the drive is touched."
+                )
+            },
+            confirmButton = { TextButton(onClick = { onDelete(d); confirmDelete = null }) { Text(if (usb) "Forget" else "Remove") } },
             dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text("Cancel") } }
         )
+    }
+}
+
+@Composable
+private fun HintCard(icon: ImageVector, title: String, text: String) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            contentAlignment = Alignment.Center
+        ) { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun UsbCard(
+    name: String, vol: AttachedVolume?, active: Boolean, connected: Boolean, needsAccess: Boolean = false,
+    onOpen: () -> Unit, onForget: (() -> Unit)?
+) {
+    val border = when {
+        active -> BorderStroke(1.5.dp, OkGreen)
+        needsAccess -> BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+        else -> BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    }
+    OutlinedCard(
+        onClick = onOpen, enabled = connected,
+        shape = RoundedCornerShape(20.dp), border = border,
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(
+                        when {
+                            active -> OkGreen.copy(alpha = 0.18f)
+                            connected -> MaterialTheme.colorScheme.primaryContainer
+                            else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                        }
+                    ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Usb, null, tint = when {
+                        active -> OkGreen
+                        connected -> MaterialTheme.colorScheme.onPrimaryContainer
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    })
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        if (active) {
+                            Spacer(Modifier.width(8.dp))
+                            Text("IN USE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = OkGreen, letterSpacing = 1.sp,
+                                modifier = Modifier.border(1.dp, OkGreen, RoundedCornerShape(50)).padding(horizontal = 7.dp, vertical = 1.dp))
+                        }
+                    }
+                    Text(
+                        when {
+                            !connected -> "Not plugged in"
+                            needsAccess -> "Plugged in · tap to allow access"
+                            else -> "Plugged in · tap to browse"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (connected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (onForget != null) IconButton(onClick = onForget) {
+                    Icon(Icons.Default.DeleteOutline, "Forget $name", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            val free = vol?.freeBytes
+            val total = vol?.totalBytes
+            if (free != null && total != null && total > 0) {
+                Spacer(Modifier.height(10.dp))
+                LinearProgressIndicator(
+                    progress = { ((total - free).toFloat() / total).coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                )
+                Spacer(Modifier.height(4.dp))
+                Text("${TransferManager.fmt(free)} free of ${TransferManager.fmt(total)}",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (needsAccess) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "Android asks once: on the next screen tap “Use this folder”, then “Allow”.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 
@@ -298,7 +467,7 @@ private fun DriveEditPage(
         ) {
             Text("What kind of drive?", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp))
-            DriveType.entries.forEach { t ->
+            DriveType.entries.filter { it.isNetwork }.forEach { t ->
                 val selected = t == type
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
@@ -332,14 +501,14 @@ private fun DriveEditPage(
                     Text(when (type) {
                         DriveType.SMB -> "Address"
                         DriveType.WEBDAV -> "WebDAV address"
-                        DriveType.MOBILEDIGGER -> "Server address"
+                        DriveType.MOBILEDIGGER, DriveType.USB -> "Server address"
                     })
                 },
                 placeholder = {
                     Text(when (type) {
                         DriveType.SMB -> "192.168.1.20 or nas.local"
                         DriveType.WEBDAV -> "http://nas.local:5005/music"
-                        DriveType.MOBILEDIGGER -> "192.168.1.129:8080"
+                        DriveType.MOBILEDIGGER, DriveType.USB -> "192.168.1.129:8080"
                     })
                 },
                 leadingIcon = { Icon(Icons.Default.Link, null) },
@@ -497,7 +666,7 @@ private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBa
     val crumbs = if (path.isBlank()) emptyList() else path.split('/')
 
     Column(Modifier.fillMaxWidth()) {
-        PageHeader(drive.name, "Pick the folder to load. Subfolders are included.", onBack, null)
+        PageHeader(drive.name, "Open a folder, then play it or copy it to the phone. Subfolders are included.", onBack, null)
         // Breadcrumbs
         Row(
             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -505,7 +674,7 @@ private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBa
         ) {
             AssistChip(
                 onClick = { viewModel.browseDrive(drive, "") },
-                label = { Text(drive.type.let { if (it == DriveType.SMB) drive.share.ifBlank { "Top" } else "Top" }) },
+                label = { Text(when (drive.type) { DriveType.SMB -> drive.share.ifBlank { "Top" }; DriveType.USB -> drive.name; else -> "Top" }, maxLines = 1) },
                 leadingIcon = { Icon(driveIcon(drive.type), null, Modifier.size(16.dp)) }
             )
             crumbs.forEachIndexed { i, c ->
@@ -568,7 +737,7 @@ private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBa
                 Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp))
                 Text(if (path.isBlank()) "Load everything" else "Load “${path.substringAfterLast('/')}”", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (path.isNotBlank()) {
+            if (path.isNotBlank() || drive.type == DriveType.USB) {
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = { showTransfer = true },
@@ -576,7 +745,8 @@ private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBa
                     modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(Icons.Default.Download, null); Spacer(Modifier.width(8.dp))
-                    Text("Copy or move to phone…", maxLines = 1)
+                    Text(if (path.isBlank()) "Copy or move the whole drive…" else "Copy or move “${path.substringAfterLast('/')}” to phone…",
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

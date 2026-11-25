@@ -3158,6 +3158,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         if (_currentPlayingFile.value?.uri == mf.uri) {
                             _currentPlayingFile.value = renamed
                         }
+                        if (currentFile?.uri == mf.uri) currentFile = renamed
                     }
                 }
                 withContext(Dispatchers.Main) {
@@ -3193,6 +3194,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             PlaylistTab.REJECTED -> _rejectedFiles.value = _rejectedFiles.value.map { if (it.uri == cur.uri) renamed else it }
                         }
                         _currentPlayingFile.value = renamed
+                        // Renaming changes the URI: keep the field used by Like/Dislike and
+                        // "move to custom folder" in sync, or they act on the old, gone URI.
+                        if (currentFile?.uri == cur.uri) currentFile = renamed
                         // Ensure playback continues from same time
                         try { seekTo(resumePos) } catch (_: Exception) {}
                         _errorMessage.value = "Renamed current file"
@@ -3228,6 +3232,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                         if (_currentPlayingFile.value?.uri == mf.uri) {
                             _currentPlayingFile.value = renamed
                         }
+                        if (currentFile?.uri == mf.uri) currentFile = renamed
                         _errorMessage.value = "Renamed file"
                     }
                 } else {

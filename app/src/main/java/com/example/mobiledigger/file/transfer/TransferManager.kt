@@ -44,9 +44,11 @@ data class TransferJob(
     /** A different file had the same name on the phone, so this one was saved as "name (1)". */
     val renamed: Int = 0,
     /** Drive kind, for wording ("USB drive" vs network). */
-    val usb: Boolean = false
+    val usb: Boolean = false,
+    /** Folder name used when the whole drive is copied (see [NetworkDrive.topName]). */
+    val rootName: String = ""
 ) {
-    val folderName: String get() = sourceFolder.trim('/').substringAfterLast('/').ifBlank { driveName }
+    val folderName: String get() = sourceFolder.trim('/').substringAfterLast('/').ifBlank { rootName.ifBlank { driveName } }
     val totalBytes: Long get() = files.sumOf { it.size }
     val doneBytes: Long get() = files.filter { it.done }.sumOf { it.size }
     val doneFiles: Int get() = files.count { it.done }
@@ -54,7 +56,7 @@ data class TransferJob(
     fun toJson(): JSONObject = JSONObject()
         .put("driveId", driveId).put("driveName", driveName).put("sourceFolder", sourceFolder)
         .put("destTreeUri", destTreeUri).put("destLabel", destLabel).put("move", move).put("notDeleted", notDeleted)
-        .put("skipped", skipped).put("renamed", renamed).put("usb", usb)
+        .put("skipped", skipped).put("renamed", renamed).put("usb", usb).put("rootName", rootName)
         .put("files", JSONArray().apply {
             files.forEach { put(JSONObject().put("p", it.path).put("r", it.rel).put("s", it.size).put("d", it.done)) }
         })
@@ -66,7 +68,7 @@ data class TransferJob(
             o.getJSONArray("files").let { a ->
                 (0 until a.length()).map { i -> a.getJSONObject(i).let { TransferFile(it.getString("p"), it.getString("r"), it.optLong("s"), it.optBoolean("d")) } }
             },
-            o.optInt("notDeleted"), o.optInt("skipped"), o.optInt("renamed"), o.optBoolean("usb")
+            o.optInt("notDeleted"), o.optInt("skipped"), o.optInt("renamed"), o.optBoolean("usb"), o.optString("rootName")
         )
     }
 }
@@ -139,7 +141,7 @@ object TransferManager {
         val client = DriveClients.create(drive)
         try {
             val root = folder.trim('/')
-            val top = root.substringAfterLast('/').ifBlank { drive.name.ifBlank { "Network" } }
+            val top = root.substringAfterLast('/').ifBlank { drive.topName.ifBlank { "Drive" } }
             val out = mutableListOf<TransferFile>()
             fun walk(path: String, depth: Int) {
                 if (depth > 15 || out.size > 20000) return
@@ -353,6 +355,8 @@ object TransferManager {
     private fun summary(job: TransferJob): String {
         val verb = if (job.move) "Moved" else "Copied"
         val n = job.files.size - job.skipped
+        if (n == 0 && job.notDeleted == 0) return "Nothing new: all ${job.skipped} files are already in ${job.destLabel}/${job.folderName}" +
+            if (job.move) " (removed from ${job.driveName})" else ""
         return buildString {
             append("$verb $n ${if (n == 1) "file" else "files"} to ${job.destLabel}/${job.folderName}")
             if (job.skipped > 0) append(" · ${job.skipped} already there")
@@ -362,16 +366,26 @@ object TransferManager {
     }
 
     /**
-     * After a full move: deletes the source folder if nothing but (now empty) folders is left in
-     * it. Any file still there — even a hidden one — keeps the folder.
+     * After a full move: removes folders under [folder] that are now empty (and [folder] itself,
+     * unless it is the top of the drive). A folder with any file left in it — even a hidden one —
+     * is kept.
      */
     private fun removeEmptyFolders(client: DriveClient, folder: String) {
-        val root = folder.trim('/')
-        if (root.isEmpty()) return
-        fun empty(path: String, depth: Int): Boolean =
-            depth < 20 && client.list(path).all { it.isDir && empty(it.path, depth + 1) }
-        runCatching { if (empty(root, 0)) client.deleteFolder(root) }
-            .onFailure { CrashLogger.log("TransferManager", "Left the emptied source folder in place: ${it.message}") }
+        fun prune(path: String, depth: Int): Boolean {
+            if (depth > 20) return false
+            var empty = true
+            for (e in client.list(path)) {
+                if (!e.isDir) { empty = false; continue }
+                if (prune(e.path, depth + 1)) {
+                    runCatching { client.deleteFolder(e.path) }.onFailure { empty = false }
+                } else empty = false
+            }
+            return empty
+        }
+        runCatching {
+            val root = folder.trim('/')
+            if (prune(root, 0) && root.isNotEmpty()) client.deleteFolder(root)
+        }.onFailure { CrashLogger.log("TransferManager", "Left emptied source folders in place: ${it.message}") }
     }
 
     /**

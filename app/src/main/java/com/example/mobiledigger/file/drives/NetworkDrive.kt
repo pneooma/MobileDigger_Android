@@ -47,6 +47,12 @@ data class NetworkDrive(
         .put("domain", domain).put("folder", folder)
         .put("writeShare", writeShare).put("writeUser", writeUser).put("writePassword", writePassword)
 
+    /** Name of the drive's top level as a folder: the granted folder on a USB drive, else the drive name. */
+    val topName: String
+        get() = if (type == DriveType.USB)
+            UsbDrives.folderOf(android.net.Uri.parse(address)).substringAfterLast('/').ifBlank { name }
+        else name
+
     /** Short "where is it" line for the UI (never shows the password). */
     val displayAddress: String
         get() = when (type) {

@@ -56,7 +56,7 @@ fun TransferSetupDialog(drive: NetworkDrive, folder: String, viewModel: MusicVie
     // Default destination: the phone folder already used as the music source
     var dest by remember { mutableStateOf(viewModel.preferences.getSourceRootUri()?.let { Uri.parse(it) }) }
     val busy = TransferManager.state.collectAsState().value.status == TransferStatus.RUNNING
-    val folderName = folder.trim('/').substringAfterLast('/').ifBlank { drive.name }
+    val folderName = folder.trim('/').substringAfterLast('/').ifBlank { drive.topName }
     val isUsb = drive.type == DriveType.USB
 
     LaunchedEffect(drive.id, folder) {
@@ -97,7 +97,7 @@ fun TransferSetupDialog(drive: NetworkDrive, folder: String, viewModel: MusicVie
                     detail = when {
                         scanError != null -> null
                         files == null -> "Counting files…"
-                        else -> "${files.size} ${if (musicOnly) "music files" else "files"} · ${TransferManager.fmt(bytes)}" +
+                        else -> "${files.size} ${if (musicOnly) "music " else ""}${if (files.size == 1) "file" else "files"} · ${TransferManager.fmt(bytes)}" +
                             (if (leftOut > 0) " · $leftOut other files left out" else "")
                     },
                     loading = plan == null && scanError == null
@@ -173,7 +173,7 @@ fun TransferSetupDialog(drive: NetworkDrive, folder: String, viewModel: MusicVie
                         context, TransferJob(
                             driveId = drive.id, driveName = drive.name, sourceFolder = folder,
                             destTreeUri = d.toString(), destLabel = folderLabel(d.toString()) ?: "phone",
-                            move = doMove, files = f, usb = isUsb
+                            move = doMove, files = f, usb = isUsb, rootName = drive.topName
                         )
                     )
                     onDismiss()

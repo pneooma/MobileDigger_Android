@@ -361,7 +361,7 @@ private fun UsbCard(
             if (needsAccess) {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Android asks once: on the next screen tap “Use this folder”, then “Allow”.",
+                    "Android asks once: tap “Use this folder”, then “Allow”. If it says it can't use the top of the drive, open your music folder on it first.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -745,7 +745,7 @@ private fun DriveBrowsePage(drive: NetworkDrive, viewModel: MusicViewModel, onBa
                     modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(Icons.Default.Download, null); Spacer(Modifier.width(8.dp))
-                    Text(if (path.isBlank()) "Copy or move the whole drive…" else "Copy or move “${path.substringAfterLast('/')}” to phone…",
+                    Text("Copy or move “${path.substringAfterLast('/').ifBlank { drive.topName }}” to phone…",
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }

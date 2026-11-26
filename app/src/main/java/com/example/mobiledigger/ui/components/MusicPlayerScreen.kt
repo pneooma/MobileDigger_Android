@@ -292,6 +292,8 @@ fun MusicPlayerScreen(
     // "Archives" drawer in the To Do list: collapsed by default, choice remembered
     val uiPrefs = remember { context.getSharedPreferences("ui_prefs", android.content.Context.MODE_PRIVATE) }
     var archivesOpen by remember { mutableStateOf(uiPrefs.getBoolean("archives_open", false)) }
+    // Folders collapsed in the To Do / Liked lists (remembered; collapsed tracks are skipped by Next)
+    val collapsedFolders by viewModel.collapsedFolders.collectAsState()
     val setArchivesOpen: (Boolean) -> Unit = { open -> archivesOpen = open; uiPrefs.edit().putBoolean("archives_open", open).apply() }
     // Toolbar of action buttons (Home, Settings, EQ, Search…): can be hidden for more list space; remembered
     var isActionsVisible by remember { mutableStateOf(uiPrefs.getBoolean("actions_visible", true)) }
@@ -4190,6 +4192,8 @@ fun MusicPlayerScreen(
                                     .sorted()
                                     .forEach { subfolder ->
                                         add(PlaylistItem.HeaderItem(subfolder))
+                                        // Collapsed: just the header (its tracks stay selectable from it)
+                                        if ("${currentPlaylistTab.name}|$subfolder" in collapsedFolders) return@forEach
                                         archivesByFolder[subfolder]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
                                         grouped[subfolder]?.let { files -> addAll(files.map { PlaylistItem.FileItem(it) }) }
                                     }
@@ -4260,6 +4264,8 @@ fun MusicPlayerScreen(
                                         val archCount = archiveItems.count { it.folder == subName }
                                         var nameOpen by rememberSaveable(subName) { mutableStateOf(false) }
                                         val shortName = subName.trimEnd('/').substringAfterLast('/').ifBlank { subName }
+                                        val isCollapsed = "${currentPlaylistTab.name}|$subName" in collapsedFolders
+                                        val fold by animateFloatAsState(if (isCollapsed) -90f else 0f, tween(Motion.panelMs() / 2), label = "folderFold")
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -4268,9 +4274,24 @@ fun MusicPlayerScreen(
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(start = 14.dp, end = 6.dp),
+                                                    .padding(start = 2.dp, end = 6.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
+                                                // Collapse / expand this folder (remembered)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(36.dp)
+                                                        .clip(CircleShape)
+                                                        .clickable { viewModel.toggleFolderCollapsed(subName) },
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ExpandMore,
+                                                        contentDescription = if (isCollapsed) "Expand $shortName" else "Collapse $shortName",
+                                                        tint = if (isCollapsed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(22.dp).graphicsLayer { rotationZ = fold }
+                                                    )
+                                                }
                                                 Row(
                                                     modifier = Modifier
                                                         .weight(1f)
@@ -4296,7 +4317,7 @@ fun MusicPlayerScreen(
                                                     )
                                                     Spacer(Modifier.width(6.dp))
                                                     Text(
-                                                        text = "${subIndices.size}",
+                                                        text = if (isCollapsed) "${subIndices.size} hidden" else "${subIndices.size}",
                                                         style = MaterialTheme.typography.labelSmall,
                                                         color = MaterialTheme.colorScheme.primary,
                                                         modifier = Modifier

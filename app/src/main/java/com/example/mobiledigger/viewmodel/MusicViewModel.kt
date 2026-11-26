@@ -288,9 +288,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             val playingUri = _currentPlayingFile.value?.uri
             val stillPresent = if (playingUri != null) files.indexOfFirst { it.uri == playingUri } else -1
             _currentIndex.value = if (stillPresent != -1) {
-                (stillPresent + 1) % files.size
+                stepIndex(files, stillPresent, forward = true)
             } else {
-                _currentIndex.value.coerceIn(0, files.size - 1)
+                val i = _currentIndex.value.coerceIn(0, files.size - 1)
+                // The next track shifted into this slot; skip it too if its folder is collapsed.
+                if (isFolderCollapsed(_currentPlaylistTab.value, files[i].subfolder)) stepIndex(files, i, forward = true) else i
             }
             loadCurrentFile()
             // Start new file at 0 volume then fade in
@@ -403,6 +405,44 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyMap())
     
+    // Folders collapsed in the To Do / Liked lists, as "TAB|folder"; remembered across launches.
+    // A collapsed folder's tracks are hidden from the list and skipped by Next / Previous / auto-advance,
+    // but the folder can still be selected (header checkbox) to like / move / reject it later.
+    private val collapsePrefs = application.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE)
+    private val _collapsedFolders = MutableStateFlow<Set<String>>(
+        runCatching { collapsePrefs.getStringSet("collapsed_folders", emptySet())?.toSet() }.getOrNull() ?: emptySet()
+    )
+    val collapsedFolders: StateFlow<Set<String>> = _collapsedFolders.asStateFlow()
+
+    private fun collapseKey(tab: PlaylistTab, folder: String) = "${tab.name}|$folder"
+
+    fun isFolderCollapsed(tab: PlaylistTab, folder: String?): Boolean =
+        folder != null && collapseKey(tab, folder) in _collapsedFolders.value
+
+    /** Collapse or expand [folders] in the current tab. */
+    fun setFoldersCollapsed(folders: Collection<String>, collapsed: Boolean) {
+        val keys = folders.map { collapseKey(_currentPlaylistTab.value, it) }
+        val next = if (collapsed) _collapsedFolders.value + keys else _collapsedFolders.value - keys.toSet()
+        _collapsedFolders.value = next
+        collapsePrefs.edit().putStringSet("collapsed_folders", next).apply()
+    }
+
+    fun toggleFolderCollapsed(folder: String) =
+        setFoldersCollapsed(listOf(folder), !isFolderCollapsed(_currentPlaylistTab.value, folder))
+
+    /** Next/previous index in [files] that isn't in a collapsed folder (plain step if all are collapsed). */
+    private fun stepIndex(files: List<MusicFile>, from: Int, forward: Boolean): Int {
+        val n = files.size
+        if (n == 0) return 0
+        val tab = _currentPlaylistTab.value
+        var i = from
+        repeat(n) {
+            i = if (forward) (i + 1).mod(n) else (i - 1).mod(n)
+            if (!isFolderCollapsed(tab, files[i].subfolder)) return i
+        }
+        return if (forward) (from + 1).mod(n) else (from - 1).mod(n)
+    }
+
     // Liked playlist subfolder filter (null or empty = no filter, show all liked)
     private val _likedFilter = MutableStateFlow<List<String>?>(null)
     val likedFilter: StateFlow<List<String>?> = _likedFilter.asStateFlow()
@@ -1062,7 +1102,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                 delay(50) // Brief pause for 120Hz smooth animation
                 
                 val currentIndex = _currentIndex.value
-                val nextIndex = (currentIndex + 1) % currentFiles.size
+                val nextIndex = stepIndex(currentFiles, currentIndex, forward = true)
                 CrashLogger.log("MusicViewModel", "🔄 NEXT() - moving from index $currentIndex to $nextIndex")
                 _currentIndex.value = nextIndex
                 
@@ -1113,11 +1153,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             
             delay(50) // Brief pause for 120Hz smooth animation
             
-            val prevIndex = if (_currentIndex.value > 0) {
-                _currentIndex.value - 1
-            } else {
-                currentFiles.size - 1
-            }
+            val prevIndex = stepIndex(currentFiles, _currentIndex.value, forward = false)
             _currentIndex.value = prevIndex
             loadCurrentFile()
             updateNotification()
@@ -1611,7 +1647,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - updated current playing file to: ${currentFile.name} (URI: ${currentFile.uri})")
             
             // Pre-fetch next file for buffering (only if list has more than 1 item)
-            val nextFile = if (files.size > 1) files[(_currentIndex.value + 1) % files.size] else null
+            val nextFile = if (files.size > 1) files[stepIndex(files, _currentIndex.value, forward = true)] else null
             if (nextFile != null) {
                 CrashLogger.log("MusicViewModel", "📁 LOAD_CURRENT_FILE() - preloaded next file: ${nextFile.name}")
             }

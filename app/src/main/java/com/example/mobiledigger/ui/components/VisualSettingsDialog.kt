@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
@@ -47,6 +48,9 @@ fun SettingsDialog(
     val settings by visualSettingsManager.settings
     var currentSettings by remember { mutableStateOf(settings) }
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showDeskRemote by remember { mutableStateOf(false) }
+    val deskRemote by com.example.mobiledigger.remote.DeskRemote.state.collectAsState()
+    if (showDeskRemote) com.example.mobiledigger.ui.screens.DeskRemoteDialog { showDeskRemote = false }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -119,7 +123,31 @@ fun SettingsDialog(
                     ) {
                         Spacer(Modifier.height(6.dp))
                         when (tab) {
-                            0 -> GeneralTab(currentSettings, themeManager) { currentSettings = it }
+                            0 -> {
+                                // Desk remote: control playback from a nearby computer over Bluetooth
+                                OutlinedCard(
+                                    onClick = { showDeskRemote = true },
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                                ) {
+                                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(androidx.compose.material.icons.Icons.Default.Bluetooth, contentDescription = null,
+                                            tint = if (deskRemote.on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Spacer(Modifier.width(12.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            Text("Desk remote (Bluetooth)", fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                if (deskRemote.on) "On · PIN ${deskRemote.pin}" + if (deskRemote.unlocked > 0) " · computer connected" else ""
+                                                else "Control next / like / dislike from your computer",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Text(if (deskRemote.on) "Open" else "Set up", color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                                GeneralTab(currentSettings, themeManager) { currentSettings = it }
+                            }
                             1 -> VisualTab(currentSettings) { currentSettings = it }
                             2 -> AboutTab()
                         }

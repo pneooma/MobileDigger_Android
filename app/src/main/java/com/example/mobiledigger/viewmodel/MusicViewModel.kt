@@ -416,8 +416,21 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
 
     private fun collapseKey(tab: PlaylistTab, folder: String) = "${tab.name}|$folder"
 
-    fun isFolderCollapsed(tab: PlaylistTab, folder: String?): Boolean =
-        folder != null && collapseKey(tab, folder) in _collapsedFolders.value
+    /**
+     * Whether a track in [folder] (path like "A/B/C", null = top of the list) is hidden: the top
+     * ("" key) or any folder on its path is collapsed.
+     */
+    fun isFolderCollapsed(tab: PlaylistTab, folder: String?): Boolean {
+        val set = _collapsedFolders.value
+        if (set.isEmpty()) return false
+        if (collapseKey(tab, "") in set) return true
+        var path = ""
+        folder?.trim('/')?.split('/')?.filter { it.isNotEmpty() }?.forEach { seg ->
+            path = if (path.isEmpty()) seg else "$path/$seg"
+            if (collapseKey(tab, path) in set) return true
+        }
+        return false
+    }
 
     /** Collapse or expand [folders] in the current tab. */
     fun setFoldersCollapsed(folders: Collection<String>, collapsed: Boolean) {
@@ -427,8 +440,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         collapsePrefs.edit().putStringSet("collapsed_folders", next).apply()
     }
 
+    /** Collapse / expand one folder of the tree ("" = the whole list). */
     fun toggleFolderCollapsed(folder: String) =
-        setFoldersCollapsed(listOf(folder), !isFolderCollapsed(_currentPlaylistTab.value, folder))
+        setFoldersCollapsed(listOf(folder), collapseKey(_currentPlaylistTab.value, folder) !in _collapsedFolders.value)
 
     /** Next/previous index in [files] that isn't in a collapsed folder (plain step if all are collapsed). */
     private fun stepIndex(files: List<MusicFile>, from: Int, forward: Boolean): Int {
@@ -3060,10 +3074,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
      */
     fun toggleSubfolderSelection(subfolderName: String) {
         val files = currentPlaylistFiles.value
-        val indices = files.indices.filter { files[it].subfolder == subfolderName }.toSet()
+        // The whole branch: the folder and everything below it ("" = the whole list)
+        val inBranch = { f: String? -> folderInBranch(f, subfolderName) }
+        val indices = files.indices.filter { inBranch(files[it].subfolder) }.toSet()
         // Archives in that folder are part of the folder too (To Do tab only)
         val archUris = if (_currentPlaylistTab.value == PlaylistTab.TODO)
-            _archives.value.filter { it.folder == subfolderName }.map { it.uri }.toSet() else emptySet()
+            _archives.value.filter { inBranch(it.folder) }.map { it.uri }.toSet() else emptySet()
         if (indices.isEmpty() && archUris.isEmpty()) return
         // One kind at a time: keep selecting what's already being selected; otherwise tracks,
         // or archives when the folder holds only archives.
@@ -3832,11 +3848,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                             val newId = DocumentsContract.getDocumentId(renamed)
                             // Files inside keep their names; only the folder part of their ids changes.
                             val remap: (MusicFile) -> MusicFile = { f ->
-                                if (f.subfolder != oldName) f else {
+                                if (!folderInBranch(f.subfolder, oldName)) f else {
                                     val id = runCatching { DocumentsContract.getDocumentId(f.uri) }.getOrNull()
                                     val newUri = if (id != null && id.startsWith("$oldId/"))
                                         DocumentsContract.buildDocumentUriUsingTree(f.uri, newId + id.removePrefix(oldId)) else f.uri
-                                    f.copy(uri = newUri, subfolder = target)
+                                    f.copy(uri = newUri, subfolder = target + f.subfolder!!.trim('/').removePrefix(oldName))
                                 }
                             }
                             withContext(Dispatchers.Main) {
@@ -4319,3 +4335,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
 }
 
+
+
+/** Whether a track in [folder] (null/"" = top) lies in the branch [branch] ("" = everything). */
+fun folderInBranch(folder: String?, branch: String): Boolean {
+    val b = branch.trim('/')
+    if (b.isEmpty()) return true
+    val f = folder?.trim('/') ?: return false
+    return f == b || f.startsWith("$b/")
+}

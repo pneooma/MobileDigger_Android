@@ -216,7 +216,8 @@ fun AlreadySortedChip(was: Char) {
 
 // Sealed class for playlist items (headers and files)
 sealed class PlaylistItem {
-    data class HeaderItem(val subfolder: String) : PlaylistItem()
+    /** A folder of the tree: [subfolder] = its path ("" = the top of the list), [depth] for indenting. */
+    data class HeaderItem(val subfolder: String, val depth: Int = 0, val label: String = subfolder, val isRoot: Boolean = false) : PlaylistItem()
     data class FileItem(val file: com.example.mobiledigger.model.MusicFile) : PlaylistItem()
     data class ArchiveRowItem(val archive: com.example.mobiledigger.file.archives.ArchiveItem) : PlaylistItem()
     /** Collapsible "Archives" drawer bar at the top of the To Do list. */
@@ -4169,34 +4170,47 @@ fun MusicPlayerScreen(
                         // Conditionally display search results or current playlist files (reverted to original)
                         val displayFiles = currentPlaylistFiles // Search results handled within dropdown
                         
-                        // Group files by subfolder for TODO and LIKED playlists
+                        // To Do and Liked are shown as a folder tree: a top folder (the source folder /
+                        // "Liked") that can fold the whole list, then nested subfolders ("A › B › C"),
+                        // each collapsible (remembered). Collapsed branches are skipped by Next.
+                        val tabKey = currentPlaylistTab.name
+                        val isCollapsedPath = { path: String -> "$tabKey|$path" in collapsedFolders }
                         val groupedItems: List<PlaylistItem> = if (currentPlaylistTab == PlaylistTab.TODO || currentPlaylistTab == PlaylistTab.LIKED) {
-                            // Group by subfolder, handle null subfolders
-                            val grouped = currentPlaylistFiles.groupBy { it.subfolder }
-                            // Archives sit inside their own folder (To Do only); folders holding only
-                            // archives get a header too, so they no longer look empty.
+                            val norm = { f: String? -> f?.trim('/')?.takeIf { it.isNotEmpty() } }
+                            val grouped = currentPlaylistFiles.groupBy { norm(it.subfolder) }
                             // The "Archives" drawer bar hides/shows all archive rows (remembered).
                             val archivesByFolder = if (currentPlaylistTab == PlaylistTab.TODO && archivesOpen)
-                                archiveItems.groupBy { it.folder?.takeIf { f -> f.isNotBlank() } } else emptyMap()
-                            // Create flat list with headers: [Drawer, Header, Archive, File, File, Header, ...]
+                                archiveItems.groupBy { norm(it.folder) } else emptyMap()
+                            val archiveFolders = if (currentPlaylistTab == PlaylistTab.TODO) archiveItems.mapNotNull { norm(it.folder) } else emptyList()
+                            // Every folder on every path, so "A/B/C" also gives "A" and "A/B"
+                            val allPaths = (grouped.keys.filterNotNull() + archiveFolders).flatMap { p ->
+                                p.split('/').runningReduce { a, b -> "$a/$b" }
+                            }.toSet()
+                            val children = allPaths.groupBy { it.substringBeforeLast('/', "") }
+                                .mapValues { (_, v) -> v.sortedBy { it.lowercase() } }
+                            val rootLabel = when (currentPlaylistTab) {
+                                PlaylistTab.LIKED -> "Liked"
+                                else -> {
+                                    val first = currentPlaylistFiles.firstOrNull()?.uri ?: archiveItems.firstOrNull()?.uri
+                                    val drive = com.example.mobiledigger.file.drives.DriveProxy.parse(first)?.first
+                                        ?.let { id -> savedDrives.firstOrNull { it.id == id }?.name }
+                                    drive ?: folderLabel(viewModel.preferences.getSourceRootUri())?.substringAfterLast('/') ?: "To Do"
+                                }
+                            }
                             buildList {
                                 if (currentPlaylistTab == PlaylistTab.TODO && archiveItems.isNotEmpty()) add(PlaylistItem.ArchivesToggleItem(archiveItems.size))
-                                // Root folder first
-                                archivesByFolder[null]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
-                                grouped[null]?.let { files ->
-                                    addAll(files.map { PlaylistItem.FileItem(it) })
-                                }
-                                // Then each subfolder: header, its archives, its tracks
-                                (grouped.keys.filterNotNull() + archivesByFolder.keys.filterNotNull())
-                                    .distinct()
-                                    .sorted()
-                                    .forEach { subfolder ->
-                                        add(PlaylistItem.HeaderItem(subfolder))
-                                        // Collapsed: just the header (its tracks stay selectable from it)
-                                        if ("${currentPlaylistTab.name}|$subfolder" in collapsedFolders) return@forEach
-                                        archivesByFolder[subfolder]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
-                                        grouped[subfolder]?.let { files -> addAll(files.map { PlaylistItem.FileItem(it) }) }
+                                if (currentPlaylistFiles.isEmpty() && archiveItems.isEmpty()) return@buildList
+                                fun addFolder(path: String, depth: Int) {
+                                    val key = if (path.isEmpty()) null else path
+                                    archivesByFolder[key]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
+                                    grouped[key]?.let { files -> addAll(files.map { PlaylistItem.FileItem(it) }) }
+                                    children[path]?.forEach { c ->
+                                        add(PlaylistItem.HeaderItem(c, depth + 1, c.substringAfterLast('/')))
+                                        if (!isCollapsedPath(c)) addFolder(c, depth + 1)
                                     }
+                                }
+                                add(PlaylistItem.HeaderItem("", 0, rootLabel, isRoot = true))
+                                if (!isCollapsedPath("")) addFolder("", 0)
                             }
                         } else {
                             // For other playlists, just wrap files
@@ -4208,7 +4222,7 @@ fun MusicPlayerScreen(
                             items = groupedItems, 
                             key = { idx, item -> 
                                 when (item) {
-                                    is PlaylistItem.HeaderItem -> "header_${item.subfolder}"
+                                    is PlaylistItem.HeaderItem -> if (item.isRoot) "header_<root>" else "header_${item.subfolder}"
                                     is PlaylistItem.FileItem -> "${item.file.uri}_${item.file.subfolder ?: ""}"
                                     is PlaylistItem.ArchiveRowItem -> "archive_${item.archive.uri}"
                                     is PlaylistItem.ArchivesToggleItem -> "archives_toggle"
@@ -4252,19 +4266,21 @@ fun MusicPlayerScreen(
                                             modifier = Modifier.padding(horizontal = 8.dp)
                                         )
                                         val subName = playlistItem.subfolder
+                                        val inBranch = { f: String? -> com.example.mobiledigger.viewmodel.folderInBranch(f, subName) }
                                         val subIndices = currentPlaylistFiles.indices
-                                            .filter { currentPlaylistFiles[it].subfolder == subName }.toSet()
-                                        val subArch = if (currentPlaylistTab == PlaylistTab.TODO) archiveItems.filter { it.folder == subName }.map { it.uri } else emptyList()
+                                            .filter { inBranch(currentPlaylistFiles[it].subfolder) }.toSet()
+                                        val subArch = if (currentPlaylistTab == PlaylistTab.TODO) archiveItems.filter { inBranch(it.folder) }.map { it.uri } else emptyList()
                                         val allSubSelected = if (selectedArchiveUris.isNotEmpty() || (selectedIndices.isEmpty() && subIndices.isEmpty()))
                                             subArch.isNotEmpty() && selectedArchiveUris.containsAll(subArch)
                                         else subIndices.isNotEmpty() && selectedIndices.containsAll(subIndices)
                                         // Compact folder divider: one quiet line (last path part, ellipsized),
                                         // a small count pill and the select-all box. Tap the name to see the
                                         // full folder name and details.
-                                        val archCount = archiveItems.count { it.folder == subName }
+                                        val archCount = archiveItems.count { inBranch(it.folder) }
                                         var nameOpen by rememberSaveable(subName) { mutableStateOf(false) }
-                                        val shortName = subName.trimEnd('/').substringAfterLast('/').ifBlank { subName }
-                                        val isCollapsed = "${currentPlaylistTab.name}|$subName" in collapsedFolders
+                                        val shortName = playlistItem.label.ifBlank { subName }
+                                        val isRootHeader = playlistItem.isRoot
+                                        val isCollapsed = isCollapsedPath(subName)
                                         val fold by animateFloatAsState(if (isCollapsed) -90f else 0f, tween(Motion.panelMs() / 2), label = "folderFold")
                                         Column(
                                             modifier = Modifier
@@ -4274,7 +4290,7 @@ fun MusicPlayerScreen(
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(start = 2.dp, end = 6.dp),
+                                                    .padding(start = (2 + 16 * playlistItem.depth).dp, end = 6.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 // Collapse / expand this folder (remembered)
@@ -4301,16 +4317,21 @@ fun MusicPlayerScreen(
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Icon(
-                                                        Icons.Default.Folder, contentDescription = null,
-                                                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                                        modifier = Modifier.size(14.dp)
+                                                        when {
+                                                            !isRootHeader -> if (isCollapsed) Icons.Default.Folder else Icons.Default.FolderOpen
+                                                            currentPlaylistTab == PlaylistTab.LIKED -> Icons.Default.Favorite
+                                                            else -> Icons.Default.LibraryMusic
+                                                        },
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary.copy(alpha = if (isRootHeader) 1f else 0.7f),
+                                                        modifier = Modifier.size(if (isRootHeader) 18.dp else 14.dp)
                                                     )
                                                     Spacer(Modifier.width(6.dp))
                                                     Text(
                                                         text = shortName,
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        fontWeight = FontWeight.Medium,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        style = if (isRootHeader) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium,
+                                                        fontWeight = if (isRootHeader) FontWeight.Bold else FontWeight.Medium,
+                                                        color = if (isRootHeader) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis,
                                                         modifier = Modifier.weight(1f, fill = false)
@@ -4345,7 +4366,7 @@ fun MusicPlayerScreen(
                                             }
                                             if (nameOpen) {
                                                 val sampleUri = subIndices.firstOrNull()?.let { currentPlaylistFiles.getOrNull(it)?.uri }
-                                                    ?: archiveItems.firstOrNull { it.folder == subName }?.uri
+                                                    ?: archiveItems.firstOrNull { inBranch(it.folder) }?.uri
                                                 val loc = remember(sampleUri, savedDrives) { folderLocation(sampleUri, savedDrives) }
                                                 Column(Modifier.padding(start = 34.dp, end = 16.dp, bottom = 8.dp)) {
                                                     Row(verticalAlignment = Alignment.CenterVertically) {

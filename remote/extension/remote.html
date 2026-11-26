@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MobileDigger Remote</title>
+<style>
+/* Layout: one narrow control column — status, now playing + keys, mini player, shortcuts. */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --fg: #17201c; --muted: #5d6b64; --line: #d6dfda;
+  --accent: #1f9d6b; --like: #1f9d6b; --dislike: #d2453b; --warn: #b7791f;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1412; --panel: #18201c; --fg: #e6eeea; --muted: #93a39b; --line: #2a3530;
+          --accent: #3ccf93; --like: #3ccf93; --dislike: #ff6b5f; --warn: #e3a64a; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 var(--sans); }
+main { max-width: 580px; margin: 0 auto; padding: 28px 16px 40px; display: grid; gap: 16px; }
+h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.on { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); }
+.dot.wait { background: var(--warn); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.status, .hint { color: var(--muted); font-size: 13px; }
+.np { font-size: 18px; font-weight: 600; min-height: 1.45em; overflow-wrap: anywhere; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 10px 14px; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button:disabled { opacity: .45; cursor: default; }
+.keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.key { display: grid; gap: 4px; justify-items: center; padding: 12px 6px; }
+.key span { font-size: 20px; }
+.key b { font-size: 13px; }
+.like b { color: var(--like); } .dislike b { color: var(--dislike); }
+.flash { background: color-mix(in srgb, var(--accent) 22%, var(--panel)) !important; }
+.dislike.flash { background: color-mix(in srgb, var(--dislike) 22%, var(--panel)) !important; }
+input { font: 20px var(--mono); letter-spacing: 4px; width: 9.5ch; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.err { color: var(--dislike); font-size: 13px; }
+.bind { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.bind:last-child { border-bottom: 0; }
+.kbd-btn { font: 13px var(--mono); padding: 6px 10px; min-width: 9ch; }
+code { font: 13px var(--mono); color: var(--fg); }
+/* Mini player (always-on-top window) */
+body.pip { padding: 8px 10px; display: grid; gap: 6px; align-content: center; height: 100vh; }
+.pip-title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pip-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pip-btn { padding: 6px 0; font-size: 18px; border-radius: 10px; }
+@media (max-width: 460px) { .keys { grid-template-columns: repeat(3, 1fr); } }
+@media (prefers-reduced-motion: no-preference) { button { transition: background .15s; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><span id="dot" class="dot"></span>MobileDigger Remote</h1>
+
+  <section class="panel">
+    <div class="status" id="status">Not connected. On the phone: Settings → Desk remote → switch it on.</div>
+    <div class="row">
+      <button class="primary" id="connectBtn">Connect to phone</button>
+      <button id="disconnectBtn" hidden>Disconnect</button>
+      <button id="miniBtn">Open mini player</button>
+    </div>
+    <div class="row" id="pinRow" hidden>
+      <label for="pin">PIN shown on the phone</label>
+      <input id="pin" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="000000">
+      <button id="pinBtn">Unlock</button>
+    </div>
+    <div class="err" id="err" hidden></div>
+  </section>
+
+  <section class="panel">
+    <h2>Now playing</h2>
+    <div class="np" id="np">—</div>
+    <div class="keys">
+      <button class="key" data-cmd="prev" disabled><span>⏮</span><b>Previous</b></button>
+      <button class="key" data-cmd="play" disabled><span>⏯</span><b>Play/Pause</b></button>
+      <button class="key" data-cmd="next" disabled><span>⏭</span><b>Next</b></button>
+      <button class="key like" data-cmd="like" disabled><span>👍</span><b>Like</b></button>
+      <button class="key dislike" data-cmd="dislike" disabled><span>👎</span><b>Dislike</b></button>
+    </div>
+    <div class="hint">The mini player stays on top of every app. Drag it to the corner you like; Chrome remembers where.</div>
+  </section>
+
+  <section class="panel" id="globalBox" hidden>
+    <h2>Global shortcuts (work in any app)</h2>
+    <div id="globalList"></div>
+    <div class="row">
+      <button id="globalBtn">Change global shortcuts…</button>
+    </div>
+    <div class="hint">Chrome sets these in its shortcuts page. Set each one's scope to <b>Global</b>. Keep this tab open (it can be in the background) so the shortcuts reach the phone.</div>
+  </section>
+  <div class="hint" id="globalHint" hidden>For shortcuts that work while you're in other apps, install the MobileDigger Remote extension (see README).</div>
+
+  <section class="panel">
+    <h2>Keys in this tab and the mini player</h2>
+    <div id="keyList"></div>
+    <div class="row"><button id="resetKeys">Reset to defaults</button></div>
+    <div class="hint">Click a key to change it, then press the new key or combination.</div>
+  </section>
+</main>
+<script src="remote.js"></script>
+</body>
+</html>

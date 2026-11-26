@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "MobileDigger Remote",
+  "version": "1.0.0",
+  "description": "Control MobileDigger on your phone over Bluetooth: global hotkeys and an always-on-top mini player.",
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "MobileDigger Remote" },
+  "commands": {
+    "prev":    { "description": "Previous track", "suggested_key": { "default": "Ctrl+Shift+1", "mac": "Ctrl+Shift+1" }, "global": true },
+    "next":    { "description": "Next track",     "suggested_key": { "default": "Ctrl+Shift+3", "mac": "Ctrl+Shift+3" }, "global": true },
+    "like":    { "description": "Like",           "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Ctrl+Shift+8" }, "global": true },
+    "dislike": { "description": "Dislike",        "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Ctrl+Shift+9" }, "global": true },
+    "play":    { "description": "Play / Pause", "global": true }
+  }
+}

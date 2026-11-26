@@ -989,6 +989,9 @@ fun MusicPlayerScreen(
         if (showDrivesDialog) {
             com.example.mobiledigger.ui.screens.NetworkDrivesDialog(viewModel) { showDrivesDialog = false }
         }
+        var showDeskRemote by remember { mutableStateOf(false) }
+        val deskRemote by com.example.mobiledigger.remote.DeskRemote.state.collectAsState()
+        if (showDeskRemote) com.example.mobiledigger.ui.screens.DeskRemoteDialog { showDeskRemote = false }
 
         val topMessageBanner: @Composable () -> Unit = {
         // App messages ("1 file moved to Liked", "Source set…", errors): slim banner at the top,
@@ -1399,6 +1402,12 @@ fun MusicPlayerScreen(
                                 text = { Text(if (activeDrive != null) "Drive: ${activeDrive.name}" else "Drives (USB & network)…") },
                                 leadingIcon = { Icon(Icons.Default.Router, contentDescription = null) },
                                 onClick = { filterMenuExpanded = false; showDrivesDialog = true }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(if (deskRemote.on) "Desk remote: on · PIN ${deskRemote.pin}" else "Desk remote (Bluetooth)…") },
+                                leadingIcon = { Icon(Icons.Default.Bluetooth, contentDescription = null,
+                                    tint = if (deskRemote.on) MaterialTheme.colorScheme.primary else LocalContentColor.current) },
+                                onClick = { filterMenuExpanded = false; showDeskRemote = true }
                             )
                         }
                     }

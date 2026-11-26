@@ -628,6 +628,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     withContext(Dispatchers.Main) {
                         registerNotificationReceiver()
                         publishLibraryForCar()
+                        startDeskRemoteFeed()
                     }
                     // Force notification update after service starts
                     delay(1000) // Wait 1 second for service to initialize
@@ -2688,6 +2689,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
             }
                 .debounce(400)
                 .collect { (lists, tab, cur) -> MediaLibrary.update(lists, tab, cur) }
+        }
+    }
+
+    /** Keeps the Desk remote page's "now playing" line up to date (no-op while the remote is off). */
+    private fun startDeskRemoteFeed() {
+        viewModelScope.launch {
+            _currentPlayingFile.collect { f ->
+                com.example.mobiledigger.remote.DeskRemote.setNowPlaying(f?.name?.substringBeforeLast('.') ?: "")
+            }
         }
     }
 

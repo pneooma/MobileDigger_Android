@@ -742,7 +742,16 @@ class FileManager(private val context: Context) {
      * it with its new URI, or null on failure. Same storage: an instant move; otherwise copy, then
      * delete the original — and if that delete fails the copy is removed (no duplicates).
      */
-    suspend fun moveToLikedFolder(musicFile: MusicFile, subfolderName: String?): MusicFile? = withContext(Dispatchers.IO) {
+    suspend fun moveToLikedFolder(musicFile: MusicFile, subfolderName: String?): MusicFile? =
+        moveToLikedFolderInner(musicFile, subfolderName)?.also { moved ->
+            // Remember when it arrived, so Liked lists it newest-first (a move keeps the old file date).
+            com.example.mobiledigger.util.SortHistory.record(
+                musicFile.copy(name = moved.name), true,
+                resultsPath(if (subfolderName.isNullOrBlank()) "Liked" else "Liked › $subfolderName")
+            )
+        }
+
+    private suspend fun moveToLikedFolderInner(musicFile: MusicFile, subfolderName: String?): MusicFile? = withContext(Dispatchers.IO) {
         if (!isLocalMovable(musicFile.uri)) return@withContext null
         try {
             val liked = likedFolder(create = true) ?: return@withContext null

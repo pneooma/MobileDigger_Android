@@ -4200,14 +4200,21 @@ fun MusicPlayerScreen(
                             buildList {
                                 if (currentPlaylistTab == PlaylistTab.TODO && archiveItems.isNotEmpty()) add(PlaylistItem.ArchivesToggleItem(archiveItems.size))
                                 if (currentPlaylistFiles.isEmpty() && archiveItems.isEmpty()) return@buildList
+                                // Liked: subfolders first, then the folder's own tracks (newest liked
+                                // first, as loaded). To Do: tracks first, then subfolders.
+                                val foldersFirst = currentPlaylistTab == PlaylistTab.LIKED
                                 fun addFolder(path: String, depth: Int) {
                                     val key = if (path.isEmpty()) null else path
+                                    val addSubfolders = {
+                                        children[path]?.forEach { c ->
+                                            add(PlaylistItem.HeaderItem(c, depth + 1, c.substringAfterLast('/')))
+                                            if (!isCollapsedPath(c)) addFolder(c, depth + 1)
+                                        }
+                                    }
+                                    if (foldersFirst) addSubfolders()
                                     archivesByFolder[key]?.let { a -> addAll(a.map { PlaylistItem.ArchiveRowItem(it) }) }
                                     grouped[key]?.let { files -> addAll(files.map { PlaylistItem.FileItem(it) }) }
-                                    children[path]?.forEach { c ->
-                                        add(PlaylistItem.HeaderItem(c, depth + 1, c.substringAfterLast('/')))
-                                        if (!isCollapsedPath(c)) addFolder(c, depth + 1)
-                                    }
+                                    if (!foldersFirst) addSubfolders()
                                 }
                                 add(PlaylistItem.HeaderItem("", 0, rootLabel, isRoot = true))
                                 if (!isCollapsedPath("")) addFolder("", 0)

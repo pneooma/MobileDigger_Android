@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-         versionCode = 13106
-         versionName = "13.106"
+         versionCode = 13107
+         versionName = "13.107"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -102,6 +102,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.hierynomus:smbj:0.13.0")
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+    // iPod touch pairing: X.509 certificates for the lockdown pair record
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
 
     // Archives in music folders: ZIP + 7z (commons-compress, xz for LZMA2) and RAR 4 (junrar)
     implementation("org.apache.commons:commons-compress:1.27.1")

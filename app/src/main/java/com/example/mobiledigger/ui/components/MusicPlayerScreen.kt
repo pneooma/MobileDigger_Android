@@ -288,6 +288,7 @@ fun MusicPlayerScreen(
 
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showIpodDialog by remember { mutableStateOf(false) } // iPod touch manager (send progress shows here)
     var showUndoPicker by remember { mutableStateOf(false) }
     var showEqualizer by remember { mutableStateOf(false) }
     // "Archives" drawer in the To Do list: collapsed by default, choice remembered
@@ -818,6 +819,7 @@ fun MusicPlayerScreen(
             confirmButton = { TextButton(onClick = { showUndoPicker = false }) { Text("Close") } }
         )
     }
+    if (showIpodDialog) com.example.mobiledigger.ui.screens.IpodDialog { showIpodDialog = false }
     if (showSettingsDialog) {
         SettingsDialog(
             visualSettingsManager = viewModel.visualSettingsManager,
@@ -1438,6 +1440,22 @@ fun MusicPlayerScreen(
             // Multi-select inline controls — compact grid layout
             if (isMultiSelectionMode) {
                 val selectedCount by viewModel.selectedIndices.collectAsState()
+                // Send the selected tracks to a connected iPod touch (optionally into a playlist)
+                var showSendToIpod by remember { mutableStateOf(false) }
+                if (showSendToIpod) {
+                    val files = selectedCount.sorted().mapNotNull { currentPlaylistFiles.getOrNull(it) }
+                    com.example.mobiledigger.ui.screens.SendToIpodDialog(
+                        count = files.size,
+                        onSend = { target ->
+                            showSendToIpod = false
+                            com.example.mobiledigger.ipod.IpodManager.send(context,
+                                files.map { com.example.mobiledigger.ipod.IpodManager.Source(it.uri, it.name) }, target)
+                            viewModel.toggleMultiSelectionMode()
+                            showIpodDialog = true
+                        },
+                        onDismiss = { showSendToIpod = false }
+                    )
+                }
                 if (selectedArchiveUris.isEmpty()) Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1463,6 +1481,7 @@ fun MusicPlayerScreen(
                     MsButton("Reject", Icons.Default.ThumbDown, tint = if (isMonochrome) monoColor else Color.Red) { viewModel.sortSelectedFiles(SortAction.DISLIKE) }
                     MsButton("Rename", Icons.Default.Edit) { showRenameSelectedDialog = true }
                     MsButton("Move", Icons.Default.Folder) { viewModeForSubfolderDialog = false; multiMoveMode = true; showSubfolderSelectionDialog = true }
+                    MsButton("iPod", Icons.Default.PhoneIphone) { if (selectedCount.isNotEmpty()) showSendToIpod = true }
                     MsButton("Like", Icons.Default.Favorite, tint = YesButton) { viewModel.sortSelectedFiles(SortAction.LIKE) }
                     MsButton("Delete", Icons.Default.DeleteForever, tint = Color.Red) { if (selectedCount.isNotEmpty()) showDeleteSelectedDialog = true }
                     MsButton("Exit", Icons.Default.Close, tint = Color.Red, border = BorderStroke(1.dp, Color.Red), textColor = Color.Red) { viewModel.toggleMultiSelectionMode() }

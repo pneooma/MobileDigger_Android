@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
@@ -51,6 +52,8 @@ fun SettingsDialog(
     var showDeskRemote by remember { mutableStateOf(false) }
     val deskRemote by com.example.mobiledigger.remote.DeskRemote.state.collectAsState()
     if (showDeskRemote) com.example.mobiledigger.ui.screens.DeskRemoteDialog { showDeskRemote = false }
+    var showIpod by remember { mutableStateOf(false) }
+    if (showIpod) com.example.mobiledigger.ui.screens.IpodDialog { showIpod = false }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -144,6 +147,23 @@ fun SettingsDialog(
                                             )
                                         }
                                         Text(if (deskRemote.on) "Open" else "Set up", color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                                OutlinedCard(
+                                    onClick = { showIpod = true },
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                                ) {
+                                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(androidx.compose.material.icons.Icons.Default.PhoneIphone, contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Spacer(Modifier.width(12.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            Text("iPod", fontWeight = FontWeight.SemiBold)
+                                            Text("Copy music and manage playlists on an iPod touch",
+                                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        Text("Open", color = MaterialTheme.colorScheme.primary)
                                     }
                                 }
                                 GeneralTab(currentSettings, themeManager) { currentSettings = it }

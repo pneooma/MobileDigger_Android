@@ -52,8 +52,6 @@ fun SettingsDialog(
     var showDeskRemote by remember { mutableStateOf(false) }
     val deskRemote by com.example.mobiledigger.remote.DeskRemote.state.collectAsState()
     if (showDeskRemote) com.example.mobiledigger.ui.screens.DeskRemoteDialog { showDeskRemote = false }
-    var showIpod by remember { mutableStateOf(false) }
-    if (showIpod) com.example.mobiledigger.ui.screens.IpodDialog { showIpod = false }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -150,7 +148,7 @@ fun SettingsDialog(
                                     }
                                 }
                                 OutlinedCard(
-                                    onClick = { showIpod = true },
+                                    onClick = { onDismiss(); com.example.mobiledigger.ipod.IpodManager.openPage() },
                                     shape = RoundedCornerShape(16.dp),
                                     modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
                                 ) {

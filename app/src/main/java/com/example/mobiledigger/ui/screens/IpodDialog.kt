@@ -29,9 +29,12 @@ import com.example.mobiledigger.ipod.TouchTrack
 
 private fun mb(b: Long) = if (b >= 1L shl 30) "%.1f GB".format(b / 1073741824.0) else "${b shr 20} MB"
 
-/** iPod touch manager: what's on it, playlists (create / edit / delete), remove songs. */
+/**
+ * The iPod page: what's connected, sending songs from this phone (with a per-song transfer queue),
+ * playlists on the iPod and the songs on it.
+ */
 @Composable
-fun IpodDialog(onDismiss: () -> Unit) {
+fun IpodPage(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, bars: PaddingValues = PaddingValues(), onDismiss: () -> Unit) {
     val context = LocalContext.current
     val ui by IpodManager.ui.collectAsState()
     val lib = ui.library
@@ -41,54 +44,240 @@ fun IpodDialog(onDismiss: () -> Unit) {
     val busy = ui.status == IpodManager.Status.BUSY || ui.status == IpodManager.Status.CONNECTING
     LaunchedEffect(Unit) { if (!IpodManager.isConnected && !busy) IpodManager.connect(context) }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            Modifier.fillMaxWidth().heightIn(max = (LocalConfiguration.current.screenHeightDp - 90).dp).padding(10.dp),
-            shape = RoundedCornerShape(26.dp), color = MaterialTheme.colorScheme.surface
-        ) {
-            if (lib != null && (editing != null || creating)) {
-                PlaylistEditor(lib, editing, busy,
-                    onBack = { editing = null; creating = false },
-                    onSave = { name, members ->
-                        IpodManager.savePlaylist(context, editing?.id, name, members); editing = null; creating = false
-                    },
-                    onDelete = { pl -> IpodManager.deletePlaylist(context, pl.id, pl.name); editing = null })
-                return@Surface
-            }
-            Column(Modifier.fillMaxWidth()) {
-                // Header
-                Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 6.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.PhoneIphone, null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(ui.deviceName ?: "iPod touch", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text(
-                            buildString {
-                                if (lib != null) append("${lib.tracks.size} songs · ${lib.playlists.size} playlists")
-                                ui.free?.let { (free, total) -> append(" · ${mb(free)} free of ${mb(total)}") }
-                            }.ifEmpty { "Not connected" },
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(onClick = { IpodManager.connect(context) }, enabled = !busy) { Icon(Icons.Default.Refresh, "Reconnect") }
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, "Close") }
+    Dialog(onDismissRequest = { if (editing != null || creating) { editing = null; creating = false } else onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        // Edge to edge; the dialog window gets no system-bar insets, so the caller's ([bars]) keep the
+        // top bar and the Send button clear of the status and navigation bars.
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            // The window starts below the status bar but keeps the full screen height, so it reaches past the
+            // bottom edge by the status-bar height: pad the bottom by that plus the navigation bar.
+            Column(Modifier.fillMaxSize().padding(bottom = bars.calculateTopPadding() + bars.calculateBottomPadding()).imePadding()) {
+                if (lib != null && (editing != null || creating)) {
+                    PlaylistEditor(lib, editing, busy,
+                        onBack = { editing = null; creating = false },
+                        onSave = { name, members -> IpodManager.savePlaylist(context, editing?.id, name, members); editing = null; creating = false; tab = 1 },
+                        onDelete = { pl -> IpodManager.deletePlaylist(context, pl.id, pl.name); editing = null })
+                    return@Column
                 }
-                // Status
+                // Top bar
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onDismiss) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    Text("iPod", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { IpodManager.connect(context) }, enabled = !busy) { Icon(Icons.Default.Refresh, "Reconnect") }
+                }
+                DeviceCard(ui, lib, busy) { IpodManager.connect(context) }
                 StatusCard(ui, busy)
-                if (lib != null) {
-                    TabRow(selectedTabIndex = tab, modifier = Modifier.padding(top = 6.dp)) {
-                        Tab(tab == 0, { tab = 0 }, text = { Text("Playlists") })
-                        Tab(tab == 1, { tab = 1 }, text = { Text("Songs") })
+                TabRow(selectedTabIndex = tab) {
+                    Tab(tab == 0, { tab = 0 }, text = { Text("Send") }, icon = { Icon(Icons.Default.Upload, null) })
+                    Tab(tab == 1, { tab = 1 }, text = { Text("Playlists" + (lib?.let { " (${it.playlists.size})" } ?: "")) },
+                        icon = { Icon(Icons.AutoMirrored.Filled.QueueMusic, null) })
+                    Tab(tab == 2, { tab = 2 }, text = { Text("On iPod" + (lib?.let { " (${it.tracks.size})" } ?: "")) },
+                        icon = { Icon(Icons.Default.PhoneIphone, null) })
+                }
+                Box(Modifier.weight(1f)) {
+                    when (tab) {
+                        0 -> SendTab(viewModel, ui, busy)
+                        1 -> if (lib != null) PlaylistsTab(lib, busy, onOpen = { editing = it }, onNew = { creating = true }) else NotConnected()
+                        else -> if (lib != null) SongsTab(lib, busy) { ids -> IpodManager.removeSongs(context, ids) } else NotConnected()
                     }
-                    Box(Modifier.weight(1f, fill = false)) {
-                        if (tab == 0) PlaylistsTab(lib, busy, onOpen = { editing = it }, onNew = { creating = true })
-                        else SongsTab(lib, busy) { ids -> IpodManager.removeSongs(context, ids) }
-                    }
-                } else Spacer(Modifier.height(12.dp))
-                Text(
-                    "To send songs: select them in your playlist (Select), then tap “iPod”.",
-                    Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NotConnected() {
+    Text("Connect the iPod to see what's on it.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+private fun DeviceCard(ui: IpodManager.Ui, lib: TouchLibrary?, busy: Boolean, onConnect: () -> Unit) {
+    Card(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp), shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PhoneIphone, null, Modifier.size(36.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(ui.deviceName ?: "iPod touch", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        when {
+                            lib != null -> "${lib.tracks.size} songs · ${lib.playlists.size} playlists"
+                            ui.status == IpodManager.Status.CONNECTING -> "Connecting…"
+                            else -> "Not connected"
+                        },
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (lib == null && !busy) Button(onClick = onConnect) { Text("Connect") }
+            }
+            ui.free?.let { (free, total) ->
+                if (total > 0) {
+                    LinearProgressIndicator(progress = { ((total - free).toFloat() / total).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(6.dp), trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+                    Text("${mb(free)} free of ${mb(total)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+private val convertExt = setOf("flac", "wav", "aif", "aiff", "ogg", "opus")
+
+/** Pick songs from this phone's lists and send them; shows the transfer queue and recent transfers. */
+@Composable
+private fun SendTab(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, ui: IpodManager.Ui, busy: Boolean) {
+    val context = LocalContext.current
+    val todo by viewModel.musicFiles.collectAsState()
+    val liked by viewModel.likedFiles.collectAsState()
+    val rejected by viewModel.rejectedFiles.collectAsState()
+    var source by remember { mutableIntStateOf(1) } // Liked first: the songs worth taking along
+    var query by remember { mutableStateOf("") }
+    val picked = remember { mutableStateMapOf<String, com.example.mobiledigger.model.MusicFile>() }
+    var target by remember { mutableStateOf<IpodManager.Target>(IpodManager.Target.None) }
+    var newName by remember { mutableStateOf("") }
+    var targetMenu by remember { mutableStateOf(false) }
+    val lists = listOf("To Do" to todo, "Liked" to liked, "Rejected" to rejected)
+    val shown = remember(source, query, todo, liked, rejected) {
+        val q = query.trim().lowercase()
+        lists[source].second.filter { q.isEmpty() || it.name.lowercase().contains(q) || (it.subfolder ?: "").lowercase().contains(q) }
+    }
+    val pickedSize = picked.values.sumOf { it.size }
+    val lib = ui.library
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+
+    Column(Modifier.fillMaxSize()) {
+        // Transfer queue (current / last job)
+        if (ui.queue.isNotEmpty()) TransferQueue(ui, busy)
+        // Source + search
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            lists.forEachIndexed { i, (name, l) ->
+                FilterChip(selected = source == i, onClick = { source = i }, label = { Text("$name ${l.size}") })
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(query, { query = it }, Modifier.weight(1f), singleLine = true,
+                placeholder = { Text("Search ${lists[source].first}") }, leadingIcon = { Icon(Icons.Default.Search, null) })
+            Spacer(Modifier.width(6.dp))
+            val allPicked = shown.isNotEmpty() && shown.all { it.uri.toString() in picked }
+            TextButton(onClick = {
+                if (allPicked) shown.forEach { picked.remove(it.uri.toString()) } else shown.forEach { picked[it.uri.toString()] = it }
+            }, enabled = shown.isNotEmpty()) { Text(if (allPicked) "None" else "All") }
+        }
+        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+            if (shown.isEmpty()) item {
+                Text(if (lists[source].second.isEmpty()) "Nothing in ${lists[source].first}. Load your music first." else "No match.",
+                    Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            itemsIndexed(shown, key = { _, f -> f.uri.toString() }) { _, f ->
+                val key = f.uri.toString()
+                val sel = key in picked
+                val ext = f.name.substringAfterLast('.', "").lowercase()
+                ListItem(
+                    headlineContent = { Text(f.name.substringBeforeLast('.'), maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 14.sp) },
+                    supportingContent = {
+                        Text(listOfNotNull(f.subfolder, ext.uppercase(), if (f.size > 0) mb(f.size) else null,
+                            if (ext in convertExt) "→ AAC" else null).joinToString(" · "), fontSize = 12.sp)
+                    },
+                    leadingContent = { Checkbox(sel, { if (sel) picked.remove(key) else picked[key] = f }) },
+                    modifier = Modifier.clickable { if (sel) picked.remove(key) else picked[key] = f }
                 )
+            }
+        }
+        // Send bar
+        HorizontalDivider()
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box {
+                OutlinedButton(onClick = { targetMenu = true }, modifier = Modifier.fillMaxWidth(), enabled = lib != null) {
+                    Icon(Icons.AutoMirrored.Filled.PlaylistAdd, null); Spacer(Modifier.width(8.dp))
+                    Text(when (val t = target) {
+                        IpodManager.Target.None -> "No playlist (just add the songs)"
+                        is IpodManager.Target.New -> "New playlist: ${t.name.ifBlank { "…" }}"
+                        is IpodManager.Target.Existing -> "Add to: " + (lib?.playlists?.firstOrNull { it.id == t.pid }?.name ?: "?")
+                    }, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Icon(Icons.Default.ArrowDropDown, null)
+                }
+                DropdownMenu(targetMenu, { targetMenu = false }) {
+                    DropdownMenuItem(text = { Text("No playlist") }, onClick = { target = IpodManager.Target.None; targetMenu = false })
+                    DropdownMenuItem(text = { Text("New playlist…") }, onClick = { target = IpodManager.Target.New(newName); targetMenu = false })
+                    lib?.playlists?.filter { it.editable }?.forEach { p ->
+                        DropdownMenuItem(text = { Text("${p.name} (${p.trackIds.size})") }, onClick = { target = IpodManager.Target.Existing(p.id); targetMenu = false })
+                    }
+                }
+            }
+            if (target is IpodManager.Target.New) OutlinedTextField(newName, { newName = it; target = IpodManager.Target.New(it) },
+                Modifier.fillMaxWidth(), singleLine = true, label = { Text("Playlist name") })
+            val free = ui.free?.first
+            val tooBig = free != null && pickedSize > free - (50L shl 20)
+            Button(
+                onClick = {
+                    focus.clearFocus()
+                    IpodManager.send(context, picked.values.map { IpodManager.Source(it.uri, it.name) },
+                        (target as? IpodManager.Target.New)?.let { IpodManager.Target.New(newName.trim()) } ?: target)
+                    picked.clear()
+                },
+                enabled = picked.isNotEmpty() && lib != null && !busy && !tooBig &&
+                    (target !is IpodManager.Target.New || newName.isNotBlank()),
+                modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Default.Upload, null); Spacer(Modifier.width(8.dp))
+                Text(when {
+                    busy -> "Transfer in progress…"
+                    picked.isEmpty() -> "Pick songs to send"
+                    tooBig -> "Not enough space on the iPod"
+                    else -> "Send ${picked.size} song${if (picked.size == 1) "" else "s"} · ${mb(pickedSize)}"
+                })
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransferQueue(ui: IpodManager.Ui, busy: Boolean) {
+    val done = ui.queue.count { it.state == IpodManager.TState.DONE }
+    val failed = ui.queue.count { it.state == IpodManager.TState.FAILED }
+    Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), shape = RoundedCornerShape(16.dp)) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (busy) "Transferring · $done of ${ui.queue.size} done" else "Last transfer · $done sent" + (if (failed > 0) ", $failed failed" else ""),
+                    fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                if (!busy) TextButton(onClick = { IpodManager.clearQueue() }) { Text("Clear") }
+            }
+            LazyColumn(Modifier.heightIn(max = 170.dp)) {
+                itemsIndexed(ui.queue) { _, it ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        val (icon, tint) = when (it.state) {
+                            IpodManager.TState.DONE -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.primary
+                            IpodManager.TState.FAILED -> Icons.Default.Error to MaterialTheme.colorScheme.error
+                            IpodManager.TState.SENDING -> Icons.Default.Upload to MaterialTheme.colorScheme.primary
+                            IpodManager.TState.CONVERTING, IpodManager.TState.PREPARING -> Icons.Default.Sync to MaterialTheme.colorScheme.tertiary
+                            IpodManager.TState.WAITING -> Icons.Default.Schedule to MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                        Icon(icon, null, Modifier.size(18.dp), tint = tint)
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(it.name.substringBeforeLast('.'), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 13.sp)
+                            val label = when (it.state) {
+                                IpodManager.TState.WAITING -> it.detail.ifEmpty { "Waiting" }
+                                IpodManager.TState.PREPARING -> "Preparing"
+                                IpodManager.TState.CONVERTING -> "Converting to AAC"
+                                IpodManager.TState.SENDING -> "Sending"
+                                IpodManager.TState.DONE -> "On the iPod"
+                                IpodManager.TState.FAILED -> it.detail.ifEmpty { "Failed" }
+                            }
+                            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+            if (ui.history.isNotEmpty() && !busy) {
+                HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                ui.history.take(3).forEach { h ->
+                    Text((if (h.ok) "✓ " else "✗ ") + java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(h.time)) + "  " + h.text,
+                        fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        color = if (h.ok) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
+                }
             }
         }
     }
@@ -97,7 +286,7 @@ fun IpodDialog(onDismiss: () -> Unit) {
 @Composable
 private fun StatusCard(ui: IpodManager.Ui, busy: Boolean) {
     val show = busy || ui.prompt != null || ui.status == IpodManager.Status.ERROR || ui.status == IpodManager.Status.NO_DEVICE ||
-        (ui.status == IpodManager.Status.READY && ui.message.isNotEmpty())
+        (ui.status == IpodManager.Status.READY && ui.message.isNotEmpty() && ui.message != "Connected")
     if (!show) return
     val err = ui.status == IpodManager.Status.ERROR || ui.status == IpodManager.Status.NO_DEVICE
     Card(
@@ -153,6 +342,18 @@ private fun SongsTab(lib: TouchLibrary, busy: Boolean, onRemove: (List<Long>) ->
             .sortedBy { it.title.lowercase() }
     }
     Column {
+        if (lib.unfinished.isNotEmpty()) Card(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp), shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("${lib.unfinished.size} song${if (lib.unfinished.size == 1) "" else "s"} didn't finish transferring", fontWeight = FontWeight.SemiBold)
+                    Text(lib.unfinished.joinToString { it.title }.take(120), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                TextButton(onClick = { onRemove(lib.unfinished.map { it.syncId }) }, enabled = !busy) { Text("Remove") }
+            }
+        }
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(query, { query = it }, Modifier.weight(1f), singleLine = true,
                 placeholder = { Text("Search the iPod") }, leadingIcon = { Icon(Icons.Default.Search, null) })

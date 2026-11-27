@@ -288,7 +288,6 @@ fun MusicPlayerScreen(
 
     var showLoveDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
-    var showIpodDialog by remember { mutableStateOf(false) } // iPod touch manager (send progress shows here)
     var showUndoPicker by remember { mutableStateOf(false) }
     var showEqualizer by remember { mutableStateOf(false) }
     // "Archives" drawer in the To Do list: collapsed by default, choice remembered
@@ -819,7 +818,10 @@ fun MusicPlayerScreen(
             confirmButton = { TextButton(onClick = { showUndoPicker = false }) { Text("Close") } }
         )
     }
-    if (showIpodDialog) com.example.mobiledigger.ui.screens.IpodDialog { showIpodDialog = false }
+    // The iPod page (opened from Settings, the Sort menu or the multi-select bar)
+    val ipodPageOpen by com.example.mobiledigger.ipod.IpodManager.pageOpen.collectAsState()
+    val systemBars = WindowInsets.systemBars.asPaddingValues()
+    if (ipodPageOpen) com.example.mobiledigger.ui.screens.IpodPage(viewModel, systemBars) { com.example.mobiledigger.ipod.IpodManager.closePage() }
     if (showSettingsDialog) {
         SettingsDialog(
             visualSettingsManager = viewModel.visualSettingsManager,
@@ -1411,6 +1413,11 @@ fun MusicPlayerScreen(
                                     tint = if (deskRemote.on) MaterialTheme.colorScheme.primary else LocalContentColor.current) },
                                 onClick = { filterMenuExpanded = false; showDeskRemote = true }
                             )
+                            DropdownMenuItem(
+                                text = { Text("iPod…") },
+                                leadingIcon = { Icon(Icons.Default.PhoneIphone, contentDescription = null) },
+                                onClick = { filterMenuExpanded = false; com.example.mobiledigger.ipod.IpodManager.openPage() }
+                            )
                         }
                     }
                     val canUndo = viewModel.sortResults.collectAsState().value.isNotEmpty()
@@ -1451,7 +1458,7 @@ fun MusicPlayerScreen(
                             com.example.mobiledigger.ipod.IpodManager.send(context,
                                 files.map { com.example.mobiledigger.ipod.IpodManager.Source(it.uri, it.name) }, target)
                             viewModel.toggleMultiSelectionMode()
-                            showIpodDialog = true
+                            com.example.mobiledigger.ipod.IpodManager.openPage()
                         },
                         onDismiss = { showSendToIpod = false }
                     )

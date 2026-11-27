@@ -30,7 +30,9 @@ data class TouchLibrary(
     val dbPid: Long?,
     val primaryContainerPid: Long?,
     val maxArtworkToken: Long,
-    val paths: Set<String>
+    val paths: Set<String>,
+    /** Songs a sync announced but whose audio never arrived (interrupted transfer): no file on the iPod. */
+    val unfinished: List<TouchTrack> = emptyList()
 )
 
 /**
@@ -55,9 +57,12 @@ class IpodTouch private constructor(val mux: UsbMux, val lockdown: Lockdown, val
                 val ld = Lockdown(mux, context.filesDir)
                 ld.ensurePaired(onPrompt)
                 ld.startSession()
+                val name = Plist.str(runCatching { ld.getValue("DeviceName") }.getOrNull()) ?: "iPod touch"
+                val version = Plist.str(runCatching { ld.getValue("ProductVersion") }.getOrNull()) ?: ""
+                runCatching { ld.close() }
                 return IpodTouch(mux, ld, context.filesDir).also { t ->
-                    t.name = Plist.str(runCatching { ld.getValue("DeviceName") }.getOrNull()) ?: "iPod touch"
-                    t.productVersion = Plist.str(runCatching { ld.getValue("ProductVersion") }.getOrNull()) ?: ""
+                    t.name = name
+                    t.productVersion = version
                     CrashLogger.log("IpodTouch", "Connected: ${t.name} iOS ${t.productVersion} ${t.udid}")
                 }
             } catch (e: Exception) {
@@ -66,11 +71,26 @@ class IpodTouch private constructor(val mux: UsbMux, val lockdown: Lockdown, val
         }
     }
 
-    fun afc(): AfcClient = AfcClient(lockdown.startService("com.apple.afc"))
+    /**
+     * lockdownd drops idle connections, so each use gets a fresh session (as libimobiledevice does);
+     * the pairing is already saved, so no prompt.
+     */
+    private fun <T> withLockdown(block: (Lockdown) -> T): T {
+        val ld = Lockdown(mux, appDir)
+        try {
+            ld.ensurePaired({ })
+            ld.startSession()
+            return block(ld)
+        } finally { runCatching { ld.close() } }
+    }
+
+    fun startService(name: String): DeviceStream = withLockdown { it.startService(name) }
+
+    fun afc(): AfcClient = AfcClient(startService("com.apple.afc"))
 
     /** Free / total bytes of the media partition, if the device says. */
     fun freeSpace(): Pair<Long, Long>? = runCatching {
-        val v = Plist.dict(lockdown.getValue(domain = "com.apple.disk_usage"))
+        val v = Plist.dict(withLockdown { it.getValue(domain = "com.apple.disk_usage") })
         val total = Plist.long(v["TotalDataCapacity"]) ?: Plist.long(v["TotalDiskCapacity"])
         val free = Plist.long(v["TotalDataAvailable"]) ?: Plist.long(v["AmountDataAvailable"])
         if (total != null && free != null) free to total else null
@@ -94,10 +114,7 @@ class IpodTouch private constructor(val mux: UsbMux, val lockdown: Lockdown, val
         return LibraryReader.read(db, name)
     }
 
-    fun close() {
-        runCatching { lockdown.close() }
-        mux.close()
-    }
+    fun close() = mux.close()
 }
 
 /** Read-only parser for the iOS MediaLibrary.sqlitedb (ported from IpodDigger's TouchLibraryReader). */
@@ -180,7 +197,17 @@ object LibraryReader {
             if ("artwork_token" in tables) db.rawQuery("SELECT artwork_token FROM artwork_token", null).use { c ->
                 while (c.moveToNext()) c.getString(0)?.toLongOrNull()?.let { maxToken = maxOf(maxToken, it) }
             }
-            return TouchLibrary(deviceName, tracks, playlists, anchor, dbPid, pcPid, maxToken, paths)
+            val unfinished = ArrayList<TouchTrack>()
+            db.rawQuery("""
+                SELECT i.item_pid, e.title, e.location FROM item i JOIN item_extra e ON e.item_pid = i.item_pid
+            """.trimIndent(), null).use { c ->
+                while (c.moveToNext()) {
+                    val id = c.getLong(0); val sync = syncIds[id] ?: 0L
+                    if (sync != 0L && c.getString(2).isNullOrEmpty())
+                        unfinished += TouchTrack(id, sync, c.getString(1).orEmpty(), "", "", 0, 0, "")
+                }
+            }
+            return TouchLibrary(deviceName, tracks, playlists, anchor, dbPid, pcPid, maxToken, paths, unfinished)
         } finally { db.close() }
     }
 

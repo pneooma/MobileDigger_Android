@@ -120,7 +120,10 @@ object TouchMedia {
         } finally { runCatching { r.release() } }
         // "Artist - Title.ext" file names when the file has no tags
         if (m["title"] == null) {
-            val base = displayName.substringBeforeLast('.')
+            // "07. Artist_-_Title_(Original_Mix)" → artist "Artist", title "Title (Original Mix)"
+            var base = displayName.substringBeforeLast('.')
+            if (!base.contains(' ') && base.contains('_')) base = base.replace('_', ' ')
+            base = base.replace(Regex("^\\s*\\d{1,3}\\s*[.)\\-]\\s*"), "").replace(Regex("\\s{2,}"), " ").trim()
             val parts = base.split(" - ", limit = 2)
             if (parts.size == 2 && m["artist"] == null) { m["artist"] = parts[0].trim(); m["title"] = parts[1].trim() }
             else m["title"] = base

@@ -62,6 +62,9 @@ class UsbMux private constructor(
             try {
                 // The kernel picks configuration 1 (camera/PTP only); the mux lives in a later one.
                 val cfg = d.getConfiguration(cfgIndex)
+                // Switch away and back so the iPod starts a fresh multiplexer (a previous, interrupted
+                // link would otherwise leave its packet numbering and connections behind).
+                if (cfgIndex != 0) runCatching { c.setConfiguration(d.getConfiguration(0)); Thread.sleep(300) }
                 if (!c.setConfiguration(cfg)) CrashLogger.log(TAG, "setConfiguration(${cfg.id}) refused; trying anyway")
                 if (!c.claimInterface(itf, true)) throw IOException("Couldn't claim the iPod's sync interface")
                 var inEp: UsbEndpoint? = null; var outEp: UsbEndpoint? = null
@@ -86,24 +89,60 @@ class UsbMux private constructor(
     private val sendLock = Any()
     @Volatile private var closed = false
     private val conns = ConcurrentHashMap<Int, MuxConnection>() // by our source port
-    private var nextPort = 0x4000
+    // Random start: ports of a previous link may still be open on the iPod's side.
+    private var nextPort = 0x4000 + java.util.Random().nextInt(0x8000)
     private var reader: Thread? = null
     private val versionReply = LinkedBlockingQueue<Int>()
 
     // ------------------------------------------------------------------ low level
 
     private fun usbWrite(data: ByteArray) {
+        if (closed) throw IOException("The USB link to the iPod is closed")
         var off = 0
         while (off < data.size) {
-            val n = conn.bulkTransfer(epOut, data, off, data.size - off, 5000)
-            if (n < 0) throw IOException("USB write failed")
+            // The iPod can hold off a write for many seconds while it stores an incoming file. A packet
+            // must never be dropped (the mux numbers every packet and stops at a gap), so wait long, and if
+            // a write still fails, close the link instead of carrying on with a hole in the sequence.
+            val n = conn.bulkTransfer(epOut, data, off, data.size - off, 60_000)
+            if (n < 0) {
+                CrashLogger.log(TAG, "USB write failed after ${off}/${data.size} bytes; closing the link")
+                failLink()
+                throw IOException("The USB link to the iPod failed. Unplug it, plug it back in and try again.")
+            }
             off += n
         }
         // A transfer that's an exact multiple of the packet size needs a zero-length packet to end it.
-        if (data.isNotEmpty() && data.size % epOut.maxPacketSize == 0) conn.bulkTransfer(epOut, ByteArray(0), 0, 1000)
+        if (data.isNotEmpty() && data.size % epOut.maxPacketSize == 0) conn.bulkTransfer(epOut, ByteArray(0), 0, 10_000)
     }
 
+    /** Marks the link dead and wakes every connection, so waiting reads / writes fail instead of hanging. */
+    private fun failLink() {
+        closed = true
+        conns.values.forEach { it.abort() }
+    }
+
+    val isClosed get() = closed
+
+    /**
+     * Packets go out through one sender thread, in sequence order. Nothing that reads from the iPod ever
+     * waits for a USB write: if the reader blocked behind a large upload, the iPod's replies would back up
+     * and it would stop accepting data (a deadlock that showed up as write timeouts and lost packets).
+     */
+    private val outQ = LinkedBlockingQueue<ByteArray>()
+    private val sender = Thread({
+        try {
+            while (!closed) {
+                val pkt = outQ.poll(1, TimeUnit.SECONDS) ?: continue
+                usbWrite(pkt)
+            }
+        } catch (e: Exception) {
+            if (!closed) CrashLogger.log(TAG, "sender stopped", e)
+            failLink()
+        }
+    }, "usbmux-sender").apply { isDaemon = true }
+
     private fun sendPacket(proto: Int, header: ByteArray, payload: ByteArray?, payloadLen: Int = payload?.size ?: 0) {
+        if (closed) throw IOException("The USB link to the iPod is closed")
         synchronized(sendLock) {
             val hsize = if (version < 2) 8 else 16
             val total = hsize + header.size + payloadLen
@@ -116,11 +155,13 @@ class UsbMux private constructor(
             }
             buf.put(header)
             if (payload != null && payloadLen > 0) buf.put(payload, 0, payloadLen)
-            usbWrite(buf.array())
+            // Sequence numbers are assigned here, under the lock, and the queue keeps that order.
+            outQ.put(buf.array())
         }
     }
 
     private fun handshake() {
+        sender.start()
         reader = Thread({ readLoop() }, "usbmux-reader").apply { isDaemon = true; start() }
         sendPacket(PROTO_VERSION, ByteBuffer.allocate(12).putInt(2).putInt(0).putInt(0).array(), null)
         val major = versionReply.poll(5, TimeUnit.SECONDS) ?: throw IOException("The iPod didn't answer the USB handshake")
@@ -176,7 +217,16 @@ class UsbMux private constructor(
                 val payloadStart = hsize + 20
                 val payload = if (pkt.size > payloadStart) pkt.copyOfRange(payloadStart, pkt.size) else ByteArray(0)
                 val c = conns[dport]
-                if (c == null) { CrashLogger.log(TAG, "packet for unknown port $dport (from $sport)"); return }
+                if (c == null) {
+                    // A connection we don't have (left over from an earlier link): reset it on the iPod's side.
+                    if (flags and TH_RST == 0) runCatching {
+                        val h = ByteBuffer.allocate(20)
+                        h.putShort(dport.toShort()); h.putShort(sport.toShort()); h.putInt(ack); h.putInt(seq + payload.size)
+                        h.put((5 shl 4).toByte()); h.put(TH_RST.toByte()); h.putShort(0); h.putShort(0); h.putShort(0)
+                        sendPacket(PROTO_TCP, h.array(), null)
+                    }
+                    return
+                }
                 c.onTcp(flags, seq, ack, win, payload)
             }
         }
@@ -328,9 +378,13 @@ class UsbMux private constructor(
             return out
         }
 
+        internal fun abort() {
+            synchronized(lock) { connected = false; finished = true; lock.notifyAll() }
+        }
+
         fun close() {
             synchronized(lock) {
-                if (connected) runCatching { sendTcp(TH_RST, null) }
+                if (connected && !closed) runCatching { sendTcp(TH_RST, null) }
                 connected = false; finished = true
                 lock.notifyAll()
             }

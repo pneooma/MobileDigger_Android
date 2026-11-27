@@ -37,7 +37,9 @@ data class SyncResult(val added: Int, val removed: Int, val playlistsChanged: In
  *   → SyncFinished.
  */
 class TouchSync(private val t: IpodTouch, private val appDir: File, private val work: File,
-                private val log: (String) -> Unit, private val progress: (String, Float?) -> Unit) {
+                private val log: (String) -> Unit, private val progress: (String, Float?) -> Unit,
+                /** Index (into the adds) of the song being uploaded / just completed. */
+                private val onSending: (Int) -> Unit = {}, private val onSent: (Int) -> Unit = {}) {
 
     companion object {
         private const val STAGING = "/iTunes_Control/Sync/Media"
@@ -261,7 +263,7 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
                 var pid = DeviceState.randomPid(); while (pid in usedPids) pid = DeviceState.randomPid(); usedPids += pid
                 buildTrack(add.audio, pid, randomAssetPath(add.audio.ext, taken), st) { nextCache++ }
             }
-            val deletePids = removeSyncIds.filter { it != 0L && dev.tracks.any { t -> t.syncId == it } }.distinct()
+            val deletePids = removeSyncIds.filter { it != 0L && (dev.tracks.any { t -> t.syncId == it } || dev.unfinished.any { t -> t.syncId == it }) }.distinct()
 
             // Playlists: delete before (re)insert; a Replace gets a fresh pid.
             val existingPlaylistPids = dev.playlists.map { it.id }.toSet()
@@ -303,7 +305,7 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
             progress("Connecting to the iPod…", null)
             cleanStaging(afc, st, dev.anchor)
             DeviceState.save(appDir, t.udid, st)
-            val atc = Atc(t.lockdown.startService("com.apple.atc"))
+            val atc = Atc(t.startService("com.apple.atc"))
             try {
                 atc.send(mapOf("Command" to "Ping", "Session" to 1L))
                 while (true) {
@@ -391,6 +393,8 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
                                     afc.write(bytes, "/Airlock/Media/Artwork/$aid")
                                     sent += bytes.size
                                 }
+                                val addIndex = prepared.indexOf(p)
+                                onSending(addIndex)
                                 if (parts and 1 != 0) {
                                     afc.makeDirectory("/Airlock/Media")
                                     val tmp = "/Airlock/Media/$aid.${p.a.ext}"
@@ -410,6 +414,7 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
                                         "AssetID" to aid, "Dataclass" to "Media", "AssetPath" to "")))
                                 }
                                 completed += aid
+                                onSent(addIndex)
                             }
                         }
                         "Progress" -> if (prepared.isEmpty()) Plist.dict(params(m))["OverallProgress"]?.let {

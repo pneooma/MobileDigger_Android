@@ -3108,7 +3108,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
     
-    fun moveSelectedFilesToSubfolder(subfolderName: String) {
+    /** [onMoved]: the moved tracks at their new place (e.g. to also send them to the iPod). */
+    fun moveSelectedFilesToSubfolder(subfolderName: String, onMoved: ((List<MusicFile>) -> Unit)? = null) {
         viewModelScope.launch(Dispatchers.IO) {
             val display = currentPlaylistFiles.value
             val filesToMove = _selectedIndices.value.sorted().mapNotNull { display.getOrNull(it) }
@@ -3134,6 +3135,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     addToSubfolderHistory(subfolderName)
                     updateSubfolderInfo()
                     applyMovedToLiked(moved)
+                    onMoved?.invoke(moved.values.toList())
                 }
                 _errorMessage.value = when {
                     failed == 0 -> "Moved ${moved.size} files to $subfolderName"
@@ -3794,13 +3796,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         _newSubfolderName.value = name
     }
     
-    fun createNewSubfolder() {
+    fun createNewSubfolder(onMoved: ((List<MusicFile>) -> Unit)? = null) {
         val name = _newSubfolderName.value.trim()
         if (name.isNotBlank()) {
             addToSubfolderHistory(name)
             hideSubfolderDialog()
             // Automatically move the current file to the new subfolder
-            moveCurrentFileToSubfolder(name)
+            moveCurrentFileToSubfolder(name, onMoved)
         }
     }
     
@@ -3950,7 +3952,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
      * the track was already liked, renamed or moved to another folder: it is first looked up where
      * it is now, instead of failing on its old location.
      */
-    private fun moveCurrentToLiked(subfolderName: String?) {
+    private fun moveCurrentToLiked(subfolderName: String?, onMoved: ((List<MusicFile>) -> Unit)? = null) {
         val start = this.currentFile ?: _currentPlayingFile.value
         if (start == null) {
             _errorMessage.value = "No file is currently playing"
@@ -3981,6 +3983,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
                     if (subfolderName != null) addToSubfolderHistory(subfolderName)
                     updateSubfolderInfo()
                     applyMovedToLiked(mapOf(start.uri to newFile, from.uri to newFile))
+                    onMoved?.invoke(listOf(newFile))
                     _errorMessage.value = "Moved '${newFile.name}' to '$label'"
                 }
             } catch (e: Exception) {
@@ -3990,9 +3993,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
         }
     }
 
-    fun moveCurrentFileToSubfolder(subfolderName: String) {
+    fun moveCurrentFileToSubfolder(subfolderName: String, onMoved: ((List<MusicFile>) -> Unit)? = null) {
         CrashLogger.log("MusicViewModel", "📂 moveCurrentFileToSubfolder: ${currentFile?.name} -> $subfolderName")
-        moveCurrentToLiked(subfolderName)
+        moveCurrentToLiked(subfolderName, onMoved)
     }
 
     fun moveCurrentFileFromSubfolderToRoot() = moveCurrentToLiked(null)

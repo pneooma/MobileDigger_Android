@@ -818,6 +818,16 @@ fun MusicPlayerScreen(
             confirmButton = { TextButton(onClick = { showUndoPicker = false }) { Text("Close") } }
         )
     }
+    // "Move to a custom folder" can also send the moved tracks to the iPod (playlist chosen each time)
+    var moveAlsoIpod by remember { mutableStateOf(false) }
+    var moveIpodUsePlaylist by remember { mutableStateOf(false) }
+    var moveIpodPlaylist by remember { mutableStateOf("") }
+    val ipodOnMoved: ((List<com.example.mobiledigger.model.MusicFile>) -> Unit)? = if (!moveAlsoIpod) null else { files ->
+        com.example.mobiledigger.ipod.IpodManager.enqueue(context,
+            files.map { com.example.mobiledigger.ipod.IpodManager.Source(it.uri, it.name, it.size) },
+            if (moveIpodUsePlaylist) moveIpodPlaylist.trim().ifEmpty { null } else null,
+            com.example.mobiledigger.ipod.SendQuality.load(context))
+    }
     // The iPod page (opened from Settings, the Sort menu or the multi-select bar)
     val ipodPageOpen by com.example.mobiledigger.ipod.IpodManager.pageOpen.collectAsState()
     val systemBars = WindowInsets.systemBars.asPaddingValues()
@@ -1361,6 +1371,15 @@ fun MusicPlayerScreen(
                 ) {
                     ToolbarButton(icon = { Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Home", onClick = { viewModel.resetToInitialState() })
                     ToolbarButton(icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(tbIconSize)) }, label = "Settings", onClick = { showSettingsDialog = true })
+                    // iPod page; a badge counts songs still on their way to the iPod
+                    val ipodUi by com.example.mobiledigger.ipod.IpodManager.ui.collectAsState()
+                    ToolbarButton(icon = {
+                        BadgedBox(badge = { if (ipodUi.pending > 0) Badge { Text("${ipodUi.pending}") } }) {
+                            Icon(Icons.Default.PhoneIphone, contentDescription = "iPod",
+                                tint = if (com.example.mobiledigger.ipod.IpodManager.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(tbIconSize))
+                        }
+                    }, label = "iPod", onClick = { com.example.mobiledigger.ipod.IpodManager.openPage() })
                     ToolbarButton(icon = {
                         val eqOn by com.example.mobiledigger.audio.AudioFx.enabled.collectAsState()
                         val eqGains by com.example.mobiledigger.audio.AudioFx.gains.collectAsState()
@@ -1452,15 +1471,13 @@ fun MusicPlayerScreen(
                 if (showSendToIpod) {
                     val files = selectedCount.sorted().mapNotNull { currentPlaylistFiles.getOrNull(it) }
                     com.example.mobiledigger.ui.screens.SendToIpodDialog(
-                        count = files.size,
-                        onSend = { target ->
+                        files = files,
+                        onDismiss = { showSendToIpod = false },
+                        onQueued = {
                             showSendToIpod = false
-                            com.example.mobiledigger.ipod.IpodManager.send(context,
-                                files.map { com.example.mobiledigger.ipod.IpodManager.Source(it.uri, it.name) }, target)
                             viewModel.toggleMultiSelectionMode()
                             com.example.mobiledigger.ipod.IpodManager.openPage()
-                        },
-                        onDismiss = { showSendToIpod = false }
+                        }
                     )
                 }
                 if (selectedArchiveUris.isEmpty()) Row(
@@ -1872,6 +1889,7 @@ fun MusicPlayerScreen(
                     onPickDestination = { destLauncher.launch(null) },
                     onResume = { viewModel.resumeLastSources() },
                     onOpenDrives = { showDrivesDialog = true },
+                    onOpenIpod = { com.example.mobiledigger.ipod.IpodManager.openPage() },
                     onLoadRecent = { viewModel.setSourceFolderPreference(android.net.Uri.parse(it)) },
                     onRemoveRecent = { viewModel.removeRecentSource(it) },
                     onSetDestination = { viewModel.selectDestinationFolder(android.net.Uri.parse(it)) },
@@ -5512,8 +5530,8 @@ fun MusicPlayerScreen(
                             multiMoveMode = false
                             val name = newSubfolderName.trim()
                             viewModel.hideSubfolderDialog()
-                            if (name.isNotBlank()) viewModel.moveSelectedFilesToSubfolder(name)
-                        } else viewModel.createNewSubfolder()
+                            if (name.isNotBlank()) viewModel.moveSelectedFilesToSubfolder(name, ipodOnMoved)
+                        } else viewModel.createNewSubfolder(ipodOnMoved)
                     },
                     enabled = newSubfolderName.trim().isNotBlank()
                 ) {
@@ -5636,6 +5654,22 @@ fun MusicPlayerScreen(
                     if (!viewModeForSubfolderDialog) {
                         Text("Select or create a subfolder to move the current playing file")
                         Spacer(modifier = Modifier.height(8.dp))
+                        // Also send what's moved to the iPod, into a playlist picked now
+                        Row(Modifier.fillMaxWidth().clickable { moveAlsoIpod = !moveAlsoIpod }, verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(moveAlsoIpod, { moveAlsoIpod = it })
+                            Icon(Icons.Default.PhoneIphone, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(6.dp))
+                            Text("Also send to the iPod", fontWeight = FontWeight.SemiBold)
+                        }
+                        if (moveAlsoIpod) {
+                            val ipodState by com.example.mobiledigger.ipod.IpodManager.ui.collectAsState()
+                            com.example.mobiledigger.ui.screens.PlaylistField(moveIpodUsePlaylist, moveIpodPlaylist,
+                                ipodState.library?.playlists?.filter { it.editable }?.map { it.name } ?: emptyList(),
+                                onEnabled = { moveIpodUsePlaylist = it }, onName = { moveIpodPlaylist = it })
+                            Text("Quality: ${com.example.mobiledigger.ipod.SendQuality.load(context).label} (change it on the iPod page)",
+                                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                     
                     // Add new subfolder option
@@ -5689,8 +5723,8 @@ fun MusicPlayerScreen(
                                     OutlinedButton(
                                         onClick = {
                                             showSubfolderSelectionDialog = false
-                                            if (multiMoveMode) { multiMoveMode = false; viewModel.moveSelectedFilesToSubfolder(subfolder) }
-                                            else viewModel.moveCurrentFileToSubfolder(subfolder)
+                                            if (multiMoveMode) { multiMoveMode = false; viewModel.moveSelectedFilesToSubfolder(subfolder, ipodOnMoved) }
+                                            else viewModel.moveCurrentFileToSubfolder(subfolder, ipodOnMoved)
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(20.dp),
@@ -5813,8 +5847,8 @@ fun MusicPlayerScreen(
                                 OutlinedButton(
                                 onClick = {
                                     showSubfolderSelectionDialog = false
-                                    if (multiMoveMode) { multiMoveMode = false; viewModel.moveSelectedFilesToSubfolder(subfolder) }
-                                    else viewModel.moveCurrentFileToSubfolder(subfolder)
+                                    if (multiMoveMode) { multiMoveMode = false; viewModel.moveSelectedFilesToSubfolder(subfolder, ipodOnMoved) }
+                                    else viewModel.moveCurrentFileToSubfolder(subfolder, ipodOnMoved)
                                 },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(20.dp),

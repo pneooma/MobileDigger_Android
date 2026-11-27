@@ -54,6 +54,7 @@ fun WelcomePanel(
     onPickDestination: () -> Unit,
     onResume: () -> Unit,
     onOpenDrives: () -> Unit,
+    onOpenIpod: () -> Unit = {},
     onLoadRecent: (String) -> Unit,
     onRemoveRecent: (String) -> Unit,
     onSetDestination: (String) -> Unit,
@@ -110,6 +111,27 @@ fun WelcomePanel(
                 },
                 selected = activeDriveName != null, modifier = Modifier.weight(1f), onClick = onOpenDrives
             )
+        }
+        // iPod touch: send music (converted in the background) and manage its playlists
+        val ipod by com.example.mobiledigger.ipod.IpodManager.ui.collectAsState()
+        OutlinedCard(onClick = onOpenIpod, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
+            Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PhoneIphone, null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("iPod", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        when {
+                            ipod.pending > 0 -> "${ipod.pending} songs on their way to the iPod"
+                            ipod.library != null -> "${ipod.deviceName ?: "iPod"} · ${ipod.library!!.tracks.size} songs · ${ipod.library!!.playlists.size} playlists"
+                            else -> "Send music and manage playlists on an iPod touch"
+                        },
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
 
         // Both a phone folder and a network drive are set up: let the user pick what to load

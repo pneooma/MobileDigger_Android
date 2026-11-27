@@ -28,6 +28,9 @@ sealed class PlaylistChange {
 
 data class SyncResult(val added: Int, val removed: Int, val playlistsChanged: Int)
 
+/** New details for a song on the iPod (its wire pid = item_store.sync_id). */
+data class TrackEdit(val syncId: Long, val title: String, val artist: String, val album: String, val albumArtist: String, val genre: String)
+
 /**
  * Music sync to an iPod touch over ATC + AFC, ported from IpodDigger's TouchSync.writeBlocking
  * (proven on an iPod touch 5G / iOS 9.3.5). One call = one ATC session:
@@ -226,7 +229,22 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
 
     // ------------------------------------------------------------------ the session
 
-    fun run(adds: List<TouchAdd>, removeSyncIds: List<Long>, playlists: List<PlaylistChange>): SyncResult {
+    private fun editOp(e: TrackEdit, state: DeviceState): Map<String, Any?> {
+        val now = Date((System.currentTimeMillis() / 1000) * 1000)
+        val item = linkedMapOf<String, Any?>("title" to e.title, "sort_name" to e.title, "genre" to e.genre, "date_modified" to now)
+        if (e.artist.isNotEmpty()) { item["artist"] = e.artist; item["sort_artist"] = e.artist }
+        if (e.albumArtist.isNotEmpty()) { item["album_artist"] = e.albumArtist; item["sort_album_artist"] = e.albumArtist }
+        val groupArtist = e.albumArtist.ifEmpty { e.artist }
+        if (e.album.isNotEmpty()) {
+            item["album"] = e.album; item["sort_album"] = e.album
+            item["album_pid"] = state.albumPids.getOrPut(groupKey(e.album, groupArtist)) { DeviceState.randomPid() }
+        }
+        if (groupArtist.isNotEmpty()) item["artist_pid"] = state.artistPids.getOrPut(groupArtist.lowercase()) { DeviceState.randomPid() }
+        return linkedMapOf("operation" to "update_track", "pid" to e.syncId, "item" to item)
+    }
+
+    fun run(adds: List<TouchAdd>, removeSyncIds: List<Long>, playlists: List<PlaylistChange>,
+            edits: List<TrackEdit> = emptyList()): SyncResult {
         progress("Backing up the iPod database…", null)
         val afc = t.afc()
         try {
@@ -279,7 +297,8 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
                 }
                 is PlaylistChange.Create -> playlistOps += playlistOp(DeviceState.randomPid(), c.name, resolve(c.members))
             }
-            if (prepared.isEmpty() && deletePids.isEmpty() && playlistOps.isEmpty() && !firstSync) return SyncResult(0, 0, 0)
+            val editOps = edits.filter { e -> e.syncId != 0L && dev.tracks.any { it.syncId == e.syncId } }.map { editOp(it, st) }
+            if (prepared.isEmpty() && deletePids.isEmpty() && playlistOps.isEmpty() && editOps.isEmpty() && !firstSync) return SyncResult(0, 0, 0)
 
             val totalBytes = prepared.sumOf { it.a.file.length() + (it.a.cover?.length() ?: 0) }
             t.freeSpace()?.let { (free, _) ->
@@ -299,6 +318,7 @@ class TouchSync(private val t: IpodTouch, private val appDir: File, private val 
                     "item_to_container" to emptyList<Long>())
             }
             ops += prepared.map { it.op }
+            ops += editOps
             ops += deletePids.map { mapOf("operation" to "delete_track", "pid" to it) }
             ops += playlistOps
 

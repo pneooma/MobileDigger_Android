@@ -16,7 +16,9 @@ data class TouchTrack(
     val album: String,
     val durationMs: Long,
     val fileSize: Long,
-    val devicePath: String
+    val devicePath: String,
+    val albumArtist: String = "",
+    val genre: String = ""
 )
 
 /** [id] = container_pid (for playlists a computer synced, also their wire pid); [editable] = made by a computer sync. */
@@ -140,11 +142,12 @@ object LibraryReader {
             val paths = HashSet<String>()
             db.rawQuery("""
                 SELECT i.item_pid, e.title, ia.item_artist, aa.album_artist, al.album, e.total_time_ms,
-                       i.base_location_id, e.location, e.file_size
+                       i.base_location_id, e.location, e.file_size, g.genre
                 FROM item i JOIN item_extra e ON e.item_pid = i.item_pid
                 LEFT JOIN item_artist ia ON ia.item_artist_pid = i.item_artist_pid
                 LEFT JOIN album_artist aa ON aa.album_artist_pid = i.album_artist_pid
                 LEFT JOIN album al ON al.album_pid = i.album_pid
+                LEFT JOIN genre g ON g.genre_id = i.genre_id
             """.trimIndent(), null).use { c ->
                 while (c.moveToNext()) {
                     val file = c.getString(7) ?: ""
@@ -158,7 +161,8 @@ object LibraryReader {
                     tracks += TouchTrack(
                         id, syncIds[id] ?: 0L,
                         c.getString(1).orEmpty().ifEmpty { file.substringBeforeLast('.') },
-                        artist, c.getString(4).orEmpty(), c.getDouble(5).toLong(), c.getLong(8), "/$rel"
+                        artist, c.getString(4).orEmpty(), c.getDouble(5).toLong(), c.getLong(8), "/$rel",
+                        c.getString(3).orEmpty(), c.getString(9).orEmpty().let { if (it == "Unknown Genre") "" else it }
                     )
                 }
             }

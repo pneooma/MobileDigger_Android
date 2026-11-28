@@ -351,6 +351,7 @@ object IpodManager {
                 // Only redraw on visible steps: hundreds of queued songs × frequent callbacks = a lot of copying.
                 if (f - shown >= 0.02f || f >= 1f) { shown = f; setItem(item.id) { it.copy(progress = f) } }
             }
+            if (_ui.value.queue.none { it.id == item.id }) { dir.deleteRecursively(); return }   // cancelled while converting
             prepared[item.id] = a
             setItem(item.id) { it.copy(state = TState.READY, progress = 1f,
                 detail = if (a.converted) "Converted (${a.codec.uppercase()}), ready to send" else "Ready to send") }

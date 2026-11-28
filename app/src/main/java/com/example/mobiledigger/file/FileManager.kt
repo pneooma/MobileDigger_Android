@@ -23,6 +23,8 @@ class FileManager(private val context: Context) {
     private var selectedFolder: DocumentFile? = null
     private var destinationFolder: DocumentFile? = null
     private var selectedFolderPath: String? = null  // For direct file access
+    /** Name of the folder loaded into To Do (null when none / network). */
+    val selectedFolderName: String? get() = selectedFolder?.name ?: selectedFolderPath?.trimEnd('/')?.substringAfterLast('/')
     private val musicExtensions = setOf("mp3", "wav", "flac", "aac", "ogg", "m4a", "aif", "aiff")
     private val contentResolver: ContentResolver = context.contentResolver
     private val preferencesManager = PreferencesManager(context)

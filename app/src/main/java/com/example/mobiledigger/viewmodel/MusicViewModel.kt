@@ -69,6 +69,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application), 
     
     val audioManager = AudioManager(application)
     private val fileManager = FileManager(application)
+    /** Name of the folder currently loaded into To Do. */
+    val loadedFolderName: String? get() = fileManager.selectedFolderName
     private val settingsRepository = SettingsRepository(application)
     val preferences = settingsRepository.preferences
     val themeManager = settingsRepository.themeManager

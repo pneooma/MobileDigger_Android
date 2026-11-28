@@ -205,6 +205,7 @@ private fun SendTab(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel
     var playlist by remember { mutableStateOf("") }
     var playlistTouched by remember { mutableStateOf(false) }
     var showOptions by remember { mutableStateOf(false) }
+    var askPlaylist by remember { mutableStateOf(false) }
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
     val lists = listOf("To Do" to todo, "Liked" to liked, "Rejected" to rejected)
     val all = lists[source].second
@@ -316,15 +317,37 @@ private fun SendTab(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel
                 PlaylistField(usePlaylist, playlist, ui.library?.playlists?.filter { it.editable }?.map { it.name } ?: emptyList(),
                     onEnabled = { usePlaylist = it; playlistTouched = true }, onName = { playlist = it; playlistTouched = true })
             }
+            fun send(pl: String?) {
+                IpodManager.enqueue(context, picked.values.map { IpodManager.Source(it.uri, it.name, it.size) }, pl, quality)
+                picked.clear(); playlistTouched = false; usePlaylist = false; playlist = ""
+                onQueued()
+            }
+            if (askPlaylist) {
+                // Ask each time: which iPod playlist? Pre-filled from the folder the songs come from.
+                var name by remember {
+                    mutableStateOf(playlist.takeIf { usePlaylist && it.isNotBlank() }
+                        ?: commonFolder(picked.values.toList())
+                        ?: (if (source == 0) viewModel.loadedFolderName else null) ?: "")
+                }
+                val existing = ui.library?.playlists?.filter { it.editable }?.map { it.name } ?: emptyList()
+                AlertDialog(onDismissRequest = { askPlaylist = false },
+                    title = { Text("Send ${picked.size} song${if (picked.size == 1) "" else "s"} to the iPod") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Put them in a playlist on the iPod:", style = MaterialTheme.typography.bodyMedium)
+                            OutlinedTextField(name, { name = it }, singleLine = true, label = { Text("Playlist name") }, modifier = Modifier.fillMaxWidth())
+                            if (existing.isNotEmpty()) Text(
+                                if (existing.any { it.equals(name.trim(), true) }) "Adds them to the existing playlist “${name.trim()}”."
+                                else "Existing: " + existing.joinToString(", "),
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    confirmButton = { TextButton(onClick = { askPlaylist = false; send(name.trim()) }, enabled = name.isNotBlank()) { Text("Send to playlist") } },
+                    dismissButton = { TextButton(onClick = { askPlaylist = false; send(null) }) { Text("No playlist") } })
+            }
             Button(
-                onClick = {
-                    focus.clearFocus()
-                    IpodManager.enqueue(context, picked.values.map { IpodManager.Source(it.uri, it.name, it.size) },
-                        if (usePlaylist) playlist.trim().ifEmpty { null } else null, quality)
-                    picked.clear(); playlistTouched = false; usePlaylist = false; playlist = ""
-                    onQueued()
-                },
-                enabled = picked.isNotEmpty() && (!usePlaylist || playlist.isNotBlank()),
+                onClick = { focus.clearFocus(); askPlaylist = true },
+                enabled = picked.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Default.Upload, null); Spacer(Modifier.width(8.dp))
@@ -627,7 +650,7 @@ private fun PlaylistsTab(lib: TouchLibrary, busy: Boolean, onOpen: (TouchPlaylis
     val ls4 = androidx.compose.foundation.lazy.rememberLazyListState()
         LazyColumn(Modifier.fillMaxWidth().lazyScrollbar(ls4, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls4, contentPadding = PaddingValues(vertical = 6.dp)) {
         item {
-            Button(onClick = onNew, enabled = !busy && lib.tracks.isNotEmpty(),
+            Button(onClick = onNew, enabled = !busy,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp).height(50.dp), shape = RoundedCornerShape(16.dp)) {
                 Icon(Icons.AutoMirrored.Filled.PlaylistAdd, null); Spacer(Modifier.width(8.dp)); Text("New playlist")
             }

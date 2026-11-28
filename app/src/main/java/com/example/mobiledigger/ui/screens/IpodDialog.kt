@@ -348,18 +348,30 @@ private fun QueueTab(ui: IpodManager.Ui) {
     val failed = q.count { it.state == IpodManager.TState.FAILED }
     val converting = q.count { it.state == IpodManager.TState.CONVERTING || it.state == IpodManager.TState.PREPARING }
     val ready = q.count { it.state == IpodManager.TState.READY }
+    val waiting = q.count { it.state == IpodManager.TState.WAITING }
+    var confirmCancel by remember { mutableStateOf(false) }
+    if (confirmCancel) AlertDialog(onDismissRequest = { confirmCancel = false },
+        title = { Text("Cancel the songs not sent yet?") },
+        text = { Text("${waiting + converting + ready} songs waiting, converting or ready will be removed from the queue. Songs already on the iPod stay.") },
+        confirmButton = { TextButton(onClick = { confirmCancel = false; IpodManager.cancelPending() }) { Text("Cancel them") } },
+        dismissButton = { TextButton(onClick = { confirmCancel = false }) { Text("Keep") } })
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(if (q.isEmpty()) "Nothing queued" else "$done of ${q.size} on the iPod", fontWeight = FontWeight.SemiBold)
                 if (q.isNotEmpty()) Text(listOfNotNull(
-                    if (converting > 0) "$converting converting" else null, if (ready > 0) "$ready ready" else null,
+                    if (converting > 0) "$converting converting" else null, if (waiting > 0) "$waiting waiting" else null,
+                    if (ready > 0) "$ready ready" else null,
                     if (failed > 0) "$failed failed" else null).joinToString(" · ").ifEmpty { "All done" },
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (failed > 0) TextButton(onClick = { IpodManager.retryFailed(context) }) { Text("Retry failed") }
             if (done + failed > 0) TextButton(onClick = { IpodManager.clearFinished() }) { Text("Clear done") }
+            if (waiting + converting + ready > 0) TextButton(onClick = { confirmCancel = true }) { Text("Cancel") }
         }
+        if (waiting + converting + ready > 0)
+            Text("Keeps going in the background — you can leave the app or lock the phone.", Modifier.padding(horizontal = 14.dp),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (ready > 0 && !IpodManager.isConnected)
             Text("Connect the iPod to send the songs that are ready.", Modifier.padding(horizontal = 14.dp),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)

@@ -165,6 +165,11 @@
             android:name=".file.transfer.TransferService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <!-- Keeps converting / sending to the iPod with the screen off or the app in the background -->
+        <service
+            android:name=".ipod.IpodService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <!-- Shares files to WhatsApp & co. with a generic MIME type so they go as
              documents (original file, no zipping, no re-encoding). -->
         <provider

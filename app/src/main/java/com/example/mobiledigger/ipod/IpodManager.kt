@@ -14,8 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -80,6 +83,69 @@ object IpodManager {
 
     val isConnected get() = touch != null
 
+    @Volatile private var app: Context? = null
+    private const val BATCH = 12          // wait for this many ready songs (each session costs ~13 s on its own)…
+    private const val BATCH_WAIT_MS = 45_000L  // …but not longer than this
+    private const val MAX_BATCH = 40
+
+    /** True while something is converting/sending or an iPod job runs — what the background service waits for. */
+    fun hasBackgroundWork(): Boolean {
+        val u = _ui.value
+        if (u.status == Status.BUSY || u.status == Status.CONNECTING) return true
+        return u.queue.any {
+            it.state == TState.WAITING || it.state == TState.PREPARING || it.state == TState.CONVERTING || it.state == TState.SENDING ||
+                (it.state == TState.READY && touch != null)
+        }
+    }
+
+    private fun keepAlive(ctx: Context) { if (hasBackgroundWork()) IpodService.start(ctx) }
+
+    // ------------------------------------------------------------------ outbox on disk
+
+    private fun outboxFile(ctx: Context) = File(ctx.filesDir, "ipod/outbox.json")
+    @Volatile private var saveQueued = false
+
+    /** Writes the songs not sent yet, so a closed / killed app picks them up again. Debounced. */
+    private fun saveOutbox() {
+        val ctx = app ?: return
+        if (saveQueued) return
+        saveQueued = true
+        scope.launch {
+            delay(1000)
+            saveQueued = false
+            val arr = JSONArray()
+            for (it in _ui.value.queue) {
+                if (it.state == TState.DONE || it.state == TState.FAILED) continue
+                val s = sources[it.id] ?: continue
+                arr.put(JSONObject().put("uri", s.uri.toString()).put("name", s.name).put("size", s.size)
+                    .put("playlist", it.playlist ?: "").put("alac", it.quality.alac).put("aac", it.quality.aacKbps)
+                    .put("keep", it.quality.keepCompatible))
+            }
+            runCatching {
+                val f = outboxFile(ctx); f.parentFile?.mkdirs()
+                val tmp = File(f.path + ".tmp"); tmp.writeText(arr.toString()); tmp.renameTo(f)
+            }.onFailure { CrashLogger.log("iPod", "couldn't save the outbox", it) }
+        }
+    }
+
+    /** Called when the app comes to the foreground: puts back songs that were queued when the app was closed, and resumes work. */
+    fun onForeground(context: Context) {
+        val ctx = context.applicationContext
+        if (app == null) {
+            app = ctx
+            val saved = runCatching { JSONArray(outboxFile(ctx).takeIf { it.exists() }?.readText() ?: "[]") }.getOrNull() ?: JSONArray()
+            val groups = (0 until saved.length()).map { saved.getJSONObject(it) }.groupBy {
+                Triple(it.optString("playlist").ifBlank { null }, it.optBoolean("alac"), it.optInt("aac", 256) to it.optBoolean("keep", true))
+            }
+            for ((k, list) in groups) {
+                enqueue(ctx, list.map { Source(android.net.Uri.parse(it.getString("uri")), it.getString("name"), it.optLong("size")) },
+                    k.first, SendQuality(k.second, k.third.first, k.third.second), restored = true)
+            }
+        }
+        keepAlive(ctx)
+        autoConnect(ctx)
+    }
+
     fun note(s: String) {
         CrashLogger.log("iPod", s)
         synchronized(stateLock) { _ui.value = _ui.value.copy(log = (_ui.value.log + s).takeLast(200)) }
@@ -92,19 +158,34 @@ object IpodManager {
         note(message)
     }
 
-    private fun setItem(id: Int, f: (TransferItem) -> TransferItem) =
-        update { u -> u.copy(queue = u.queue.map { if (it.id == id) f(it) else it }) }
+    private fun setItem(id: Int, f: (TransferItem) -> TransferItem) {
+        var finished = false
+        update { u -> u.copy(queue = u.queue.map { if (it.id == id) f(it).also { n -> finished = it.state != n.state && (n.state == TState.DONE || n.state == TState.FAILED) } else it }) }
+        if (finished) saveOutbox()
+    }
 
     private fun addHistory(text: String, ok: Boolean) =
         update { it.copy(history = (listOf(HistoryEntry(System.currentTimeMillis(), text, ok)) + it.history).take(20)) }
 
     fun clearFinished() = update { u -> u.copy(queue = u.queue.filter { it.state != TState.DONE && it.state != TState.FAILED }) }
 
+    /** Drops songs still waiting / converting / ready (not the ones being sent right now). */
+    fun cancelPending() {
+        val drop = _ui.value.queue.filter { it.state == TState.WAITING || it.state == TState.PREPARING || it.state == TState.CONVERTING || it.state == TState.READY }
+        if (drop.isEmpty()) return
+        val ids = drop.map { it.id }.toSet()
+        update { u -> u.copy(queue = u.queue.filterNot { it.id in ids }) }
+        for (id in ids) { sources.remove(id); prepared.remove(id)?.file?.parentFile?.deleteRecursively() }
+        note("Cancelled ${ids.size} songs waiting for the iPod")
+        saveOutbox()
+    }
+
     // ------------------------------------------------------------------ connection
 
     /** Finds the iPod, asks for USB permission if needed, connects and reads its library. */
     fun connect(context: Context) {
         val ctx = context.applicationContext
+        app = app ?: ctx
         val usb = ctx.getSystemService(UsbManager::class.java)
         val dev = IpodTouch.findDevice(usb)
         if (dev == null) { set(Status.NO_DEVICE, "No iPod touch found. Plug it into the phone (USB-C to Lightning) and unlock it."); return }
@@ -128,6 +209,7 @@ object IpodManager {
             lock.withLock {
                 runCatching { touch?.close() }; touch = null
                 set(Status.CONNECTING, "Connecting to the iPod…")
+                IpodService.start(ctx)
                 try {
                     val t0 = SystemClock.elapsedRealtime()
                     val t = IpodTouch.connect(ctx, usb, dev) { msg -> update { it.copy(prompt = msg) }; note(msg) }
@@ -204,6 +286,7 @@ object IpodManager {
     }
 
     private fun job(ctx: Context, title: String, block: (IpodTouch, File) -> String) {
+        IpodService.start(ctx.applicationContext)
         scope.launch { runJob(ctx.applicationContext, title, block); trySend(ctx.applicationContext) }
     }
 
@@ -230,8 +313,9 @@ object IpodManager {
      * Queues songs for the iPod. Conversion starts immediately in the background; they're sent as
      * soon as the iPod is connected. [playlist] = iPod playlist to add them to (null = none).
      */
-    fun enqueue(context: Context, list: List<Source>, playlist: String?, quality: SendQuality) {
+    fun enqueue(context: Context, list: List<Source>, playlist: String?, quality: SendQuality, restored: Boolean = false) {
         val ctx = context.applicationContext
+        app = app ?: ctx
         if (list.isEmpty()) return
         val items = list.map { s ->
             val id = nextId.getAndIncrement()
@@ -239,14 +323,17 @@ object IpodManager {
             TransferItem(id, s.name, playlist?.trim()?.takeIf { it.isNotEmpty() }, quality, TState.WAITING)
         }
         update { it.copy(queue = it.queue + items) }
-        note("Queued ${items.size} songs for the iPod" + (playlist?.let { " (playlist “$it”)" } ?: ""))
+        note((if (restored) "Resumed " else "Queued ") + "${items.size} songs for the iPod" + (playlist?.let { " (playlist “$it”)" } ?: ""))
+        saveOutbox()
         val work = File(ctx.cacheDir, "ipod-outbox").also { it.mkdirs() }
         for (item in items) workers.execute { prepareItem(ctx, item, work) }
+        IpodService.start(ctx)
         autoConnect(ctx)
     }
 
     private fun prepareItem(ctx: Context, item: TransferItem, work: File) {
         val s = sources[item.id] ?: return
+        if (_ui.value.queue.none { it.id == item.id }) return   // cancelled meanwhile
         val needsConvert = s.name.substringAfterLast('.', "").lowercase().let { ext ->
             !item.quality.keepCompatible || ext !in setOf("mp3", "m4a", "mp4")
         }
@@ -259,7 +346,11 @@ object IpodManager {
                 java.net.URL(s.uri.toString()).openStream().use { inp -> f.outputStream().use { inp.copyTo(it) } }
                 android.net.Uri.fromFile(f)
             } else s.uri
-            val a = TouchMedia.prepare(ctx, uri, s.name, dir, item.id, item.quality) { f -> setItem(item.id) { it.copy(progress = f) } }
+            var shown = -1f
+            val a = TouchMedia.prepare(ctx, uri, s.name, dir, item.id, item.quality) { f ->
+                // Only redraw on visible steps: hundreds of queued songs × frequent callbacks = a lot of copying.
+                if (f - shown >= 0.02f || f >= 1f) { shown = f; setItem(item.id) { it.copy(progress = f) } }
+            }
             prepared[item.id] = a
             setItem(item.id) { it.copy(state = TState.READY, progress = 1f,
                 detail = if (a.converted) "Converted (${a.codec.uppercase()}), ready to send" else "Ready to send") }
@@ -278,9 +369,20 @@ object IpodManager {
         if (!sending.compareAndSet(false, true)) return
         scope.launch {
             try {
+                var waitingSince = 0L
                 while (true) {
-                    val ready = _ui.value.queue.filter { it.state == TState.READY && prepared.containsKey(it.id) }
-                    if (ready.isEmpty() || touch == null) break
+                    val q = _ui.value.queue
+                    val allReady = q.filter { it.state == TState.READY && prepared.containsKey(it.id) }
+                    if (allReady.isEmpty() || touch == null) break
+                    // Fewer than a batch ready and more still converting: wait a little for them, so the
+                    // fixed cost of a sync session is shared by more songs.
+                    val inFlight = q.count { it.state == TState.WAITING || it.state == TState.PREPARING || it.state == TState.CONVERTING }
+                    if (inFlight > 0 && allReady.size < BATCH) {
+                        if (waitingSince == 0L) waitingSince = SystemClock.elapsedRealtime()
+                        if (SystemClock.elapsedRealtime() - waitingSince < BATCH_WAIT_MS) { delay(1500); continue }
+                    }
+                    waitingSince = 0L
+                    val ready = allReady.take(MAX_BATCH)
                     ready.forEach { r -> setItem(r.id) { it.copy(state = TState.SENDING, detail = "Waiting for the iPod", progress = 0f) } }
                     val ok = runJob(ctx, "Sending ${ready.size} song${if (ready.size == 1) "" else "s"}…") { t, w ->
                         val adds = ready.map { TouchAdd(prepared[it.id]!!) }
@@ -323,6 +425,8 @@ object IpodManager {
             if (prepared.containsKey(f.id)) setItem(f.id) { it.copy(state = TState.READY, detail = "Ready to send") }
             else { setItem(f.id) { it.copy(state = TState.WAITING, detail = "") }; workers.execute { prepareItem(ctx, f, work) } }
         }
+        saveOutbox()
+        IpodService.start(ctx)
         trySend(ctx)
     }
 

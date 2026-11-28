@@ -255,6 +255,12 @@ class MainActivity : ComponentActivity() {
         }
     }
     
+    override fun onResume() {
+        super.onResume()
+        // Songs queued for the iPod before the app was closed carry on; work in progress keeps running in the background.
+        com.example.mobiledigger.ipod.IpodManager.onForeground(this)
+    }
+
     override fun onPause() {
         super.onPause()
         // The MusicService is a foreground service and will manage its own lifecycle.

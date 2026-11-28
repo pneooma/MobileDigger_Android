@@ -206,9 +206,32 @@ object TouchMedia {
     }
 
     private fun open(src: File, ext: String, wantFullDepth: Boolean): Pcm = when {
-        ext == "wav" -> runCatching { WavPcm(src) }.getOrElse { DecodedPcm(src, wantFullDepth) }
+        ext == "flac" -> runCatching<Pcm> { FlacPcm(src) }.getOrElse {
+            IpodDebug.log("own FLAC decoder refused ${src.name}: ${it.message}; using Android's"); DecodedPcm(src, false)
+        }
+        ext == "wav" -> runCatching { WavPcm(src) }.getOrElse { DecodedPcm(src, false) }
         isAiff(src) -> AiffPcm(src)
-        else -> DecodedPcm(src, wantFullDepth)
+        // Android's decoders only in 16-bit: asked for float output its FLAC decoder handed back
+        // another layout (half the length, noise), so full-depth formats use the readers above.
+        else -> DecodedPcm(src, false)
+    }
+
+    /** FLAC through our own decoder: exact at any bit depth (24-bit stays 24-bit). */
+    private class FlacPcm(f: File) : Pcm {
+        private val d = FlacDecoder(f)
+        override val rate get() = d.sampleRate
+        override val channels get() = minOf(d.channels, 2)
+        override val bits get() = if (d.bitsPerSample > 16) 24 else 16
+        init { if (d.sampleRate <= 0 || d.channels <= 0) throw IOException("Bad FLAC header") }
+        override fun fraction() = d.fraction
+        override fun read(): IntArray? {
+            val blk = d.nextBlock() ?: return null
+            val src = d.bitsPerSample
+            val shift = bits - src // 8 → 16, 12 → 16, 20 → 24 (left); 32 → 24 (right)
+            if (shift != 0) for (i in blk.indices) blk[i] = if (shift > 0) blk[i] shl shift else blk[i] shr -shift
+            return downmix(blk, d.channels, bits)
+        }
+        override fun close() = d.close()
     }
 
     private fun isAiff(f: File): Boolean = runCatching {

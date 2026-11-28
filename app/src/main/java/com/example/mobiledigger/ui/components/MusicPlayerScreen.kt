@@ -831,7 +831,8 @@ fun MusicPlayerScreen(
     // The iPod page (opened from Settings, the Sort menu or the multi-select bar)
     val ipodPageOpen by com.example.mobiledigger.ipod.IpodManager.pageOpen.collectAsState()
     val systemBars = WindowInsets.systemBars.asPaddingValues()
-    if (ipodPageOpen) com.example.mobiledigger.ui.screens.IpodPage(viewModel, systemBars) { com.example.mobiledigger.ipod.IpodManager.closePage() }
+    if (ipodPageOpen) com.example.mobiledigger.ui.screens.IpodPage(viewModel, systemBars,
+        onLoadFolder = { folderLauncher.launch(null) }) { com.example.mobiledigger.ipod.IpodManager.closePage() }
     if (showSettingsDialog) {
         SettingsDialog(
             visualSettingsManager = viewModel.visualSettingsManager,

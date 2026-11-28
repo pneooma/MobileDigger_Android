@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -42,12 +43,32 @@ private fun mb(b: Long) = if (b >= 1L shl 30) "%.1f GB".format(b / 1073741824.0)
 
 private typealias MF = com.example.mobiledigger.model.MusicFile
 
+/** A thin scrollbar on the right of a LazyColumn (Compose has none built in). */
+fun Modifier.lazyScrollbar(state: androidx.compose.foundation.lazy.LazyListState, color: androidx.compose.ui.graphics.Color) =
+    this.drawWithContent {
+        drawContent()
+        val info = state.layoutInfo
+        val total = info.totalItemsCount
+        val visible = info.visibleItemsInfo
+        if (total == 0 || visible.isEmpty() || visible.size >= total) return@drawWithContent
+        val avg = visible.sumOf { it.size }.toFloat() / visible.size
+        val contentH = avg * total
+        val viewH = size.height
+        val scrolled = state.firstVisibleItemIndex * avg + state.firstVisibleItemScrollOffset
+        val thumbH = (viewH * viewH / contentH).coerceIn(24.dp.toPx(), viewH)
+        val y = ((scrolled / (contentH - viewH).coerceAtLeast(1f)) * (viewH - thumbH)).coerceIn(0f, viewH - thumbH)
+        drawRoundRect(color, topLeft = androidx.compose.ui.geometry.Offset(size.width - 5.dp.toPx(), y),
+            size = androidx.compose.ui.geometry.Size(3.dp.toPx(), thumbH),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()))
+    }
+
 /**
  * The iPod page: what's connected, sending songs/folders from this phone (converted in the
  * background), the transfer queue, playlists on the iPod and the songs on it.
  */
 @Composable
-fun IpodPage(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, bars: PaddingValues = PaddingValues(), onDismiss: () -> Unit) {
+fun IpodPage(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, bars: PaddingValues = PaddingValues(),
+             onLoadFolder: () -> Unit = {}, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val ui by IpodManager.ui.collectAsState()
     val lib = ui.library
@@ -88,7 +109,7 @@ fun IpodPage(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, bars:
                 }
                 Box(Modifier.weight(1f)) {
                     when (tab) {
-                        0 -> SendTab(viewModel, ui) { tab = 1 }
+                        0 -> SendTab(viewModel, ui, onLoadFolder) { tab = 1 }
                         1 -> QueueTab(ui)
                         2 -> if (lib != null) PlaylistsTab(lib, busy, onOpen = { editing = it }, onNew = { creating = true }) else NotConnected()
                         else -> if (lib != null) SongsTab(lib, busy) else NotConnected()
@@ -170,7 +191,7 @@ private fun inBranch(f: MF, branch: String) = com.example.mobiledigger.viewmodel
 
 /** Folder tree of one list; folders can be ticked as a whole (their whole branch). */
 @Composable
-private fun SendTab(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, ui: IpodManager.Ui, onQueued: () -> Unit) {
+private fun SendTab(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel, ui: IpodManager.Ui, onLoadFolder: () -> Unit, onQueued: () -> Unit) {
     val context = LocalContext.current
     val todo by viewModel.musicFiles.collectAsState()
     val liked by viewModel.likedFiles.collectAsState()
@@ -229,9 +250,19 @@ private fun SendTab(viewModel: com.example.mobiledigger.viewmodel.MusicViewModel
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(query, { query = it }, Modifier.weight(1f), singleLine = true,
                 placeholder = { Text("Search ${lists[source].first}") }, leadingIcon = { Icon(Icons.Default.Search, null) })
-            if (picked.isNotEmpty()) TextButton(onClick = { picked.clear(); if (!playlistTouched) { usePlaylist = false; playlist = "" } }) { Text("Clear") }
+            val allOn = shown.isNotEmpty() && shown.all { it.uri.toString() in picked }
+            TextButton(onClick = {
+                if (allOn) { shown.forEach { picked.remove(it.uri.toString()) }; if (!playlistTouched) { usePlaylist = false; playlist = "" } }
+                else shown.forEach { picked[it.uri.toString()] = it }
+            }, enabled = shown.isNotEmpty()) { Text(if (allOn) "None" else "All") }
         }
-        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+        // Choose what's in To Do: load another phone folder without leaving this page
+        TextButton(onClick = onLoadFolder, modifier = Modifier.padding(horizontal = 4.dp)) {
+            Icon(Icons.Default.FolderOpen, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
+            Text("Load a folder into To Do")
+        }
+        val ls1 = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.weight(1f).fillMaxWidth().lazyScrollbar(ls1, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls1) {
             if (rows.isEmpty()) item {
                 Text(if (all.isEmpty()) "Nothing in ${lists[source].first}. Load your music first." else "No match.",
                     Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -332,7 +363,8 @@ private fun QueueTab(ui: IpodManager.Ui) {
         if (ready > 0 && !IpodManager.isConnected)
             Text("Connect the iPod to send the songs that are ready.", Modifier.padding(horizontal = 14.dp),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-        LazyColumn(Modifier.fillMaxSize()) {
+        val ls2 = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.fillMaxSize().lazyScrollbar(ls2, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls2) {
             itemsIndexed(q.reversed(), key = { _, it -> it.id }) { _, it ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     val (icon, tint) = when (it.state) {
@@ -397,14 +429,20 @@ private fun SongsTab(lib: TouchLibrary, busy: Boolean) {
         }
         OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp), singleLine = true,
             placeholder = { Text("Search the iPod") }, leadingIcon = { Icon(Icons.Default.Search, null) })
-        if (selected.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        val selectable = shown.filter { it.syncId != 0L }.map { it.id }
+        val allSel = selectable.isNotEmpty() && selected.containsAll(selectable)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Text("${selected.size} selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            Checkbox(allSel, { selected = if (allSel) selected - selectable.toSet() else selected + selectable })
+            Text(if (selected.isEmpty()) "Select all (${selectable.size})" else "${selected.size} selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            if (selected.isNotEmpty()) {
             FilledTonalButton(onClick = { addTo = true }, enabled = !busy) { Text("+ Playlist") }
             if (selTracks.size == 1) FilledTonalButton(onClick = { editTrack = selTracks.first() }, enabled = !busy) { Text("Edit") }
             FilledTonalButton(onClick = { confirm = true }, enabled = !busy) { Text("Delete") }
+            }
         }
-        LazyColumn(Modifier.fillMaxWidth()) {
+        val ls3 = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.fillMaxWidth().lazyScrollbar(ls3, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls3) {
             itemsIndexed(shown, key = { _, t -> t.id }) { _, t ->
                 val sel = t.id in selected
                 ListItem(
@@ -574,13 +612,13 @@ private fun StatusCard(ui: IpodManager.Ui, busy: Boolean) {
 
 @Composable
 private fun PlaylistsTab(lib: TouchLibrary, busy: Boolean, onOpen: (TouchPlaylist) -> Unit, onNew: () -> Unit) {
-    LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 6.dp)) {
+    val ls4 = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.fillMaxWidth().lazyScrollbar(ls4, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls4, contentPadding = PaddingValues(vertical = 6.dp)) {
         item {
-            ListItem(
-                headlineContent = { Text("New playlist", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary) },
-                leadingContent = { Icon(Icons.AutoMirrored.Filled.PlaylistAdd, null, tint = MaterialTheme.colorScheme.primary) },
-                modifier = Modifier.clickable(enabled = !busy && lib.tracks.isNotEmpty()) { onNew() }
-            )
+            Button(onClick = onNew, enabled = !busy && lib.tracks.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp).height(50.dp), shape = RoundedCornerShape(16.dp)) {
+                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, null); Spacer(Modifier.width(8.dp)); Text("New playlist")
+            }
         }
         if (lib.playlists.isEmpty()) item {
             Text("No playlists on the iPod yet.", Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -634,7 +672,8 @@ private fun PlaylistEditor(
             Text("${members.size} songs", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
             if (editable) TextButton(onClick = { picking = true }) { Icon(Icons.Default.Add, null); Text("Add songs") }
         }
-        LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+        val ls5 = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false).lazyScrollbar(ls5, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls5) {
             itemsIndexed(members.toList(), key = { i, id -> "$i-$id" }) { i, sid ->
                 val t = bySync[sid]
                 ListItem(
@@ -684,7 +723,8 @@ private fun SongPicker(lib: TouchLibrary, already: Set<Long>, onDone: (List<Long
         }
         OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 14.dp), singleLine = true,
             placeholder = { Text("Search the iPod") }, leadingIcon = { Icon(Icons.Default.Search, null) })
-        LazyColumn(Modifier.fillMaxWidth()) {
+        val ls6 = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.fillMaxWidth().lazyScrollbar(ls6, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)), state = ls6) {
             itemsIndexed(shown, key = { _, t -> t.id }) { _, t: TouchTrack ->
                 val inList = t.syncId in already
                 val sel = t.syncId in picked

@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.mobiledigger"
         minSdk = 31
         targetSdk = 36
-         versionCode = 13109
-         versionName = "13.109"
+         versionCode = 13110
+         versionName = "13.110"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -117,4 +117,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Lets FlacDecoderTest read a real FLAC: ./gradlew testDebugUnitTest -Pflac.test=/path/song.flac
+tasks.withType<Test>().configureEach {
+    (project.findProperty("flac.test") as String?)?.let { systemProperty("flac.test", it) }
+    testLogging { showStandardStreams = true }
 }
